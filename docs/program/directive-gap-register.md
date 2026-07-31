@@ -6,7 +6,7 @@
 | ID | Description | Directive Reference | Risk | Dependencies | Recommendation | Owner | Priority | Target Phase |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | GAP-001 | ~~Master Directive missing~~ **CLOSED** — file at repo root | Governance | — | — | Keep PDF + add markdown mirror optional | Program | Closed | — |
-| GAP-002 | technical-roadmap phase scheme ≠ Master Directive §42 | §42 / roadmap | P0 | — | Rewrite roadmap to MD phases; keep crosswalk | Program | P0 | DR-1 |
+| GAP-002 | technical-roadmap phase scheme ≠ Master Directive §42 | §42 / roadmap | P0 | — | **CLOSED in DR-1** — roadmap rewritten to §42; legacy 1–17 historical appendix | Program | Closed | DR-1 |
 | GAP-003 | Academy dual-stack: Firebase live; AWS scaffold | §19, §38, Phases 6–8 | P0 | GAP-002 | Cutover plan; freeze Firebase feature growth | Product | P0 | Phase 6 |
 | GAP-004 | FX pilot tenant not designated | FX program (adjacent) | P1 | — | Complete pilot tenant record; Wave 1 | RMS/FX | P1 | FX-P1 |
 | GAP-QR-01 | Shared QR platform not started | §17A / Phase 5A | P1 | Phase 5 gates | Authorize QR-S0 when ready | Platform | P1 | 5A |
