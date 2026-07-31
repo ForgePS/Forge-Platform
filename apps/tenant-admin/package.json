@@ -16,7 +16,7 @@
     "@forge/design-system": "workspace:*",
     "@forge/import-center": "workspace:*",
     "@forge/ui": "workspace:*",
-    "next": "^15.3.4",
+    "next": "^15.5.22",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
