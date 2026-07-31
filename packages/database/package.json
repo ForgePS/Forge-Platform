@@ -1,0 +1,59 @@
+{
+  "name": "@forge/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./seed": {
+      "types": "./dist/seed.d.ts",
+      "import": "./dist/seed.js"
+    },
+    "./neris-import": {
+      "types": "./dist/neris/import-schema.d.ts",
+      "import": "./dist/neris/import-schema.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --max-warnings=0",
+    "test": "vitest run --passWithNoTests",
+    "test:unit": "vitest run --passWithNoTests",
+    "test:integration": "vitest run src/tenant-isolation.integration.test.ts src/neris/neris-integrity.integration.test.ts",
+    "test:rls": "vitest run src/tenant-isolation.integration.test.ts src/neris/neris-integrity.integration.test.ts",
+    "test:neris": "vitest run src/neris/neris-integrity.integration.test.ts",
+    "clean": "rimraf dist",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/migrate.ts",
+    "db:migrate:status": "tsx src/migrate-status.ts",
+    "db:migrate:test": "cross-env DATABASE_URL=postgresql://forge:forge_local_only@localhost:5432/forge_platform_test tsx src/migrate.ts",
+    "db:test:reset": "cross-env DATABASE_URL=postgresql://forge:forge_local_only@localhost:5432/forge_platform_test tsx src/migrate.ts",
+    "db:seed": "tsx src/seed.ts",
+    "neris:import-schema": "tsx src/neris/import-schema.ts",
+    "neris:seed-rms": "tsx src/seed-rms-synthetic.ts",
+    "neris:link-rms-cognito": "tsx src/link-rms-e2e-cognito.ts"
+  },
+  "dependencies": {
+    "@forge/contracts": "workspace:*",
+    "@forge/environment": "workspace:*",
+    "@forge/neris": "workspace:*",
+    "drizzle-orm": "^0.44.2",
+    "postgres": "^3.4.7",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/uuid": "^10.0.0",
+    "cross-env": "^7.0.3",
+    "drizzle-kit": "^0.31.1",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

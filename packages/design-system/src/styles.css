@@ -1,0 +1,48 @@
+:root {
+  color-scheme: light dark;
+  --forge-font-sans: "Segoe UI", "Helvetica Neue", sans-serif;
+  --forge-space-1: 0.25rem;
+  --forge-space-2: 0.5rem;
+  --forge-space-3: 0.75rem;
+  --forge-space-4: 1rem;
+  --forge-space-6: 1.5rem;
+  --forge-radius-sm: 0.25rem;
+  --forge-radius-md: 0.5rem;
+  --forge-text-sm: 0.875rem;
+  --forge-text-md: 1rem;
+  --forge-text-lg: 1.25rem;
+  --forge-color-bg: #f7f8fa;
+  --forge-color-surface: #ffffff;
+  --forge-color-text: #15202b;
+  --forge-color-muted: #5b6b7c;
+  --forge-color-border: #d5dde5;
+  --forge-color-primary: #0b5fff;
+  --forge-color-danger: #b42318;
+  --forge-color-success: #067647;
+  --forge-focus-ring: 0 0 0 3px rgba(11, 95, 255, 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --forge-color-bg: #0f1419;
+    --forge-color-surface: #1a222c;
+    --forge-color-text: #e8eef5;
+    --forge-color-muted: #9aabbc;
+    --forge-color-border: #2d3a47;
+    --forge-color-primary: #6ea8ff;
+  }
+}
+
+.forge-theme-light {
+  color-scheme: light;
+}
+
+.forge-theme-dark {
+  color-scheme: dark;
+  --forge-color-bg: #0f1419;
+  --forge-color-surface: #1a222c;
+  --forge-color-text: #e8eef5;
+  --forge-color-muted: #9aabbc;
+  --forge-color-border: #2d3a47;
+  --forge-color-primary: #6ea8ff;
+}

@@ -1,0 +1,195 @@
+/* Forge Experience design tokens — FX-S1
+ * Source of truth aligned to docs/forge-experience/tokens/*
+ * Components MUST use these variables. No hard-coded colors/spacing in UI.
+ */
+
+:root,
+[data-fx-theme="light"] {
+  /* Primitives (reference) */
+  --fx-color-neutral-0: #ffffff;
+  --fx-color-neutral-50: #f4f6f8;
+  --fx-color-neutral-100: #e8ecf0;
+  --fx-color-neutral-200: #d0d7de;
+  --fx-color-neutral-300: #a8b3bf;
+  --fx-color-neutral-400: #7a8794;
+  --fx-color-neutral-500: #5b6772;
+  --fx-color-neutral-600: #44505a;
+  --fx-color-neutral-700: #2f3942;
+  --fx-color-neutral-800: #1e262d;
+  --fx-color-neutral-900: #12171c;
+  --fx-color-neutral-950: #0a0d10;
+
+  --fx-color-brand-500: #1f5a86;
+  --fx-color-brand-600: #184a6e;
+  --fx-color-brand-300: #5e92bc;
+
+  --fx-color-success-400: #3d9b6e;
+  --fx-color-success-500: #2f7d57;
+  --fx-color-success-600: #246345;
+  --fx-color-warning-400: #d4a017;
+  --fx-color-warning-500: #b8860b;
+  --fx-color-warning-600: #8f6a08;
+  --fx-color-danger-400: #d4534f;
+  --fx-color-danger-500: #b83a36;
+  --fx-color-danger-600: #922e2b;
+  --fx-color-info-400: #4a90c4;
+  --fx-color-info-500: #2f74a8;
+  --fx-color-info-600: #245c86;
+
+  /* Semantic — light */
+  --fx-color-surface-default: var(--fx-color-neutral-0);
+  --fx-color-surface-secondary: var(--fx-color-neutral-50);
+  --fx-color-surface-tertiary: var(--fx-color-neutral-100);
+  --fx-color-surface-inverse: var(--fx-color-neutral-900);
+  --fx-color-surface-overlay: rgba(18, 23, 28, 0.55);
+  --fx-color-surface-disabled: var(--fx-color-neutral-100);
+
+  --fx-color-text-primary: var(--fx-color-neutral-900);
+  --fx-color-text-secondary: var(--fx-color-neutral-600);
+  --fx-color-text-muted: var(--fx-color-neutral-500);
+  --fx-color-text-inverse: var(--fx-color-neutral-0);
+
+  --fx-color-border-default: var(--fx-color-neutral-200);
+  --fx-color-border-subtle: var(--fx-color-neutral-100);
+  --fx-color-border-focus: var(--fx-color-brand-500);
+
+  --fx-color-action-primary: var(--fx-color-brand-600);
+  --fx-color-action-secondary: var(--fx-color-neutral-700);
+  --fx-color-action-success: var(--fx-color-success-600);
+  --fx-color-action-warning: var(--fx-color-warning-600);
+  --fx-color-action-danger: var(--fx-color-danger-600);
+  --fx-color-action-disabled: var(--fx-color-neutral-300);
+
+  --fx-color-status-success: var(--fx-color-success-500);
+  --fx-color-status-warning: var(--fx-color-warning-500);
+  --fx-color-status-danger: var(--fx-color-danger-500);
+  --fx-color-status-info: var(--fx-color-info-500);
+  --fx-color-status-neutral: var(--fx-color-neutral-500);
+
+  --fx-color-priority-low: var(--fx-color-neutral-400);
+  --fx-color-priority-normal: var(--fx-color-info-500);
+  --fx-color-priority-high: var(--fx-color-warning-500);
+  --fx-color-priority-critical: var(--fx-color-danger-500);
+
+  --fx-font-sans: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --fx-font-display: "IBM Plex Sans", "Source Sans 3", system-ui, sans-serif;
+  --fx-font-mono: "IBM Plex Mono", Consolas, ui-monospace, monospace;
+
+  --fx-space-4: 4px;
+  --fx-space-8: 8px;
+  --fx-space-12: 12px;
+  --fx-space-16: 16px;
+  --fx-space-20: 20px;
+  --fx-space-24: 24px;
+  --fx-space-32: 32px;
+  --fx-space-40: 40px;
+  --fx-space-48: 48px;
+  --fx-space-64: 64px;
+  --fx-space-80: 80px;
+  --fx-space-96: 96px;
+
+  --fx-radius-small: 4px;
+  --fx-radius-medium: 8px;
+  --fx-radius-large: 12px;
+  --fx-radius-xl: 16px;
+  --fx-radius-round: 9999px;
+
+  --fx-shadow-small: 0 1px 2px rgba(18, 23, 28, 0.08);
+  --fx-shadow-medium: 0 2px 8px rgba(18, 23, 28, 0.12);
+  --fx-shadow-large: 0 8px 24px rgba(18, 23, 28, 0.16);
+  --fx-shadow-floating: 0 12px 32px rgba(18, 23, 28, 0.2);
+  --fx-shadow-modal: 0 16px 48px rgba(18, 23, 28, 0.28);
+
+  --fx-elevation-0: 0;
+  --fx-elevation-1: 10;
+  --fx-elevation-2: 20;
+  --fx-elevation-3: 30;
+  --fx-elevation-4: 40;
+
+  --fx-motion-fast: 120ms;
+  --fx-motion-normal: 200ms;
+  --fx-motion-slow: 320ms;
+  --fx-motion-easing: cubic-bezier(0.2, 0, 0, 1);
+
+  --fx-touch-min: 44px;
+}
+
+[data-fx-theme="dark"] {
+  --fx-color-surface-default: var(--fx-color-neutral-950);
+  --fx-color-surface-secondary: var(--fx-color-neutral-900);
+  --fx-color-surface-tertiary: var(--fx-color-neutral-800);
+  --fx-color-surface-inverse: var(--fx-color-neutral-50);
+  --fx-color-surface-overlay: rgba(0, 0, 0, 0.65);
+  --fx-color-surface-disabled: var(--fx-color-neutral-800);
+
+  --fx-color-text-primary: var(--fx-color-neutral-50);
+  --fx-color-text-secondary: var(--fx-color-neutral-300);
+  --fx-color-text-muted: var(--fx-color-neutral-400);
+  --fx-color-text-inverse: var(--fx-color-neutral-950);
+
+  --fx-color-border-default: var(--fx-color-neutral-700);
+  --fx-color-border-subtle: var(--fx-color-neutral-800);
+  --fx-color-border-focus: var(--fx-color-brand-300);
+
+  --fx-color-action-primary: var(--fx-color-brand-300);
+  --fx-color-action-secondary: var(--fx-color-neutral-200);
+  --fx-color-action-success: var(--fx-color-success-400);
+  --fx-color-action-warning: var(--fx-color-warning-400);
+  --fx-color-action-danger: var(--fx-color-danger-400);
+  --fx-color-action-disabled: var(--fx-color-neutral-600);
+
+  --fx-color-status-success: var(--fx-color-success-400);
+  --fx-color-status-warning: var(--fx-color-warning-400);
+  --fx-color-status-danger: var(--fx-color-danger-400);
+  --fx-color-status-info: var(--fx-color-info-400);
+  --fx-color-status-neutral: var(--fx-color-neutral-400);
+
+  --fx-color-priority-low: var(--fx-color-neutral-500);
+  --fx-color-priority-normal: var(--fx-color-info-400);
+  --fx-color-priority-high: var(--fx-color-warning-400);
+  --fx-color-priority-critical: var(--fx-color-danger-400);
+}
+
+[data-fx-theme="high-contrast"] {
+  --fx-color-surface-default: #ffffff;
+  --fx-color-surface-secondary: #ffffff;
+  --fx-color-surface-tertiary: #f0f0f0;
+  --fx-color-surface-inverse: #000000;
+  --fx-color-surface-overlay: rgba(0, 0, 0, 0.75);
+  --fx-color-surface-disabled: #e0e0e0;
+
+  --fx-color-text-primary: #000000;
+  --fx-color-text-secondary: #000000;
+  --fx-color-text-muted: #222222;
+  --fx-color-text-inverse: #ffffff;
+
+  --fx-color-border-default: #000000;
+  --fx-color-border-subtle: #333333;
+  --fx-color-border-focus: #0000ee;
+
+  --fx-color-action-primary: #0000ee;
+  --fx-color-action-secondary: #000000;
+  --fx-color-action-success: #006400;
+  --fx-color-action-warning: #7a5a00;
+  --fx-color-action-danger: #8b0000;
+  --fx-color-action-disabled: #666666;
+
+  --fx-color-status-success: #006400;
+  --fx-color-status-warning: #7a5a00;
+  --fx-color-status-danger: #8b0000;
+  --fx-color-status-info: #0000ee;
+  --fx-color-status-neutral: #333333;
+
+  --fx-color-priority-low: #333333;
+  --fx-color-priority-normal: #0000ee;
+  --fx-color-priority-high: #7a5a00;
+  --fx-color-priority-critical: #8b0000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --fx-motion-fast: 0ms;
+    --fx-motion-normal: 0ms;
+    --fx-motion-slow: 0ms;
+  }
+}

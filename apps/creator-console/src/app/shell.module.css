@@ -1,0 +1,115 @@
+.body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Source Sans 3", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(20, 83, 45, 0.12), transparent 40%),
+    linear-gradient(180deg, #f3f6f2 0%, #e7eee8 100%);
+  color: #14201a;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: calc(100vh - 32px);
+}
+
+.nav {
+  padding: 1.5rem 1rem;
+  border-right: 1px solid rgba(20, 32, 26, 0.12);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px);
+}
+
+.brand {
+  margin: 0 0 1.25rem;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.navLink {
+  display: block;
+  padding: 0.45rem 0.35rem;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.navLink:hover {
+  background: rgba(20, 83, 45, 0.08);
+}
+
+.navLinkActive {
+  background: rgba(20, 83, 45, 0.12);
+  font-weight: 600;
+}
+
+.navGroup {
+  margin-bottom: 1rem;
+}
+
+.navGroupLabel {
+  margin: 0 0 0.35rem;
+  padding: 0 0.35rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.55;
+}
+
+.session {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.5rem;
+  border-radius: 8px;
+  background: rgba(20, 83, 45, 0.06);
+  font-size: 0.85rem;
+}
+
+.sessionLabel {
+  margin: 0;
+  opacity: 0.65;
+  font-size: 0.75rem;
+}
+
+.sessionValue {
+  margin: 0 0 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+}
+
+.signOut {
+  margin-top: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #14532d;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.authError {
+  margin: 0 0 0.75rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(153, 27, 27, 0.08);
+  color: #7f1d1d;
+  font-size: 0.8rem;
+}
+
+.main {
+  padding: 1.75rem 2rem 3rem;
+}
+
+@media (max-width: 800px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .nav {
+    border-right: 0;
+    border-bottom: 1px solid rgba(20, 32, 26, 0.12);
+  }
+}

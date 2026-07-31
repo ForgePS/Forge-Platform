@@ -1,0 +1,143 @@
+.page h1 {
+  margin: 0 0 0.35rem;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin: 0 0 1.25rem;
+  opacity: 0.8;
+}
+
+.muted {
+  opacity: 0.75;
+  font-size: 0.95rem;
+}
+
+.error {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(153, 27, 27, 0.08);
+  color: #7f1d1d;
+}
+
+.success {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(20, 83, 45, 0.1);
+  color: #14532d;
+}
+
+.panel {
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(20, 32, 26, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.panel h2 {
+  margin: 0 0 0.85rem;
+  font-size: 1.05rem;
+}
+
+.form {
+  display: grid;
+  gap: 0.65rem;
+  max-width: 36rem;
+}
+
+.formRow {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.formRow label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.formRow input,
+.formRow select,
+.formRow textarea {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(20, 32, 26, 0.2);
+  border-radius: 6px;
+  font: inherit;
+  background: #fff;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.button {
+  appearance: none;
+  border: 1px solid rgba(20, 83, 45, 0.35);
+  background: #14532d;
+  color: #f3f6f2;
+  border-radius: 6px;
+  padding: 0.45rem 0.85rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.buttonSecondary {
+  appearance: none;
+  border: 1px solid rgba(20, 32, 26, 0.25);
+  background: transparent;
+  color: #14201a;
+  border-radius: 6px;
+  padding: 0.45rem 0.85rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.buttonSecondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.5rem 0.4rem;
+  border-bottom: 1px solid rgba(20, 32, 26, 0.1);
+  vertical-align: top;
+}
+
+.table th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+
+.linkRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin: 0.75rem 0 1.25rem;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}

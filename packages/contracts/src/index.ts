@@ -1,0 +1,421 @@
+import { z } from "zod";
+
+export const apiMetaSchema = z.object({
+  requestId: z.string(),
+  correlationId: z.string(),
+  page: z.number().int().positive().optional(),
+  pageSize: z.number().int().positive().optional(),
+  total: z.number().int().nonnegative().optional(),
+});
+
+export type ApiMeta = z.infer<typeof apiMetaSchema>;
+
+export interface ApiSuccess<T> {
+  data: T;
+  meta: ApiMeta;
+}
+
+export interface ApiErrorBody {
+  error: {
+    code: string;
+    message: string;
+    details: unknown[];
+    requestId: string;
+    correlationId: string;
+  };
+}
+
+export const PLATFORM_PERMISSIONS = [
+  "platform.tenant.read",
+  "platform.tenant.create",
+  "platform.tenant.update",
+  "platform.tenant.suspend",
+  "platform.organization.read",
+  "platform.organization.create",
+  "platform.person.read",
+  "platform.person.create",
+  "platform.person.update",
+  "platform.person.merge",
+  "platform.user.invite",
+  "platform.role.assign",
+  "platform.permission.read",
+  "platform.audit.read",
+  "platform.feature.manage",
+  "platform.entitlement.manage",
+  "platform.configuration.update",
+  "platform.configuration.publish",
+  "tenant.configuration.update",
+  "tenant.configuration.publish",
+  "platform.sensitive_data.read",
+  "platform.invitation.read",
+  "platform.invitation.manage",
+  "platform.membership.read",
+  "platform.membership.manage",
+  "platform.onboarding.manage",
+  "platform.neris.schema.read",
+  "platform.neris.schema.import",
+  "platform.neris.overlay.read",
+  "platform.neris.overlay.manage",
+  "platform.cad.adapter.manage",
+  "platform.cad.mapping_template.manage",
+  "platform.cad.global_diagnostics.view",
+  "platform.ai.narrative.manage",
+  "platform.ai.provider.manage",
+  "platform.ai.policy.manage",
+  "platform.ai.usage.view",
+] as const;
+
+/** Universal Import Platform permissions (unscoped names; assignment decides principal scope). */
+export const IMPORT_PERMISSIONS = [
+  "import.view",
+  "import.upload",
+  "import.map",
+  "import.validate",
+  "import.preview",
+  "import.approve",
+  "import.execute",
+  "import.rollback",
+  "import.profile.manage",
+  "import.template.manage",
+  "import.error.reprocess",
+  "import.sensitive",
+] as const;
+
+export type ImportPermission = (typeof IMPORT_PERMISSIONS)[number];
+
+export type PlatformPermission = (typeof PLATFORM_PERMISSIONS)[number];
+
+/**
+ * Permissions that only a platform (creator) principal may hold or grant.
+ * A tenant administrator is refused when it tries to grant any of these,
+ * independently of the permissions it holds itself.
+ */
+export const CREATOR_ONLY_PERMISSIONS = [
+  "platform.tenant.create",
+  "platform.tenant.suspend",
+  "platform.onboarding.manage",
+  "platform.neris.schema.import",
+  "platform.cad.adapter.manage",
+  "platform.cad.mapping_template.manage",
+  "platform.cad.global_diagnostics.view",
+  "platform.ai.narrative.manage",
+  "platform.ai.provider.manage",
+  "platform.ai.policy.manage",
+] as const satisfies readonly PlatformPermission[];
+
+export function isCreatorOnlyPermission(code: string): boolean {
+  return (CREATOR_ONLY_PERMISSIONS as readonly string[]).includes(code);
+}
+
+export const createTenantInputSchema = z.object({
+  tenantKey: z
+    .string()
+    .min(2)
+    .max(64)
+    .regex(/^[a-z0-9][a-z0-9_-]*$/),
+  slug: z
+    .string()
+    .min(2)
+    .max(100)
+    .regex(/^[a-z0-9][a-z0-9-]*$/),
+  legalName: z.string().min(1).max(300),
+  displayName: z.string().min(1).max(300),
+  tenantType: z.string().min(1).max(64).default("CUSTOMER"),
+  timezone: z.string().min(1).max(64).default("America/Chicago"),
+  defaultLocale: z.string().min(2).max(16).default("en-US"),
+  dataRegion: z.string().min(2).max(32).default("us-east-1"),
+});
+
+export type CreateTenantInput = z.infer<typeof createTenantInputSchema>;
+
+export const createOrganizationInputSchema = z.object({
+  organizationTypeCode: z.string().min(1).max(64),
+  slug: z
+    .string()
+    .min(2)
+    .max(100)
+    .regex(/^[a-z0-9][a-z0-9-]*$/),
+  legalName: z.string().min(1).max(300),
+  displayName: z.string().min(1).max(300),
+  parentOrganizationId: z.string().uuid().optional(),
+  email: z.string().email().optional(),
+  phone: z.string().max(40).optional(),
+  timezone: z.string().max(64).optional(),
+});
+
+export type CreateOrganizationInput = z.infer<typeof createOrganizationInputSchema>;
+
+export const createPersonInputSchema = z.object({
+  firstName: z.string().min(1).max(100),
+  middleName: z.string().max(100).optional(),
+  lastName: z.string().min(1).max(100),
+  suffix: z.string().max(40).optional(),
+  preferredName: z.string().max(100).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().max(40).optional(),
+  dateOfBirth: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  recordSource: z.string().max(64).default("MANUAL"),
+});
+
+export type CreatePersonInput = z.infer<typeof createPersonInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Invitations (ADR-020)
+// ---------------------------------------------------------------------------
+
+export const INVITATION_STATUSES = [
+  "DRAFT",
+  "PENDING",
+  "SENT",
+  "ACCEPTED",
+  "EXPIRED",
+  "REVOKED",
+  "FAILED",
+] as const;
+
+export type InvitationStatus = (typeof INVITATION_STATUSES)[number];
+
+/** Statuses from which no further transition is permitted. */
+export const TERMINAL_INVITATION_STATUSES = [
+  "ACCEPTED",
+  "EXPIRED",
+  "REVOKED",
+  "FAILED",
+] as const satisfies readonly InvitationStatus[];
+
+export const createInvitationInputSchema = z.object({
+  tenantId: z.string().uuid(),
+  email: z.string().email().max(320),
+  firstName: z.string().min(1).max(100).optional(),
+  lastName: z.string().min(1).max(100).optional(),
+  organizationId: z.string().uuid().optional(),
+  roleCodes: z.array(z.string().min(1).max(64)).max(20).default([]),
+  productCodes: z.array(z.string().min(1).max(64)).max(20).default([]),
+  moduleCodes: z.array(z.string().min(1).max(64)).max(50).default([]),
+  expiresInHours: z.number().int().min(1).max(720).default(168),
+  /** When false the invitation is stored as DRAFT and no Cognito user is created. */
+  send: z.boolean().default(true),
+});
+
+export type CreateInvitationInput = z.infer<typeof createInvitationInputSchema>;
+
+export const acceptInvitationInputSchema = z.object({
+  token: z.string().min(16).max(512),
+  /** Cognito subject of the authenticated identity accepting the invitation. */
+  cognitoSubject: z.string().min(1).max(255).optional(),
+});
+
+export type AcceptInvitationInput = z.infer<typeof acceptInvitationInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Memberships (ADR-021)
+// ---------------------------------------------------------------------------
+
+export const MEMBERSHIP_STATUSES = [
+  "PENDING",
+  "ACTIVE",
+  "SUSPENDED",
+  "EXPIRED",
+  "REVOKED",
+  "ARCHIVED",
+] as const;
+
+export type MembershipStatus = (typeof MEMBERSHIP_STATUSES)[number];
+
+export const createMembershipInputSchema = z.object({
+  userId: z.string().uuid(),
+  status: z.enum(["PENDING", "ACTIVE"]).default("PENDING"),
+  isDefaultTenant: z.boolean().default(false),
+  expiresAt: z.string().datetime().optional(),
+  roleCodes: z.array(z.string().min(1).max(64)).max(20).default([]),
+  productCodes: z.array(z.string().min(1).max(64)).max(20).default([]),
+  moduleCodes: z.array(z.string().min(1).max(64)).max(50).default([]),
+});
+
+export type CreateMembershipInput = z.infer<typeof createMembershipInputSchema>;
+
+export const patchMembershipInputSchema = z.object({
+  isDefaultTenant: z.boolean().optional(),
+  expiresAt: z.string().datetime().nullable().optional(),
+});
+
+export const setMembershipRolesInputSchema = z.object({
+  roles: z
+    .array(
+      z.object({
+        roleCode: z.string().min(1).max(64),
+        organizationId: z.string().uuid().nullable().optional(),
+      }),
+    )
+    .max(50),
+});
+
+export const setMembershipProductsInputSchema = z.object({
+  productCodes: z.array(z.string().min(1).max(64)).max(20),
+  moduleCodes: z.array(z.string().min(1).max(64)).max(50).default([]),
+});
+
+// ---------------------------------------------------------------------------
+// Subscriptions (ADR-019 states, extended in Sprint 1E)
+// ---------------------------------------------------------------------------
+
+export const SUBSCRIPTION_STATUSES = [
+  "ACTIVE",
+  "PAYMENT_DUE",
+  "GRACE_PERIOD",
+  "READ_ONLY",
+  "SUSPENDED",
+  "TERMINATED",
+  "ARCHIVED",
+] as const;
+
+export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
+
+/** Statuses that permit writes. Everything else is read-only or blocked. */
+export const WRITABLE_SUBSCRIPTION_STATUSES = [
+  "ACTIVE",
+  "PAYMENT_DUE",
+  "GRACE_PERIOD",
+] as const satisfies readonly SubscriptionStatus[];
+
+/** Statuses that still permit reads. No status ever deletes customer data. */
+export const READABLE_SUBSCRIPTION_STATUSES = [
+  "ACTIVE",
+  "PAYMENT_DUE",
+  "GRACE_PERIOD",
+  "READ_ONLY",
+  "ARCHIVED",
+] as const satisfies readonly SubscriptionStatus[];
+
+// ---------------------------------------------------------------------------
+// Onboarding (ADR-027)
+// ---------------------------------------------------------------------------
+
+export const CUSTOMER_TYPES = ["INDUSTRIAL", "FIRE_DEPARTMENT", "FIRE_ACADEMY", "OTHER"] as const;
+
+export type CustomerType = (typeof CUSTOMER_TYPES)[number];
+
+export const ONBOARDING_STEPS = [
+  { number: 1, key: "CREATE_TENANT", label: "Create tenant" },
+  { number: 2, key: "SELECT_CUSTOMER_TYPE", label: "Select customer type" },
+  { number: 3, key: "CREATE_PRIMARY_ORGANIZATION", label: "Create primary organization" },
+  { number: 4, key: "SELECT_PRODUCTS", label: "Select products" },
+  { number: 5, key: "SELECT_MODULES", label: "Select modules" },
+  { number: 6, key: "CONFIGURE_SUBSCRIPTION", label: "Configure subscription" },
+  { number: 7, key: "CONFIGURE_BRANDING", label: "Configure branding" },
+  { number: 8, key: "CREATE_PRIMARY_ADMINISTRATOR", label: "Create primary administrator" },
+  { number: 9, key: "SEND_INVITATION", label: "Send invitation" },
+  { number: 10, key: "REVIEW_CONFIGURATION", label: "Review configuration" },
+  { number: 11, key: "ACTIVATE_TENANT", label: "Activate tenant" },
+] as const;
+
+export type OnboardingStepKey = (typeof ONBOARDING_STEPS)[number]["key"];
+
+export const startOnboardingInputSchema = z.object({
+  customerType: z.enum(CUSTOMER_TYPES),
+  templateCode: z.string().min(1).max(64).optional(),
+  tenantKey: createTenantInputSchema.shape.tenantKey,
+  slug: createTenantInputSchema.shape.slug,
+  legalName: z.string().min(1).max(300),
+  displayName: z.string().min(1).max(300),
+  timezone: z.string().min(1).max(64).default("America/Chicago"),
+});
+
+export type StartOnboardingInput = z.infer<typeof startOnboardingInputSchema>;
+
+export const completeOnboardingStepInputSchema = z.object({
+  stepKey: z.string().min(1).max(64),
+  payload: z.record(z.unknown()).default({}),
+});
+
+export * from "./starter-templates.js";
+export {
+  RMS_PERMISSIONS,
+  NERIS_INCIDENT_STATUSES,
+  PREFILL_SOURCES,
+  VALIDATION_SEVERITIES,
+  VALIDATION_SOURCES,
+  NUMBER_RESET_MODES,
+  NUMBER_SCOPES,
+  SPECIALTY_REVIEWER_ROLES,
+  ATTACHMENT_CATEGORIES,
+  pageQuerySchema,
+  createStationInputSchema,
+  createShiftInputSchema,
+  createApparatusInputSchema,
+  createUnitInputSchema,
+  createRmsPersonnelInputSchema,
+  createOccupancyInputSchema,
+  createPreplanInputSchema,
+  createIncidentInputSchema,
+  patchIncidentInputSchema,
+  upsertFieldValueInputSchema,
+  batchUpsertFieldValuesInputSchema,
+  submitReviewInputSchema,
+  returnIncidentInputSchema,
+  voidIncidentInputSchema,
+  reviewCommentInputSchema,
+  resolveReviewCommentInputSchema,
+  reopenReviewCommentInputSchema,
+  returnSpecialtySectionInputSchema,
+  duplicateCheckInputSchema,
+  upsertNarrativeInputSchema,
+  createIncidentUnitInputSchema,
+  patchIncidentUnitInputSchema,
+  createIncidentPersonnelInputSchema,
+  patchIncidentPersonnelInputSchema,
+  prefillQuerySchema,
+  initializeAttachmentUploadInputSchema,
+  completeAttachmentUploadInputSchema,
+  patchAttachmentInputSchema,
+  createExposureInputSchema,
+  patchExposureInputSchema,
+  createCivilianCasualtyInputSchema,
+  patchCivilianCasualtyInputSchema,
+  createFireServiceCasualtyInputSchema,
+  patchFireServiceCasualtyInputSchema,
+  createHazmatSubstanceInputSchema,
+  patchHazmatSubstanceInputSchema,
+  createHazmatContainerInputSchema,
+  patchHazmatContainerInputSchema,
+  createAlarmSystemInputSchema,
+  patchAlarmSystemInputSchema,
+  createProtectionSystemInputSchema,
+  patchProtectionSystemInputSchema,
+  createOccupancyLinkInputSchema,
+  createProposedMasterUpdateInputSchema,
+  reviewProposedMasterUpdateInputSchema,
+  sectionApprovalInputSchema,
+  RMS_DEPARTMENT_ADMIN_PERMISSIONS,
+  RMS_OFFICER_PERMISSIONS,
+  RMS_MEMBER_INCIDENT_PERMISSIONS,
+  RMS_SAFETY_OFFICER_PERMISSIONS,
+  RMS_HAZMAT_OFFICER_PERMISSIONS,
+  RMS_FIRE_INVESTIGATOR_PERMISSIONS,
+  RMS_PREVENTION_OFFICER_PERMISSIONS,
+  RMS_TRAINING_OFFICER_PERMISSIONS,
+  type RmsPermission,
+  type NerisIncidentStatus,
+  type PrefillSource,
+  type CreateIncidentInput,
+} from "./rms-neris.js";
+import { RMS_PERMISSIONS as _RMS_PERMISSIONS } from "./rms-neris.js";
+import {
+  ACADEMY_AI_NARRATIVE_PERMISSIONS,
+  INDUSTRIAL_AI_NARRATIVE_PERMISSIONS,
+} from "@forge/ai-contracts";
+
+/** All seeded permission codes (platform + RMS + product AI + import). */
+export const ALL_PERMISSIONS = [
+  ...PLATFORM_PERMISSIONS,
+  ...IMPORT_PERMISSIONS,
+  ..._RMS_PERMISSIONS,
+  ...INDUSTRIAL_AI_NARRATIVE_PERMISSIONS,
+  ...ACADEMY_AI_NARRATIVE_PERMISSIONS,
+] as const;
+export type AnyPermission = (typeof ALL_PERMISSIONS)[number];
+
+export * from "@forge/ai-contracts";
