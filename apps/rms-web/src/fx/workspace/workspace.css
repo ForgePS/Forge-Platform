@@ -35,13 +35,13 @@
 
 .rms-fx-workspace__eyebrow {
   margin: 0 0 0.25rem;
-  color: var(--fx-color-text-muted, #5b6573);
+  color: var(--fx-color-text-muted);
   font-size: 0.875rem;
 }
 
 .rms-fx-workspace__meta {
   margin: 0.15rem 0 0;
-  color: var(--fx-color-text-muted, #5b6573);
+  color: var(--fx-color-text-muted);
   font-size: 0.8125rem;
 }
 
@@ -118,7 +118,7 @@
 }
 
 .rms-fx-workspace-summary__row dt {
-  color: var(--fx-color-text-muted, #5b6573);
+  color: var(--fx-color-text-muted);
   font-size: 0.8125rem;
 }
 
@@ -148,7 +148,7 @@
 
 .rms-fx-workspace-timeline__item time {
   font-size: 0.75rem;
-  color: var(--fx-color-text-muted, #5b6573);
+  color: var(--fx-color-text-muted);
 }
 
 .rms-fx-workspace-list {
@@ -172,7 +172,7 @@
 
 .rms-fx-workspace-state--error {
   border-style: solid;
-  border-color: var(--fx-color-border-danger, #b42318);
+  border-color: var(--fx-color-status-danger);
 }
 
 .rms-fx-workspace-state__title {

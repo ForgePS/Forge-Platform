@@ -1,54 +1,62 @@
+/* RMS legacy shell — Sneat tokens via @forge/design-system */
+
 .shell {
   display: grid;
   min-height: calc(100vh - 2rem);
+  color: var(--forge-color-heading);
+  font-family: var(--forge-font-sans);
 }
 
 @media (min-width: 900px) {
   .shell {
-    grid-template-columns: 15rem minmax(0, 1fr);
+    grid-template-columns: var(--forge-menu-width) minmax(0, 1fr);
   }
 }
 
 .nav {
   padding: 1rem;
-  border-bottom: 1px solid rgba(20, 32, 26, 0.12);
-  background: rgba(255, 255, 255, 0.65);
+  border-bottom: 1px solid var(--forge-color-border);
+  background: var(--forge-color-surface);
+  box-shadow: var(--forge-shadow-sm);
 }
 
 @media (min-width: 900px) {
   .nav {
     border-bottom: 0;
-    border-right: 1px solid rgba(20, 32, 26, 0.12);
+    border-right: 1px solid var(--forge-color-border);
     min-height: 100%;
   }
 }
 
 .brand {
   margin: 0 0 1rem;
-  font-family: Fraunces, Georgia, serif;
-  font-size: 1.15rem;
-  letter-spacing: -0.02em;
+  font-family: var(--forge-font-sans);
+  font-size: var(--forge-text-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--forge-color-heading);
 }
 
 .session {
   margin: 0 0 1rem;
   padding: 0.65rem 0.75rem;
-  border-radius: 8px;
-  background: rgba(20, 32, 26, 0.05);
-  font-size: 0.85rem;
+  border-radius: var(--forge-radius-lg);
+  background: var(--forge-color-surface-2);
+  border: 1px solid var(--forge-color-border-light);
+  font-size: var(--forge-text-sm);
 }
 
 .sessionLabel {
   margin: 0;
-  opacity: 0.65;
-  font-size: 0.75rem;
+  color: var(--forge-color-muted);
+  font-size: var(--forge-text-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .sessionValue {
   margin: 0 0 0.35rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--forge-font-mono);
 }
 
 .signOut {
@@ -56,17 +64,18 @@
   appearance: none;
   border: 0;
   background: transparent;
-  color: #7f1d1d;
+  color: var(--forge-color-danger);
   cursor: pointer;
   font: inherit;
   padding: 0;
   text-decoration: underline;
+  min-height: var(--forge-touch-min);
 }
 
 .authError {
   margin: 0 0 0.75rem;
-  color: #7f1d1d;
-  font-size: 0.85rem;
+  color: var(--forge-color-danger);
+  font-size: var(--forge-text-sm);
 }
 
 .navGroup {
@@ -78,25 +87,28 @@
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  opacity: 0.65;
+  color: var(--forge-color-muted);
 }
 
 .navLink {
   display: block;
   padding: 0.55rem 0.65rem;
-  border-radius: 6px;
-  color: inherit;
+  border-radius: var(--forge-radius-md);
+  color: var(--forge-color-heading);
   text-decoration: none;
   font-size: 0.95rem;
   min-height: 2.75rem;
 }
 
 .navLink:hover {
-  background: rgba(20, 83, 45, 0.08);
+  background: var(--forge-color-primary-soft);
+  color: var(--forge-color-primary);
+  text-decoration: none;
 }
 
 .navLinkActive {
-  background: rgba(20, 83, 45, 0.12);
+  background: var(--forge-color-primary-soft);
+  color: var(--forge-color-primary);
   font-weight: 600;
 }
 
@@ -132,7 +144,7 @@
   gap: 0.75rem;
   margin-bottom: 1rem;
   padding-bottom: 0.85rem;
-  border-bottom: 1px solid rgba(20, 32, 26, 0.12);
+  border-bottom: 1px solid var(--forge-color-border);
 }
 
 .incidentHeaderSticky {
@@ -140,7 +152,7 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(243, 246, 242, 0.96);
+  background: color-mix(in srgb, var(--forge-color-bg) 96%, transparent);
   backdrop-filter: blur(6px);
   padding-top: 0.35rem;
   margin-top: -0.35rem;
@@ -175,7 +187,7 @@
   position: sticky;
   top: 4.5rem;
   z-index: 15;
-  background: rgba(243, 246, 242, 0.96);
+  background: color-mix(in srgb, var(--forge-color-bg) 96%, transparent);
   backdrop-filter: blur(6px);
   padding-top: 0.35rem;
   margin-bottom: 0.75rem;
@@ -190,18 +202,19 @@
 .sectionLink {
   white-space: nowrap;
   padding: 0.55rem 0.85rem;
-  border-radius: 999px;
-  border: 1px solid rgba(20, 32, 26, 0.15);
+  border-radius: var(--forge-radius-md);
+  border: 1px solid var(--forge-color-border);
   text-decoration: none;
-  color: inherit;
+  color: var(--forge-color-heading);
   font-size: 0.88rem;
   min-height: 2.75rem;
   display: inline-flex;
   align-items: center;
+  background: var(--forge-color-surface);
 }
 
 .sectionLinkActive {
-  background: #14532d;
-  border-color: #14532d;
-  color: #f3f6f2;
+  background: var(--forge-color-primary);
+  border-color: var(--forge-color-primary);
+  color: #fff;
 }

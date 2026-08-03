@@ -14,7 +14,7 @@
   text-align: left;
   caption-side: top;
   margin-bottom: 0.5rem;
-  color: var(--fx-color-text-muted, #5b6573);
+  color: var(--fx-color-text-muted);
   font-size: 0.8125rem;
 }
 
@@ -48,13 +48,13 @@
 }
 
 .rms-fx-table__sort:focus-visible {
-  outline: 2px solid var(--fx-color-border-focus, #2563eb);
+  outline: 2px solid var(--fx-color-border-focus);
   outline-offset: 2px;
 }
 
 .rms-fx-table__status {
   margin: 0.5rem 0;
-  color: var(--fx-color-text-muted, #5b6573);
+  color: var(--fx-color-text-muted);
 }
 
 .rms-fx-table-toolbar {
@@ -89,7 +89,7 @@
 
 .rms-fx-table-error {
   padding: var(--fx-space-12, 0.75rem);
-  border: 1px solid var(--fx-color-border-danger, #b42318);
+  border: 1px solid var(--fx-color-status-danger);
   border-radius: var(--fx-radius-medium, 6px);
 }
 

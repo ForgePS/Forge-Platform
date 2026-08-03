@@ -51,6 +51,8 @@
   --fx-color-border-default: var(--fx-color-neutral-200);
   --fx-color-border-subtle: var(--fx-color-neutral-100);
   --fx-color-border-focus: var(--fx-color-brand-500);
+  --fx-color-border-danger: var(--fx-color-danger-500);
+  --fx-color-text-danger: var(--fx-color-danger-600);
 
   --fx-color-action-primary: var(--fx-color-brand-500);
   --fx-color-action-secondary: var(--fx-color-neutral-700);

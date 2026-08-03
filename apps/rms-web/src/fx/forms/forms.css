@@ -13,7 +13,7 @@
 
 .rms-fx-form__lead {
   margin: 0;
-  color: var(--fx-color-text-muted, #5b6573);
+  color: var(--fx-color-text-muted);
 }
 
 .rms-fx-form__section {
@@ -58,7 +58,7 @@
 }
 
 .rms-fx-required {
-  color: var(--fx-color-text-danger, #b42318);
+  color: var(--fx-color-status-danger);
 }
 
 .rms-fx-field__input {
@@ -72,24 +72,24 @@
 }
 
 .rms-fx-field__input:focus-visible {
-  outline: 2px solid var(--fx-color-border-focus, #2563eb);
+  outline: 2px solid var(--fx-color-border-focus);
   outline-offset: 2px;
 }
 
 .rms-fx-field--error .rms-fx-field__input {
-  border-color: var(--fx-color-border-danger, #b42318);
+  border-color: var(--fx-color-status-danger);
 }
 
 .rms-fx-field__hint,
 .rms-fx-field__help {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--fx-color-text-muted, #5b6573);
+  color: var(--fx-color-text-muted);
 }
 
 .rms-fx-field__error {
   font-size: 0.8125rem;
-  color: var(--fx-color-text-danger, #b42318);
+  color: var(--fx-color-status-danger);
 }
 
 .rms-fx-field__warning {
@@ -125,7 +125,7 @@
 
 .rms-fx-validation-summary {
   padding: var(--fx-space-12, 0.75rem);
-  border: 1px solid var(--fx-color-border-danger, #b42318);
+  border: 1px solid var(--fx-color-status-danger);
   border-radius: var(--fx-radius-medium, 6px);
   background: var(--fx-color-surface-default, #fff);
 }
@@ -160,7 +160,7 @@
 
 .rms-fx-form-error {
   padding: var(--fx-space-12, 0.75rem);
-  border: 1px solid var(--fx-color-border-danger, #b42318);
+  border: 1px solid var(--fx-color-status-danger);
   border-radius: var(--fx-radius-medium, 6px);
 }
 
