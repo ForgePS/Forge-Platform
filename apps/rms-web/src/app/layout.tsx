@@ -13,7 +13,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-fx-theme="light">
+    <html lang="en" className="forge-theme-light" data-fx-theme="light">
       <body>
         <ApiBootstrap>
           <AppShell>{children}</AppShell>

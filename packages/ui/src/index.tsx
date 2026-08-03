@@ -8,10 +8,23 @@ import type {
 
 export function Button({
   children,
+  className,
+  variant = "primary",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { children: ReactNode }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  children: ReactNode;
+  variant?: "primary" | "secondary" | "danger" | "outline";
+}) {
+  const variantClass =
+    variant === "secondary"
+      ? "forge-btn forge-btn--secondary"
+      : variant === "danger"
+        ? "forge-btn forge-btn--danger"
+        : variant === "outline"
+          ? "forge-btn forge-btn--outline"
+          : "forge-btn";
   return (
-    <button type="button" {...props}>
+    <button type="button" className={[variantClass, className].filter(Boolean).join(" ")} {...props}>
       {children}
     </button>
   );
@@ -20,12 +33,13 @@ export function Button({
 export function Input({
   label,
   id,
+  className,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { label: string; id: string }) {
   return (
     <label htmlFor={id}>
       <span>{label}</span>
-      <input id={id} {...props} />
+      <input id={id} className={["forge-input", className].filter(Boolean).join(" ")} {...props} />
     </label>
   );
 }
@@ -34,12 +48,13 @@ export function Select({
   label,
   id,
   children,
+  className,
   ...props
 }: SelectHTMLAttributes<HTMLSelectElement> & { label: string; id: string; children: ReactNode }) {
   return (
     <label htmlFor={id}>
       <span>{label}</span>
-      <select id={id} {...props}>
+      <select id={id} className={["forge-select", className].filter(Boolean).join(" ")} {...props}>
         {children}
       </select>
     </label>
@@ -49,12 +64,17 @@ export function Select({
 export function Textarea({
   label,
   id,
+  className,
   ...props
 }: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string; id: string }) {
   return (
     <label htmlFor={id}>
       <span>{label}</span>
-      <textarea id={id} {...props} />
+      <textarea
+        id={id}
+        className={["forge-textarea", className].filter(Boolean).join(" ")}
+        {...props}
+      />
     </label>
   );
 }
@@ -65,7 +85,7 @@ export function Checkbox({
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { label: string; id: string }) {
   return (
-    <label htmlFor={id}>
+    <label htmlFor={id} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
       <input id={id} type="checkbox" {...props} />
       <span>{label}</span>
     </label>
@@ -78,7 +98,7 @@ export function Radio({
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { label: string; id: string }) {
   return (
-    <label htmlFor={id}>
+    <label htmlFor={id} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
       <input id={id} type="radio" {...props} />
       <span>{label}</span>
     </label>
@@ -93,7 +113,7 @@ export function Alert({
   tone?: "info" | "danger" | "success";
 }) {
   return (
-    <div role="alert" data-tone={tone}>
+    <div role="alert" data-tone={tone} className={`forge-alert forge-alert--${tone}`}>
       {children}
     </div>
   );
@@ -105,7 +125,7 @@ export function Badge({ children }: { children: ReactNode }) {
 
 export function Card({ children, title }: { children: ReactNode; title?: string }) {
   return (
-    <section data-component="card">
+    <section data-component="card" className="forge-card">
       {title ? <h2>{title}</h2> : null}
       {children}
     </section>
@@ -125,10 +145,23 @@ export function Modal({
 }) {
   if (!open) return null;
   return (
-    <div role="dialog" aria-modal="true" aria-label={title}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      className="forge-card"
+      style={{
+        position: "fixed",
+        inset: "20% 20%",
+        zIndex: 50,
+        boxShadow: "var(--forge-shadow-lg)",
+      }}
+    >
       <h2>{title}</h2>
       {children}
-      <Button onClick={onClose}>Close</Button>
+      <Button onClick={onClose} variant="secondary">
+        Close
+      </Button>
     </div>
   );
 }
@@ -143,7 +176,7 @@ export function LoadingIndicator({ label = "Loading" }: { label?: string }) {
 
 export function EmptyState({ title, description }: { title: string; description: string }) {
   return (
-    <div data-component="empty-state">
+    <div data-component="empty-state" className="forge-card">
       <h2>{title}</h2>
       <p>{description}</p>
     </div>
@@ -152,7 +185,7 @@ export function EmptyState({ title, description }: { title: string; description:
 
 export function ErrorState({ title, description }: { title: string; description: string }) {
   return (
-    <div role="alert" data-component="error-state">
+    <div role="alert" data-component="error-state" className="forge-alert forge-alert--danger">
       <h2>{title}</h2>
       <p>{description}</p>
     </div>
