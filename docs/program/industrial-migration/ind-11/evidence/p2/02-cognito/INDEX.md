@@ -17,7 +17,7 @@
 | `APPROVE-PRODUCERS-PROD-TWIN-LINK.md` | Gate for prod-twin membership — **SIGNED** |
 | `link-prod-twin-payload.json` | Subjects linked to prod twin |
 | `link-prod-twin-roster-result.json` | Aurora prod-twin link evidence |
-| `login-smoke-prod-twin.json` | API smoke on prod twin |
+| `OPERATOR-FIRST-LOGIN-COMMS-DRAFT.md` | I3 operator URL + first-login draft (not announced) |
 
 **Freeze counts (2026-08-05T20:16:50Z):** Auth total 10 · Producers matched **6**
 

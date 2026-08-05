@@ -1,7 +1,7 @@
 # Producers P2 — Phase 2 Prep Checklist (Cognito roster)
 
 **Date:** 2026-08-05  
-**Status:** Phase 2 staging Cognito create + Aurora link **DONE** for freeze roster (6 users); prod twin + login smoke + comms still open  
+**Status:** Phase 2 **EXIT GREEN** — see [`60-producers-p2-phase2-exit.md`](60-producers-p2-phase2-exit.md)  
 **Phase 1 exit:** [`58-producers-p2-phase1-exit.md`](58-producers-p2-phase1-exit.md) **GREEN**  
 **Plan:** [`56-producers-p2-execution-plan.md`](56-producers-p2-execution-plan.md)  
 **Foundational plan:** [`../33-user-migration-plan.md`](../33-user-migration-plan.md)
@@ -35,7 +35,7 @@
 | E1 | Phase 1 exit remains green | **DONE** (`58`) |
 | E2 | Sign read-only Auth export approval for Producers org | **DONE** 2026-08-05 |
 | E3 | Sign Cognito bulk-create approval (staging first) | **DONE** (`APPROVE-PRODUCERS-COGNITO-CREATE.md`) |
-| E4 | Comms draft: URL + first-login / password-change steps | PENDING |
+| E4 | Comms draft: URL + first-login / password-change steps | **DONE** (`OPERATOR-FIRST-LOGIN-COMMS-DRAFT.md` — not sent) |
 
 ### F. Read-only Firebase Auth export
 
@@ -73,7 +73,7 @@
 | --- | --- | --- |
 | I1 | Repeat create/link onto `producers-rice-mill` (or shared Cognito users + second membership) | **DONE** (membership link only — `link-prod-twin-roster-result.json`) |
 | I2 | Dark hostname login smoke | **DONE** API smoke on prod twin (`login-smoke-prod-twin.json`) |
-| I3 | Operator comms ready; still **no** Phase 5 SoT announce | PENDING |
+| I3 | Operator comms ready; still **no** Phase 5 SoT announce | **DONE** draft ready — send gated by plant-ops approve |
 
 ### J. Evidence
 
@@ -81,7 +81,7 @@
 | --- | --- | --- |
 | J1 | Folder `evidence/p2/02-cognito/` | **DONE** (scaffold) |
 | J2 | Export + mapping + create result JSON (redact temps) | PENDING |
-| J3 | Phase 2 exit note | PENDING |
+| J3 | Phase 2 exit note | **DONE** (`60-producers-p2-phase2-exit.md`) |
 
 ---
 

@@ -1,14 +1,14 @@
 # Producers P2 Execution Plan — AWS Primary Pilot
 
 **Date:** 2026-08-05  
-**Status:** AUTHORIZED — Phase 1 **EXIT GREEN**; Phase 2 **prep open** (`59-producers-p2-phase2-prep.md`) — Auth export UNSIGNED  
+**Status:** AUTHORIZED — Phase 1 **EXIT GREEN**; Phase 2 **EXIT GREEN** (`60-producers-p2-phase2-exit.md`); next = Phase 3 Storage→S3 (prep)  
 **Authority:** DEC-IND-011, MD-1.0, DD-IND-1.0 · Signed record: `evidence/p2/00-authorization/APPROVE-PRODUCERS-AWS-PRIMARY-PILOT.md`  
 **Product:** Forge Industrial Safety  
 **Tenant focus:** Producers Rice Mill (`business-1782553339499`)  
 **Target model:** AWS day-to-day primary for Producers only; Firebase read-oriented fallback  
 **Not in scope:** Full IND-13 cutover for all Industrial tenants; true dual-write  
 **Phase 1 exit:** [`58-producers-p2-phase1-exit.md`](58-producers-p2-phase1-exit.md)  
-**Phase 2 prep:** [`59-producers-p2-phase2-prep.md`](59-producers-p2-phase2-prep.md)
+**Phase 2 prep / exit:** [`59-producers-p2-phase2-prep.md`](59-producers-p2-phase2-prep.md) · [`60-producers-p2-phase2-exit.md`](60-producers-p2-phase2-exit.md)
 
 ## Goal
 
@@ -47,7 +47,7 @@ Phase 1 checklist: [`57-producers-p2-phase1-prep.md`](57-producers-p2-phase1-pre
 | Dev Industrial UI/API against Aurora | DONE — see `55-industrial-ui-module-deep-links.md` |
 | Creator Cognito → Tenant A entitlements | DONE (dev only) |
 | Firebase production SoT | Unchanged |
-| Cognito Firebase Auth import | NOT STARTED (fail-closed) |
+| Cognito Firebase Auth import | **DONE** Phase 2 for Producers freeze roster (6) — see `60-producers-p2-phase2-exit.md` |
 | Storage → S3 blobs | NOT STARTED (docs are PENDING_UPLOAD / path-only) |
 | Production / staging-prod tenant | **DONE** Phase 1 — see `58-producers-p2-phase1-exit.md` |
 
@@ -273,11 +273,11 @@ Role: Program Owner
 
 ## Immediate next action
 
-1. Sign `evidence/p2/02-cognito/APPROVE-PRODUCERS-AUTH-EXPORT.md`.  
-2. Confirm **“begin Phase 2 Auth export”** in session (read-only).  
-3. After freeze counts accepted, sign Cognito create approval (staging first).  
+1. Plant-ops approve / optionally send `OPERATOR-FIRST-LOGIN-COMMS-DRAFT.md` for pilot UAT.  
+2. Start Phase 3 Storage prep when file/AV gate is ready.  
+3. Keep Firebase Auth enabled until Phase 5/6.
 
-Phase 2 prep: [`59-producers-p2-phase2-prep.md`](59-producers-p2-phase2-prep.md).
+Phase 2 exit: [`60-producers-p2-phase2-exit.md`](60-producers-p2-phase2-exit.md).
 
 ## References
 
