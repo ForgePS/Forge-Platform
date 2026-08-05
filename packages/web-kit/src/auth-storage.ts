@@ -1,6 +1,10 @@
+import { assertAccessTokenShape } from "./access-token.js";
+
 const DEV_PRINCIPAL_KEY = "forge-dev-principal";
 const BEARER_TOKEN_KEY = "forge-bearer-token";
 const REFRESH_TOKEN_KEY = "forge-refresh-token";
+/** Last tenant chosen via select-tenant — sent as x-tenant-id for Cognito sessions. */
+const ACTIVE_TENANT_KEY = "forge-active-tenant-id";
 
 export type DevPrincipal = {
   userId: string;
@@ -25,8 +29,11 @@ export function getBearerToken(): string | null {
   return localStorage.getItem(BEARER_TOKEN_KEY);
 }
 
+/**
+ * Persist a Cognito access_token only. JWKS documents and non-JWT payloads are rejected.
+ */
 export function setBearerToken(token: string): void {
-  localStorage.setItem(BEARER_TOKEN_KEY, token);
+  localStorage.setItem(BEARER_TOKEN_KEY, assertAccessTokenShape(token));
 }
 
 export function clearBearerToken(): void {
@@ -46,10 +53,24 @@ export function clearRefreshToken(): void {
   localStorage.removeItem(REFRESH_TOKEN_KEY);
 }
 
+export function getActiveTenantId(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(ACTIVE_TENANT_KEY);
+}
+
+export function setActiveTenantId(tenantId: string): void {
+  localStorage.setItem(ACTIVE_TENANT_KEY, tenantId);
+}
+
+export function clearActiveTenantId(): void {
+  localStorage.removeItem(ACTIVE_TENANT_KEY);
+}
+
 export function clearAuthStorage(): void {
   clearDevPrincipal();
   clearBearerToken();
   clearRefreshToken();
+  clearActiveTenantId();
 }
 
 export function parseDevPrincipal(raw: string): DevPrincipal | null {

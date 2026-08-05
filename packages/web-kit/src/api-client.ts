@@ -1,4 +1,4 @@
-import { getBearerToken, getDevPrincipal } from "./auth-storage.js";
+import { getActiveTenantId, getBearerToken, getDevPrincipal } from "./auth-storage.js";
 
 export type ApiSuccess<T> = {
   data: T;
@@ -64,7 +64,14 @@ export class ApiConflictError extends ApiError {
   }
 }
 
+function allowDevPrincipal(): boolean {
+  // Deployed builds must omit NEXT_PUBLIC_ALLOW_DEV_PRINCIPAL (see sync-static-site).
+  // Hosted environments must not silently impersonate via leftover localStorage values.
+  return process.env.NEXT_PUBLIC_ALLOW_DEV_PRINCIPAL === "true";
+}
+
 function devPrincipalHeader(): Record<string, string> {
+  if (!allowDevPrincipal()) return {};
   const stored = getDevPrincipal();
   const raw = stored ?? clientConfig.devPrincipalEnv;
   if (!raw) return {};
@@ -96,6 +103,10 @@ function requestHeaders(options?: ApiRequestOptions, withJson = false): Record<s
     Accept: "application/json",
     ...authHeaders(),
   };
+  const activeTenantId = getActiveTenantId();
+  if (activeTenantId) {
+    headers["x-tenant-id"] = activeTenantId;
+  }
   if (withJson) {
     headers["Content-Type"] = "application/json";
   }
@@ -108,7 +119,15 @@ function requestHeaders(options?: ApiRequestOptions, withJson = false): Record<s
   return headers;
 }
 
-async function parseResponse<T>(res: Response): Promise<ApiResult<T>> {
+async function parseResponse<T>(
+  res: Response,
+  /**
+   * Whether this request carried Authorization. Anonymous 401s (e.g. AuthProvider
+   * bootstrap on /auth/callback) must not clear tokens that a concurrent OAuth
+   * exchange just wrote to storage.
+   */
+  hadAuthorization: boolean,
+): Promise<ApiResult<T>> {
   const etagHeader = res.headers.get("etag");
   let body: ApiSuccess<T> | { error: { message: string; code?: string } };
   try {
@@ -122,7 +141,7 @@ async function parseResponse<T>(res: Response): Promise<ApiResult<T>> {
     throw new ApiConflictError(message);
   }
 
-  if (res.status === 401) {
+  if (res.status === 401 && hadAuthorization) {
     clientConfig.onUnauthorized?.();
   }
 
@@ -148,11 +167,12 @@ export async function apiGetResult<T>(
   path: string,
   options?: ApiRequestOptions,
 ): Promise<ApiResult<T>> {
+  const headers = requestHeaders(options);
   const res = await fetch(`${getApiBaseUrl()}${path}${buildQuery(options?.query)}`, {
-    headers: requestHeaders(options),
+    headers,
     cache: "no-store",
   });
-  return parseResponse<T>(res);
+  return parseResponse<T>(res, Boolean(headers.Authorization));
 }
 
 export async function apiSend<T>(
@@ -171,16 +191,17 @@ export async function apiSendResult<T>(
   payload?: unknown,
   options?: ApiRequestOptions,
 ): Promise<ApiResult<T>> {
+  const headers = requestHeaders(options, payload !== undefined);
   const init: RequestInit = {
     method,
-    headers: requestHeaders(options, payload !== undefined),
+    headers,
     cache: "no-store",
   };
   if (payload !== undefined) {
     init.body = JSON.stringify(payload);
   }
   const res = await fetch(`${getApiBaseUrl()}${path}${buildQuery(options?.query)}`, init);
-  return parseResponse<T>(res);
+  return parseResponse<T>(res, Boolean(headers.Authorization));
 }
 
 export async function apiFetchRaw(path: string): Promise<Response> {

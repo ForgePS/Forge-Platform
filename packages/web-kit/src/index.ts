@@ -18,6 +18,11 @@ export {
 } from "./api-client.js";
 
 export {
+  assertAccessTokenShape,
+  InvalidAccessTokenError,
+} from "./access-token.js";
+
+export {
   getDevPrincipal,
   setDevPrincipal,
   clearDevPrincipal,
@@ -27,6 +32,9 @@ export {
   getRefreshToken,
   setRefreshToken,
   clearRefreshToken,
+  getActiveTenantId,
+  setActiveTenantId,
+  clearActiveTenantId,
   clearAuthStorage,
   parseDevPrincipal,
   type DevPrincipal,

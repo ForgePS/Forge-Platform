@@ -12,7 +12,13 @@ import {
 } from "react";
 import { configureApiClient } from "./api-client.js";
 import { authMe, logoutAll, selectTenant, type AuthMe } from "./auth-api.js";
-import { clearAuthStorage, getRefreshToken } from "./auth-storage.js";
+import {
+  clearActiveTenantId,
+  clearAuthStorage,
+  getActiveTenantId,
+  getRefreshToken,
+  setActiveTenantId,
+} from "./auth-storage.js";
 import { buildLogoutUrl, redirectToCognitoLogin, refreshAccessToken } from "./cognito-oauth.js";
 
 export type AuthContextValue = {
@@ -28,6 +34,37 @@ export type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+/**
+ * Restore Cognito active-tenant context. Cognito identity home tenant is not
+ * sticky across requests unless clients send x-tenant-id (via getActiveTenantId).
+ */
+async function resolveSession(): Promise<AuthMe> {
+  const persisted = getActiveTenantId();
+  try {
+    let me = await authMe();
+    if (
+      persisted &&
+      me.tenantId !== persisted &&
+      me.tenants.some((t) => t.tenantId === persisted && t.selectable)
+    ) {
+      me = await selectTenant(persisted);
+    } else if (
+      persisted &&
+      !me.tenants.some((t) => t.tenantId === persisted && t.selectable)
+    ) {
+      clearActiveTenantId();
+      me = await authMe();
+    }
+    return me;
+  } catch (err) {
+    if (persisted) {
+      clearActiveTenantId();
+      return authMe();
+    }
+    throw err;
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<AuthMe | null>(null);
@@ -52,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      setMe(await authMe());
+      setMe(await resolveSession());
     } catch (err) {
       setMe(null);
       const status = err && typeof err === "object" && "status" in err ? Number(err.status) : 0;
@@ -66,6 +103,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function bootstrap() {
+      // On the OAuth callback route, skip /auth/me until exchangeCodeForTokens
+      // completes — a concurrent 401-with-bearer race can clear a just-written token.
+      if (typeof window !== "undefined" && window.location.pathname.includes("/auth/callback")) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
@@ -73,10 +117,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             await refreshAccessToken();
           } catch {
-            clearSession();
+            // Keep the existing access token — a refresh failure must not wipe a
+            // just-established session (common right after OAuth code exchange).
           }
         }
-        setMe(await authMe());
+        setMe(await resolveSession());
       } catch (err) {
         setMe(null);
         // Unauthenticated visitors (no bearer / no linked session) are expected
@@ -95,7 +140,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithCognito = useCallback(async () => {
     setError(null);
-    await redirectToCognitoLogin();
+    try {
+      await redirectToCognitoLogin();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign-in failed");
+    }
   }, []);
 
   const logout = useCallback(async () => {
@@ -118,8 +167,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const chooseTenant = useCallback(async (tenantId: string) => {
     setError(null);
-    const updated = await selectTenant(tenantId);
-    setMe(updated);
+    setActiveTenantId(tenantId);
+    try {
+      const updated = await selectTenant(tenantId);
+      setMe(updated);
+    } catch (err) {
+      clearActiveTenantId();
+      setError(err instanceof Error ? err.message : "Tenant switch failed");
+    }
   }, []);
 
   const signOutAll = logout;

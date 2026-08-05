@@ -1,409 +1,70 @@
 /*
- * Industrial Safety shell styles.
- * Palette bridges to shared Sneat tokens from @forge/design-system.
- * Class names (--ind-*) preserved so modules keep stable selectors.
+ * Industrial content styles on top of vendored Sneat Free (core/theme-default).
+ * Shell layout/menu/navbar come from /public/sneat CSS — do not redefine them here.
  */
 
-:root {
-  --ind-bg: var(--forge-color-bg);
-  --ind-surface: var(--forge-color-surface);
-  --ind-panel: var(--forge-color-surface);
-  --ind-text: var(--forge-color-heading);
-  --ind-muted: var(--forge-color-muted);
-  --ind-accent: var(--forge-color-primary);
-  --ind-border: var(--forge-color-border);
-  --ind-focus: var(--forge-color-primary);
-  --ind-danger: var(--forge-color-danger);
-  --ind-success: var(--forge-color-success);
-  --ind-font: var(--forge-font-sans);
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  min-height: 100%;
-  background: var(--ind-bg);
-  color: var(--ind-text);
-  font-family: var(--ind-font);
-  font-size: var(--forge-text-md);
-  line-height: var(--forge-line-height);
-}
-
-a {
-  color: var(--ind-accent);
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-a:focus-visible,
-button:focus-visible {
-  outline: 2px solid var(--ind-focus);
-  outline-offset: 2px;
-}
-
-.ind-skip {
-  position: absolute;
-  left: -999px;
-  top: 0;
-  background: var(--ind-surface);
-  color: var(--ind-text);
-  padding: 0.5rem 1rem;
-  z-index: 50;
-  box-shadow: var(--forge-shadow-md);
-  border-radius: var(--forge-radius-md);
-}
-
-.ind-skip:focus {
-  left: 0.5rem;
-  top: 0.5rem;
-}
-
-.ind-shell {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.ind-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-  min-height: var(--forge-navbar-height);
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid var(--ind-border);
-  background: var(--ind-surface);
-  box-shadow: var(--forge-shadow-sm);
-}
-
-.ind-brand {
-  margin: 0;
-  font-size: var(--forge-text-xl);
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: var(--forge-color-heading);
-}
-
-.ind-tenant,
-.ind-muted,
-.ind-user {
-  color: var(--ind-muted);
-  margin: 0.25rem 0 0;
-  font-size: var(--forge-text-sm);
-}
-
-.ind-header-brand {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.ind-header-actions {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-/* WCAG 2.5.8: primary controls keep a 44px minimum target on every viewport. */
-.ind-header-actions button,
-.ind-nav-toggle {
-  min-height: var(--forge-touch-min);
-  min-width: var(--forge-touch-min);
-  background: transparent;
-  border: 1px solid var(--ind-border);
-  color: var(--ind-text);
-  border-radius: var(--forge-radius-md);
-  padding: 0.5rem 0.75rem;
-  font: inherit;
-  cursor: pointer;
-}
-
-.ind-nav-toggle,
-.ind-header-actions button,
-.ind-state button {
-  min-height: 44px;
-  min-width: 44px;
-}
-
-/* The hamburger only exists where the sidebar collapses. */
-.ind-nav-toggle {
-  display: none;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.ind-network-banner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1.25rem;
-  background: color-mix(in srgb, var(--ind-danger) 12%, var(--ind-surface));
-  border-bottom: 1px solid color-mix(in srgb, var(--ind-danger) 35%, var(--ind-border));
-  color: var(--ind-text);
-  font-size: var(--forge-text-sm);
-}
-
-.ind-network-dot {
-  width: 0.6rem;
-  height: 0.6rem;
-  border-radius: 50%;
-  background: var(--ind-danger);
-}
-
-.ind-body {
-  display: grid;
-  grid-template-columns: var(--forge-menu-width) 1fr;
-  flex: 1;
-  min-height: 0;
-}
-
-.ind-nav {
-  border-right: 1px solid var(--ind-border);
-  background: var(--ind-panel);
-  padding: 1rem;
-  overflow: auto;
-}
-
-.ind-nav-group h2 {
-  margin: 0.75rem 0 0.35rem;
-  font-size: var(--forge-text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ind-muted);
-}
-
-.ind-nav ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.ind-nav a {
-  display: flex;
-  align-items: center;
-  min-height: 2.75rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--forge-radius-md);
-  color: var(--ind-text);
-}
-
-.ind-nav a:hover {
-  background: var(--forge-color-surface-2);
-  text-decoration: none;
-}
-
-.ind-nav a.active,
-.ind-nav a[aria-current="page"] {
-  background: var(--forge-color-primary-soft);
-  color: var(--forge-color-primary);
+.ind-content h1 {
+  font-size: 1.375rem;
   font-weight: 600;
+  margin: 0 0 0.75rem;
 }
 
-.ind-main {
-  padding: 1.5rem;
-}
-
-.ind-footer {
-  border-top: 1px solid var(--ind-border);
-  padding: 0.75rem 1.25rem;
-  background: var(--ind-surface);
-  color: var(--ind-muted);
-  font-size: var(--forge-text-sm);
-}
-
-.ind-state,
-.ind-unavailable {
-  max-width: 40rem;
-  margin: 4rem auto;
-  padding: 2rem;
-  background: var(--ind-surface);
-  border: 1px solid var(--ind-border);
-  border-radius: var(--forge-radius-lg);
-  box-shadow: var(--forge-shadow-md);
-}
-
-.ind-state h1,
-.ind-unavailable h1,
-.ind-main h1 {
-  margin-top: 0;
-  color: var(--forge-color-heading);
-}
-
-.ind-ops {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  max-width: 56rem;
-}
-
-.ind-ops-header h1 {
-  margin-bottom: 0.25rem;
-}
-
-.ind-ops-filters,
-.ind-ops-create {
-  display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: var(--ind-surface);
-  border: 1px solid var(--ind-border);
-  border-radius: var(--forge-radius-lg);
-  box-shadow: var(--forge-shadow-sm);
-}
-
-.ind-ops-filters {
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  align-items: end;
-}
-
-.ind-ops-filters label,
-.ind-ops-create label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-size: var(--forge-text-sm);
-}
-
-.ind-ops-filters input,
-.ind-ops-create input,
-.ind-ops-filters button,
-.ind-ops-create button,
-.ind-header-actions button,
-.ind-state button {
-  min-height: 2.75rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--forge-radius-md);
-  border: 1px solid var(--ind-border);
-  background: var(--forge-color-surface);
-  color: var(--ind-text);
-  font: inherit;
-}
-
-.ind-ops-filters button,
-.ind-ops-create button,
-.ind-state button {
-  background: var(--ind-accent);
-  color: #fff;
-  border-color: transparent;
-  cursor: pointer;
+.ind-content h2 {
+  font-size: 1.125rem;
   font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
 }
 
-.ind-ops-filters button:hover,
-.ind-ops-create button:hover,
-.ind-state button:hover {
-  background: var(--forge-color-primary-hover);
+.ind-content p {
+  margin: 0 0 0.75rem;
 }
 
-/* Wide record tables scroll horizontally instead of overflowing the viewport. */
-.ind-ops-table-wrap,
-.ind-table-scroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  background: var(--ind-surface);
-  border: 1px solid var(--ind-border);
-  border-radius: var(--forge-radius-lg);
-  box-shadow: var(--forge-shadow-sm);
+.ind-muted {
+  color: #a1acb8;
 }
 
-.ind-ops-table {
+/* Module workspace cards keep legacy .ind-* hooks used across components */
+.ind-panel,
+.ind-card {
+  background: #fff;
+  border: 1px solid #d9dee3;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.25rem 1rem rgba(161, 172, 184, 0.45);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.ind-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.ind-ops-table th,
-.ind-ops-table td {
+.ind-table th,
+.ind-table td {
+  border-bottom: 1px solid #ebeef0;
+  padding: 0.65rem 0.5rem;
   text-align: left;
-  padding: 0.65rem 0.75rem;
-  border-bottom: 1px solid var(--ind-border);
+  vertical-align: top;
 }
 
-.ind-ops-table th {
-  background: var(--forge-color-surface-2);
-  font-size: var(--forge-text-sm);
-  color: var(--forge-color-heading);
+.ind-table th {
+  color: #566a7f;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-/* Status must never be colour-only: pair the token with its text label. */
-.ind-error {
-  color: var(--ind-danger);
-  font-weight: 600;
+.ind-state {
+  /* Fallback if used outside GateCard */
+  max-width: 32rem;
+  margin: 3rem auto;
+  padding: 1.5rem;
 }
 
-.ind-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.15rem 0.5rem;
-  border: 1px solid var(--ind-border);
-  border-radius: var(--forge-radius-md);
-  font-size: var(--forge-text-sm);
-}
-
-.ind-status::before {
-  content: "";
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.ind-status-blocked,
-.ind-status-failed {
-  color: var(--ind-danger);
-  border-color: color-mix(in srgb, var(--ind-danger) 40%, var(--ind-border));
-  background: color-mix(in srgb, var(--ind-danger) 8%, transparent);
-}
-
-.ind-status-available,
-.ind-status-clean {
-  color: var(--ind-success);
-  border-color: color-mix(in srgb, var(--ind-success) 40%, var(--ind-border));
-  background: color-mix(in srgb, var(--ind-success) 8%, transparent);
-}
-
-.ind-status-pending {
-  color: var(--ind-muted);
-}
-
-@media (max-width: 900px) {
-  .ind-body {
-    grid-template-columns: 1fr;
-  }
-
-  .ind-nav-toggle {
-    display: inline-flex;
-  }
-
-  /* Collapsed by default on small viewports; the hamburger reveals it. */
-  .ind-nav {
-    display: none;
-    border-right: none;
-    border-bottom: 1px solid var(--ind-border);
-    max-height: 60vh;
-  }
-
-  .ind-nav-open {
-    display: block;
-  }
-
-  .ind-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-/* Primary actions must not depend on hover to be discoverable. */
-@media (hover: none) {
-  a:hover {
-    text-decoration: none;
-  }
+.ind-banner {
+  padding: 0.5rem 1rem;
+  background: #fff2e2;
+  border-bottom: 1px solid #ffd9a8;
+  color: #8a5a00;
+  font-size: 0.875rem;
 }
