@@ -1,9 +1,10 @@
 /**
- * Link Cognito-created Producers roster into staging Aurora tenant.
+ * Link Cognito-created Producers roster into a Producers Aurora tenant.
  * Runs inside platform-api ECS (DATABASE_SECRET_ARN).
  *
  * Env:
  *   DATABASE_SECRET_ARN
+ *   FORGE_P2_TARGET_TENANT_ID — staging or prod twin UUID
  *   FORGE_P2_LINK_PAYLOAD_S3_BUCKET + FORGE_P2_LINK_PAYLOAD_S3_KEY
  *   (or FORGE_P2_LINK_PAYLOAD_JSON for tiny payloads)
  */
@@ -20,7 +21,8 @@ const dbRequire = createRequire("/app/apps/platform-api/node_modules/@forge/data
 const postgresMod = await import(pathToFileURL(dbRequire.resolve("postgres")).href);
 const postgres = postgresMod.default ?? postgresMod;
 
-const TENANT_ID = "0882c865-59c2-49a6-ab88-ce6ca89be30c";
+const TENANT_ID =
+  process.env.FORGE_P2_TARGET_TENANT_ID?.trim() || "0882c865-59c2-49a6-ab88-ce6ca89be30c";
 const ADMIN_ROLE = "IND3V_INDUSTRIAL_ADMIN";
 const OPERATOR_ROLE = "IND3V_INDUSTRIAL_OPERATOR";
 

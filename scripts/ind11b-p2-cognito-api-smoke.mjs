@@ -14,6 +14,11 @@ const CLIENT = "3rls9835j4qs3jmchb3uh7ketm";
 const REGION = "us-east-1";
 const API = process.env.FORGE_API_BASE || "https://api-dev.forgepublicsafety.com";
 const STAGING = "0882c865-59c2-49a6-ab88-ce6ca89be30c";
+const PROD_TWIN = "5da680d3-50f5-46ac-8b85-6cf454b6a0da";
+const TENANT =
+  process.env.FORGE_P2_SMOKE_TENANT?.trim() || STAGING;
+const EVIDENCE_NAME =
+  TENANT === PROD_TWIN ? "login-smoke-prod-twin.json" : "login-smoke-staging.json";
 const EVID = path.resolve(
   "docs/program/industrial-migration/ind-11/evidence/p2/02-cognito",
 );
@@ -92,12 +97,12 @@ const results = [];
 for (const email of TARGETS) {
   try {
     const { accessToken } = await tokensFor(email);
-    const me = await apiCall("auth_me", accessToken, "/api/v1/auth/me", STAGING);
+    const me = await apiCall("auth_me", accessToken, "/api/v1/auth/me", TENANT);
     const boot = await apiCall(
       "bootstrap",
       accessToken,
       "/api/v1/industrial/bootstrap",
-      STAGING,
+      TENANT,
     );
     results.push({
       email,
@@ -113,11 +118,11 @@ for (const email of TARGETS) {
 const out = {
   ok: results.every((r) => r.ok),
   at: new Date().toISOString(),
-  phase: "PRODUCERS-P2-H4-api-smoke",
+  phase: TENANT === PROD_TWIN ? "PRODUCERS-P2-prod-twin-api-smoke" : "PRODUCERS-P2-H4-api-smoke",
   apiBase: API,
-  stagingTenantId: STAGING,
+  tenantId: TENANT,
   results,
 };
-fs.writeFileSync(path.join(EVID, "login-smoke-staging.json"), `${JSON.stringify(out, null, 2)}\n`);
+fs.writeFileSync(path.join(EVID, EVIDENCE_NAME), `${JSON.stringify(out, null, 2)}\n`);
 console.log(JSON.stringify(out, null, 2));
 process.exit(out.ok ? 0 : 1);

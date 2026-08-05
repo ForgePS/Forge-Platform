@@ -14,13 +14,17 @@
 | `cognito-create-staging-result.json` | Create evidence (no passwords) |
 | `link-staging-payload.json` | Subjects linked (no passwords) |
 | `link-staging-roster-result.json` | Aurora link evidence |
-| `login-smoke-force-change.json` | NEW_PASSWORD_REQUIRED completed for safetyadmin + jlackie |
-| `login-smoke-staging.json` | Post-change `/auth/me` + `/industrial/bootstrap` on staging |
+| `APPROVE-PRODUCERS-PROD-TWIN-LINK.md` | Gate for prod-twin membership — **SIGNED** |
+| `link-prod-twin-payload.json` | Subjects linked to prod twin |
+| `link-prod-twin-roster-result.json` | Aurora prod-twin link evidence |
+| `login-smoke-prod-twin.json` | API smoke on prod twin |
 
 **Freeze counts (2026-08-05T20:16:50Z):** Auth total 10 · Producers matched **6**
 
 **Staging create (2026-08-05T20:32:53Z):** Cognito created 4 · linked existing 1 · passwords issued 4 (local `~/.forge/producers-p2/` only) · Aurora linked **6/6**
 
 **H4 smoke (2026-08-05T20:47Z):** FORCE_CHANGE_PASSWORD + API bootstrap PASS for safetyadmin (admin) and jlackie (operator) on staging tenant
+
+**Prod twin (2026-08-05T20:59Z):** Membership link **6/6**; API smoke PASS on `producers-rice-mill` for safetyadmin + jlackie
 
 **Temp / smoke passwords:** never committed — see local `~/.forge/producers-p2/`

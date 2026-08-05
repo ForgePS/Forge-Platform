@@ -52,7 +52,7 @@
 | # | Task | Status |
 | --- | --- | --- |
 | G1 | Map each Auth user → target Cognito username = email | **DONE** (`roster-map-plan.json`) |
-| G2 | Assign AWS tenant membership(s): prefer staging for dress; prod twin only after staging smoke | **DONE** staging; prod twin PENDING |
+| G2 | Assign AWS tenant membership(s): prefer staging for dress; prod twin only after staging smoke | **DONE** staging + prod twin |
 | G3 | Role templates: admin / supervisor / operator → platform roles (`IND3V_*` or successor) | **DONE** admin + operator (no supervisor in freeze) |
 | G4 | Membership product + day-1 module access (mirror Phase 1 seed) | **DONE** (15 modules each) |
 | G5 | De-dupe: existing Cognito users (e.g. `admin@forgepublicsafety.com`) → link not recreate | **DONE** |
@@ -71,8 +71,8 @@
 
 | # | Task | Status |
 | --- | --- | --- |
-| I1 | Repeat create/link onto `producers-rice-mill` (or shared Cognito users + second membership) | PENDING |
-| I2 | Dark hostname login smoke | PENDING |
+| I1 | Repeat create/link onto `producers-rice-mill` (or shared Cognito users + second membership) | **DONE** (membership link only — `link-prod-twin-roster-result.json`) |
+| I2 | Dark hostname login smoke | **DONE** API smoke on prod twin (`login-smoke-prod-twin.json`) |
 | I3 | Operator comms ready; still **no** Phase 5 SoT announce | PENDING |
 
 ### J. Evidence
