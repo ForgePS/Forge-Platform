@@ -16,7 +16,7 @@
 | Target AWS tenant | Staging: `0882c865-59c2-49a6-ab88-ce6ca89be30c` (`producers-rice-mill-staging`); Production twin: `5da680d3-50f5-46ac-8b85-6cf454b6a0da` (`producers-rice-mill`) — **not** acceptance-A |
 | Environment path | Staging-prod dress rehearsal, then production window |
 | Staging landing | Same AWS account; staging-prod stack/tenant |
-| Hostname | `https://producers-rice-mill.industrial.forgepublicsafety.com/` |
+| Hostname | `https://producers-rice-mill.forgepublicsafety.com/` (flattened 2026-08-05; ACM wildcard compatibility) |
 | Effective cutover window | TBD — fill before Phase 5 |
 
 ## Day-1 modules (AUTHORIZED)

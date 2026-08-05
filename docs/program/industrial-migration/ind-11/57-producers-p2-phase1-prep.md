@@ -10,7 +10,7 @@
 | Env | `tenant_key` | Display name (proposed) | Hostname |
 | --- | --- | --- | --- |
 | Staging-prod | `producers-rice-mill-staging` | Producers Rice Mill (Staging) | TBD staging alias OR temporary CF URL until cert ready |
-| Production | `producers-rice-mill` | Producers Rice Mill | `https://producers-rice-mill.industrial.forgepublicsafety.com/` |
+| Production | `producers-rice-mill` | Producers Rice Mill | `https://producers-rice-mill.forgepublicsafety.com/` |
 
 Firebase SoT org (unchanged until Phase 5): `business-1782553339499`.
 
@@ -36,7 +36,7 @@ Firebase SoT org (unchanged until Phase 5): `business-1782553339499`.
 | # | Task | Status |
 | --- | --- | --- |
 | B1 | Confirm Industrial Cognito client callback URLs include staging + prod subdomain | **DONE** (prod subdomain + existing CF/dev URLs kept) |
-| B2 | Logout URLs for both hostnames | **DONE** (`producers-rice-mill.industrial.forgepublicsafety.com`) |
+| B2 | Logout URLs for both hostnames | **DONE** (`producers-rice-mill.forgepublicsafety.com` + nested keep) |
 | B3 | API JWT client allowlist includes Industrial client | PENDING (verify — likely already true for `3rls…`) |
 | B4 | Synthetic admin user for staging smoke (before full roster import) | **DONE** (DB persona; Cognito link still Phase 2) |
 
@@ -44,9 +44,9 @@ Firebase SoT org (unchanged until Phase 5): `business-1782553339499`.
 
 | # | Task | Status |
 | --- | --- | --- |
-| C1 | ACM certificate covering `producers-rice-mill.industrial.forgepublicsafety.com` (and staging hostname if used) | PENDING |
-| C2 | CloudFront alias binding draft (deploy dark / not announced) | PENDING |
-| C3 | DNS records prepared but not pointed for end users until Phase 5 | PENDING |
+| C1 | ACM certificate covering Producers hostname | **DONE** — existing `*.forgepublicsafety.com` covers flat hostname |
+| C2 | CloudFront alias binding draft (deploy dark / not announced) | **DONE** — alias `producers-rice-mill.forgepublicsafety.com` on `EXIC8HBMJ4I2Z` |
+| C3 | DNS records prepared but not pointed for end users until Phase 5 | **PENDING external** — no Route53 zone in acct; need CNAME at DNS owner → `d2ed3566n8x2gi.cloudfront.net` |
 | C4 | Industrial static site build points at correct API base for each env | PENDING |
 
 ### D. Evidence / gates

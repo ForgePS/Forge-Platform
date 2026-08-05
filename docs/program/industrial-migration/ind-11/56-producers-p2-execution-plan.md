@@ -20,7 +20,7 @@ Move Producers Rice Mill operators from Firebase Industrial to AWS Industrial fo
 | AWS tenant | **New dedicated production tenant** (do not promote `import-acceptance-tenant-a`) |
 | Environment path | **Staging-prod dress rehearsal → production window** |
 | Staging landing | Same AWS account; staging-prod stack/tenant |
-| Operator hostname | Subdomain: `https://producers-rice-mill.industrial.forgepublicsafety.com/` |
+| Operator hostname | **LOCKED (revised):** `https://producers-rice-mill.forgepublicsafety.com/` (flattened; nested `*.industrial.*` abandoned — ACM `*.forgepublicsafety.com` covers one label only) |
 | Cognito roster | **Full Producers Firebase Auth roster** before cutover |
 | Storage → S3 | **All Producers Firebase Storage objects** before cutover |
 | Day-1 modules | Personnel, Equipment, LOTO, Sites/Areas, Documents, Training, Forms, Inspections, Incidents, QR Links, High-risk (CS/HW), Tasks, Messaging, Emergency Response |
@@ -86,7 +86,7 @@ Each phase has **entry criteria**, **work**, **exit criteria**. Do not skip exit
 | --- | --- | --- |
 | Sign P2 authorization record | Program owner | Fail-closed without signature — **PENDING** |
 | Choose Producers production tenant ID/key | Platform + Industrial | **LOCKED shape:** new dedicated tenant; UUID at provision |
-| Hostname strategy | Platform | **LOCKED:** `producers-rice-mill.industrial.forgepublicsafety.com` |
+| Hostname strategy | Platform | **LOCKED (revised):** `producers-rice-mill.forgepublicsafety.com` |
 | Lock module allowlist for pilot day-1 | Industrial product | **LOCKED** — see Phase 0 decisions table |
 | Confirm out-of-scope domains stay Firebase | Product | corrective actions, scan_*, WC satellites, etc. |
 | Support + rollback contacts | Ops | Names, escalation — **OPEN** |
@@ -173,7 +173,7 @@ Each phase has **entry criteria**, **work**, **exit criteria**. Do not skip exit
 | --- | --- |
 | 1 | Freeze Firebase writes for Producers (or maintain mode) |
 | 2 | Final micro-delta if needed |
-| 3 | Enable `producers-rice-mill.industrial.forgepublicsafety.com` |
+| 3 | Enable `producers-rice-mill.forgepublicsafety.com` |
 | 4 | Make Cognito primary login for Producers operators |
 | 5 | Enable QR public resolver on AWS for Producers tokens (blue/green + Firebase fallback) |
 | 6 | T+1h critical-path smoke: login → personnel → equipment → LOTO → forms/inspections sample → QR sample |
@@ -244,7 +244,7 @@ Program: Forge Industrial Safety
 Tenant: Producers Rice Mill (business-1782553339499)
 Target AWS tenant: <UUID / tenant_key — NEW dedicated, not acceptance-A>
 Environment path: staging-prod dress rehearsal then production
-Hostname: https://producers-rice-mill.industrial.forgepublicsafety.com/
+Hostname: https://producers-rice-mill.forgepublicsafety.com/
 Day-1 modules: personnel, equipment, LOTO, sites/areas, documents, training,
   forms, inspections, incidents, QR links, confined space, hot work,
   tasks, messaging, emergency response
