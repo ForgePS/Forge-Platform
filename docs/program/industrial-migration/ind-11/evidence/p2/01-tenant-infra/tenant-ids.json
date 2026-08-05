@@ -1,0 +1,23 @@
+{
+  "pilot": "PRODUCERS_AWS_PRIMARY_P2",
+  "firebaseBusinessId": "business-1782553339499",
+  "firebaseProject": "forge-industrial-safety",
+  "doNotUseTenantIds": [
+    "019faa15-e558-70b6-adcd-a510c3c995f4"
+  ],
+  "tenants": {
+    "staging": {
+      "tenantKey": "producers-rice-mill-staging",
+      "displayName": "Producers Rice Mill (Staging)",
+      "tenantId": null,
+      "hostname": null
+    },
+    "production": {
+      "tenantKey": "producers-rice-mill",
+      "displayName": "Producers Rice Mill",
+      "tenantId": null,
+      "hostname": "https://producers-rice-mill.industrial.forgepublicsafety.com/"
+    }
+  },
+  "notes": "UUIDs filled after Phase 1 provision. Do not promote import-acceptance-tenant-a."
+}

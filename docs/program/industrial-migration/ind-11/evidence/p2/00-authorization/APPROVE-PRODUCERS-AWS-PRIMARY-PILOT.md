@@ -1,7 +1,8 @@
 # APPROVE PRODUCERS AWS-PRIMARY PILOT
 
-**Status:** UNSIGNED — pending Program Owner signature  
+**Status:** SIGNED — AUTHORIZED  
 **Drafted:** 2026-08-05  
+**Signed:** 2026-08-05  
 **Governing docs:** DEC-IND-011 · `56-producers-p2-execution-plan.md` · MD-1.0 · DD-IND-1.0
 
 ---
@@ -41,9 +42,9 @@ Personnel · Equipment / Assets · Lockout/Tagout · Sites / Areas · Documents 
 | Casual apply of drafts 0028 / 0029 | NOT AUTHORIZED |
 | Academy / RMS scope | NOT AUTHORIZED |
 
-## Preconditions (must be true before Phase 1 execution)
+## Preconditions
 
-- [ ] This record signed by Program Owner  
+- [x] This record signed by Program Owner  
 - [ ] Support and rollback contacts named  
 - [ ] Cutover window agreed with Producers plant ops  
 
@@ -51,7 +52,7 @@ Personnel · Equipment / Assets · Lockout/Tagout · Sites / Areas · Documents 
 
 | Role | Name | Signature | Date |
 | --- | --- | --- | --- |
-| Program Owner | | | |
+| Program Owner | Jeremy | APPROVED (electronic, Cursor session 2026-08-05) | 2026-08-05 |
 | Industrial Product Lead (optional) | | | |
 | Platform / Ops Lead (optional) | | | |
 
@@ -62,7 +63,7 @@ Personnel · Equipment / Assets · Lockout/Tagout · Sites / Areas · Documents 
 | Staging UAT complete date | |
 | Production freeze start (UTC) | |
 | Production go-live (UTC) | |
-| Rollback decision authority | |
+| Rollback decision authority | Jeremy (Program Owner) unless delegated |
 
 ## References
 

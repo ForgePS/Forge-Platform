@@ -1,8 +1,8 @@
 # Producers P2 Execution Plan — AWS Primary Pilot
 
 **Date:** 2026-08-05  
-**Status:** DRAFT — NOT AUTHORIZED (awaits written P2 approval)  
-**Authority:** DEC-IND-011, MD-1.0, DD-IND-1.0  
+**Status:** AUTHORIZED (Phase 0 signed) — Phase 1 prep only; no live provision yet  
+**Authority:** DEC-IND-011, MD-1.0, DD-IND-1.0 · Signed record: `evidence/p2/00-authorization/APPROVE-PRODUCERS-AWS-PRIMARY-PILOT.md`  
 **Product:** Forge Industrial Safety  
 **Tenant focus:** Producers Rice Mill (`business-1782553339499`)  
 **Target model:** AWS day-to-day primary for Producers only; Firebase read-oriented fallback  
@@ -25,15 +25,17 @@ Move Producers Rice Mill operators from Firebase Industrial to AWS Industrial fo
 | Storage → S3 | **All Producers Firebase Storage objects** before cutover |
 | Day-1 modules | Personnel, Equipment, LOTO, Sites/Areas, Documents, Training, Forms, Inspections, Incidents, QR Links, High-risk (CS/HW), Tasks, Messaging, Emergency Response |
 
-**Still open (must close before Phase 1 starts):**
+**Still open (must close before Phase 1 execution starts):**
 
 | Open item | Notes |
 | --- | --- |
-| Signed `APPROVE PRODUCERS AWS-PRIMARY PILOT` | Template below — no execution without signature |
-| Production tenant UUID / `tenant_key` | Assigned when tenant is provisioned |
-| Staging-prod stack naming / CF aliases | Infra design in Phase 1 |
+| Signed `APPROVE PRODUCERS AWS-PRIMARY PILOT` | **DONE** 2026-08-05 (Jeremy) |
+| Production / staging tenant UUIDs | After Phase 1 provision — keys locked: `producers-rice-mill-staging` / `producers-rice-mill` |
+| Staging-prod stack naming / CF aliases | See `57-producers-p2-phase1-prep.md` |
 | Named cutover window | Business + plant ops calendar |
-| Support / rollback contacts | Ops names |
+| Support / rollback contacts | Ops names — still open |
+
+Phase 1 prep checklist: [`57-producers-p2-phase1-prep.md`](57-producers-p2-phase1-prep.md).
 
 ## Current baseline (P1)
 
