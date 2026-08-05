@@ -64,7 +64,7 @@
 | H1 | Dry-run Cognito AdminCreateUser plan (counts only) | **DONE** (map counts) |
 | H2 | Bulk create on staging tenant with temp password + `FORCE_CHANGE_PASSWORD` | **DONE** (4 created, temps local-only) |
 | H3 | Persist `authentication_identities` + memberships/roles | **DONE** (`link-staging-roster-result.json`) |
-| H4 | Login smoke: admin, supervisor, operator (+ sample N of roster) | PENDING (manual — FORCE_CHANGE_PASSWORD) |
+| H4 | Login smoke: admin, supervisor, operator (+ sample N of roster) | **DONE** — force-change + API `/auth/me` + bootstrap for `safetyadmin@` + `jlackie@` on staging |
 | H5 | Count reconciliation vs F4 freeze (100% or documented exceptions) | **DONE** 6/6 |
 
 ### I. Prod twin (dark) — after staging green
