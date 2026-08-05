@@ -45,8 +45,17 @@ Personnel · Equipment / Assets · Lockout/Tagout · Sites / Areas · Documents 
 ## Preconditions
 
 - [x] This record signed by Program Owner  
-- [ ] Support and rollback contacts named  
+- [x] Support and rollback contacts named (2026-08-05)  
 - [ ] Cutover window agreed with Producers plant ops  
+
+## Support and rollback contacts (D4)
+
+| Role | Name / contact | Notes |
+| --- | --- | --- |
+| Program Owner / primary support | Jeremy | Day-to-day decision + coordinator during P2 |
+| Rollback decision authority | Jeremy (Program Owner) | May delegate; default is Jeremy |
+| On-call rollback operator | Operator on call / Jeremy | Execute DNS / SoT rollback commands when authorized |
+| Producers plant ops contact | TBD before Phase 5 | Required before production announce |
 
 ## Signatures
 

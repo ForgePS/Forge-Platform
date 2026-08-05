@@ -55,8 +55,8 @@ Firebase SoT org (unchanged until Phase 5): `business-1782553339499`.
 | --- | --- | --- |
 | D1 | Record tenant UUIDs in `evidence/p2/01-tenant-infra/tenant-ids.json` | **DONE** |
 | D2 | Staging bootstrap smoke: `/auth/me` + `/industrial/bootstrap` | **DONE** (API + browser on prod twin host) |
-| D3 | Update auth record with tenant UUIDs after provision | PENDING |
-| D4 | Support/rollback contacts filled on auth record | PENDING |
+| D3 | Update auth record with tenant UUIDs after provision | **DONE** (auth record Target AWS tenant row) |
+| D4 | Support/rollback contacts filled on auth record | **DONE** (Jeremy primary; plant ops TBD Phase 5) |
 
 ---
 
