@@ -35,10 +35,10 @@ Firebase SoT org (unchanged until Phase 5): `business-1782553339499`.
 
 | # | Task | Status |
 | --- | --- | --- |
-| B1 | Confirm Industrial Cognito client callback URLs include staging + prod subdomain | PENDING |
-| B2 | Logout URLs for both hostnames | PENDING |
-| B3 | API JWT client allowlist includes Industrial client | PENDING |
-| B4 | Synthetic admin user for staging smoke (before full roster import) | PENDING |
+| B1 | Confirm Industrial Cognito client callback URLs include staging + prod subdomain | **DONE** (prod subdomain + existing CF/dev URLs kept) |
+| B2 | Logout URLs for both hostnames | **DONE** (`producers-rice-mill.industrial.forgepublicsafety.com`) |
+| B3 | API JWT client allowlist includes Industrial client | PENDING (verify — likely already true for `3rls…`) |
+| B4 | Synthetic admin user for staging smoke (before full roster import) | **DONE** (DB persona; Cognito link still Phase 2) |
 
 ### C. Edge / DNS (dark)
 
