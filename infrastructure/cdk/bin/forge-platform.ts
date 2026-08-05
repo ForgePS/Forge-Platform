@@ -54,9 +54,25 @@ const observability = new ObservabilityStack(app, "ForgeObservability", {
   logsKey: security.logsKey,
 });
 
-const publicRmsUrl = "https://d3ud5uzwd9js2z.cloudfront.net";
-const publicCreatorUrl = "https://ddztl9s33wu40.cloudfront.net";
-const publicTenantAdminUrl = "https://d1uxdl4szvsixc.cloudfront.net";
+const publicRmsUrl = process.env.FORGE_PUBLIC_RMS_URL || "https://rms-dev.forgepublicsafety.com";
+const publicCreatorUrl =
+  process.env.FORGE_PUBLIC_CREATOR_URL || "https://creator-dev.forgepublicsafety.com";
+const publicTenantAdminUrl =
+  process.env.FORGE_PUBLIC_ADMIN_URL || "https://admin-dev.forgepublicsafety.com";
+/** Industrial Web. Prefer custom domain; CloudFront override via FORGE_PUBLIC_INDUSTRIAL_URL. */
+const publicIndustrialUrl =
+  process.env.FORGE_PUBLIC_INDUSTRIAL_URL || "https://industrial-dev.forgepublicsafety.com";
+/** Producers P2 dark/pre-announce hostname (flat for ACM *.forgepublicsafety.com). */
+const publicProducersIndustrialUrl =
+  process.env.FORGE_PUBLIC_PRODUCERS_INDUSTRIAL_URL ||
+  "https://producers-rice-mill.forgepublicsafety.com";
+/** Legacy CloudFront origins retained during custom-domain cutover (explicit CORS allowlist). */
+const legacyCloudFrontOrigins = [
+  "https://d3ud5uzwd9js2z.cloudfront.net",
+  "https://ddztl9s33wu40.cloudfront.net",
+  "https://d1uxdl4szvsixc.cloudfront.net",
+  "https://d2ed3566n8x2gi.cloudfront.net",
+];
 const cognitoDomain = `forge-${config.environmentName}-${config.account.slice(-6)}.auth.${config.region}.amazoncognito.com`;
 
 const compute = new ComputeStack(app, "ForgeCompute", {
@@ -73,6 +89,7 @@ const compute = new ComputeStack(app, "ForgeCompute", {
   importQueue: messaging.imports,
   notificationQueue: messaging.notifications,
   documentQueue: messaging.documents,
+  exportQueue: messaging.exportJobs,
   integrationQueue: messaging.integrationEvents,
   cadIntakeQueue: messaging.cadIntake,
   cadNormalizationQueue: messaging.cadNormalization,
@@ -90,10 +107,18 @@ const compute = new ComputeStack(app, "ForgeCompute", {
   cognitoClientIds: [
     identity.cognito.rmsClient.userPoolClientId,
     identity.cognito.creatorClient.userPoolClientId,
+    identity.cognito.industrialClient.userPoolClientId,
   ].join(","),
   cognitoDomain,
-  // S8 DEF-S8-021: Tenant Admin must call API from browser with X-Forge-Dev-Principal.
-  browserOrigins: [publicRmsUrl, publicCreatorUrl, publicTenantAdminUrl],
+  // Explicit allowlist — never wildcard with credentialed browser calls.
+  browserOrigins: [
+    publicRmsUrl,
+    publicCreatorUrl,
+    publicTenantAdminUrl,
+    publicIndustrialUrl,
+    publicProducersIndustrialUrl,
+    ...legacyCloudFrontOrigins,
+  ].filter((u) => Boolean(u)),
   publicRmsUrl,
   publicCreatorUrl,
 });
@@ -110,6 +135,7 @@ new MonitoringStack(app, "ForgeMonitoring", {
   importsDlq: messaging.importsDlq,
   notificationsDlq: messaging.notificationsDlq,
   documentsDlq: messaging.documentsDlq,
+  exportsDlq: messaging.exportJobsDlq,
   integrationDlq: messaging.integrationEventsDlq,
   cadIntakeDlq: messaging.cadIntakeDlq,
   cadNormalizationDlq: messaging.cadNormalizationDlq,
