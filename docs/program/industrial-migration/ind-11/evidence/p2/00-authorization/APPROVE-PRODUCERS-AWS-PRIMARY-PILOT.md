@@ -13,7 +13,7 @@
 | --- | --- |
 | Program | Forge Industrial Safety |
 | Pilot tenant (Firebase) | Producers Rice Mill (`business-1782553339499`) |
-| Target AWS tenant | **NEW dedicated tenant** (UUID / `tenant_key` TBD at Phase 1 provision — **not** `import-acceptance-tenant-a`) |
+| Target AWS tenant | Staging: `0882c865-59c2-49a6-ab88-ce6ca89be30c` (`producers-rice-mill-staging`); Production twin: `5da680d3-50f5-46ac-8b85-6cf454b6a0da` (`producers-rice-mill`) — **not** acceptance-A |
 | Environment path | Staging-prod dress rehearsal, then production window |
 | Staging landing | Same AWS account; staging-prod stack/tenant |
 | Hostname | `https://producers-rice-mill.industrial.forgepublicsafety.com/` |

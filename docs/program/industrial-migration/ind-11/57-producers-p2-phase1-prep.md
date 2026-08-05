@@ -24,11 +24,11 @@ Firebase SoT org (unchanged until Phase 5): `business-1782553339499`.
 
 | # | Task | Status |
 | --- | --- | --- |
-| A1 | Create tenants `producers-rice-mill-staging` and `producers-rice-mill` in Aurora | PENDING |
-| A2 | Seed Industrial roles/personas (IND-3V pattern: industrial admin + operator) on both | PENDING |
-| A3 | Activate `FORGE_INDUSTRIAL` product on both | PENDING |
-| A4 | Entitle day-1 modules (locked allowlist in plan 56) | PENDING |
-| A5 | Tenant feature-flag overrides ON (global defaults stay OFF) | PENDING |
+| A1 | Create tenants `producers-rice-mill-staging` and `producers-rice-mill` in Aurora | **DONE** (`tenant-ids.json`) |
+| A2 | Seed Industrial roles/personas (IND-3V pattern: industrial admin + operator) on both | **DONE** (admin synthetic; viewer deferred) |
+| A3 | Activate `FORGE_INDUSTRIAL` product on both | **DONE** |
+| A4 | Entitle day-1 modules (locked allowlist in plan 56) | **DONE** (15/16 — `IMPORT` module missing from catalog) |
+| A5 | Tenant feature-flag overrides ON (global defaults stay OFF) | **DONE** (16 flags) |
 | A6 | Cross-tenant negative smoke vs acceptance-A and forge-platform | PENDING |
 
 ### B. Cognito / app clients
