@@ -1,12 +1,13 @@
 # Producers P2 Execution Plan — AWS Primary Pilot
 
 **Date:** 2026-08-05  
-**Status:** AUTHORIZED (Phase 0 signed) — Phase 1 prep only; no live provision yet  
+**Status:** AUTHORIZED — **Phase 1 EXIT GREEN** (2026-08-05); next = Phase 2 Cognito roster  
 **Authority:** DEC-IND-011, MD-1.0, DD-IND-1.0 · Signed record: `evidence/p2/00-authorization/APPROVE-PRODUCERS-AWS-PRIMARY-PILOT.md`  
 **Product:** Forge Industrial Safety  
 **Tenant focus:** Producers Rice Mill (`business-1782553339499`)  
 **Target model:** AWS day-to-day primary for Producers only; Firebase read-oriented fallback  
 **Not in scope:** Full IND-13 cutover for all Industrial tenants; true dual-write
+**Phase 1 exit:** [`58-producers-p2-phase1-exit.md`](58-producers-p2-phase1-exit.md)
 
 ## Goal
 
@@ -25,17 +26,17 @@ Move Producers Rice Mill operators from Firebase Industrial to AWS Industrial fo
 | Storage → S3 | **All Producers Firebase Storage objects** before cutover |
 | Day-1 modules | Personnel, Equipment, LOTO, Sites/Areas, Documents, Training, Forms, Inspections, Incidents, QR Links, High-risk (CS/HW), Tasks, Messaging, Emergency Response |
 
-**Still open (must close before Phase 1 execution starts):**
+**Still open (before Phase 5 / plant announce):**
 
 | Open item | Notes |
 | --- | --- |
 | Signed `APPROVE PRODUCERS AWS-PRIMARY PILOT` | **DONE** 2026-08-05 (Jeremy) |
-| Production / staging tenant UUIDs | After Phase 1 provision — keys locked: `producers-rice-mill-staging` / `producers-rice-mill` |
-| Staging-prod stack naming / CF aliases | See `57-producers-p2-phase1-prep.md` |
-| Named cutover window | Business + plant ops calendar |
-| Support / rollback contacts | Ops names — still open |
+| Production / staging tenant UUIDs | **DONE** — see `tenant-ids.json` + auth record |
+| Staging-prod stack naming / CF aliases | **DONE** — flat hostname dark to CF |
+| Named cutover window | Business + plant ops calendar — still open |
+| Support / rollback contacts | **DONE** (Jeremy primary; plant ops TBD Phase 5) |
 
-Phase 1 prep checklist: [`57-producers-p2-phase1-prep.md`](57-producers-p2-phase1-prep.md).
+Phase 1 checklist: [`57-producers-p2-phase1-prep.md`](57-producers-p2-phase1-prep.md) · Exit: [`58-producers-p2-phase1-exit.md`](58-producers-p2-phase1-exit.md).
 
 ## Current baseline (P1)
 
@@ -47,7 +48,7 @@ Phase 1 prep checklist: [`57-producers-p2-phase1-prep.md`](57-producers-p2-phase
 | Firebase production SoT | Unchanged |
 | Cognito Firebase Auth import | NOT STARTED (fail-closed) |
 | Storage → S3 blobs | NOT STARTED (docs are PENDING_UPLOAD / path-only) |
-| Production / staging-prod tenant | NOT STARTED (still `import-acceptance-tenant-a`) |
+| Production / staging-prod tenant | **DONE** Phase 1 — see `58-producers-p2-phase1-exit.md` |
 
 P1 smoke evidence: `evidence/wave3/api-smoke-tenant-a.json`, `browser-smoke-extra-modules.json`.
 

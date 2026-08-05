@@ -1,7 +1,7 @@
 # Producers P2 — Phase 1 Prep Checklist
 
 **Date:** 2026-08-05  
-**Status:** Phase 1 core gates DONE (tenants, edge, CORS, Cognito link smoke) — still pre-announce / not Phase 5 SoT  
+**Status:** Phase 1 **EXIT GREEN** — see [`58-producers-p2-phase1-exit.md`](58-producers-p2-phase1-exit.md)  
 **Authorization:** SIGNED — `evidence/p2/00-authorization/APPROVE-PRODUCERS-AWS-PRIMARY-PILOT.md`  
 **Plan:** `56-producers-p2-execution-plan.md`
 
