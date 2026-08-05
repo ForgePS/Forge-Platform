@@ -1,7 +1,7 @@
 # Producers P2 — Phase 2 Prep Checklist (Cognito roster)
 
 **Date:** 2026-08-05  
-**Status:** PREP ONLY — no Firebase Auth live inventory and no Cognito AdminCreateUser until export + import are separately approved  
+**Status:** Phase 2 staging Cognito create + Aurora link **DONE** for freeze roster (6 users); prod twin + login smoke + comms still open  
 **Phase 1 exit:** [`58-producers-p2-phase1-exit.md`](58-producers-p2-phase1-exit.md) **GREEN**  
 **Plan:** [`56-producers-p2-execution-plan.md`](56-producers-p2-execution-plan.md)  
 **Foundational plan:** [`../33-user-migration-plan.md`](../33-user-migration-plan.md)
@@ -34,7 +34,7 @@
 | --- | --- | --- |
 | E1 | Phase 1 exit remains green | **DONE** (`58`) |
 | E2 | Sign read-only Auth export approval for Producers org | **DONE** 2026-08-05 |
-| E3 | Sign Cognito bulk-create approval (staging first) | PENDING (after E2 counts freeze) |
+| E3 | Sign Cognito bulk-create approval (staging first) | **DONE** (`APPROVE-PRODUCERS-COGNITO-CREATE.md`) |
 | E4 | Comms draft: URL + first-login / password-change steps | PENDING |
 
 ### F. Read-only Firebase Auth export
@@ -51,21 +51,21 @@
 
 | # | Task | Status |
 | --- | --- | --- |
-| G1 | Map each Auth user → target Cognito username = email | PENDING |
-| G2 | Assign AWS tenant membership(s): prefer staging for dress; prod twin only after staging smoke | PENDING |
-| G3 | Role templates: admin / supervisor / operator → platform roles (`IND3V_*` or successor) | PENDING |
-| G4 | Membership product + day-1 module access (mirror Phase 1 seed) | PENDING |
-| G5 | De-dupe: existing Cognito users (e.g. `admin@forgepublicsafety.com`) → link not recreate | PENDING |
+| G1 | Map each Auth user → target Cognito username = email | **DONE** (`roster-map-plan.json`) |
+| G2 | Assign AWS tenant membership(s): prefer staging for dress; prod twin only after staging smoke | **DONE** staging; prod twin PENDING |
+| G3 | Role templates: admin / supervisor / operator → platform roles (`IND3V_*` or successor) | **DONE** admin + operator (no supervisor in freeze) |
+| G4 | Membership product + day-1 module access (mirror Phase 1 seed) | **DONE** (15 modules each) |
+| G5 | De-dupe: existing Cognito users (e.g. `admin@forgepublicsafety.com`) → link not recreate | **DONE** |
 
 ### H. Cognito create (staging first)
 
 | # | Task | Status |
 | --- | --- | --- |
-| H1 | Dry-run Cognito AdminCreateUser plan (counts only) | PENDING |
-| H2 | Bulk create on staging tenant with temp password + `FORCE_CHANGE_PASSWORD` | PENDING |
-| H3 | Persist `authentication_identities` + memberships/roles | PENDING |
-| H4 | Login smoke: admin, supervisor, operator (+ sample N of roster) | PENDING |
-| H5 | Count reconciliation vs F4 freeze (100% or documented exceptions) | PENDING |
+| H1 | Dry-run Cognito AdminCreateUser plan (counts only) | **DONE** (map counts) |
+| H2 | Bulk create on staging tenant with temp password + `FORCE_CHANGE_PASSWORD` | **DONE** (4 created, temps local-only) |
+| H3 | Persist `authentication_identities` + memberships/roles | **DONE** (`link-staging-roster-result.json`) |
+| H4 | Login smoke: admin, supervisor, operator (+ sample N of roster) | PENDING (manual — FORCE_CHANGE_PASSWORD) |
+| H5 | Count reconciliation vs F4 freeze (100% or documented exceptions) | **DONE** 6/6 |
 
 ### I. Prod twin (dark) — after staging green
 
