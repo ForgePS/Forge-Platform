@@ -1,7 +1,7 @@
 # Producers P2 — Phase 1 Prep Checklist
 
 **Date:** 2026-08-05  
-**Status:** PREP ONLY — no live AWS provision until this checklist is accepted and execution is explicitly started  
+**Status:** Phase 1 core gates DONE (tenants, edge, CORS, Cognito link smoke) — still pre-announce / not Phase 5 SoT  
 **Authorization:** SIGNED — `evidence/p2/00-authorization/APPROVE-PRODUCERS-AWS-PRIMARY-PILOT.md`  
 **Plan:** `56-producers-p2-execution-plan.md`
 
@@ -29,7 +29,7 @@ Firebase SoT org (unchanged until Phase 5): `business-1782553339499`.
 | A3 | Activate `FORGE_INDUSTRIAL` product on both | **DONE** |
 | A4 | Entitle day-1 modules (locked allowlist in plan 56) | **DONE** (15/16 — `IMPORT` module missing from catalog) |
 | A5 | Tenant feature-flag overrides ON (global defaults stay OFF) | **DONE** (16 flags) |
-| A6 | Cross-tenant negative smoke vs acceptance-A and forge-platform | PENDING |
+| A6 | Cross-tenant negative smoke vs acceptance-A and forge-platform | **DONE** (`p2-api-smoke-a6.json`) |
 
 ### B. Cognito / app clients
 
@@ -37,8 +37,8 @@ Firebase SoT org (unchanged until Phase 5): `business-1782553339499`.
 | --- | --- | --- |
 | B1 | Confirm Industrial Cognito client callback URLs include staging + prod subdomain | **DONE** (prod subdomain + existing CF/dev URLs kept) |
 | B2 | Logout URLs for both hostnames | **DONE** (`producers-rice-mill.forgepublicsafety.com` + nested keep) |
-| B3 | API JWT client allowlist includes Industrial client | PENDING (verify — likely already true for `3rls…`) |
-| B4 | Synthetic admin user for staging smoke (before full roster import) | **DONE** (DB persona; Cognito link still Phase 2) |
+| B3 | API JWT client allowlist includes Industrial client | **DONE** (`b3-cognito-client-allowlist.json` — includes `3rls…`) |
+| B4 | Synthetic admin user for staging smoke (before full roster import) | **DONE** (DB persona; creator Cognito also linked for operator smoke — full roster still Phase 2) |
 
 ### C. Edge / DNS (dark)
 
@@ -47,14 +47,14 @@ Firebase SoT org (unchanged until Phase 5): `business-1782553339499`.
 | C1 | ACM certificate covering Producers hostname | **DONE** — existing `*.forgepublicsafety.com` covers flat hostname |
 | C2 | CloudFront alias binding draft (deploy dark / not announced) | **DONE** — alias `producers-rice-mill.forgepublicsafety.com` on `EXIC8HBMJ4I2Z` |
 | C3 | DNS records prepared but not pointed for end users until Phase 5 | **DONE** CNAME live (`dns-producers-rice-mill-verified.json`) — still pre-announce until Phase 5 |
-| C4 | Industrial static site build points at correct API base for each env | PENDING |
+| C4 | Industrial static site build points at correct API base for each env | **DONE** (`c4-industrial-api-base.json` → `https://api-dev.forgepublicsafety.com`) |
 
 ### D. Evidence / gates
 
 | # | Task | Status |
 | --- | --- | --- |
-| D1 | Record tenant UUIDs in `evidence/p2/01-tenant-infra/tenant-ids.json` | PENDING |
-| D2 | Staging bootstrap smoke: `/auth/me` + `/industrial/bootstrap` | PENDING |
+| D1 | Record tenant UUIDs in `evidence/p2/01-tenant-infra/tenant-ids.json` | **DONE** |
+| D2 | Staging bootstrap smoke: `/auth/me` + `/industrial/bootstrap` | **DONE** (API + browser on prod twin host) |
 | D3 | Update auth record with tenant UUIDs after provision | PENDING |
 | D4 | Support/rollback contacts filled on auth record | PENDING |
 
