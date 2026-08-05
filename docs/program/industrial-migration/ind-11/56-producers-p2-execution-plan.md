@@ -1,14 +1,15 @@
 # Producers P2 Execution Plan — AWS Primary Pilot
 
 **Date:** 2026-08-05  
-**Status:** AUTHORIZED — Phase 1 **EXIT GREEN**; Phase 2 **EXIT GREEN** (`60-producers-p2-phase2-exit.md`); next = Phase 3 Storage→S3 (prep)  
+**Status:** AUTHORIZED — Phase 1–2 **EXIT GREEN**; Phase 3 **prep open** (`61-producers-p2-phase3-prep.md`) — Storage inventory UNSIGNED; AV decision still open  
 **Authority:** DEC-IND-011, MD-1.0, DD-IND-1.0 · Signed record: `evidence/p2/00-authorization/APPROVE-PRODUCERS-AWS-PRIMARY-PILOT.md`  
 **Product:** Forge Industrial Safety  
 **Tenant focus:** Producers Rice Mill (`business-1782553339499`)  
 **Target model:** AWS day-to-day primary for Producers only; Firebase read-oriented fallback  
 **Not in scope:** Full IND-13 cutover for all Industrial tenants; true dual-write  
 **Phase 1 exit:** [`58-producers-p2-phase1-exit.md`](58-producers-p2-phase1-exit.md)  
-**Phase 2 prep / exit:** [`59-producers-p2-phase2-prep.md`](59-producers-p2-phase2-prep.md) · [`60-producers-p2-phase2-exit.md`](60-producers-p2-phase2-exit.md)
+**Phase 2 exit:** [`60-producers-p2-phase2-exit.md`](60-producers-p2-phase2-exit.md)  
+**Phase 3 prep:** [`61-producers-p2-phase3-prep.md`](61-producers-p2-phase3-prep.md)
 
 ## Goal
 
@@ -273,11 +274,11 @@ Role: Program Owner
 
 ## Immediate next action
 
-1. Plant-ops approve / optionally send `OPERATOR-FIRST-LOGIN-COMMS-DRAFT.md` for pilot UAT.  
-2. Start Phase 3 Storage prep when file/AV gate is ready.  
-3. Keep Firebase Auth enabled until Phase 5/6.
+1. Choose AV approach (scanner vs time-boxed waiver) — record under `evidence/p2/03-storage/`.  
+2. Sign `evidence/p2/03-storage/APPROVE-PRODUCERS-STORAGE-INVENTORY.md`.  
+3. Confirm **“begin Phase 3 Storage inventory”** (read-only).  
 
-Phase 2 exit: [`60-producers-p2-phase2-exit.md`](60-producers-p2-phase2-exit.md).
+Phase 3 prep: [`61-producers-p2-phase3-prep.md`](61-producers-p2-phase3-prep.md).
 
 ## References
 
