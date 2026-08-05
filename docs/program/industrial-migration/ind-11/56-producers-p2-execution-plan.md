@@ -1,13 +1,14 @@
 # Producers P2 Execution Plan — AWS Primary Pilot
 
 **Date:** 2026-08-05  
-**Status:** AUTHORIZED — **Phase 1 EXIT GREEN** (2026-08-05); next = Phase 2 Cognito roster  
+**Status:** AUTHORIZED — Phase 1 **EXIT GREEN**; Phase 2 **prep open** (`59-producers-p2-phase2-prep.md`) — Auth export UNSIGNED  
 **Authority:** DEC-IND-011, MD-1.0, DD-IND-1.0 · Signed record: `evidence/p2/00-authorization/APPROVE-PRODUCERS-AWS-PRIMARY-PILOT.md`  
 **Product:** Forge Industrial Safety  
 **Tenant focus:** Producers Rice Mill (`business-1782553339499`)  
 **Target model:** AWS day-to-day primary for Producers only; Firebase read-oriented fallback  
-**Not in scope:** Full IND-13 cutover for all Industrial tenants; true dual-write
-**Phase 1 exit:** [`58-producers-p2-phase1-exit.md`](58-producers-p2-phase1-exit.md)
+**Not in scope:** Full IND-13 cutover for all Industrial tenants; true dual-write  
+**Phase 1 exit:** [`58-producers-p2-phase1-exit.md`](58-producers-p2-phase1-exit.md)  
+**Phase 2 prep:** [`59-producers-p2-phase2-prep.md`](59-producers-p2-phase2-prep.md)
 
 ## Goal
 
@@ -272,9 +273,11 @@ Role: Program Owner
 
 ## Immediate next action
 
-1. Program owner signs the authorization template.  
-2. Name support/rollback contacts.  
-3. Start Phase 1 only after signature.
+1. Sign `evidence/p2/02-cognito/APPROVE-PRODUCERS-AUTH-EXPORT.md`.  
+2. Confirm **“begin Phase 2 Auth export”** in session (read-only).  
+3. After freeze counts accepted, sign Cognito create approval (staging first).  
+
+Phase 2 prep: [`59-producers-p2-phase2-prep.md`](59-producers-p2-phase2-prep.md).
 
 ## References
 
