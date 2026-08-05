@@ -1,7 +1,8 @@
 # APPROVE PRODUCERS AUTH EXPORT (Phase 2)
 
-**Status:** UNSIGNED — NOT AUTHORIZED  
+**Status:** SIGNED — AUTHORIZED (read-only Auth export)  
 **Drafted:** 2026-08-05  
+**Signed:** 2026-08-05  
 **Governing docs:** DEC-IND-011 · `56-producers-p2-execution-plan.md` · `59-producers-p2-phase2-prep.md` · `33-user-migration-plan.md`
 
 ---
@@ -37,14 +38,14 @@
 
 - [x] Phase 1 exit green (`58-producers-p2-phase1-exit.md`)  
 - [x] Pilot AWS-primary auth signed  
-- [ ] This record signed by Program Owner  
-- [ ] Operator confirms “begin Phase 2 Auth export” in session after signature  
+- [x] This record signed by Program Owner  
+- [x] Operator confirms “begin Phase 2 Auth export” in session after signature  
 
 ## Signatures
 
 | Role | Name | Signature | Date |
 | --- | --- | --- | --- |
-| Program Owner | Jeremy | | |
+| Program Owner | Jeremy | APPROVED (electronic, Cursor session 2026-08-05 — “begin pase 2 auth export”) | 2026-08-05 |
 | Platform / Ops Lead (optional) | | | |
 
 ## Evidence destination

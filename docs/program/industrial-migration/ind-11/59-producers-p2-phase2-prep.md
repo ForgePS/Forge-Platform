@@ -33,7 +33,7 @@
 | # | Task | Status |
 | --- | --- | --- |
 | E1 | Phase 1 exit remains green | **DONE** (`58`) |
-| E2 | Sign read-only Auth export approval for Producers org | PENDING — `evidence/p2/02-cognito/APPROVE-PRODUCERS-AUTH-EXPORT.md` |
+| E2 | Sign read-only Auth export approval for Producers org | **DONE** 2026-08-05 |
 | E3 | Sign Cognito bulk-create approval (staging first) | PENDING (after E2 counts freeze) |
 | E4 | Comms draft: URL + first-login / password-change steps | PENDING |
 
@@ -41,11 +41,11 @@
 
 | # | Task | Status |
 | --- | --- | --- |
-| F1 | Tooling: allowlisted Auth list filtered to Producers business | PENDING (script sketch below — no live run) |
-| F2 | Capture UID, email, disabled, emailVerified, metadata timestamps | PENDING |
-| F3 | Capture custom-claims business/role fields needed for mapping (no secrets) | PENDING |
-| F4 | Produce freeze file `roster-export-<date>.json` + count summary | PENDING |
-| F5 | Exception list: missing email, disabled, multi-business, duplicates | PENDING |
+| F1 | Tooling: allowlisted Auth list filtered to Producers business | **DONE** (`scripts/ind11b-p2-auth-export-producers.mjs`) |
+| F2 | Capture UID, email, disabled, emailVerified, metadata timestamps | **DONE** |
+| F3 | Capture custom-claims business/role fields needed for mapping (no secrets) | **DONE** (businessIds + roleHints + claimKeys) |
+| F4 | Produce freeze file `roster-export-<date>.json` + count summary | **DONE** (`roster-export-2026-08-05T20-16-50-164Z.json`, `roster-count-summary.json`) |
+| F5 | Exception list: missing email, disabled, multi-business, duplicates | **DONE** — see summary (1 multi-business; 0 missing/disabled/dup) |
 
 ### G. Mapping
 
