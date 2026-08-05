@@ -42,7 +42,7 @@ Evidence: `docs/program/industrial-migration/ind-11/evidence/p2/01-tenant-infra/
 
 | When | Action |
 | --- | --- |
-| Now (dark) | Create CNAME anytime — site will resolve to Industrial CF once DNS propagates; treat as **pre-announce / internal only** until Phase 5 |
+| Now | **CNAME applied and verified** (2026-08-05) — resolves to Industrial CF; pre-announce until Phase 5 |
 | Phase 5 cutover | Announce URL to Producers operators; Cognito primary login |
 | Rollback | Remove or lower-TTL flip CNAME away; Firebase remains fallback until P2 exit |
 

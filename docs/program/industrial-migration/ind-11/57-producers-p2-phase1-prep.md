@@ -46,7 +46,7 @@ Firebase SoT org (unchanged until Phase 5): `business-1782553339499`.
 | --- | --- | --- |
 | C1 | ACM certificate covering Producers hostname | **DONE** — existing `*.forgepublicsafety.com` covers flat hostname |
 | C2 | CloudFront alias binding draft (deploy dark / not announced) | **DONE** — alias `producers-rice-mill.forgepublicsafety.com` on `EXIC8HBMJ4I2Z` |
-| C3 | DNS records prepared but not pointed for end users until Phase 5 | **PENDING external** — no Route53 zone in acct; need CNAME at DNS owner → `d2ed3566n8x2gi.cloudfront.net` |
+| C3 | DNS records prepared but not pointed for end users until Phase 5 | **DONE** CNAME live (`dns-producers-rice-mill-verified.json`) — still pre-announce until Phase 5 |
 | C4 | Industrial static site build points at correct API base for each env | PENDING |
 
 ### D. Evidence / gates

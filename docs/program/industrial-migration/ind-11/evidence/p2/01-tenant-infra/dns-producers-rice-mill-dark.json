@@ -8,6 +8,8 @@
     "forgepublicsafety.com",
     "*.forgepublicsafety.com"
   ],
-  "note": "No Route53 hosted zone in account 511343547817. Create CNAME at DNS owner: producers-rice-mill.forgepublicsafety.com -> d2ed3566n8x2gi.cloudfront.net (or alias record). Nested *.industrial.* hostname abandoned for TLS wildcard limits.",
-  "status": "CF_ALIAS_DARK_DNS_PENDING"
+  "status": "DNS_LIVE_PRE_ANNOUNCE",
+  "verifiedAt": "2026-08-05T18:10:35.000Z",
+  "verifiedEvidence": "dns-producers-rice-mill-verified.json",
+  "note": "CNAME applied externally and verified. Hostname resolves to Industrial CloudFront. Pre-announce until Phase 5. Nested *.industrial.* hostname abandoned for TLS wildcard limits."
 }
