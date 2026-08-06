@@ -1,7 +1,7 @@
 # FORGE-UI-S5 COMPLETION REPORT
 
 **Status:** PASS WITH LIMITATIONS  
-**Commit:** pending (this branch)  
+**Commit:** `d785928`  
 **Packages Modified:** `@forge/design-system`, `@forge/ui`
 
 ## Hardening delivered
