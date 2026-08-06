@@ -110,19 +110,40 @@ async function loginViaCognito(page: Page): Promise<void> {
 
   if (page.url().includes("/select-tenant")) {
     await page.getByRole("heading", { name: /select tenant/i }).waitFor({ timeout: 20_000 });
-    const forgePlatform = page.getByRole("button", { name: /^select$/i }).first();
-    // Prefer Forge Platform if listed as text near a Select button.
-    const platformRow = page.locator("tr, li, div").filter({ hasText: /forge platform/i }).first();
-    if (await platformRow.count()) {
-      const rowSelect = platformRow.getByRole("button", { name: /^select$/i }).first();
-      if (await rowSelect.count()) {
-        await rowSelect.click();
-      } else {
-        await forgePlatform.click();
-      }
-    } else {
-      await forgePlatform.click();
+
+    // Wait through rolling API deploys / auth hydration.
+    await expect
+      .poll(
+        async () => {
+          const body = await page.locator("body").innerText();
+          if (/not authenticated/i.test(body)) return "unauthenticated";
+          if (await page.getByRole("button", { name: /^select$/i }).count()) return "ready";
+          if (/no tenants available/i.test(body)) return "empty";
+          return "loading";
+        },
+        { timeout: 60_000 },
+      )
+      .toMatch(/ready|empty/);
+
+    const body = await page.locator("body").innerText();
+    if (/not authenticated/i.test(body)) {
+      throw new Error("Cognito callback completed but /auth/me is unauthenticated");
     }
+
+    const platformRow = page.locator("tr").filter({ hasText: /forge platform/i });
+    const preferred = platformRow.getByRole("button", { name: /^select$/i }).first();
+    if (await preferred.count()) {
+      await preferred.click();
+    } else {
+      const anySelect = page.getByRole("button", { name: /^select$/i }).first();
+      if (await anySelect.count()) {
+        await anySelect.click();
+      } else {
+        await page.goto(`${CREATOR}/`);
+        return;
+      }
+    }
+
     await page.waitForURL(
       (url) => !url.pathname.includes("/select-tenant") && !url.pathname.includes("/login"),
       { timeout: 30_000 },
