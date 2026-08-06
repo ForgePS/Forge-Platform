@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
-import { tenantDetailHref } from "@/hooks/use-tenant-id";
+import { tenantDetailHref, useTenantId } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
 import { apiGet, apiSend } from "@/lib/api";
 import styles from "../page.module.css";
@@ -31,8 +30,7 @@ type CatalogProduct = { id: string; code: string; name: string };
 type CatalogModule = { id: string; code: string; name: string };
 
 function EntitlementsInner() {
-  const searchParams = useSearchParams();
-  const tenantId = searchParams.get("tenantId");
+  const tenantId = useTenantId();
 
   const [data, setData] = useState<EntitlementsPayload | null>(null);
   const [catalogProducts, setCatalogProducts] = useState<CatalogProduct[]>([]);

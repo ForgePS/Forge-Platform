@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { tenantDetailHref } from "@/hooks/use-tenant-id";
+import { tenantDetailHref, useTenantId } from "@/hooks/use-tenant-id";
 import { apiGet, apiGetResult, apiSend, apiSendResult, toIfMatch } from "@/lib/api";
 import styles from "../page.module.css";
 
@@ -36,8 +35,7 @@ type User = {
 };
 
 function RolesInner() {
-  const searchParams = useSearchParams();
-  const tenantId = searchParams.get("tenantId");
+  const tenantId = useTenantId();
   const { hasPermission } = useAuth();
   const canAssign = hasPermission("platform.role.assign");
   const canRead = hasPermission("platform.permission.read");

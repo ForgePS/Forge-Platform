@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
-import { personDetailHref, tenantDetailHref } from "@/hooks/use-tenant-id";
+import { personDetailHref, tenantDetailHref, useTenantId } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
 import { apiGet, apiSend } from "@/lib/api";
 import styles from "../page.module.css";
@@ -19,8 +18,7 @@ type Person = {
 };
 
 function PersonsInner() {
-  const searchParams = useSearchParams();
-  const tenantId = searchParams.get("tenantId");
+  const tenantId = useTenantId();
 
   const [items, setItems] = useState<Person[]>([]);
   const [loading, setLoading] = useState(Boolean(tenantId));
