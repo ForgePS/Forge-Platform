@@ -1,7 +1,8 @@
 # APPROVE PRODUCERS PHASE 4 LOAD (parity)
 
-**Status:** UNSIGNED — pending Program Owner signature  
+**Status:** SIGNED — AUTHORIZED (staging load first; prod twin after staging UAT)  
 **Drafted:** 2026-08-06  
+**Signed:** 2026-08-06  
 **Governing docs:** DEC-IND-011 · `56-producers-p2-execution-plan.md` · `63-producers-p2-phase4-prep.md` · `APPROVE-PRODUCERS-AWS-PRIMARY-PILOT.md`
 
 ---
@@ -15,7 +16,7 @@
 | Second target | `producers-rice-mill` · `5da680d3-50f5-46ac-8b85-6cf454b6a0da` (only after staging UAT signed) |
 | Source | Firebase `forge-industrial-safety` · `business-1782553339499` |
 | Includes | Day-1 module row load, N4 URL rewrite on staging, parity/RLS evidence, dark twin load |
-| Firebase write-freeze | Required for final delta; window TBD before T1 |
+| Firebase write-freeze | Dress rehearsal: short/overlapping plant freeze OK for staging load; formal window required before final delta / twin (T1) |
 
 ## Explicitly NOT authorized by this record
 
@@ -28,18 +29,18 @@
 
 ## Preconditions
 
-- [ ] Phases 1–3 exit green  
-- [ ] Phase 4 prep checklist reviewed  
-- [ ] Extract freeze path + tenant mapping reviewed  
-- [ ] This record signed by Program Owner  
-- [ ] Operator confirms **“begin Phase 4 staging load”**  
+- [x] Phases 1–3 exit green  
+- [x] Phase 4 prep checklist reviewed  
+- [x] Extract freeze path + tenant mapping reviewed (Q2/Q3 before write)  
+- [x] This record signed by Program Owner  
+- [x] Operator confirms **“begin Phase 4 staging load”** (Cursor 2026-08-06)  
 
 ## Signatures
 
 | Role | Name | Signature | Date |
 | --- | --- | --- | --- |
-| Program Owner | | | |
-| Producers lead (UAT owner) | | | |
+| Program Owner | Jeremy | APPROVED (electronic, Cursor session 2026-08-06 — Phase 4 staging extract/load + dress-rehearsal freeze) | 2026-08-06 |
+| Producers lead (UAT owner) | | Pending S2 staging UAT | |
 
 ## Evidence destination
 

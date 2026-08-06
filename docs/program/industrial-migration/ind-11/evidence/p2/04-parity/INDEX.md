@@ -1,15 +1,21 @@
 # Phase 4 parity evidence index
 
-**Status:** PREP — awaiting signed load approval  
+**Status:** STAGING LOAD COMPLETE (dress rehearsal) — UAT / twin still pending  
 **Prep:** `../../63-producers-p2-phase4-prep.md`  
-**Phase 3 exit:** `../../62-producers-p2-phase3-exit.md` **GREEN**
+**Phase 3 exit:** `../../62-producers-p2-phase3-exit.md` **GREEN**  
+**Freeze:** `s3://forge-development-imports-511343547817-us-east-1/ind11b/p4-staging/2026-08-06T15-15-28-618Z`
 
 | Artifact | Purpose |
 | --- | --- |
-| `APPROVE-PRODUCERS-PHASE4-LOAD.md` | **UNSIGNED** — staging (then twin) domain load |
-| _(pending)_ extract freeze | Q2 census |
-| _(pending)_ tenant mapping | Org → staging / twin |
-| _(pending)_ load results | R/T load JSON |
-| _(pending)_ parity + RLS | Count + isolation reports |
-| _(pending)_ UAT checklist | S/T plant sign-off |
+| `APPROVE-PRODUCERS-PHASE4-LOAD.md` | **SIGNED** — staging authorized; twin after UAT |
+| `tenant-mapping-staging.json` | Q3 org → staging UUID |
+| `extract-freeze-manifest.json` | Q2 remapped freeze + SHA256s |
+| `extract-freeze-manifest-latest.json` | Pointer |
+| `load-wave*-result.json` | R1 ECS load evidence per wave |
+| `parity-counts-result.json` | R2 Aurora counts (staging) |
+| `staging-load-summary.json` | Roll-up |
+| _(pending)_ RLS isolation | R3 |
+| _(pending)_ N4 URL rewrite | R4 |
+| _(pending)_ UAT checklist / S2 | S package |
+| _(pending)_ twin load | T (blocked on S2) |
 | _(pending)_ Phase 4 exit | U3 |

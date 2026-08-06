@@ -1,7 +1,7 @@
 # Producers P2 — Phase 4 Prep Checklist (Final data load + parity)
 
 **Date:** 2026-08-06  
-**Status:** PREP ONLY — no Firebase write-freeze and no Producers tenant domain reload until Phase 4 load approval is signed  
+**Status:** STAGING LOAD IN PROGRESS — approval signed; dress-rehearsal freeze remapped + waves 1–3 loaded onto staging (2026-08-06); UAT / twin / live re-extract still pending  
 **Phase 3 exit:** [`62-producers-p2-phase3-exit.md`](62-producers-p2-phase3-exit.md) **GREEN** (N4 deferred here)  
 **Phase 2 exit:** [`60-producers-p2-phase2-exit.md`](60-producers-p2-phase2-exit.md) **GREEN**  
 **Phase 1 exit:** [`58-producers-p2-phase1-exit.md`](58-producers-p2-phase1-exit.md) **GREEN**  
@@ -28,7 +28,7 @@
 | Cognito roster memberships | 6/6 | 6/6 | N/A for pilot |
 | S3 blobs (9077) | Present | Present | N/A |
 | `platform_documents` AVAILABLE | 9077 | 0 (optional) | 8 (smoke + PENDING leftovers) |
-| Domain rows (sites/equip/LOTO/…) | **Sparse / not full load** | **Sparse / not full load** | ~8.8k NONPRODUCTION_LOAD (waves 1–3) |
+| Domain rows (sites/equip/LOTO/…) | **Loaded (dress remap)** — see `evidence/p2/04-parity/staging-load-summary.json` | **Sparse / not full load** | ~8.8k NONPRODUCTION_LOAD (waves 1–3) sample |
 
 **Implication:** Phase 4 is the first **authorized full domain load** onto dedicated Producers tenants. Do not treat Tenant A counts as staging/prod parity.
 
@@ -41,8 +41,8 @@
 | # | Task | Status |
 | --- | --- | --- |
 | P1 | Phases 1–3 exits remain green | **DONE** |
-| P2 | Sign Phase 4 load approval (staging first; prod twin after staging UAT) | PENDING — draft `evidence/p2/04-parity/APPROVE-PRODUCERS-PHASE4-LOAD.md` |
-| P3 | Agree Firebase Producers write-freeze window (owner, start, max duration) | PENDING |
+| P2 | Sign Phase 4 load approval (staging first; prod twin after staging UAT) | **DONE** — signed 2026-08-06 |
+| P3 | Agree Firebase Producers write-freeze window (owner, start, max duration) | PARTIAL — dress rehearsal OK; formal window before final delta / twin |
 | P4 | Plant ops confirms maintenance notice text + contacts | PENDING |
 | P5 | Confirm QR token policy: rotated tokens stay; remint/label plan before Phase 5 | PENDING |
 
@@ -50,18 +50,18 @@
 
 | # | Task | Status |
 | --- | --- | --- |
-| Q1 | Inventory loader set (wave1/2/3 / migration-firebase) vs day-1 modules | PENDING |
-| Q2 | Refresh Producers extract freeze (org-scoped) into imports bucket | PENDING |
-| Q3 | Tenant mapping file: Firebase org → staging UUID (and prod twin after green) | PENDING — do **not** reuse wave1 Tenant A mapping as SoT |
-| Q4 | Exception catalog: unmapped collections (carry from `54`) | PENDING |
-| Q5 | Dry-run counts by domain vs Firebase census | PENDING |
+| Q1 | Inventory loader set (wave1/2/3 / migration-firebase) vs day-1 modules | **DONE** — prior S3 ECS loaders reused; `migration-firebase` source still absent on tip |
+| Q2 | Refresh Producers extract freeze (org-scoped) into imports bucket | **DONE (dress)** — remapped prior uncapped payloads → `ind11b/p4-staging/2026-08-06T15-15-28-618Z` (live Firebase re-extract deferred) |
+| Q3 | Tenant mapping file: Firebase org → staging UUID (and prod twin after green) | **DONE** — `evidence/p2/04-parity/tenant-mapping-staging.json` |
+| Q4 | Exception catalog: unmapped collections (carry from `54`) | PENDING (carry-forward) |
+| Q5 | Dry-run counts by domain vs Firebase census | PARTIAL — parity vs remapped freeze SHAs; live census deferred |
 
 ### R. Staging load (after P2 signed)
 
 | # | Task | Status |
 | --- | --- | --- |
-| R1 | Idempotent load onto `producers-rice-mill-staging` (fail-closed flags) | PENDING |
-| R2 | Row count parity report vs Q5 freeze (100% or signed exceptions) | PENDING |
+| R1 | Idempotent load onto `producers-rice-mill-staging` (fail-closed flags) | **DONE** — waves 1–3 `errorCount: 0` |
+| R2 | Row count parity report vs Q5 freeze (100% or signed exceptions) | **DONE** — see `parity-counts-result.json` / `staging-load-summary.json` |
 | R3 | RLS verify: forge_app cannot read cross-tenant; staging isolated from twin/A | PENDING |
 | R4 | N4 Firebase → S3 URL rewrite on staging domain fields / attachment links | PENDING (deferred from Phase 3) |
 | R5 | Optional: upsert prod-twin `platform_documents` if twin UAT needs docs list | PENDING |
@@ -89,7 +89,7 @@
 
 | # | Task | Status |
 | --- | --- | --- |
-| U1 | Folder `evidence/p2/04-parity/` | **DONE** (scaffold) |
+| U1 | Folder `evidence/p2/04-parity/` | **DONE** (load + freeze evidence on file) |
 | U2 | Freeze + load + parity + RLS + UAT JSON/MD packs | PENDING |
 | U3 | Phase 4 exit note | PENDING |
 
@@ -150,9 +150,10 @@ Phase 4 **staging load** may start when:
 
 ## Immediate next actions
 
-1. Draft and sign `evidence/p2/04-parity/APPROVE-PRODUCERS-PHASE4-LOAD.md`.  
-2. Re-establish loader tooling / `migration-firebase` path on this branch tip (or ECS image that still has it).  
-3. Run Q2 dry census → freeze before any write.  
+1. R3 RLS isolation verify (staging vs twin vs Tenant A).  
+2. R6 API/browser smoke + S1/S2 staging UAT.  
+3. Restore live Firebase extract tooling before final delta / prod-twin load.  
+4. R4 N4 URL rewrite once domain attachment fields need S3 keys.  
 
 ## References
 
