@@ -262,7 +262,7 @@ export async function seedConfigAuthPersonas(options?: {
 
 async function main(): Promise<void> {
   const result = await seedConfigAuthPersonas();
-  console.info(JSON.stringify({ ok: true, ...result }, null, 2));
+  console.warn(JSON.stringify({ ok: true, ...result }, null, 2));
 }
 
 const isDirect =

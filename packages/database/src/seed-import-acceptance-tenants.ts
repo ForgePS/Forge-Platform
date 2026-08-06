@@ -213,7 +213,7 @@ export async function seedImportAcceptanceTenants(): Promise<{
 
 async function main(): Promise<void> {
   const result = await seedImportAcceptanceTenants();
-  console.info(
+  console.warn(
     JSON.stringify(
       {
         ok: true,
@@ -225,7 +225,7 @@ async function main(): Promise<void> {
     ),
   );
   // Full IDs only to stdout JSON for controlled evidence capture (not CloudWatch-friendly logs beyond this).
-  console.info(JSON.stringify({ ok: true, ...result }));
+  console.warn(JSON.stringify({ ok: true, ...result }));
 }
 
 const isDirect =

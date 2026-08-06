@@ -21,7 +21,7 @@ async function main(): Promise<void> {
         sql`select code from permissions where code like 'import.%' order by 1`,
       )),
     ] as Array<{ code: string }>;
-    console.info(
+    console.warn(
       JSON.stringify({
         ok: true,
         importPermissionCount: perms.length,

@@ -346,7 +346,7 @@ export async function seedImportS8Personas(): Promise<{
 
 async function main(): Promise<void> {
   const result = await seedImportS8Personas();
-  console.info(JSON.stringify(result));
+  console.warn(JSON.stringify(result));
 }
 
 const isDirect =

@@ -94,7 +94,7 @@ async function main(): Promise<void> {
         );
       }) && perms.length === 12;
 
-    console.info(
+    console.warn(
       JSON.stringify({
         ok,
         currentUser: who?.u,

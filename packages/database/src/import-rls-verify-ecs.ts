@@ -112,7 +112,7 @@ async function main(): Promise<void> {
   out.tenantA = tenantA || null;
   out.tenantB = tenantB || null;
   if (!tenantA || !tenantB) {
-    console.info(JSON.stringify({ ...out, error: "missing acceptance tenants", cases }));
+    console.warn(JSON.stringify({ ...out, error: "missing acceptance tenants", cases }));
     process.exit(2);
   }
 
@@ -172,7 +172,7 @@ async function main(): Promise<void> {
   );
   const jobAId = aJob[0]?.id;
   if (!jobAId) {
-    console.info(JSON.stringify({ ...out, error: "missing acceptance job fixture", cases }));
+    console.warn(JSON.stringify({ ...out, error: "missing acceptance job fixture", cases }));
     process.exit(2);
   }
 
@@ -354,7 +354,7 @@ async function main(): Promise<void> {
     Number(out.metadataLeakage) === 0 &&
     Number(out.rlsBypass) === 0;
 
-  console.info(JSON.stringify(out));
+  console.warn(JSON.stringify(out));
   process.exit(out.ok ? 0 : 1);
 }
 
