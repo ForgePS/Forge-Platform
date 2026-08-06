@@ -147,8 +147,9 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
   useEffect(() => {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
-      const controller = abortRef.current;
-      controller?.abort();
+      // Abort the latest in-flight request on unmount (ref is reassigned per request).
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional latest-ref abort
+      abortRef.current?.abort();
     };
   }, []);
 
