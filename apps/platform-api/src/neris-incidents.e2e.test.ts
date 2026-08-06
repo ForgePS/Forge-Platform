@@ -75,6 +75,7 @@ describe("NERIS Phase 2 incidents API", () => {
         "rms.neris.validation.view",
         "rms.neris.audit.view",
         "rms.masterdata.read",
+        "rms.masterdata.manage",
         "platform.organization.read",
         "platform.person.read",
         "platform.permission.read",
@@ -93,12 +94,12 @@ describe("NERIS Phase 2 incidents API", () => {
       .post(`/api/v1/tenants/${tenant.tenantId}/neris/incidents`)
       .set("Idempotency-Key", createId())
       .send({ incidentDate: "2026-07-26", dispatchDescription: "Synthetic smoke" })
-      .expect(200);
+      .expect(201);
     const second = await api
       .post(`/api/v1/tenants/${tenant.tenantId}/neris/incidents`)
       .set("Idempotency-Key", createId())
       .send({ incidentDate: "2026-07-26", dispatchDescription: "Synthetic smoke 2" })
-      .expect(200);
+      .expect(201);
 
     expect(first.body.data.incidentNumber).toBeTruthy();
     expect(second.body.data.incidentNumber).toBeTruthy();
@@ -115,7 +116,7 @@ describe("NERIS Phase 2 incidents API", () => {
       .post(`/api/v1/tenants/${tenant.tenantId}/neris/incidents`)
       .set("Idempotency-Key", key)
       .send({ incidentDate: "2026-07-26" })
-      .expect(200);
+      .expect(201);
     const replay = await api
       .post(`/api/v1/tenants/${tenant.tenantId}/neris/incidents`)
       .set("Idempotency-Key", key)
@@ -133,7 +134,7 @@ describe("NERIS Phase 2 incidents API", () => {
       .post(`/api/v1/tenants/${tenant.tenantId}/neris/incidents`)
       .set("Idempotency-Key", createId())
       .send({ incidentDate: "2026-07-26" })
-      .expect(200);
+      .expect(201);
     const incidentId = created.body.data.id;
     const etag = created.headers.etag as string;
 
@@ -162,7 +163,7 @@ describe("NERIS Phase 2 incidents API", () => {
       .post(`/api/v1/tenants/${tenantA.tenantId}/neris/incidents`)
       .set("Idempotency-Key", createId())
       .send({ incidentDate: "2026-07-26" })
-      .expect(200);
+      .expect(201);
 
     await expect(
       withTenantTransaction(harness.appDb, tenantB.tenantId, async (tx) =>
@@ -213,7 +214,7 @@ describe("NERIS Phase 2 incidents API", () => {
       .post(`/api/v1/tenants/${tenant.tenantId}/neris/incidents`)
       .set("Idempotency-Key", createId())
       .send({ incidentDate: "2026-07-26", stationId: station.body.data.id })
-      .expect(200);
+      .expect(201);
 
     const unitAssignment = await api
       .post(`/api/v1/tenants/${tenant.tenantId}/neris/incidents/${incident.body.data.id}/units`)

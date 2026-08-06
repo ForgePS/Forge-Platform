@@ -181,6 +181,10 @@ jobs:
           PGPASSWORD: forge_local_only
       - name: Database migrate and seed
         run: |
+          pnpm --filter @forge/contracts build
+          pnpm --filter @forge/environment build
+          pnpm --filter @forge/neris build
+          pnpm --filter @forge/database build
           pnpm db:migrate:test
           pnpm --filter @forge/database db:seed
         env:

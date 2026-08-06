@@ -97,7 +97,7 @@ export const developerCostProfile: CostProfile = {
     },
     compute: {
       apiDesiredCount: 1,
-      workerDesiredCount: 1,
+      workerDesiredCount: 0,
     },
     retention: {
       applicationLogsDays: 14,
