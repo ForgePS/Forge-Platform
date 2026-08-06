@@ -1,11 +1,12 @@
 # Producers P2 — Phase 3 Prep Checklist (Storage → S3)
 
 **Date:** 2026-08-05  
-**Status:** Inventory freeze **COMPLETE** — S3 copy blocked until K5 signed  
+**Status:** Staging S3 **copy COMPLETE** (M2/M3 green) — Aurora metadata / presign / URL rewrite (N) still open; prod-twin copy (M4) pending  
 **Phase 2 exit:** [`60-producers-p2-phase2-exit.md`](60-producers-p2-phase2-exit.md) **GREEN**  
 **Plan:** [`56-producers-p2-execution-plan.md`](56-producers-p2-execution-plan.md)  
 **Foundational plan:** [`../32-file-migration-plan.md`](../32-file-migration-plan.md)  
-**Freeze:** `evidence/p2/03-storage/storage-inventory-2026-08-06T01-06-44-696Z.json`
+**Freeze:** `evidence/p2/03-storage/storage-inventory-2026-08-06T01-06-44-696Z.json`  
+**Copy:** `evidence/p2/03-storage/s3-copy-staging-result.json` · reconcile `s3-copy-staging-reconcile.json`
 
 ## Locked targets
 
@@ -33,7 +34,7 @@
 | K2 | Pilot auth already authorizes Storage→S3 for Producers | **DONE** (Phase 0 signed) |
 | K3 | Choose AV approach: production scanner **or** time-boxed waiver | **DONE** — Option B waiver → `av-approach-decision.md` (expires 2026-09-05) |
 | K4 | Sign read-only Storage inventory approval | **DONE** — `APPROVE-PRODUCERS-STORAGE-INVENTORY.md` |
-| K5 | Sign S3 copy approval (staging first) after inventory freeze | PENDING — `APPROVE-PRODUCERS-STORAGE-COPY.md` |
+| K5 | Sign S3 copy approval (staging first) after inventory freeze | **DONE** — `APPROVE-PRODUCERS-STORAGE-COPY.md` |
 
 ### L. Read-only Storage inventory
 
@@ -50,9 +51,9 @@
 | # | Task | Status |
 | --- | --- | --- |
 | M1 | Dry-run key map Storage path → S3 key for prod-twin **or** staging tenant | **DONE** — staging map, 9077 unique keys, 0 collisions (`s3-map-staging-summary.json`) |
-| M2 | Parallel copy with checksum verify (staging bucket / prefix) | PENDING |
-| M3 | Object count + sample checksum reconciliation | PENDING |
-| M4 | Repeat to prod-twin prefix after staging green (or single shared prefix policy — decide in M1) | PENDING |
+| M2 | Parallel copy with checksum verify (staging bucket / prefix) | **DONE** — 9074 copied + 3 skipped, 0 errors (~13.4 min, concurrency 10) |
+| M3 | Object count + sample checksum reconciliation | **DONE** — S3 list 9077 objects / 16 516 836 986 bytes = inventory |
+| M4 | Repeat to prod-twin prefix after staging green (or single shared prefix policy — decide in M1) | PENDING — staging green; prod-twin remap TBD |
 
 ### N. Aurora metadata + download path
 
@@ -68,7 +69,7 @@
 | # | Task | Status |
 | --- | --- | --- |
 | O1 | Folder `evidence/p2/03-storage/` | **DONE** (scaffold) |
-| O2 | Inventory + copy + metadata result JSON | Inventory **DONE**; copy/metadata PENDING |
+| O2 | Inventory + copy + metadata result JSON | Inventory + staging copy **DONE**; Aurora metadata PENDING |
 | O3 | Phase 3 exit note | PENDING |
 
 ---
@@ -139,9 +140,9 @@ Scripts: `ind11b-p2-storage-inventory-plan.mjs`, `ind11b-p2-run-storage-inventor
 
 ## Immediate next actions
 
-1. Sign K5 copy approval (`APPROVE-PRODUCERS-STORAGE-COPY.md`).  
-2. Confirm **“begin Phase 3 Storage copy staging”**.  
-3. Gated parallel copy (M2) using `s3-map-staging-*-latest.json`.
+1. Phase 3 **N** package: map inventory → Aurora document metadata + flip `PENDING_UPLOAD`.  
+2. Presigned download smoke (equipment / LOTO / certificate).  
+3. Optionally remount same bytes onto prod-twin keys (M4) after staging metadata green.
 
 ## References
 

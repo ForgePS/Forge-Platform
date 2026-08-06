@@ -1,7 +1,8 @@
 # APPROVE PRODUCERS STORAGE COPY (Phase 3)
 
-**Status:** UNSIGNED — NOT AUTHORIZED  
+**Status:** SIGNED — AUTHORIZED (staging Storage → S3 copy)  
 **Drafted:** 2026-08-05  
+**Signed:** 2026-08-06  
 **Governing docs:** DEC-IND-011 · `61-producers-p2-phase3-prep.md` · `av-approach-decision.md` · inventory freeze under this folder
 
 ---
@@ -29,14 +30,14 @@
 
 - [x] Inventory freeze complete and reviewed  
 - [x] AV approach recorded (waiver)  
-- [ ] This record signed by Program Owner  
-- [ ] Operator confirms **“begin Phase 3 Storage copy staging”**  
+- [x] This record signed by Program Owner  
+- [x] Operator confirms **“begin Phase 3 Storage copy staging”**  
 
 ## Signatures
 
 | Role | Name | Signature | Date |
 | --- | --- | --- | --- |
-| Program Owner | Jeremy | | |
+| Program Owner | Jeremy | APPROVED (electronic, Cursor session 2026-08-06 — begin Phase 3 Storage copy staging) | 2026-08-06 |
 | Platform / Ops Lead (optional) | | | |
 
 ## Evidence destination
