@@ -49,7 +49,7 @@ type DashboardStats = {
   recentAudit: AuditEvent[];
   health: HealthPayload | null;
   ready: ReadyPayload | null;
-  queueHealth: "unavailable" | null;
+  queueHealth: "ok" | "degraded" | "unavailable" | null;
 };
 
 function DashboardInner() {
@@ -76,7 +76,24 @@ function DashboardInner() {
     try {
       const [healthResult, readyResult] = await Promise.allSettled([fetchHealth(), fetchReady()]);
       if (healthResult.status === "fulfilled") next.health = healthResult.value;
-      if (readyResult.status === "fulfilled") next.ready = readyResult.value;
+      if (readyResult.status === "fulfilled" && readyResult.value) {
+        next.ready = readyResult.value;
+        const checks = readyResult.value.checks;
+        if (checks.outbox === false) {
+          next.queueHealth = "unavailable";
+        } else if (
+          checks.outbox === true &&
+          ((checks.outboxFailed ?? 0) > 0 || (checks.outboxPending ?? 0) > 100)
+        ) {
+          next.queueHealth = "degraded";
+        } else if (checks.outbox === true) {
+          next.queueHealth = "ok";
+        } else {
+          next.queueHealth = "unavailable";
+        }
+      } else {
+        next.queueHealth = "unavailable";
+      }
 
       const tenants = await apiGet<Tenant[]>("/api/v1/platform/tenants");
       next.activeTenants = tenants.filter((tenant) => tenant.status === "ACTIVE").length;
@@ -206,9 +223,17 @@ function DashboardInner() {
             <article className="forge-metric-card">
               <p className="forge-metric-card__label">Queue health</p>
               <p className="forge-metric-card__value" style={{ fontSize: "1.1rem" }}>
-                Status unavailable
+                {stats.queueHealth === "ok"
+                  ? "Healthy"
+                  : stats.queueHealth === "degraded"
+                    ? "Degraded"
+                    : "Unavailable"}
               </p>
-              <p className="forge-metric-card__hint">No live queue probe wired</p>
+              <p className="forge-metric-card__hint">
+                {stats.ready?.checks.outbox
+                  ? `Outbox pending ${stats.ready.checks.outboxPending ?? 0} · failed ${stats.ready.checks.outboxFailed ?? 0}`
+                  : "Outbox probe unavailable"}
+              </p>
             </article>
           </div>
 
@@ -235,7 +260,13 @@ function DashboardInner() {
               </dd>
               <dt>Queue</dt>
               <dd>
-                <span className={styles.badgeWarn}>{stats.queueHealth ?? "unavailable"}</span>
+                {stats.queueHealth === "ok" ? (
+                  <span className={styles.badgeOk}>ok</span>
+                ) : stats.queueHealth === "degraded" ? (
+                  <span className={styles.badgeWarn}>degraded</span>
+                ) : (
+                  <span className={styles.badgeWarn}>{stats.queueHealth ?? "unavailable"}</span>
+                )}
               </dd>
               <dt>Environment</dt>
               <dd>{stats.health?.environment ?? appEnv}</dd>

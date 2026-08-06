@@ -6,11 +6,11 @@ import { filterNavigationGroups } from "@forge/design-system";
 import {
   EnvironmentBanner,
   ForgeAppShell,
-  ForgeNotificationMenu,
   ForgeTenantSwitcher,
   ForgeUserMenu,
 } from "@forge/ui";
 import { useAuth } from "@forge/web-kit";
+import { CreatorNotifications } from "@/components/creator-notifications";
 import { CREATOR_NAV_GROUPS } from "@/lib/navigation";
 import styles from "../app/shell.module.css";
 
@@ -101,7 +101,7 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
               onSelect={(id) => void chooseTenant(id)}
             />
           ) : null}
-          <ForgeNotificationMenu />
+          <CreatorNotifications />
           {me ? (
             <ForgeUserMenu
               label={me.isPlatformAdmin ? "Platform admin" : "Signed in"}

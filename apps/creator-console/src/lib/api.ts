@@ -508,7 +508,12 @@ export type HealthPayload = {
 export type ReadyPayload = {
   status: string;
   service: string;
-  checks: { database: boolean };
+  checks: {
+    database: boolean;
+    outbox?: boolean;
+    outboxPending?: number | null;
+    outboxFailed?: number | null;
+  };
   timestamp: string;
 };
 

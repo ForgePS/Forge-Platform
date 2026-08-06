@@ -1,6 +1,6 @@
 import { Controller, Get, Inject, ServiceUnavailableException } from "@nestjs/common";
 import type { ForgeEnvironment } from "@forge/environment";
-import { checkDatabaseHealth } from "@forge/database";
+import { checkDatabaseHealth, checkOutboxHealth } from "@forge/database";
 import { Public } from "./modules/auth-context/public.decorator.js";
 import { APP_ENV } from "./tokens.js";
 
@@ -29,18 +29,36 @@ export class HealthController {
     } catch {
       databaseOk = false;
     }
+
+    const outbox = await checkOutboxHealth(this.env.DATABASE_URL).catch(() => ({
+      ok: false,
+      pending: null as number | null,
+      failed: null as number | null,
+    }));
+
     if (!databaseOk) {
       throw new ServiceUnavailableException({
         status: "not_ready",
         service: "platform-api",
-        checks: { database: false },
+        checks: {
+          database: false,
+          outbox: outbox.ok,
+          outboxPending: outbox.pending,
+          outboxFailed: outbox.failed,
+        },
         timestamp: new Date().toISOString(),
       });
     }
+
     return {
       status: "ready",
       service: "platform-api",
-      checks: { database: true },
+      checks: {
+        database: true,
+        outbox: outbox.ok,
+        outboxPending: outbox.pending,
+        outboxFailed: outbox.failed,
+      },
       timestamp: new Date().toISOString(),
     };
   }
