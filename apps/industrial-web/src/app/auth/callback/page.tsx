@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authMe, exchangeCodeForTokens, useAuth, validateOAuthState } from "@forge/web-kit";
 
@@ -9,8 +9,14 @@ function AuthCallbackInner() {
   const searchParams = useSearchParams();
   const { refresh } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const started = useRef(false);
 
   useEffect(() => {
+    // Guard against React remount / searchParams identity churn double-running
+    // OAuth exchange (would clear PKCE/OAuth state on the first pass).
+    if (started.current) return;
+    started.current = true;
+
     async function completeSignIn() {
       const oauthError = searchParams.get("error");
       const oauthDescription = searchParams.get("error_description");

@@ -78,7 +78,7 @@ function GateCard({
 
 function ShellBody({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { me, loading, error, logout, loginWithCognito, chooseTenant } = useAuth();
+  const { me, loading, error, logout, loginWithCognito, chooseTenant, hasPermission } = useAuth();
   const [flags, setFlags] = useState<Record<string, boolean>>({});
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -94,8 +94,14 @@ function ShellBody({ children }: { children: ReactNode }) {
   const userId = me?.userId ?? null;
   const products = new Set(me?.activeProducts ?? []);
   const entitled = products.has(INDUSTRIAL_PRODUCT_CODE);
+  // Prefer hasPermission so PLATFORM_SUPER_ADMIN matches API evaluateAuthorization
+  // (isPlatformAdmin bypasses the industrial.access requirement).
+  const hasIndustrialAccess = hasPermission("industrial.access");
   const permissions = new Set(me?.permissions ?? []);
-  const hasAccess = Boolean(me && tenantId && entitled && permissions.has("industrial.access"));
+  if (hasIndustrialAccess) {
+    permissions.add("industrial.access");
+  }
+  const hasAccess = Boolean(me && tenantId && entitled && hasIndustrialAccess);
 
   useEffect(() => {
     if (!hasAccess || !tenantId) {
@@ -211,7 +217,7 @@ function ShellBody({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!permissions.has("industrial.access")) {
+  if (!hasIndustrialAccess) {
     return (
       <GateCard
         title="Access denied"
@@ -256,6 +262,12 @@ function ShellBody({ children }: { children: ReactNode }) {
               <Link href="/" className="menu-link" onClick={() => setMenuOpen(false)}>
                 <i className="menu-icon tf-icons bx bx-home-circle" />
                 <div>Dashboard</div>
+              </Link>
+            </li>
+            <li className={pathname === "/settings" ? "menu-item active" : "menu-item"}>
+              <Link href="/settings" className="menu-link" onClick={() => setMenuOpen(false)}>
+                <i className="menu-icon tf-icons bx bx-cog" />
+                <div>Settings</div>
               </Link>
             </li>
 

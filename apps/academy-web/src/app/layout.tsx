@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import "@forge/design-system/styles.css";
-import { EnvironmentBanner } from "@forge/ui";
+import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,14 +9,11 @@ export const metadata: Metadata = {
   description: "Sprint 1B application shell",
 };
 
-const appEnv = process.env.NEXT_PUBLIC_APP_ENV ?? process.env.APP_ENV ?? "local";
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="forge-theme-light">
       <body>
-        <EnvironmentBanner environment={appEnv} />
-        <main>{children}</main>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

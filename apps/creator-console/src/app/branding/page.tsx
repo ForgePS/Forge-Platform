@@ -43,13 +43,13 @@ function BrandingInner() {
     setLoading(true);
     setError(null);
     try {
-      const row = await apiGet<Branding>(`/api/v1/tenants/${tenantId}/branding`);
+      const row = await apiGet<Branding | null>(`/api/v1/tenants/${tenantId}/branding`);
       setBranding(row);
-      setPrimaryColor(row.primaryColor ?? "");
-      setSecondaryColor(row.secondaryColor ?? "");
-      setAccentColor(row.accentColor ?? "");
-      setEmailSenderName(row.emailSenderName ?? "");
-      setSupportEmail(row.supportEmail ?? "");
+      setPrimaryColor(row?.primaryColor ?? "");
+      setSecondaryColor(row?.secondaryColor ?? "");
+      setAccentColor(row?.accentColor ?? "");
+      setEmailSenderName(row?.emailSenderName ?? "");
+      setSupportEmail(row?.supportEmail ?? "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load branding");
     } finally {
