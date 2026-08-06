@@ -1,6 +1,6 @@
 # Phase 3 Storage evidence index
 
-**Status:** Staging copy + Aurora metadata + presign smoke + **prod-twin remount COMPLETE** — N4/O3 still open  
+**Status:** **EXIT GREEN** (`../../62-producers-p2-phase3-exit.md`) — N4 deferred to Phase 4  
 **Prep:** `../../61-producers-p2-phase3-prep.md`  
 **Freeze:** `storage-inventory-2026-08-06T01-06-44-696Z.json` · bucket `forge-industrial-safety.firebasestorage.app`  
 **Map (staging):** `s3-map-staging-latest.json` → tenant `0882c865-59c2-49a6-ab88-ce6ca89be30c`  
@@ -8,7 +8,8 @@
 **Copy:** `s3-copy-staging-result.json` · reconcile `s3-copy-staging-reconcile.json`  
 **Metadata:** `aurora-document-metadata-result.json` (9077 AVAILABLE on staging)  
 **Presign:** `presign-smoke.json` (3/3 HTTP 200)  
-**Remount:** `s3-remount-prod-twin-result.json` · reconcile `s3-remount-prod-twin-reconcile.json` (9077/9077)
+**Remount:** `s3-remount-prod-twin-result.json` · reconcile `s3-remount-prod-twin-reconcile.json` (9077/9077)  
+**Exit:** `../../62-producers-p2-phase3-exit.md`
 
 | Artifact | Purpose |
 | --- | --- |
@@ -25,3 +26,4 @@
 | `presign-smoke.json` | N3 download smoke (**PASS**) |
 | `s3-remount-prod-twin-result.json` | M4 remount (9057 copied + 20 skipped) |
 | `s3-remount-prod-twin-reconcile.json` | Prod-twin prefix vs map (**PASS**) |
+| Phase 3 exit | `../../62-producers-p2-phase3-exit.md` (**EXIT GREEN**) |

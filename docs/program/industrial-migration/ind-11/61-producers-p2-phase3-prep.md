@@ -1,8 +1,9 @@
 # Producers P2 — Phase 3 Prep Checklist (Storage → S3)
 
 **Date:** 2026-08-05  
-**Status:** Staging S3 copy + Aurora metadata + N3 presign + **M4 prod-twin remount COMPLETE** — N4 URL rewrite / O3 exit still open  
+**Status:** **EXIT GREEN** (`62-producers-p2-phase3-exit.md`) — N4 URL rewrite deferred to Phase 4  
 **Phase 2 exit:** [`60-producers-p2-phase2-exit.md`](60-producers-p2-phase2-exit.md) **GREEN**  
+**Phase 3 exit:** [`62-producers-p2-phase3-exit.md`](62-producers-p2-phase3-exit.md) **GREEN**  
 **Plan:** [`56-producers-p2-execution-plan.md`](56-producers-p2-execution-plan.md)  
 **Foundational plan:** [`../32-file-migration-plan.md`](../32-file-migration-plan.md)  
 **Freeze:** `evidence/p2/03-storage/storage-inventory-2026-08-06T01-06-44-696Z.json`  
@@ -65,7 +66,7 @@
 | N1 | Map inventory rows → `platform_documents` / `platform_document_versions` | **DONE** — staging upsert from S3 map |
 | N2 | Flip / set versions to ready with S3 key + integrity fields | **DONE** — 9077 `AVAILABLE` / `CLEAN` (AV waiver noted in metadata) |
 | N3 | Presigned download smoke: equipment doc, LOTO attachment, certificate | **DONE** — `presign-smoke.json` (3/3 HTTP 200 + AVAILABLE) |
-| N4 | URL rewrite pass for known Firebase permanent URLs in records | PENDING |
+| N4 | URL rewrite pass for known Firebase permanent URLs in records | **DEFERRED** — Phase 4 (see `62` exit gaps) |
 
 ### O. Evidence
 
@@ -73,7 +74,7 @@
 | --- | --- | --- |
 | O1 | Folder `evidence/p2/03-storage/` | **DONE** (scaffold) |
 | O2 | Inventory + copy + metadata result JSON | Inventory + staging copy + Aurora metadata **DONE** |
-| O3 | Phase 3 exit note | PENDING |
+| O3 | Phase 3 exit note | **DONE** — [`62-producers-p2-phase3-exit.md`](62-producers-p2-phase3-exit.md) |
 
 ---
 
@@ -143,9 +144,9 @@ Scripts: `ind11b-p2-storage-inventory-plan.mjs`, `ind11b-p2-run-storage-inventor
 
 ## Immediate next actions
 
-1. URL rewrite pass for Firebase permanent URLs in loaded records (N4) once domain data is on staging (Phase 4).  
-2. Optional: upsert prod-twin `platform_documents` metadata (same as N1/N2, separate approval).  
-3. Draft Phase 3 exit note (O3).
+1. Begin Phase 4 prep / load window when authorized.  
+2. Include N4 Firebase URL rewrite with staging domain parity load.  
+3. Optional: upsert prod-twin `platform_documents` metadata (separate approval).
 
 ## References
 
