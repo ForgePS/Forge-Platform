@@ -108,41 +108,73 @@ export function QrLinksWorkspace({ moduleName }: { moduleName: string }) {
     <section className="ind-ops">
       <header className="ind-ops-header">
         <h1>{moduleName}</h1>
-        <p>Industrial QR links use one-time public tokens. Save the generated image before leaving.</p>
+        <p>
+          Industrial QR links use one-time public tokens. Save the generated image before leaving.
+        </p>
       </header>
-      {error && <p role="alert" className="ind-error">{error}</p>}
+      {error && (
+        <p role="alert" className="ind-error">
+          {error}
+        </p>
+      )}
       {oneTimeToken && (
         <div className="ind-toolbar" role="status">
-          <span>Token ending {oneTimeToken.token.slice(-4)} is available only in this session.</span>
-          <button type="button" onClick={() => void downloadSvg()}>Download SVG</button>
-          <button type="button" onClick={() => setOneTimeToken(null)}>Dismiss token</button>
+          <span>
+            Token ending {oneTimeToken.token.slice(-4)} is available only in this session.
+          </span>
+          <button type="button" onClick={() => void downloadSvg()}>
+            Download SVG
+          </button>
+          <button type="button" onClick={() => setOneTimeToken(null)}>
+            Dismiss token
+          </button>
         </div>
       )}
       {permissions.has("qr.create") && (
         <form className="ind-form" onSubmit={(event) => void create(event)}>
           <label>
             Link name
-            <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input
+              required
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
           </label>
           <label>
             Target type
             <select
               value={form.targetType}
-              onChange={(e) => setForm({ ...form, targetType: e.target.value as typeof form.targetType })}
+              onChange={(e) =>
+                setForm({ ...form, targetType: e.target.value as typeof form.targetType })
+              }
             >
-              {TARGET_TYPES.map((targetType) => <option key={targetType}>{targetType}</option>)}
+              {TARGET_TYPES.map((targetType) => (
+                <option key={targetType}>{targetType}</option>
+              ))}
             </select>
           </label>
           <label>
             Target ID
-            <input required value={form.targetId} onChange={(e) => setForm({ ...form, targetId: e.target.value })} />
+            <input
+              required
+              value={form.targetId}
+              onChange={(e) => setForm({ ...form, targetId: e.target.value })}
+            />
           </label>
           <button type="submit">Create QR link</button>
         </form>
       )}
       <div className="ind-table-wrap">
         <table>
-          <thead><tr><th>Name</th><th>Type</th><th>Token hint</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Token hint</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
           <tbody>
             {items.map((link) => (
               <tr key={link.id}>
@@ -152,10 +184,14 @@ export function QrLinksWorkspace({ moduleName }: { moduleName: string }) {
                 <td>{link.status}</td>
                 <td>
                   {link.status !== "ACTIVE" && permissions.has("qr.activate") && (
-                    <button type="button" onClick={() => void transition(link.id, "ACTIVE")}>Activate</button>
+                    <button type="button" onClick={() => void transition(link.id, "ACTIVE")}>
+                      Activate
+                    </button>
                   )}
                   {link.status !== "REVOKED" && permissions.has("qr.revoke") && (
-                    <button type="button" onClick={() => void transition(link.id, "REVOKED")}>Revoke</button>
+                    <button type="button" onClick={() => void transition(link.id, "REVOKED")}>
+                      Revoke
+                    </button>
                   )}
                 </td>
               </tr>

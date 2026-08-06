@@ -169,8 +169,7 @@ export function OpsModuleWorkspace({
       <header className="ind-ops-header">
         <h1 id="ops-module-title">{moduleName}</h1>
         <p className="ind-muted">
-          AWS candidate module · Production data authority remains Firebase · Flag{" "}
-          {cfg.flagKey}
+          AWS candidate module · Production data authority remains Firebase · Flag {cfg.flagKey}
         </p>
       </header>
 
@@ -238,16 +237,13 @@ export function OpsModuleWorkspace({
             </thead>
             <tbody>
               {items.map((row) => {
-                const title =
-                  String(row[cfg.titleField] ?? row.title ?? row.name ?? row.id ?? "—");
+                const title = String(row[cfg.titleField] ?? row.title ?? row.name ?? row.id ?? "—");
                 return (
                   <tr key={String(row.id)}>
                     <td>{title}</td>
                     <td>{String(row.status ?? "—")}</td>
                     <td>
-                      {row.updatedAt
-                        ? new Date(String(row.updatedAt)).toLocaleString()
-                        : "—"}
+                      {row.updatedAt ? new Date(String(row.updatedAt)).toLocaleString() : "—"}
                     </td>
                   </tr>
                 );
@@ -258,7 +254,11 @@ export function OpsModuleWorkspace({
       )}
 
       {canManage ? (
-        <form className="ind-ops-create" onSubmit={(e) => void onCreate(e)} aria-label="Create record">
+        <form
+          className="ind-ops-create"
+          onSubmit={(e) => void onCreate(e)}
+          aria-label="Create record"
+        >
           <h2>Create</h2>
           {cfg.createFields.map((field) => (
             <label key={field.name}>
@@ -267,9 +267,7 @@ export function OpsModuleWorkspace({
                 type={field.type ?? "text"}
                 required={field.required}
                 value={form[field.name] ?? ""}
-                onChange={(ev) =>
-                  setForm((prev) => ({ ...prev, [field.name]: ev.target.value }))
-                }
+                onChange={(ev) => setForm((prev) => ({ ...prev, [field.name]: ev.target.value }))}
               />
             </label>
           ))}

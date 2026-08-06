@@ -70,14 +70,25 @@ function MigrationDetailInner() {
         subtitle={`${detail.migrationType} · ${detail.source} → ${detail.destination}`}
         actions={<Badge>{detail.status}</Badge>}
       />
-      <FixtureBanner>Fixture migration detail — adapter boundary only; no migration engine calls.</FixtureBanner>
+      <FixtureBanner>
+        Fixture migration detail — adapter boundary only; no migration engine calls.
+      </FixtureBanner>
       <ForgeMetricGrid>
-        <ForgeMetricCard label="Progress" value={detail.progressPercent == null ? "—" : `${detail.progressPercent}%`} />
+        <ForgeMetricCard
+          label="Progress"
+          value={detail.progressPercent == null ? "—" : `${detail.progressPercent}%`}
+        />
         <ForgeMetricCard label="Issues" value={detail.issueCount} />
         <ForgeMetricCard label="Users migrated" value={detail.users.migrated} />
         <ForgeMetricCard label="Users pending" value={detail.users.pending} />
       </ForgeMetricGrid>
-      <div style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))" }}>
+      <div
+        style={{
+          display: "grid",
+          gap: "1rem",
+          gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
+        }}
+      >
         <Card title="Collections / tables">
           <ul>
             {detail.collections.map((c) => (

@@ -18,7 +18,10 @@ export function ForgeTenantSwitcher({
     return <span className="forge-topbar__meta">No tenants</span>;
   }
   return (
-    <label className="forge-topbar__meta" style={{ display: "inline-flex", gap: "0.5rem", alignItems: "center" }}>
+    <label
+      className="forge-topbar__meta"
+      style={{ display: "inline-flex", gap: "0.5rem", alignItems: "center" }}
+    >
       <span>Tenant</span>
       <select
         className="forge-select"
@@ -72,13 +75,7 @@ export function ForgeNotificationMenu({
   disabledReason?: string;
 }) {
   return (
-    <Button
-      type="button"
-      variant="secondary"
-      aria-label={label}
-      title={disabledReason}
-      disabled
-    >
+    <Button type="button" variant="secondary" aria-label={label} title={disabledReason} disabled>
       {label}
       {count > 0 ? ` (${count})` : ""}
     </Button>
@@ -96,7 +93,10 @@ export function ForgeProductSwitcher({
 }) {
   if (products.length === 0) return null;
   return (
-    <label className="forge-topbar__meta" style={{ display: "inline-flex", gap: "0.5rem", alignItems: "center" }}>
+    <label
+      className="forge-topbar__meta"
+      style={{ display: "inline-flex", gap: "0.5rem", alignItems: "center" }}
+    >
       <span>Product</span>
       <select
         className="forge-select"

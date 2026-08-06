@@ -27,7 +27,10 @@ export function IndustrialDashboard() {
   });
 
   const available = nav.filter((n) => n.available && n.code !== "CORE");
-  const featured = available.length > 0 ? available.slice(0, 12) : INDUSTRIAL_MODULE_REGISTRY.filter((m) => m.code !== "CORE").slice(0, 12);
+  const featured =
+    available.length > 0
+      ? available.slice(0, 12)
+      : INDUSTRIAL_MODULE_REGISTRY.filter((m) => m.code !== "CORE").slice(0, 12);
 
   return (
     <div className="ind-content">
@@ -96,7 +99,8 @@ export function IndustrialDashboard() {
             "migrationStatus" in mod
               ? String((mod as { migrationStatus: string }).migrationStatus)
               : "FOUNDATION";
-          const availableFlag = "available" in mod ? Boolean((mod as { available?: boolean }).available) : true;
+          const availableFlag =
+            "available" in mod ? Boolean((mod as { available?: boolean }).available) : true;
           return (
             <div className="col-sm-6 col-lg-4 col-xl-3" key={code}>
               {availableFlag ? (

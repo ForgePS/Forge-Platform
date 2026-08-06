@@ -74,10 +74,7 @@ function DashboardInner() {
     };
 
     try {
-      const [healthResult, readyResult] = await Promise.allSettled([
-        fetchHealth(),
-        fetchReady(),
-      ]);
+      const [healthResult, readyResult] = await Promise.allSettled([fetchHealth(), fetchReady()]);
       if (healthResult.status === "fulfilled") next.health = healthResult.value;
       if (readyResult.status === "fulfilled") next.ready = readyResult.value;
 
@@ -92,9 +89,7 @@ function DashboardInner() {
             listInvitations({ tenantId }),
             listMemberships(tenantId),
             apiGet<User[]>(`/api/v1/tenants/${tenantId}/users`),
-            apiGet<AuditEvent[]>(
-              `/api/v1/tenants/${tenantId}/audit-events?page=1&pageSize=5`,
-            ),
+            apiGet<AuditEvent[]>(`/api/v1/tenants/${tenantId}/audit-events?page=1&pageSize=5`),
             apiGet<Subscription[]>(`/api/v1/tenants/${tenantId}/subscriptions`),
           ]);
 

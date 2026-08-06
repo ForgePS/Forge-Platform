@@ -75,18 +75,14 @@ export function buildIndustrialNavigation(input: {
         : Boolean(input.flags[flagKey]);
 
     const requiredPermissions =
-      entry.code === "CORE"
-        ? ["industrial.access"]
-        : ["industrial.access"];
+      entry.code === "CORE" ? ["industrial.access"] : ["industrial.access"];
 
     const hasPerms = requiredPermissions.every((p) => perms.has(p));
     const migrationStatus: string = entry.migrationStatus;
     const available =
       hasPerms &&
       (migrationStatus === "FOUNDATION_ONLY" ||
-        (awsEnabled &&
-          migrationStatus !== "LEGACY_FIREBASE" &&
-          migrationStatus !== "DISABLED"));
+        (awsEnabled && migrationStatus !== "LEGACY_FIREBASE" && migrationStatus !== "DISABLED"));
 
     return {
       code: entry.code,

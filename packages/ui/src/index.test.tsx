@@ -28,7 +28,9 @@ describe("ui accessibility", () => {
     render(
       <ForgeAppShell
         brand="Forge"
-        groups={[{ id: "g", label: "Overview", items: [{ id: "home", label: "Home", route: "/" }] }]}
+        groups={[
+          { id: "g", label: "Overview", items: [{ id: "home", label: "Home", route: "/" }] },
+        ]}
         activePath="/"
         renderLink={({ href, children, className }) => (
           <a href={href} className={className}>

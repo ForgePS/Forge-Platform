@@ -146,9 +146,7 @@ function ShellBody({ children }: { children: ReactNode }) {
   }
 
   if (loading) {
-    return (
-      <GateCard title="Forge Industrial Safety" body="Loading your session…" />
-    );
+    return <GateCard title="Forge Industrial Safety" body="Loading your session…" />;
   }
 
   if (error || !me) {
@@ -158,7 +156,11 @@ function ShellBody({ children }: { children: ReactNode }) {
         body="Sign in is required to continue."
         muted={error ? error : "Unauthenticated"}
       >
-        <button type="button" className="btn btn-primary d-grid w-100" onClick={() => void loginWithCognito()}>
+        <button
+          type="button"
+          className="btn btn-primary d-grid w-100"
+          onClick={() => void loginWithCognito()}
+        >
           Sign in
         </button>
       </GateCard>
@@ -168,7 +170,11 @@ function ShellBody({ children }: { children: ReactNode }) {
   if (!me.tenantId) {
     const selectable = me.tenants.filter((t) => t.selectable);
     return (
-      <GateCard title="Select a tenant" body="Choose a tenant to continue." muted="No tenant selected">
+      <GateCard
+        title="Select a tenant"
+        body="Choose a tenant to continue."
+        muted="No tenant selected"
+      >
         <div className="d-grid gap-2">
           {selectable.map((t) => (
             <button
@@ -186,9 +192,7 @@ function ShellBody({ children }: { children: ReactNode }) {
   }
 
   if (!entitled) {
-    const alternates = me.tenants.filter(
-      (t) => t.selectable && t.tenantId !== me.tenantId,
-    );
+    const alternates = me.tenants.filter((t) => t.selectable && t.tenantId !== me.tenantId);
     return (
       <GateCard
         title="Product not entitled"
@@ -210,7 +214,11 @@ function ShellBody({ children }: { children: ReactNode }) {
             ))}
           </div>
         ) : null}
-        <button type="button" className="btn btn-outline-secondary d-grid w-100" onClick={() => void signOut()}>
+        <button
+          type="button"
+          className="btn btn-outline-secondary d-grid w-100"
+          onClick={() => void signOut()}
+        >
           Sign out
         </button>
       </GateCard>
@@ -293,7 +301,9 @@ function ShellBody({ children }: { children: ReactNode }) {
                         aria-current={active ? "page" : undefined}
                         onClick={() => setMenuOpen(false)}
                       >
-                        <i className={`menu-icon tf-icons bx ${iconForModule(item.code, item.group)}`} />
+                        <i
+                          className={`menu-icon tf-icons bx ${iconForModule(item.code, item.group)}`}
+                        />
                         <div>{label}</div>
                       </Link>
                     </li>
@@ -330,7 +340,11 @@ function ShellBody({ children }: { children: ReactNode }) {
                 <li className="nav-item navbar-dropdown dropdown-user dropdown">
                   <span className="nav-link hide-arrow d-flex align-items-center gap-2">
                     <span className="fw-semibold d-none d-md-inline">{me.userId.slice(0, 8)}…</span>
-                    <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => void signOut()}>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => void signOut()}
+                    >
                       Sign out
                     </button>
                   </span>

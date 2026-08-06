@@ -161,7 +161,9 @@ export function LotoWorkspace({ moduleName }: { moduleName: string }) {
   async function loadPrint() {
     if (!selectedId || !canPrint) return;
     try {
-      const data = await apiGet<{ html: string }>(`/api/v1/industrial/loto/${selectedId}/printable`);
+      const data = await apiGet<{ html: string }>(
+        `/api/v1/industrial/loto/${selectedId}/printable`,
+      );
       setPrintHtml(data.html);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Printable failed");

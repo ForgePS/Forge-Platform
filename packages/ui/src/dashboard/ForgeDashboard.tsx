@@ -12,8 +12,7 @@ export function ForgeMetricCard({
   hint?: string;
   loading?: boolean;
 }) {
-  const display =
-    loading ? "…" : value === null || value === undefined ? "—" : value;
+  const display = loading ? "…" : value === null || value === undefined ? "—" : value;
   return (
     <article className="forge-metric-card">
       <p className="forge-metric-card__label">{label}</p>
@@ -40,7 +39,10 @@ export function ForgeStatusCard({
   return (
     <article className="forge-metric-card">
       <p className="forge-metric-card__label">{title}</p>
-      <p className="forge-metric-card__value" style={{ fontSize: "1.1rem", display: "flex", gap: "0.5rem", alignItems: "center" }}>
+      <p
+        className="forge-metric-card__value"
+        style={{ fontSize: "1.1rem", display: "flex", gap: "0.5rem", alignItems: "center" }}
+      >
         <span className={`forge-status-dot forge-status-dot--${tone}`} aria-hidden />
         {status}
       </p>

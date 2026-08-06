@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import {
-  Badge,
-  FixtureBanner,
-  ForgeDataTable,
-  ForgePageHeader,
-  LoadingIndicator,
-} from "@forge/ui";
+import { Badge, FixtureBanner, ForgeDataTable, ForgePageHeader, LoadingIndicator } from "@forge/ui";
 import { getMigrationStatusService } from "@/lib/migrations/mock-migration.service";
 import type { MigrationSummary } from "@/lib/migrations/migration.types";
 
@@ -51,7 +45,9 @@ export default function MigrationsPage() {
             id: "tenant",
             header: "Tenant",
             cell: (row) => (
-              <Link href={`/migrations/detail?id=${encodeURIComponent(row.id)}`}>{row.tenantDisplayName}</Link>
+              <Link href={`/migrations/detail?id=${encodeURIComponent(row.id)}`}>
+                {row.tenantDisplayName}
+              </Link>
             ),
           },
           { id: "source", header: "Source", cell: (row) => row.source },

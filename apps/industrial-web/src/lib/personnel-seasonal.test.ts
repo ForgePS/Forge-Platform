@@ -30,7 +30,9 @@ describe("seasonal lifecycle UI gates", () => {
   });
 
   it("maps lifecycle fields to badges", () => {
-    expect(seasonalLifecycleBadge({ personStatus: "PRE_HIRE", employmentType: "SEASONAL" })).toEqual({
+    expect(
+      seasonalLifecycleBadge({ personStatus: "PRE_HIRE", employmentType: "SEASONAL" }),
+    ).toEqual({
       label: "SEASONAL PRE-HIRE",
       kind: "pre-hire",
     });
@@ -38,9 +40,11 @@ describe("seasonal lifecycle UI gates", () => {
       label: "Active seasonal",
       kind: "active-seasonal",
     });
-    expect(seasonalLifecycleBadge({ personStatus: "ACTIVE", employmentType: "FULL_TIME" })).toEqual({
-      label: "Full-time",
-      kind: "full-time",
-    });
+    expect(seasonalLifecycleBadge({ personStatus: "ACTIVE", employmentType: "FULL_TIME" })).toEqual(
+      {
+        label: "Full-time",
+        kind: "full-time",
+      },
+    );
   });
 });

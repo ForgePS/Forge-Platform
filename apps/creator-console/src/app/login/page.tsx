@@ -85,15 +85,16 @@ export default function LoginPage() {
       {!loading && me ? (
         <div className={styles.success}>
           Authenticated as <span className={styles.mono}>{me.userId}</span>.{" "}
-          <Link href="/select-tenant/">Select tenant</Link> or <Link href="/">go to dashboard</Link>.
+          <Link href="/select-tenant/">Select tenant</Link> or <Link href="/">go to dashboard</Link>
+          .
         </div>
       ) : null}
 
       <div className={styles.panel}>
         <h2>Sign in</h2>
         <p className={styles.muted}>
-          You will be redirected to Cognito to enter your email and password. The console stores only
-          the Cognito <code>access_token</code> JWT — never JWKS public keys.
+          You will be redirected to Cognito to enter your email and password. The console stores
+          only the Cognito <code>access_token</code> JWT — never JWKS public keys.
         </p>
         <button
           className={styles.button}
@@ -109,7 +110,8 @@ export default function LoginPage() {
         <div className={styles.panel}>
           <h2>Dev principal (local / emulator only)</h2>
           <p className={styles.muted}>
-            Sends <code>x-forge-dev-principal</code>. Unavailable in deployed Creator Console builds.
+            Sends <code>x-forge-dev-principal</code>. Unavailable in deployed Creator Console
+            builds.
           </p>
           {parsedEnv ? (
             <p className={styles.muted}>

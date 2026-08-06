@@ -28,9 +28,7 @@ export function EmergencyResponseWorkspace({ moduleName }: { moduleName: string 
       );
       setError("");
     } catch (e) {
-      setError(
-        e instanceof ApiError ? e.message : "Unable to load emergency response records",
-      );
+      setError(e instanceof ApiError ? e.message : "Unable to load emergency response records");
     }
   }
 

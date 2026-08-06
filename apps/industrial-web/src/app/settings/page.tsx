@@ -38,7 +38,8 @@ export default function IndustrialSettingsPage() {
             <div className="card-body">
               <h2 className="h6">Reports</h2>
               <p className="small text-muted">
-                Operational reporting landing — see <Link href="/modules/reporting">Reporting</Link>.
+                Operational reporting landing — see <Link href="/modules/reporting">Reporting</Link>
+                .
               </p>
             </div>
           </div>

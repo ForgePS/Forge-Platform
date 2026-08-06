@@ -149,11 +149,7 @@ function metricEntries(bag: Record<string, number> | undefined): Array<[string, 
   return Object.entries(bag ?? {}).sort((a, b) => b[1] - a[1]);
 }
 
-export function SeasonalWorkforceWorkspace({
-  onGoToRoster,
-}: {
-  onGoToRoster?: () => void;
-}) {
+export function SeasonalWorkforceWorkspace({ onGoToRoster }: { onGoToRoster?: () => void }) {
   const { me } = useAuth();
   const permissions = new Set(me?.permissions ?? []);
   const canView =
@@ -220,7 +216,10 @@ export function SeasonalWorkforceWorkspace({
     expectedEndDate: "",
     ...emptyAssignment,
   });
-  const [assignmentForm, setAssignmentForm] = useState({ ...emptyAssignment, assignmentStatus: "UNASSIGNED" });
+  const [assignmentForm, setAssignmentForm] = useState({
+    ...emptyAssignment,
+    assignmentStatus: "UNASSIGNED",
+  });
   const [ftStatus, setFtStatus] = useState<(typeof FT_STATUSES)[number]>("RECOMMENDED");
   const [ftNotes, setFtNotes] = useState("");
   const [convertForm, setConvertForm] = useState({
@@ -234,7 +233,7 @@ export function SeasonalWorkforceWorkspace({
   const seasonalEnabled = isSeasonalLifecycleEnabled(bootstrap?.flags);
   const personnelModuleOn = Boolean(
     bootstrap?.industrialEnabled &&
-      bootstrap?.modules.find((m) => m.code === "PERSONNEL")?.awsEnabled,
+    bootstrap?.modules.find((m) => m.code === "PERSONNEL")?.awsEnabled,
   );
   const ready = Boolean(bootstrap && canView && personnelModuleOn && seasonalEnabled);
 
@@ -368,8 +367,9 @@ export function SeasonalWorkforceWorkspace({
         shiftName: String(eng.shiftName ?? ""),
       });
       setFtStatus(
-        (String(eng.fullTimeConsiderationStatus ?? "NOT_EVALUATED") as (typeof FT_STATUSES)[number]) ||
-          "NOT_EVALUATED",
+        (String(
+          eng.fullTimeConsiderationStatus ?? "NOT_EVALUATED",
+        ) as (typeof FT_STATUSES)[number]) || "NOT_EVALUATED",
       );
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Failed to load lifecycle");
@@ -475,7 +475,13 @@ export function SeasonalWorkforceWorkspace({
         instructorName: opt(sessionForm.instructorName),
         status: "SCHEDULED",
       });
-      setSessionForm((f) => ({ ...f, name: "", location: "", sessionDate: "", instructorName: "" }));
+      setSessionForm((f) => ({
+        ...f,
+        name: "",
+        location: "",
+        sessionDate: "",
+        instructorName: "",
+      }));
       await loadOrientation(seasonId);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Create session failed");
@@ -743,7 +749,11 @@ export function SeasonalWorkforceWorkspace({
       </div>
 
       {canManage ? (
-        <form className="ind-ops-create" onSubmit={(e) => void onCreateSeason(e)} aria-label="Create season">
+        <form
+          className="ind-ops-create"
+          onSubmit={(e) => void onCreateSeason(e)}
+          aria-label="Create season"
+        >
           <h2>Create Season</h2>
           <label>
             Name *
@@ -959,10 +969,14 @@ export function SeasonalWorkforceWorkspace({
                             setPrehire((f) => ({
                               ...f,
                               existingPersonnelId: hit.personnelId,
-                              firstName: f.firstName || String(hit.displayName ?? "").split(" ")[0] || "",
+                              firstName:
+                                f.firstName || String(hit.displayName ?? "").split(" ")[0] || "",
                               lastName:
                                 f.lastName ||
-                                String(hit.displayName ?? "").split(" ").slice(1).join(" ") ||
+                                String(hit.displayName ?? "")
+                                  .split(" ")
+                                  .slice(1)
+                                  .join(" ") ||
                                 "",
                             }))
                           }
@@ -1124,7 +1138,8 @@ export function SeasonalWorkforceWorkspace({
                 {sessionDetail.attendees.map((a) => (
                   <li key={a.id}>
                     <span>
-                      {a.displayName ?? a.personnelId} · {a.attendanceStatus} / {a.orientationStatus}
+                      {a.displayName ?? a.personnelId} · {a.attendanceStatus} /{" "}
+                      {a.orientationStatus}
                     </span>
                     {canManage ? (
                       <span className="ind-seasonal-attendee-actions">
@@ -1134,7 +1149,10 @@ export function SeasonalWorkforceWorkspace({
                         <button type="button" onClick={() => void patchAttendance(a.id, "NO_SHOW")}>
                           No-show
                         </button>
-                        <button type="button" onClick={() => void completeOrientation(a.personnelId)}>
+                        <button
+                          type="button"
+                          onClick={() => void completeOrientation(a.personnelId)}
+                        >
                           Complete orientation
                         </button>
                       </span>
@@ -1176,10 +1194,17 @@ export function SeasonalWorkforceWorkspace({
                     workers.map((w) => {
                       const badge = seasonalLifecycleBadge(w);
                       return (
-                        <tr key={w.engagementId} className={selectedId === w.personnelId ? "is-selected" : undefined}>
-                          <td>{w.displayName ?? `${w.firstName ?? ""} ${w.lastName ?? ""}`.trim()}</td>
+                        <tr
+                          key={w.engagementId}
+                          className={selectedId === w.personnelId ? "is-selected" : undefined}
+                        >
                           <td>
-                            <span className={`ind-seasonal-badge ind-seasonal-badge--${badge.kind}`}>
+                            {w.displayName ?? `${w.firstName ?? ""} ${w.lastName ?? ""}`.trim()}
+                          </td>
+                          <td>
+                            <span
+                              className={`ind-seasonal-badge ind-seasonal-badge--${badge.kind}`}
+                            >
                               {badge.label}
                             </span>
                           </td>
@@ -1216,7 +1241,9 @@ export function SeasonalWorkforceWorkspace({
               {(() => {
                 const badge = seasonalLifecycleBadge({
                   personStatus: String(eng?.personStatus ?? selectedWorker?.personStatus ?? ""),
-                  employmentType: String(eng?.employmentType ?? selectedWorker?.employmentType ?? ""),
+                  employmentType: String(
+                    eng?.employmentType ?? selectedWorker?.employmentType ?? "",
+                  ),
                 });
                 return (
                   <p>
@@ -1251,7 +1278,10 @@ export function SeasonalWorkforceWorkspace({
                     </label>
                     <label>
                       Notes
-                      <input value={hiringNotes} onChange={(ev) => setHiringNotes(ev.target.value)} />
+                      <input
+                        value={hiringNotes}
+                        onChange={(ev) => setHiringNotes(ev.target.value)}
+                      />
                     </label>
                     <button type="button" onClick={() => void submitHiringDecision()}>
                       Apply hiring decision
@@ -1429,9 +1459,7 @@ export function SeasonalWorkforceWorkspace({
                     {(history?.events ?? []).map((ev) => (
                       <li key={String(ev.id)}>
                         {String(ev.eventType ?? ev.action ?? "event")} ·{" "}
-                        {ev.effectiveAt
-                          ? new Date(String(ev.effectiveAt)).toLocaleString()
-                          : "—"}
+                        {ev.effectiveAt ? new Date(String(ev.effectiveAt)).toLocaleString() : "—"}
                       </li>
                     ))}
                   </ul>
@@ -1445,7 +1473,12 @@ export function SeasonalWorkforceWorkspace({
       ) : null}
 
       {confirm ? (
-        <div className="ind-seasonal-confirm" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+        <div
+          className="ind-seasonal-confirm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-title"
+        >
           <div className="ind-seasonal-confirm-panel">
             <h2 id="confirm-title">
               {confirm === "activate"

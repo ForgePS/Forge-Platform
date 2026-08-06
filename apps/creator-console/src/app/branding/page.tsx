@@ -67,13 +67,18 @@ function BrandingInner() {
     setSubmitting(true);
     setError(null);
     try {
-      const updated = await apiSend<Branding>(`/api/v1/tenants/${tenantId}/branding`, "PUT", {
-        primaryColor: primaryColor.trim() || null,
-        secondaryColor: secondaryColor.trim() || null,
-        accentColor: accentColor.trim() || null,
-        emailSenderName: emailSenderName.trim() || null,
-        supportEmail: supportEmail.trim() || null,
-      }, { idempotencyKey: crypto.randomUUID() });
+      const updated = await apiSend<Branding>(
+        `/api/v1/tenants/${tenantId}/branding`,
+        "PUT",
+        {
+          primaryColor: primaryColor.trim() || null,
+          secondaryColor: secondaryColor.trim() || null,
+          accentColor: accentColor.trim() || null,
+          emailSenderName: emailSenderName.trim() || null,
+          supportEmail: supportEmail.trim() || null,
+        },
+        { idempotencyKey: crypto.randomUUID() },
+      );
       setBranding(updated);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save branding");

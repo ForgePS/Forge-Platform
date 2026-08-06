@@ -341,12 +341,7 @@ export function createMembership(
   },
   options?: ApiRequestOptions,
 ): Promise<Membership> {
-  return apiSend<Membership>(
-    `/api/v1/tenants/${tenantId}/memberships`,
-    "POST",
-    payload,
-    options,
-  );
+  return apiSend<Membership>(`/api/v1/tenants/${tenantId}/memberships`, "POST", payload, options);
 }
 
 export function suspendMembership(

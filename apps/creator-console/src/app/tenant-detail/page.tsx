@@ -162,7 +162,12 @@ function TenantDetailInner() {
             </dl>
 
             <div className={styles.actions} style={{ marginTop: "1rem" }}>
-              <button className={styles.button} type="button" disabled={busy} onClick={() => void activate()}>
+              <button
+                className={styles.button}
+                type="button"
+                disabled={busy}
+                onClick={() => void activate()}
+              >
                 Activate
               </button>
             </div>

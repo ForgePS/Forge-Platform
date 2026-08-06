@@ -40,21 +40,43 @@ export function DocumentsWorkspace({ moduleName }: { moduleName: string }) {
     <section className="ind-ops">
       <header className="ind-ops-header">
         <h1>{moduleName}</h1>
-        <p>Tenant-scoped shared documents with immutable versions, malware status, and short-lived delivery.</p>
+        <p>
+          Tenant-scoped shared documents with immutable versions, malware status, and short-lived
+          delivery.
+        </p>
       </header>
-      {error && <p role="alert" className="ind-error">{error}</p>}
+      {error && (
+        <p role="alert" className="ind-error">
+          {error}
+        </p>
+      )}
       {permissions.has("documents.upload") && (
         <form className="ind-form" onSubmit={(event) => void create(event)}>
-          <label>Document name<input required value={name} onChange={(event) => setName(event.target.value)} /></label>
+          <label>
+            Document name
+            <input required value={name} onChange={(event) => setName(event.target.value)} />
+          </label>
           <button type="submit">Create document</button>
         </form>
       )}
       <div className="ind-table-wrap">
         <table>
-          <thead><tr><th>Name</th><th>Category</th><th>Status</th></tr></thead>
-          <tbody>{items.map((item) => (
-            <tr key={item.id}><td>{item.name}</td><td>{item.category ?? "—"}</td><td>{item.status}</td></tr>
-          ))}</tbody>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item) => (
+              <tr key={item.id}>
+                <td>{item.name}</td>
+                <td>{item.category ?? "—"}</td>
+                <td>{item.status}</td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
     </section>

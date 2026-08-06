@@ -63,11 +63,7 @@ export function PersonnelWorkspace({ moduleName }: { moduleName: string }) {
             aria-selected={view === "seasonal"}
             className={view === "seasonal" ? "is-active" : undefined}
             onClick={() => setView("seasonal")}
-            title={
-              seasonalOn
-                ? undefined
-                : "Seasonal lifecycle flag is off for this tenant"
-            }
+            title={seasonalOn ? undefined : "Seasonal lifecycle flag is off for this tenant"}
           >
             Seasonal Workforce
           </button>

@@ -24,7 +24,11 @@ export const TENANT_ADMIN_NAV_GROUPS: ForgeNavigationGroup[] = [
       },
       { id: "studio-email-templates", label: "Email templates", route: "/studio/email-templates" },
       { id: "studio-business-hours", label: "Business hours", route: "/studio/business-hours" },
-      { id: "studio-holiday-calendar", label: "Holiday calendar", route: "/studio/holiday-calendar" },
+      {
+        id: "studio-holiday-calendar",
+        label: "Holiday calendar",
+        route: "/studio/holiday-calendar",
+      },
       { id: "studio-facilities", label: "Facilities", route: "/studio/facilities" },
       { id: "studio-locations", label: "Locations", route: "/studio/locations" },
       { id: "studio-roles", label: "Roles", route: "/studio/roles" },

@@ -9,11 +9,11 @@ Forge Platform adopts the **Sneat Free Bootstrap 5 Admin Template** (ThemeSelect
 
 ## What we take / what we do not
 
-| Included | Not included |
-|---|---|
-| Color palette (primary `#696cff`, body `#f5f5f9`, semantics) | Bootstrap 5 CSS/JS |
-| Typography (Public Sans) | jQuery / template HTML pages |
-| Radius, elevation, menu/navbar dimensions | Icon packs wholesale |
+| Included                                                      | Not included                 |
+| ------------------------------------------------------------- | ---------------------------- |
+| Color palette (primary `#696cff`, body `#f5f5f9`, semantics)  | Bootstrap 5 CSS/JS           |
+| Typography (Public Sans)                                      | jQuery / template HTML pages |
+| Radius, elevation, menu/navbar dimensions                     | Icon packs wholesale         |
 | Conceptual sidebar + content shell patterns as CSS primitives | Vendor PHP/Blade/asset trees |
 
 Apps consume CSS variables and React components only. The download under `Downloads/sneat-1.0.0` is a **reference**; it is not copied into the monorepo runtime.
@@ -53,7 +53,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
 
 ## Theme classes
 

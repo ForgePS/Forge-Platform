@@ -76,10 +76,14 @@ export default function TenantsPage() {
       const key = normalizeTenantKey(tenantKey);
       const normalizedSlug = normalizeSlug(slugTouched ? slug : tenantKey);
       if (key.length < 2) {
-        throw new Error("Tenant key must be at least 2 characters (lowercase letters, numbers, - or _)");
+        throw new Error(
+          "Tenant key must be at least 2 characters (lowercase letters, numbers, - or _)",
+        );
       }
       if (normalizedSlug.length < 2) {
-        throw new Error("Slug must be at least 2 characters (lowercase letters, numbers, or - only)");
+        throw new Error(
+          "Slug must be at least 2 characters (lowercase letters, numbers, or - only)",
+        );
       }
       await apiSend<Tenant>("/api/v1/platform/tenants", "POST", {
         tenantKey: key,
@@ -182,9 +186,7 @@ export default function TenantsPage() {
       <div className={styles.panel}>
         <h2>All tenants</h2>
         {loading ? <p className={styles.muted}>Loading…</p> : null}
-        {!loading && tenants.length === 0 ? (
-          <p className={styles.muted}>No tenants yet.</p>
-        ) : null}
+        {!loading && tenants.length === 0 ? <p className={styles.muted}>No tenants yet.</p> : null}
         {tenants.length > 0 ? (
           <table className={styles.table}>
             <thead>

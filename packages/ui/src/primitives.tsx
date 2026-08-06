@@ -1,4 +1,10 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type {
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from "react";
 
 export function Button({
   children,
@@ -18,7 +24,11 @@ export function Button({
           ? "forge-btn forge-btn--outline"
           : "forge-btn";
   return (
-    <button type="button" className={[variantClass, className].filter(Boolean).join(" ")} {...props}>
+    <button
+      type="button"
+      className={[variantClass, className].filter(Boolean).join(" ")}
+      {...props}
+    >
       {children}
     </button>
   );
@@ -229,5 +239,7 @@ export function ForgeSkeleton({
   height?: string;
   width?: string;
 }) {
-  return <span className="forge-skeleton" style={{ display: "block", height, width }} aria-hidden />;
+  return (
+    <span className="forge-skeleton" style={{ display: "block", height, width }} aria-hidden />
+  );
 }
