@@ -22,3 +22,10 @@ cdk.context.local.json
 *.tsbuildinfo
 .vscode/
 .idea/
+
+.forge-*
+.import-*
+.tmp-*
+.ai-*
+.neris-*
+.s1-*

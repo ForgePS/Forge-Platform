@@ -1,8 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import {
-  type Database,
-  withTenantTransaction,
-} from "@forge/database";
+import { type Database, withTenantTransaction } from "@forge/database";
 import { ForgeError } from "@forge/errors";
 import { DOMAIN_EVENT_TYPES } from "@forge/events";
 import {
@@ -240,13 +237,9 @@ export class ImportsService {
             correlationId,
             data,
           });
-          const updated = await this.repo.updateJobStatus(
-            tx,
-            job,
-            next,
-            principal.userId,
-            { currentStage: "MAPPED" },
-          );
+          const updated = await this.repo.updateJobStatus(tx, job, next, principal.userId, {
+            currentStage: "MAPPED",
+          });
           await this.outbox.write(tx, {
             tenantId,
             aggregateType: "import_job",
@@ -321,8 +314,7 @@ export class ImportsService {
             throw new ForgeError("IMPORT_MAPPING_INVALID", "The mapping was not found.");
           }
           const remaining = await this.repo.countMappings(tx, tenantId, jobId);
-          const nextStatus =
-            remaining === 0 ? ("READY_FOR_MAPPING" as const) : ("MAPPED" as const);
+          const nextStatus = remaining === 0 ? ("READY_FOR_MAPPING" as const) : ("MAPPED" as const);
           const updated = await this.repo.updateJobStatus(tx, job, nextStatus, principal.userId);
           await this.outbox.write(tx, {
             tenantId,
@@ -346,11 +338,7 @@ export class ImportsService {
     principal: ForgePrincipal,
     jobId: string,
     correlationId: string,
-    action:
-      | "cancel"
-      | "submit_for_approval"
-      | "approve"
-      | "reject",
+    action: "cancel" | "submit_for_approval" | "approve" | "reject",
     auditAction: string,
     eventType: string,
   ) {
@@ -399,13 +387,7 @@ export class ImportsService {
               : action === "reject"
                 ? { approvedAt: null, approvedBy: null }
                 : {};
-          const row = await this.repo.updateJobStatus(
-            tx,
-            job,
-            next,
-            principal.userId,
-            extras,
-          );
+          const row = await this.repo.updateJobStatus(tx, job, next, principal.userId, extras);
           await this.outbox.write(tx, {
             tenantId,
             aggregateType: "import_job",

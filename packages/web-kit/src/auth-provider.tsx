@@ -145,7 +145,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOutAll,
       hasPermission,
     }),
-    [me, loading, error, refresh, loginWithCognito, logout, chooseTenant, signOutAll, hasPermission],
+    [
+      me,
+      loading,
+      error,
+      refresh,
+      loginWithCognito,
+      logout,
+      chooseTenant,
+      signOutAll,
+      hasPermission,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

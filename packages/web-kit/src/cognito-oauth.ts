@@ -1,8 +1,4 @@
-import {
-  getRefreshToken,
-  setBearerToken,
-  setRefreshToken,
-} from "./auth-storage.js";
+import { getRefreshToken, setBearerToken, setRefreshToken } from "./auth-storage.js";
 
 const PKCE_VERIFIER_KEY = "forge-oauth-pkce-verifier";
 const OAUTH_STATE_KEY = "forge-oauth-state";

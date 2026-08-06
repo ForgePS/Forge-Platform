@@ -32,14 +32,7 @@ export type ZipValidationResult =
       inventory?: ZipInventoryItem[];
     };
 
-const SUPPORTED_EXTENSIONS = new Set([
-  ".csv",
-  ".json",
-  ".xlsx",
-  ".xml",
-  ".txt",
-  ".md",
-]);
+const SUPPORTED_EXTENSIONS = new Set([".csv", ".json", ".xlsx", ".xml", ".txt", ".md"]);
 
 function listZipCentralDirectory(bytes: Uint8Array): ZipInventoryItem[] {
   const buf = Buffer.from(bytes);
@@ -74,7 +67,10 @@ function extractStoredFile(bytes: Uint8Array, pathName: string): Buffer | null {
     const nameLen = buf.readUInt16LE(offset + 26);
     const extraLen = buf.readUInt16LE(offset + 28);
     const nameStart = offset + 30;
-    const name = buf.subarray(nameStart, nameStart + nameLen).toString("utf8").replace(/\\/g, "/");
+    const name = buf
+      .subarray(nameStart, nameStart + nameLen)
+      .toString("utf8")
+      .replace(/\\/g, "/");
     const dataStart = nameStart + nameLen + extraLen;
     const data = buf.subarray(dataStart, dataStart + compSize);
     if (name === pathName) {
@@ -120,7 +116,11 @@ export function validateZipMigrationBundle(input: {
   }
   const inventory = listZipCentralDirectory(input.bytes);
   if (inventory.length === 0) {
-    return { ok: false, code: "IMPORT_ZIP_INVALID", message: "ZIP archive inventory is empty or corrupt" };
+    return {
+      ok: false,
+      code: "IMPORT_ZIP_INVALID",
+      message: "ZIP archive inventory is empty or corrupt",
+    };
   }
 
   const allowed = input.allowedExtensions ?? SUPPORTED_EXTENSIONS;

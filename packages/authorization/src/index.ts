@@ -1,7 +1,4 @@
-import {
-  READABLE_SUBSCRIPTION_STATUSES,
-  WRITABLE_SUBSCRIPTION_STATUSES,
-} from "@forge/contracts";
+import { READABLE_SUBSCRIPTION_STATUSES, WRITABLE_SUBSCRIPTION_STATUSES } from "@forge/contracts";
 import type { ForgePrincipal, TenantOperationalState } from "@forge/tenant-context";
 
 export type PermissionEffect = "ALLOW" | "DENY";
@@ -87,11 +84,7 @@ export function evaluateAuthorization(input: AuthorizationInput): AuthorizationD
         reasonCode: tenantOperationalState.reasonCode ?? "TENANT_OR_SUBSCRIPTION_INACTIVE",
       };
     }
-  } else if (
-    !subscriptionReadable &&
-    !input.allowWhenSuspended &&
-    !principal.isPlatformAdmin
-  ) {
+  } else if (!subscriptionReadable && !input.allowWhenSuspended && !principal.isPlatformAdmin) {
     return {
       allowed: false,
       reasonCode: tenantOperationalState.reasonCode ?? "SUBSCRIPTION_INACTIVE",

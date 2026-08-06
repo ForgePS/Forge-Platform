@@ -72,7 +72,6 @@ export type ForgeErrorCode =
   | "IMPORT_SCANNER_PROVIDER_UNAVAILABLE"
   | "IMPORT_SCANNER_RESPONSE_INVALID";
 
-
 export class ForgeError extends Error {
   readonly code: ForgeErrorCode;
   readonly statusCode: number;
@@ -82,7 +81,12 @@ export class ForgeError extends Error {
   constructor(
     code: ForgeErrorCode,
     message: string,
-    options?: { statusCode?: number; details?: unknown[]; cause?: unknown; exposeMessage?: boolean },
+    options?: {
+      statusCode?: number;
+      details?: unknown[];
+      cause?: unknown;
+      exposeMessage?: boolean;
+    },
   ) {
     super(message, options?.cause ? { cause: options.cause } : undefined);
     this.name = "ForgeError";

@@ -1,4 +1,4 @@
-node_modules
+﻿node_modules
 dist
 .next
 coverage
@@ -6,3 +6,20 @@ pnpm-lock.yaml
 *.min.js
 .turbo
 cdk.out
+cdk.out.*
+**/cdk.out/**
+**/cdk.out.*/**
+
+.forge-*
+.import-*
+.tmp-*
+.ai-*
+.neris-*
+.s1-*
+.s8-*
+docs/testing/evidence/
+docs/forge-experience/evidence/
+**/out/**
+**/playwright-report/**
+**/test-results/**
+*.pdf

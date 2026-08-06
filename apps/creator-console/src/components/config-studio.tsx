@@ -72,8 +72,7 @@ export function ConfigStudioWorkspace({
   const tenantId = useTenantId();
   const { hasPermission } = useAuth();
   const canUpdate =
-    hasPermission("platform.configuration.update") ||
-    hasPermission("tenant.configuration.update");
+    hasPermission("platform.configuration.update") || hasPermission("tenant.configuration.update");
   const canPublish =
     hasPermission("platform.configuration.publish") ||
     hasPermission("platform.configuration.update") ||
@@ -322,7 +321,12 @@ export function ConfigStudioWorkspace({
         <div className={styles.actions}>
           {canUpdate ? (
             <>
-              <button type="button" className={styles.button} disabled={busy} onClick={() => void createDraft()}>
+              <button
+                type="button"
+                className={styles.button}
+                disabled={busy}
+                onClick={() => void createDraft()}
+              >
                 New draft
               </button>
               <button
@@ -390,7 +394,11 @@ export function ConfigStudioWorkspace({
       <div className={styles.panel}>
         <h2>Compare versions</h2>
         <div className={styles.actions}>
-          <select value={compareFrom} onChange={(e) => setCompareFrom(e.target.value)} aria-label="Compare from">
+          <select
+            value={compareFrom}
+            onChange={(e) => setCompareFrom(e.target.value)}
+            aria-label="Compare from"
+          >
             <option value="">From…</option>
             {versions.map((v) => (
               <option key={v.id} value={v.id}>
@@ -398,7 +406,11 @@ export function ConfigStudioWorkspace({
               </option>
             ))}
           </select>
-          <select value={compareTo} onChange={(e) => setCompareTo(e.target.value)} aria-label="Compare to">
+          <select
+            value={compareTo}
+            onChange={(e) => setCompareTo(e.target.value)}
+            aria-label="Compare to"
+          >
             <option value="">To…</option>
             {versions.map((v) => (
               <option key={v.id} value={v.id}>
@@ -406,7 +418,12 @@ export function ConfigStudioWorkspace({
               </option>
             ))}
           </select>
-          <button type="button" className={styles.buttonSecondary} disabled={busy} onClick={() => void runCompare()}>
+          <button
+            type="button"
+            className={styles.buttonSecondary}
+            disabled={busy}
+            onClick={() => void runCompare()}
+          >
             Compare
           </button>
         </div>
@@ -427,13 +444,7 @@ export function ConfigStudioWorkspace({
   );
 }
 
-export function ConfigStudioPage({
-  namespace,
-  title,
-}: {
-  namespace?: string;
-  title?: string;
-}) {
+export function ConfigStudioPage({ namespace, title }: { namespace?: string; title?: string }) {
   return (
     <Suspense
       fallback={

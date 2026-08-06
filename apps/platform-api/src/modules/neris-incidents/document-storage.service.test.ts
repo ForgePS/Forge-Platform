@@ -4,11 +4,7 @@ import { DocumentStorageService } from "./document-storage.service.js";
 describe("DocumentStorageService object keys", () => {
   it("scopes object keys by tenant and incident", () => {
     const service = Object.create(DocumentStorageService.prototype) as DocumentStorageService;
-    const key = service.buildObjectKey(
-      "tenant-a",
-      "incident-b",
-      "uuid-file.pdf",
-    );
+    const key = service.buildObjectKey("tenant-a", "incident-b", "uuid-file.pdf");
     expect(key).toBe("tenants/tenant-a/incidents/incident-b/documents/uuid-file.pdf");
     expect(key).not.toContain("tenant-b");
   });

@@ -161,7 +161,11 @@ function OnboardingInner() {
                 />
               </div>
               <div className={styles.actions}>
-                <button className={styles.buttonSecondary} type="submit" disabled={loading || !canManage}>
+                <button
+                  className={styles.buttonSecondary}
+                  type="submit"
+                  disabled={loading || !canManage}
+                >
                   {loading ? "Saving…" : "Complete step"}
                 </button>
               </div>

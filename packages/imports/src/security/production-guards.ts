@@ -30,10 +30,7 @@ export function assertScannerAllowedForEnvironment(input: {
   appEnv: string;
   providerKey: string;
 }): { ok: true } | { ok: false; code: "IMPORT_SCANNER_PROVIDER_UNAVAILABLE"; message: string } {
-  if (
-    isProductionLikeAppEnv(input.appEnv) &&
-    isReferenceMalwareProvider(input.providerKey)
-  ) {
+  if (isProductionLikeAppEnv(input.appEnv) && isReferenceMalwareProvider(input.providerKey)) {
     return {
       ok: false,
       code: "IMPORT_SCANNER_PROVIDER_UNAVAILABLE",
@@ -51,12 +48,7 @@ export function assertScannerAllowedForEnvironment(input: {
  * to CANCELLED (or remains PROCESSING until safe cancel boundary).
  */
 export type StuckImportJobState =
-  | "SCANNING"
-  | "VALIDATING"
-  | "READY_FOR_PREVIEW"
-  | "QUEUED"
-  | "PROCESSING"
-  | "ROLLBACK_PENDING";
+  "SCANNING" | "VALIDATING" | "READY_FOR_PREVIEW" | "QUEUED" | "PROCESSING" | "ROLLBACK_PENDING";
 
 export const STUCK_JOB_THRESHOLDS_MS: Record<StuckImportJobState, number> = {
   SCANNING: 15 * 60_000,
@@ -74,8 +66,7 @@ export function isStuckImportJob(input: {
 }): boolean {
   const threshold = STUCK_JOB_THRESHOLDS_MS[input.status as StuckImportJobState];
   if (!threshold) return false;
-  const updated =
-    input.updatedAt instanceof Date ? input.updatedAt : new Date(input.updatedAt);
+  const updated = input.updatedAt instanceof Date ? input.updatedAt : new Date(input.updatedAt);
   const now = input.now ?? new Date();
   return now.getTime() - updated.getTime() >= threshold;
 }

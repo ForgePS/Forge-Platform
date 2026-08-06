@@ -230,8 +230,7 @@ export class OnboardingService {
                   ? { customerType: data.customerType, templateCode: template?.code ?? null }
                   : {},
             validationErrorsJson: [],
-            completedByUserId:
-              status === "COMPLETED" ? principal.userId : null,
+            completedByUserId: status === "COMPLETED" ? principal.userId : null,
             completedAt: status === "COMPLETED" ? now : null,
             createdAt: now,
             updatedAt: now,
@@ -379,7 +378,8 @@ export class OnboardingService {
             throw new ForgeError("BAD_REQUEST", "At least one module must be selected");
           }
           for (const moduleCode of moduleCodes) {
-            const isCore = template?.modules.find((mod) => mod.code === moduleCode)?.isCore ?? false;
+            const isCore =
+              template?.modules.find((mod) => mod.code === moduleCode)?.isCore ?? false;
             await this.entitlements.putModule(
               tenantId,
               moduleCode,
@@ -554,10 +554,17 @@ export class OnboardingService {
         if (!current) {
           throw new ForgeError("NOT_FOUND", "Onboarding session not found");
         }
-        const version = this.assertSessionVersion(current.recordVersion, expectedVersion, tenantId, sessionId);
+        const version = this.assertSessionVersion(
+          current.recordVersion,
+          expectedVersion,
+          tenantId,
+          sessionId,
+        );
 
         const stepDef = ONBOARDING_STEPS.find((step) => step.key === parsed.stepKey);
-        const nextStepNumber = stepDef ? Math.min(stepDef.number + 1, ONBOARDING_STEPS.length) : current.currentStep;
+        const nextStepNumber = stepDef
+          ? Math.min(stepDef.number + 1, ONBOARDING_STEPS.length)
+          : current.currentStep;
 
         const [updatedSession] = await tx
           .update(customerOnboardingSessions)
@@ -628,7 +635,12 @@ export class OnboardingService {
     principal: ForgePrincipal,
     expectedVersion: ExpectedVersion,
     tenantIdHint?: string,
-  ): Promise<OnboardingSessionView & { activationErrors: ActivationError[]; tenant: Awaited<ReturnType<TenantsService["getById"]>> }> {
+  ): Promise<
+    OnboardingSessionView & {
+      activationErrors: ActivationError[];
+      tenant: Awaited<ReturnType<TenantsService["getById"]>>;
+    }
+  > {
     const resolved = await this.resolveSession(sessionId, tenantIdHint);
     const { session, steps } = resolved;
     const tenantId = session.tenantId;
@@ -704,7 +716,12 @@ export class OnboardingService {
         if (!current) {
           throw new ForgeError("NOT_FOUND", "Onboarding session not found");
         }
-        const version = this.assertSessionVersion(current.recordVersion, expectedVersion, tenantId, sessionId);
+        const version = this.assertSessionVersion(
+          current.recordVersion,
+          expectedVersion,
+          tenantId,
+          sessionId,
+        );
 
         const [updatedSession] = await tx
           .update(customerOnboardingSessions)
@@ -1107,12 +1124,15 @@ export class OnboardingService {
     if (session.templateCode) {
       return findStarterTemplate(session.templateCode) ?? null;
     }
-    return findStarterTemplateForCustomerType(
-      session.customerType as StarterTemplate["customerType"],
-    ) ?? null;
+    return (
+      findStarterTemplateForCustomerType(session.customerType as StarterTemplate["customerType"]) ??
+      null
+    );
   }
 
-  private readSessionData(session: typeof customerOnboardingSessions.$inferSelect): OnboardingSessionData {
+  private readSessionData(
+    session: typeof customerOnboardingSessions.$inferSelect,
+  ): OnboardingSessionData {
     return (session.sessionDataJson ?? {}) as OnboardingSessionData;
   }
 
@@ -1132,9 +1152,7 @@ export class OnboardingService {
     }
     const incompletePrior = steps.some(
       (step) =>
-        step.stepNumber < target.number &&
-        step.status !== "COMPLETED" &&
-        step.status !== "SKIPPED",
+        step.stepNumber < target.number && step.status !== "COMPLETED" && step.status !== "SKIPPED",
     );
     if (incompletePrior) {
       throw new ForgeError("CONFLICT", "Complete prior onboarding steps first");

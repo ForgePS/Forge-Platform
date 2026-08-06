@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import {
-  filterBySearch,
-  ListControls,
-  paginate,
-  sortByField,
-} from "@/components/list-controls";
+import { filterBySearch, ListControls, paginate, sortByField } from "@/components/list-controls";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
 import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
@@ -46,9 +41,7 @@ function SubscriptionsInner() {
     try {
       const [rows, currentRow] = await Promise.all([
         apiGet<Subscription[]>(`/api/v1/tenants/${tenantId}/subscriptions`),
-        apiGet<Subscription>(`/api/v1/tenants/${tenantId}/subscriptions/current`).catch(
-          () => null,
-        ),
+        apiGet<Subscription>(`/api/v1/tenants/${tenantId}/subscriptions/current`).catch(() => null),
       ]);
       setItems(rows);
       setCurrent(currentRow);
@@ -107,9 +100,7 @@ function SubscriptionsInner() {
       <div className={styles.panel}>
         <h2>Current subscription</h2>
         {loading ? <p className={styles.muted}>Loading…</p> : null}
-        {!loading && !current ? (
-          <p className={styles.muted}>No current subscription.</p>
-        ) : null}
+        {!loading && !current ? <p className={styles.muted}>No current subscription.</p> : null}
         {current ? (
           <dl className={styles.dl}>
             <dt>ID</dt>

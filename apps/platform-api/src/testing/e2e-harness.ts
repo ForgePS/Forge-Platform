@@ -119,11 +119,13 @@ export class E2eHarness {
     };
   }
 
-  async createTenant(options: {
-    productCodes?: string[];
-    moduleCodes?: string[];
-    subscriptionStatus?: string;
-  } = {}): Promise<TenantFixture> {
+  async createTenant(
+    options: {
+      productCodes?: string[];
+      moduleCodes?: string[];
+      subscriptionStatus?: string;
+    } = {},
+  ): Promise<TenantFixture> {
     const tenantId = createId();
     const tenantKey = `e2e-${tenantId.replace(/-/g, "")}`;
     const now = new Date();
@@ -449,7 +451,10 @@ export class E2eHarness {
         .select({ id: idempotencyRecords.id })
         .from(idempotencyRecords)
         .where(
-          and(eq(idempotencyRecords.tenantId, tenantId), eq(idempotencyRecords.idempotencyKey, key)),
+          and(
+            eq(idempotencyRecords.tenantId, tenantId),
+            eq(idempotencyRecords.idempotencyKey, key),
+          ),
         ),
     );
     return rows.length;
@@ -514,9 +519,7 @@ export class E2eHarness {
   }
 
   simulatedCognitoSubject(email: string): string {
-    const digest = createHash("sha256")
-      .update(`local-pool:${email.toLowerCase()}`)
-      .digest("hex");
+    const digest = createHash("sha256").update(`local-pool:${email.toLowerCase()}`).digest("hex");
     return [
       digest.slice(0, 8),
       digest.slice(8, 12),

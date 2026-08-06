@@ -46,7 +46,10 @@ export async function verifyCognitoAccessToken(
 
   const audience = claims.client_id ?? claims.aud;
   const audiences = Array.isArray(audience) ? audience : audience ? [audience] : [];
-  const allowedClients = options.clientId.split(",").map((c) => c.trim()).filter(Boolean);
+  const allowedClients = options.clientId
+    .split(",")
+    .map((c) => c.trim())
+    .filter(Boolean);
   if (!allowedClients.some((id) => audiences.includes(id))) {
     throw new Error("Token audience/client mismatch");
   }

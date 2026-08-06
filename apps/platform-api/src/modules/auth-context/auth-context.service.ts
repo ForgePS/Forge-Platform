@@ -360,72 +360,77 @@ export class AuthContextService {
   }
 
   private async loadPermissions(tenantId: string, userId: string) {
-    return withTenantTransaction(this.db, tenantId, async (tx) => {
-      const membership = await tx.query.userTenantMemberships.findFirst({
-        where: and(
-          eq(userTenantMemberships.tenantId, tenantId),
-          eq(userTenantMemberships.userId, userId),
-          eq(userTenantMemberships.status, "ACTIVE"),
-        ),
-      });
+    return withTenantTransaction(
+      this.db,
+      tenantId,
+      async (tx) => {
+        const membership = await tx.query.userTenantMemberships.findFirst({
+          where: and(
+            eq(userTenantMemberships.tenantId, tenantId),
+            eq(userTenantMemberships.userId, userId),
+            eq(userTenantMemberships.status, "ACTIVE"),
+          ),
+        });
 
-      let roleRows: Array<{ roleId: string; roleCode: string }> = [];
-      if (membership) {
-        roleRows = await tx
-          .select({
-            roleId: membershipRoleAssignments.roleId,
-            roleCode: roles.code,
-          })
-          .from(membershipRoleAssignments)
-          .innerJoin(roles, eq(roles.id, membershipRoleAssignments.roleId))
-          .where(
-            and(
-              eq(membershipRoleAssignments.membershipId, membership.id),
-              eq(membershipRoleAssignments.status, "ACTIVE"),
-              isNull(membershipRoleAssignments.revokedAt),
-            ),
-          );
-      } else {
-        // Fall back to the Sprint 1D user_role_assignments projection.
-        roleRows = await tx
-          .select({
-            roleId: userRoleAssignments.roleId,
-            roleCode: roles.code,
-          })
-          .from(userRoleAssignments)
-          .innerJoin(roles, eq(roles.id, userRoleAssignments.roleId))
-          .where(
-            and(
-              eq(userRoleAssignments.tenantId, tenantId),
-              eq(userRoleAssignments.userId, userId),
-              isNull(userRoleAssignments.revokedAt),
-            ),
-          );
-      }
+        let roleRows: Array<{ roleId: string; roleCode: string }> = [];
+        if (membership) {
+          roleRows = await tx
+            .select({
+              roleId: membershipRoleAssignments.roleId,
+              roleCode: roles.code,
+            })
+            .from(membershipRoleAssignments)
+            .innerJoin(roles, eq(roles.id, membershipRoleAssignments.roleId))
+            .where(
+              and(
+                eq(membershipRoleAssignments.membershipId, membership.id),
+                eq(membershipRoleAssignments.status, "ACTIVE"),
+                isNull(membershipRoleAssignments.revokedAt),
+              ),
+            );
+        } else {
+          // Fall back to the Sprint 1D user_role_assignments projection.
+          roleRows = await tx
+            .select({
+              roleId: userRoleAssignments.roleId,
+              roleCode: roles.code,
+            })
+            .from(userRoleAssignments)
+            .innerJoin(roles, eq(roles.id, userRoleAssignments.roleId))
+            .where(
+              and(
+                eq(userRoleAssignments.tenantId, tenantId),
+                eq(userRoleAssignments.userId, userId),
+                isNull(userRoleAssignments.revokedAt),
+              ),
+            );
+        }
 
-      const roleCodes = new Set(roleRows.map((a) => a.roleCode));
-      const roleIds = roleRows.map((a) => a.roleId);
-      const permissionCodes = new Set<string>();
+        const roleCodes = new Set(roleRows.map((a) => a.roleCode));
+        const roleIds = roleRows.map((a) => a.roleId);
+        const permissionCodes = new Set<string>();
 
-      if (roleIds.length > 0) {
-        const perms = await tx
-          .select({
-            code: permissions.code,
-            effect: rolePermissions.effect,
-          })
-          .from(rolePermissions)
-          .innerJoin(permissions, eq(permissions.id, rolePermissions.permissionId))
-          .where(inArray(rolePermissions.roleId, roleIds));
+        if (roleIds.length > 0) {
+          const perms = await tx
+            .select({
+              code: permissions.code,
+              effect: rolePermissions.effect,
+            })
+            .from(rolePermissions)
+            .innerJoin(permissions, eq(permissions.id, rolePermissions.permissionId))
+            .where(inArray(rolePermissions.roleId, roleIds));
 
-        for (const p of perms) {
-          if (p.effect !== "DENY") {
-            permissionCodes.add(p.code);
+          for (const p of perms) {
+            if (p.effect !== "DENY") {
+              permissionCodes.add(p.code);
+            }
           }
         }
-      }
 
-      return { roleCodes, permissionCodes };
-    }, userId);
+        return { roleCodes, permissionCodes };
+      },
+      userId,
+    );
   }
 
   private async loadEntitlements(tenantId: string, membershipId: string | null) {

@@ -74,7 +74,11 @@ export async function submitApproveFinalize(
   incidentId: string,
 ): Promise<void> {
   let incident = await getIncident(page, tenantId, incidentId);
-  if (incident.status === "DRAFT" || incident.status === "IN_PROGRESS" || incident.status === "RETURNED_FOR_CORRECTION") {
+  if (
+    incident.status === "DRAFT" ||
+    incident.status === "IN_PROGRESS" ||
+    incident.status === "RETURNED_FOR_CORRECTION"
+  ) {
     const submit = await submitIncidentRaw(page, tenantId, incidentId, {
       note: "E2E specialty closeout submit",
     });
@@ -116,8 +120,14 @@ export async function listAudit(
     return [];
   }
   const data = unwrapData<unknown>(res.json);
-  if (Array.isArray(data)) return data as Array<{ action?: string; after?: Record<string, unknown> }>;
-  if (data && typeof data === "object" && "items" in data && Array.isArray((data as { items: unknown }).items)) {
+  if (Array.isArray(data))
+    return data as Array<{ action?: string; after?: Record<string, unknown> }>;
+  if (
+    data &&
+    typeof data === "object" &&
+    "items" in data &&
+    Array.isArray((data as { items: unknown }).items)
+  ) {
     return (data as { items: Array<{ action?: string }> }).items;
   }
   return [];
@@ -141,7 +151,9 @@ export async function validateIncident(
   page: Page,
   tenantId: string,
   incidentId: string,
-): Promise<{ findings: Array<{ technicalReference?: string; severity?: string; message?: string }> }> {
+): Promise<{
+  findings: Array<{ technicalReference?: string; severity?: string; message?: string }>;
+}> {
   const res = await apiRequest(
     page,
     "POST",
