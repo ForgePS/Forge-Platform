@@ -49,7 +49,7 @@ Phase 1 checklist: [`57-producers-p2-phase1-prep.md`](57-producers-p2-phase1-pre
 | Creator Cognito → Tenant A entitlements | DONE (dev only) |
 | Firebase production SoT | Unchanged |
 | Cognito Firebase Auth import | **DONE** Phase 2 for Producers freeze roster (6) — see `60-producers-p2-phase2-exit.md` |
-| Storage → S3 blobs | **DONE** staging (9077 objects / ~15.38 GiB reconciled); Aurora metadata still PENDING_UPLOAD until N-package |
+| Storage → S3 blobs | **DONE** staging (9077 objects / ~15.38 GiB reconciled); Aurora metadata **DONE** (9077 `AVAILABLE` on staging) |
 | Production / staging-prod tenant | **DONE** Phase 1 — see `58-producers-p2-phase1-exit.md` |
 
 P1 smoke evidence: `evidence/wave3/api-smoke-tenant-a.json`, `browser-smoke-extra-modules.json`.
@@ -274,9 +274,9 @@ Role: Program Owner
 
 ## Immediate next action
 
-1. Wire staging S3 keys into Aurora document metadata (N1/N2).  
-2. Presigned download smoke for equipment / LOTO / certificate (N3).  
-3. Decide prod-twin remount (M4) vs staging-only until Phase 5.  
+1. Wire staging S3 keys into Aurora document metadata (N1/N2). **DONE**  
+2. Presigned download smoke for equipment / LOTO / certificate (N3). **DONE**  
+3. Decide prod-twin remount (M4) vs staging-only until Phase 5. / N4 URL rewrite after domain load.  
 
 Phase 3 prep: [`61-producers-p2-phase3-prep.md`](61-producers-p2-phase3-prep.md).
 

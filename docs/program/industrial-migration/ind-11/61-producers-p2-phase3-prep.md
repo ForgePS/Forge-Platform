@@ -1,12 +1,14 @@
 # Producers P2 — Phase 3 Prep Checklist (Storage → S3)
 
 **Date:** 2026-08-05  
-**Status:** Staging S3 **copy COMPLETE** (M2/M3 green) — Aurora metadata / presign / URL rewrite (N) still open; prod-twin copy (M4) pending  
+**Status:** Staging S3 copy + Aurora metadata + **N3 presign smoke COMPLETE** — N4 URL rewrite / M4 prod-twin / O3 exit still open  
 **Phase 2 exit:** [`60-producers-p2-phase2-exit.md`](60-producers-p2-phase2-exit.md) **GREEN**  
 **Plan:** [`56-producers-p2-execution-plan.md`](56-producers-p2-execution-plan.md)  
 **Foundational plan:** [`../32-file-migration-plan.md`](../32-file-migration-plan.md)  
 **Freeze:** `evidence/p2/03-storage/storage-inventory-2026-08-06T01-06-44-696Z.json`  
-**Copy:** `evidence/p2/03-storage/s3-copy-staging-result.json` · reconcile `s3-copy-staging-reconcile.json`
+**Copy:** `evidence/p2/03-storage/s3-copy-staging-result.json` · reconcile `s3-copy-staging-reconcile.json`  
+**Metadata:** `evidence/p2/03-storage/aurora-document-metadata-result.json` (9077 AVAILABLE)  
+**Presign:** `evidence/p2/03-storage/presign-smoke.json`
 
 ## Locked targets
 
@@ -59,9 +61,9 @@
 
 | # | Task | Status |
 | --- | --- | --- |
-| N1 | Map inventory rows → `industrial_documents` / attachment metadata | PENDING |
-| N2 | Flip `PENDING_UPLOAD` → ready with S3 key + integrity fields | PENDING |
-| N3 | Presigned download smoke: equipment doc, LOTO attachment, certificate | PENDING |
+| N1 | Map inventory rows → `platform_documents` / `platform_document_versions` | **DONE** — staging upsert from S3 map |
+| N2 | Flip / set versions to ready with S3 key + integrity fields | **DONE** — 9077 `AVAILABLE` / `CLEAN` (AV waiver noted in metadata) |
+| N3 | Presigned download smoke: equipment doc, LOTO attachment, certificate | **DONE** — `presign-smoke.json` (3/3 HTTP 200 + AVAILABLE) |
 | N4 | URL rewrite pass for known Firebase permanent URLs in records | PENDING |
 
 ### O. Evidence
@@ -69,7 +71,7 @@
 | # | Task | Status |
 | --- | --- | --- |
 | O1 | Folder `evidence/p2/03-storage/` | **DONE** (scaffold) |
-| O2 | Inventory + copy + metadata result JSON | Inventory + staging copy **DONE**; Aurora metadata PENDING |
+| O2 | Inventory + copy + metadata result JSON | Inventory + staging copy + Aurora metadata **DONE** |
 | O3 | Phase 3 exit note | PENDING |
 
 ---
@@ -140,9 +142,9 @@ Scripts: `ind11b-p2-storage-inventory-plan.mjs`, `ind11b-p2-run-storage-inventor
 
 ## Immediate next actions
 
-1. Phase 3 **N** package: map inventory → Aurora document metadata + flip `PENDING_UPLOAD`.  
-2. Presigned download smoke (equipment / LOTO / certificate).  
-3. Optionally remount same bytes onto prod-twin keys (M4) after staging metadata green.
+1. URL rewrite pass for Firebase permanent URLs in loaded records (N4) once domain data is on staging (Phase 4).  
+2. Optionally remount same bytes onto prod-twin keys (M4) after N3 green.  
+3. Draft Phase 3 exit note (O3) when N4/M4 policy is decided.
 
 ## References
 
