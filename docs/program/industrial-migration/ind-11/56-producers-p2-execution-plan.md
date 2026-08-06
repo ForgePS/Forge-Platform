@@ -10,7 +10,8 @@
 **Phase 1 exit:** [`58-producers-p2-phase1-exit.md`](58-producers-p2-phase1-exit.md)  
 **Phase 2 exit:** [`60-producers-p2-phase2-exit.md`](60-producers-p2-phase2-exit.md)  
 **Phase 3 prep:** [`61-producers-p2-phase3-prep.md`](61-producers-p2-phase3-prep.md)  
-**Phase 3 exit:** [`62-producers-p2-phase3-exit.md`](62-producers-p2-phase3-exit.md) **GREEN** (N4 deferred)
+**Phase 3 exit:** [`62-producers-p2-phase3-exit.md`](62-producers-p2-phase3-exit.md) **GREEN** (N4 deferred)  
+**Phase 4 prep:** [`63-producers-p2-phase4-prep.md`](63-producers-p2-phase4-prep.md)
 
 ## Goal
 
@@ -276,7 +277,7 @@ Role: Program Owner
 ## Immediate next action
 
 1. Phase 3 Storage exit is **GREEN** (`62`) — N4 URL rewrite deferred to Phase 4.  
-2. Confirm Phase 4 entry with Producers lead (parity / freeze window).  
+2. Phase 4 prep is ready (`63`) — sign `evidence/p2/04-parity/APPROVE-PRODUCERS-PHASE4-LOAD.md` before any staging domain reload.  
 3. Optional: prod-twin Aurora document metadata upsert (separate approval).  
 
 Phase 3 prep: [`61-producers-p2-phase3-prep.md`](61-producers-p2-phase3-prep.md).

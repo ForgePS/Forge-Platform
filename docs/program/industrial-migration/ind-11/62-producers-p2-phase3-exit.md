@@ -78,8 +78,9 @@
 Phase 4 (**final Producers data load and parity**) may start when:
 
 1. This Phase 3 exit remains green  
-2. Operator confirms Phase 4 load window / freeze expectations  
-3. N4 is scheduled as part of Stage 4 domain load or explicit follow-on  
+2. Phase 4 prep reviewed (`63-producers-p2-phase4-prep.md`)  
+3. `APPROVE-PRODUCERS-PHASE4-LOAD.md` signed  
+4. Operator confirms **“begin Phase 4 staging load”**  
 
 **Fail-closed:** Do not disable Firebase Storage, announce hostname as production, or flip SoT until Phase 5/6.
 
