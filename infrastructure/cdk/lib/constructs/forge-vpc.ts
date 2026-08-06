@@ -58,9 +58,7 @@ export class ForgeVpc extends Construct {
           enforceSSL: true,
           removalPolicy: cdk.RemovalPolicy.DESTROY,
           autoDeleteObjects: true,
-          lifecycleRules: [
-            { expiration: cdk.Duration.days(config.retention.securityLogsDays) },
-          ],
+          lifecycleRules: [{ expiration: cdk.Duration.days(config.retention.securityLogsDays) }],
         });
         this.vpc.addFlowLog("FlowLog", {
           destination: ec2.FlowLogDestination.toS3(this.flowLogBucket),

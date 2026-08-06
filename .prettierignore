@@ -23,3 +23,6 @@ docs/forge-experience/evidence/
 **/playwright-report/**
 **/test-results/**
 *.pdf
+
+me.json
+me-body.json

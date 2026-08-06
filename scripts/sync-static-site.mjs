@@ -153,8 +153,7 @@ function resolveRmsBuildEnv(environment) {
   }
 
   if (!buildEnv.NEXT_PUBLIC_APP_URL) {
-    const appDomain =
-      resolveExport("ForgeFrontend-RmsDomain") ?? process.env.FORGE_RMS_APP_DOMAIN;
+    const appDomain = resolveExport("ForgeFrontend-RmsDomain") ?? process.env.FORGE_RMS_APP_DOMAIN;
     const appUrl = toHttpsOrigin(appDomain);
     if (appUrl) {
       buildEnv.NEXT_PUBLIC_APP_URL = appUrl;
@@ -189,8 +188,7 @@ function resolveRmsBuildEnv(environment) {
   }
 
   if (!buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN) {
-    const domain =
-      resolveExport("ForgeIdentity-CognitoDomain") ?? process.env.FORGE_COGNITO_DOMAIN;
+    const domain = resolveExport("ForgeIdentity-CognitoDomain") ?? process.env.FORGE_COGNITO_DOMAIN;
     if (domain) {
       buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN = domain;
       console.log(`Resolved NEXT_PUBLIC_COGNITO_DOMAIN=${domain}`);
@@ -288,8 +286,7 @@ if (!existsSync(outPath)) {
 }
 
 const bucket =
-  process.env[envKeyForApp(app, "BUCKET")] ??
-  resolveExport(`${appConfig.stackExportPrefix}Bucket`);
+  process.env[envKeyForApp(app, "BUCKET")] ?? resolveExport(`${appConfig.stackExportPrefix}Bucket`);
 const distributionId =
   process.env[envKeyForApp(app, "DISTRIBUTION_ID")] ??
   resolveExport(`${appConfig.stackExportPrefix}DistributionId`);
@@ -309,14 +306,7 @@ if (distributionId) {
   // shell:false avoids PowerShell globbing/eating of `/*`.
   const invalidation = spawnSync(
     "aws",
-    [
-      "cloudfront",
-      "create-invalidation",
-      "--distribution-id",
-      distributionId,
-      "--paths",
-      "/*",
-    ],
+    ["cloudfront", "create-invalidation", "--distribution-id", distributionId, "--paths", "/*"],
     { encoding: "utf8", env: process.env, shell: false, stdio: "inherit" },
   );
   if (invalidation.status !== 0) {

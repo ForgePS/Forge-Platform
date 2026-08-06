@@ -147,7 +147,8 @@ export class ForgeEcs extends Construct {
       alb: this.alb,
       allowedBrowserOrigins: props.browserOrigins,
     });
-    const publicApiUrl = props.publicApiUrl ?? `https://${this.apiHttps.distribution.distributionDomainName}`;
+    const publicApiUrl =
+      props.publicApiUrl ?? `https://${this.apiHttps.distribution.distributionDomainName}`;
 
     if (props.enableWaf) {
       this.webAcl = new wafv2.CfnWebACL(this, "AlbWebAcl", {

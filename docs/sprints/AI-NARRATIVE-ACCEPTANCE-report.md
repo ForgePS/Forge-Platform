@@ -95,12 +95,12 @@ Stub acceptance behavior verified: deterministic schema, missing-field reporting
 
 ## Deployed API for acceptance
 
-| Item                | Value                                                            |
-| ------------------- | ---------------------------------------------------------------- |
-| Final API task def  | `forge-development-ecs-platform-api:25`                          |
-| Image               | `.../forge-development-ecr-platformapi:ai-accept-20260727185000` |
-| Worker              | Still `:19` (Phase 4 CAD worker unchanged)                       |
-| Health after deploy | `200 healthy`                                                    |
+| Item                | Value                                                      |
+| ------------------- | ---------------------------------------------------------- |
+| Final API task def  | `forge-development-ecs-platform-api:25`                    |
+| Image               | ECR platform-api image tag ai-accept (deployed 2026-07-27) |
+| Worker              | Still `:19` (Phase 4 CAD worker unchanged)                 |
+| Health after deploy | `200 healthy`                                              |
 
 ## Live E2E results (synthetic AI tenant, stub)
 

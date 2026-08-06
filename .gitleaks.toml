@@ -1,0 +1,22 @@
+# Gitleaks config for Forge Platform CI.
+# Keep allowlist narrow; prefer remediating real findings over broad ignores.
+
+title = "Forge Platform"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known false positives in docs and local tooling dumps"
+paths = [
+  '''(?i)\.forge-.*''',
+  '''(?i)\.import-.*''',
+  '''(?i)\.neris-.*''',
+  '''(?i)\.ai-.*''',
+  '''(?i)docs/testing/evidence/.*''',
+  '''(?i)docs/forge-experience/evidence/.*''',
+]
+
+[[allowlist.regexes]]
+description = "ECR image repository:tag pairs documented in sprint reports"
+regex = '''forge-development-ecr-[a-z0-9-]+:[A-Za-z0-9._-]+'''
