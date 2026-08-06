@@ -1,10 +1,11 @@
 # Producers P2 — Phase 3 Prep Checklist (Storage → S3)
 
 **Date:** 2026-08-05  
-**Status:** PREP ONLY — no Firebase Storage live inventory and no S3 copy until inventory approval + AV approach are signed  
+**Status:** Inventory freeze **COMPLETE** — S3 copy blocked until K5 signed  
 **Phase 2 exit:** [`60-producers-p2-phase2-exit.md`](60-producers-p2-phase2-exit.md) **GREEN**  
 **Plan:** [`56-producers-p2-execution-plan.md`](56-producers-p2-execution-plan.md)  
-**Foundational plan:** [`../32-file-migration-plan.md`](../32-file-migration-plan.md)
+**Foundational plan:** [`../32-file-migration-plan.md`](../32-file-migration-plan.md)  
+**Freeze:** `evidence/p2/03-storage/storage-inventory-2026-08-06T01-06-44-696Z.json`
 
 ## Locked targets
 
@@ -30,25 +31,25 @@
 | --- | --- | --- |
 | K1 | Phase 2 exit remains green | **DONE** (`60`) |
 | K2 | Pilot auth already authorizes Storage→S3 for Producers | **DONE** (Phase 0 signed) |
-| K3 | Choose AV approach: production scanner **or** time-boxed waiver | PENDING |
-| K4 | Sign read-only Storage inventory approval | PENDING — `evidence/p2/03-storage/APPROVE-PRODUCERS-STORAGE-INVENTORY.md` |
-| K5 | Sign S3 copy approval (staging first) after inventory freeze | PENDING |
+| K3 | Choose AV approach: production scanner **or** time-boxed waiver | **DONE** — Option B waiver → `av-approach-decision.md` (expires 2026-09-05) |
+| K4 | Sign read-only Storage inventory approval | **DONE** — `APPROVE-PRODUCERS-STORAGE-INVENTORY.md` |
+| K5 | Sign S3 copy approval (staging first) after inventory freeze | PENDING — `APPROVE-PRODUCERS-STORAGE-COPY.md` |
 
 ### L. Read-only Storage inventory
 
 | # | Task | Status |
 | --- | --- | --- |
-| L1 | Tooling: list Producers-scoped Storage objects (path prefixes / metadata rules) | PENDING |
-| L2 | Capture object path, size, contentType, md5/crc, updated time | PENDING |
-| L3 | Classify categories (LOTO, equipment, certificates, general docs, QR images, other) | PENDING |
-| L4 | Produce freeze `storage-inventory-<date>.json` + count/size summary | PENDING |
-| L5 | Exception list: zero-byte, missing contentType, orphan paths, unscoped objects | PENDING |
+| L1 | Tooling: list Producers-scoped Storage objects (path prefixes / metadata rules) | **DONE** — `scripts/ind11b-p2-run-storage-inventory.mjs` |
+| L2 | Capture object path, size, contentType, md5/crc, updated time | **DONE** |
+| L3 | Classify categories (LOTO, equipment, certificates, general docs, QR images, other) | **DONE** — see freeze summary |
+| L4 | Produce freeze `storage-inventory-<date>.json` + count/size summary | **DONE** — 9077 objects / 16 516 836 986 bytes; `truncated: false` |
+| L5 | Exception list: zero-byte, missing contentType, orphan paths, unscoped objects | **DONE** — 0 / 0 / 0 / 0 Producers exceptions; 15 non-Producers skipped |
 
 ### M. S3 copy (staging first)
 
 | # | Task | Status |
 | --- | --- | --- |
-| M1 | Dry-run key map Storage path → S3 key for prod-twin **or** staging tenant | PENDING |
+| M1 | Dry-run key map Storage path → S3 key for prod-twin **or** staging tenant | **DONE** — staging map, 9077 unique keys, 0 collisions (`s3-map-staging-summary.json`) |
 | M2 | Parallel copy with checksum verify (staging bucket / prefix) | PENDING |
 | M3 | Object count + sample checksum reconciliation | PENDING |
 | M4 | Repeat to prod-twin prefix after staging green (or single shared prefix policy — decide in M1) | PENDING |
@@ -67,7 +68,7 @@
 | # | Task | Status |
 | --- | --- | --- |
 | O1 | Folder `evidence/p2/03-storage/` | **DONE** (scaffold) |
-| O2 | Inventory + copy + metadata result JSON | PENDING |
+| O2 | Inventory + copy + metadata result JSON | Inventory **DONE**; copy/metadata PENDING |
 | O3 | Phase 3 exit note | PENDING |
 
 ---
@@ -79,7 +80,7 @@
 | A — Production scanner | Preferred if GuardDuty Malware Protection / clam / vendor path is ready |
 | B — Time-boxed waiver | Allowed for pilot with written expire date + sample re-scan commitment |
 
-**Decision:** _TBD — record in K3 evidence when chosen._
+**Decision:** **B — Time-boxed waiver** recorded in `evidence/p2/03-storage/av-approach-decision.md` (expires **2026-09-05**). Hard gate for copy only.
 
 ---
 
@@ -112,21 +113,35 @@ Gates (fail-closed):
 
 ## Ready-to-execute criteria
 
-Phase 3 **inventory** may start when:
+Phase 3 **inventory** entry criteria were met; freeze is complete (`truncated: false`).
 
-1. Phase 2 exit remains green  
-2. `APPROVE-PRODUCERS-STORAGE-INVENTORY.md` signed  
-3. Operator confirms **“begin Phase 3 Storage inventory”**  
+Phase 3 **copy** may start when:
 
-Phase 3 **copy** additionally requires K3 AV decision + K5 copy approval.
+1. K3 AV decision on file (**DONE** — waiver to 2026-09-05)  
+2. `APPROVE-PRODUCERS-STORAGE-COPY.md` signed  
+3. Operator confirms **“begin Phase 3 Storage copy staging”**  
 
 ---
 
-## Immediate prep actions (this pass)
+## Inventory freeze result (2026-08-06)
 
-1. Draft unsigned Storage inventory approval.  
-2. Scaffold `evidence/p2/03-storage/`.  
-3. Point plan 56 at this checklist.  
+| Metric | Value |
+| --- | --- |
+| Bucket | `forge-industrial-safety.firebasestorage.app` |
+| Scanned | 9092 |
+| Producers matched | **9077** |
+| Bytes | **16 516 836 986** (~15.38 GiB) |
+| Non-Producers skipped | 15 |
+| LOTO / equipment / DOT / module / certs / other | 5395 / 2985 / 602 / 92 / 1 / 2 |
+| Exceptions (0-byte / no contentType / no checksum / orphan) | 0 / 0 / 0 / 0 |
+
+Scripts: `ind11b-p2-storage-inventory-plan.mjs`, `ind11b-p2-run-storage-inventory.mjs`
+
+## Immediate next actions
+
+1. Sign K5 copy approval (`APPROVE-PRODUCERS-STORAGE-COPY.md`).  
+2. Confirm **“begin Phase 3 Storage copy staging”**.  
+3. Gated parallel copy (M2) using `s3-map-staging-*-latest.json`.
 
 ## References
 

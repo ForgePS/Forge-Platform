@@ -1,7 +1,8 @@
 # APPROVE PRODUCERS STORAGE INVENTORY (Phase 3)
 
-**Status:** UNSIGNED — NOT AUTHORIZED  
+**Status:** SIGNED — AUTHORIZED (read-only Storage inventory)  
 **Drafted:** 2026-08-05  
+**Signed:** 2026-08-05  
 **Governing docs:** DEC-IND-011 · `56-producers-p2-execution-plan.md` · `61-producers-p2-phase3-prep.md` · `32-file-migration-plan.md`
 
 ---
@@ -35,15 +36,15 @@
 
 - [x] Phase 2 exit green (`60-producers-p2-phase2-exit.md`)  
 - [x] Pilot auth authorizes Storage→S3 for Producers (copy still gated)  
-- [ ] AV approach chosen (K3) — soft for inventory; **hard** before copy  
-- [ ] This record signed by Program Owner  
-- [ ] Operator confirms “begin Phase 3 Storage inventory” after signature  
+- [x] AV approach chosen (K3) — soft for inventory; **hard** before copy — see `av-approach-decision.md`  
+- [x] This record signed by Program Owner  
+- [x] Operator confirms “begin Phase 3 Storage inventory” after signature  
 
 ## Signatures
 
 | Role | Name | Signature | Date |
 | --- | --- | --- | --- |
-| Program Owner | Jeremy | | |
+| Program Owner | Jeremy | APPROVED (electronic, Cursor session 2026-08-05 — continue Phase 3 inventory) | 2026-08-05 |
 | Platform / Ops Lead (optional) | | | |
 
 ## Evidence destination

@@ -1,7 +1,7 @@
 # Producers P2 Execution Plan — AWS Primary Pilot
 
 **Date:** 2026-08-05  
-**Status:** AUTHORIZED — Phase 1–2 **EXIT GREEN**; Phase 3 **prep open** (`61-producers-p2-phase3-prep.md`) — Storage inventory UNSIGNED; AV decision still open  
+**Status:** AUTHORIZED — Phase 1–2 **EXIT GREEN**; Phase 3 **inventory freeze COMPLETE** (`61-producers-p2-phase3-prep.md`) — S3 copy UNSIGNED (K5)  
 **Authority:** DEC-IND-011, MD-1.0, DD-IND-1.0 · Signed record: `evidence/p2/00-authorization/APPROVE-PRODUCERS-AWS-PRIMARY-PILOT.md`  
 **Product:** Forge Industrial Safety  
 **Tenant focus:** Producers Rice Mill (`business-1782553339499`)  
@@ -274,9 +274,9 @@ Role: Program Owner
 
 ## Immediate next action
 
-1. Choose AV approach (scanner vs time-boxed waiver) — record under `evidence/p2/03-storage/`.  
-2. Sign `evidence/p2/03-storage/APPROVE-PRODUCERS-STORAGE-INVENTORY.md`.  
-3. Confirm **“begin Phase 3 Storage inventory”** (read-only).  
+1. Review inventory freeze summary (`evidence/p2/03-storage/storage-inventory-summary.json`).  
+2. Sign `evidence/p2/03-storage/APPROVE-PRODUCERS-STORAGE-COPY.md`.  
+3. Confirm **“begin Phase 3 Storage copy staging”** (writes to S3).  
 
 Phase 3 prep: [`61-producers-p2-phase3-prep.md`](61-producers-p2-phase3-prep.md).
 
