@@ -399,39 +399,98 @@ export function membershipHistory(tenantId: string, membershipId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Onboarding (Wave 5 scaffold)
+// Onboarding (platform customer onboarding sessions)
 // ---------------------------------------------------------------------------
 
-export type OnboardingSession = {
+export type OnboardingStepRow = {
+  id: string;
+  tenantId: string;
+  sessionId: string;
+  stepNumber: number;
+  stepKey: string;
+  status: string;
+  payloadJson: Record<string, unknown>;
+  validationErrorsJson: unknown[];
+  completedAt: string | null;
+};
+
+export type OnboardingSessionRecord = {
   id: string;
   tenantId: string;
   status: string;
   currentStep: number;
   templateCode: string | null;
   customerType: string;
+  recordVersion: number;
+  activationErrorsJson?: unknown[];
 };
 
-export async function onboardingStart(payload: {
-  customerType: string;
-  templateCode?: string;
-}): Promise<OnboardingSession> {
-  return apiSend<OnboardingSession>("/api/v1/onboarding/start", "POST", payload);
+export type OnboardingSessionView = {
+  session: OnboardingSessionRecord;
+  steps: OnboardingStepRow[];
+  template: {
+    code: string;
+    name: string;
+    customerType: string;
+  } | null;
+};
+
+const ONBOARDING_BASE = "/api/v1/platform/onboarding/sessions";
+
+export async function onboardingStart(
+  payload: {
+    customerType: string;
+    templateCode?: string;
+    tenantKey: string;
+    slug: string;
+    legalName: string;
+    displayName: string;
+    timezone?: string;
+  },
+  options?: ApiRequestOptions,
+): Promise<ApiResult<OnboardingSessionView>> {
+  return apiSendResult<OnboardingSessionView>(ONBOARDING_BASE, "POST", payload, options);
+}
+
+export async function onboardingListSessions(): Promise<OnboardingSessionView[]> {
+  return apiGet<OnboardingSessionView[]>(ONBOARDING_BASE);
+}
+
+export async function onboardingGetSession(
+  sessionId: string,
+  tenantId: string,
+): Promise<ApiResult<OnboardingSessionView>> {
+  return apiGetResult<OnboardingSessionView>(`${ONBOARDING_BASE}/${sessionId}`, {
+    query: { tenantId },
+  });
 }
 
 export async function onboardingCompleteStep(
   sessionId: string,
-  stepNumber: number,
+  stepKey: string,
   payload: Record<string, unknown>,
-): Promise<OnboardingSession> {
-  return apiSend<OnboardingSession>(
-    `/api/v1/onboarding/${sessionId}/steps/${stepNumber}/complete`,
+  ifMatch: string,
+  tenantId: string,
+): Promise<ApiResult<OnboardingSessionView>> {
+  return apiSendResult<OnboardingSessionView>(
+    `${ONBOARDING_BASE}/${sessionId}/steps/${encodeURIComponent(stepKey)}/complete`,
     "POST",
     payload,
+    { ifMatch, query: { tenantId } },
   );
 }
 
-export async function onboardingActivate(sessionId: string): Promise<OnboardingSession> {
-  return apiSend<OnboardingSession>(`/api/v1/onboarding/${sessionId}/activate`, "POST");
+export async function onboardingActivate(
+  sessionId: string,
+  ifMatch: string,
+  tenantId: string,
+): Promise<ApiResult<OnboardingSessionView>> {
+  return apiSendResult<OnboardingSessionView>(
+    `${ONBOARDING_BASE}/${sessionId}/activate`,
+    "POST",
+    undefined,
+    { ifMatch, query: { tenantId } },
+  );
 }
 
 // ---------------------------------------------------------------------------

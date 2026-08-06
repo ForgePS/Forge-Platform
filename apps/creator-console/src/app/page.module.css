@@ -125,6 +125,29 @@
   cursor: not-allowed;
 }
 
+.permList {
+  max-height: 22rem;
+  overflow: auto;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border: 1px solid var(--forge-color-border);
+  border-radius: var(--forge-radius-md);
+  background: color-mix(in srgb, var(--forge-color-surface) 88%, var(--forge-color-border));
+}
+
+.permItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.permItem input {
+  margin-top: 0.2rem;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
