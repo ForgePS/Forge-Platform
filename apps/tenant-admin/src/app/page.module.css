@@ -1,6 +1,6 @@
 .page h1 {
   margin: 0 0 0.35rem;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--forge-font-sans);
   font-size: 1.75rem;
   letter-spacing: -0.02em;
 }
@@ -18,25 +18,25 @@
 .error {
   margin: 0 0 1rem;
   padding: 0.65rem 0.85rem;
-  border-radius: 8px;
-  background: rgba(153, 27, 27, 0.08);
-  color: #7f1d1d;
+  border-radius: var(--forge-radius-lg);
+  background: color-mix(in srgb, var(--forge-color-danger) 10%, transparent);
+  color: var(--forge-color-danger);
 }
 
 .success {
   margin: 0 0 1rem;
   padding: 0.65rem 0.85rem;
-  border-radius: 8px;
-  background: rgba(20, 83, 45, 0.1);
-  color: #14532d;
+  border-radius: var(--forge-radius-lg);
+  background: color-mix(in srgb, var(--forge-color-success) 14%, transparent);
+  color: var(--forge-color-success);
 }
 
 .panel {
   margin: 0 0 1.5rem;
   padding: 1rem 1.1rem;
-  border: 1px solid rgba(20, 32, 26, 0.12);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--forge-color-border);
+  border-radius: var(--forge-radius-lg);
+  background: var(--forge-color-surface);
 }
 
 .panel h2 {
@@ -64,10 +64,10 @@
 .formRow select,
 .formRow textarea {
   padding: 0.45rem 0.55rem;
-  border: 1px solid rgba(20, 32, 26, 0.2);
-  border-radius: 6px;
+  border: 1px solid var(--forge-color-border);
+  border-radius: var(--forge-radius-md);
   font: inherit;
-  background: #fff;
+  background: var(--forge-color-surface);
 }
 
 .actions {
@@ -79,10 +79,10 @@
 
 .button {
   appearance: none;
-  border: 1px solid rgba(20, 83, 45, 0.35);
-  background: #14532d;
-  color: #f3f6f2;
-  border-radius: 6px;
+  border: 1px solid transparent;
+  background: var(--forge-color-primary);
+  color: #fff;
+  border-radius: var(--forge-radius-md);
   padding: 0.45rem 0.85rem;
   font: inherit;
   cursor: pointer;
@@ -95,10 +95,10 @@
 
 .buttonSecondary {
   appearance: none;
-  border: 1px solid rgba(20, 32, 26, 0.25);
+  border: 1px solid var(--forge-color-border);
   background: transparent;
-  color: #14201a;
-  border-radius: 6px;
+  color: var(--forge-color-heading);
+  border-radius: var(--forge-radius-md);
   padding: 0.45rem 0.85rem;
   font: inherit;
   cursor: pointer;
@@ -119,7 +119,7 @@
 .table td {
   text-align: left;
   padding: 0.5rem 0.4rem;
-  border-bottom: 1px solid rgba(20, 32, 26, 0.1);
+  border-bottom: 1px solid var(--forge-color-border-light);
   vertical-align: top;
 }
 

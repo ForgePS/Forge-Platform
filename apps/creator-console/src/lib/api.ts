@@ -1,6 +1,17 @@
-import { getBearerToken, getDevPrincipal } from "./auth-storage";
+import {
+  getApiBaseUrl,
+  getBearerToken,
+  getDevPrincipal,
+  authMe as webKitAuthMe,
+  selectTenant as webKitSelectTenant,
+  logoutAll as webKitLogoutAll,
+  type AuthMe,
+  type AuthTenant,
+} from "@forge/web-kit";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+export type { AuthMe, AuthTenant };
+
+const allowDevPrincipal = process.env.NEXT_PUBLIC_ALLOW_DEV_PRINCIPAL === "true";
 
 export type ApiSuccess<T> = {
   data: T;
@@ -23,7 +34,12 @@ export type ApiResult<T> = {
   meta?: ApiSuccess<T>["meta"];
 };
 
+function apiUrl(): string {
+  return getApiBaseUrl();
+}
+
 function devPrincipalHeader(): Record<string, string> {
+  if (!allowDevPrincipal) return {};
   const stored = getDevPrincipal();
   const raw = stored ?? process.env.NEXT_PUBLIC_DEV_PRINCIPAL;
   if (!raw) return {};
@@ -69,14 +85,50 @@ function requestHeaders(options?: ApiRequestOptions, withJson = false): Record<s
 
 async function parseResponse<T>(res: Response): Promise<ApiResult<T>> {
   const etagHeader = res.headers.get("etag");
-  let body: ApiSuccess<T> | { error: { message: string } };
+  let body:
+    | ApiSuccess<T>
+    | {
+        error: {
+          message: string;
+          code?: string;
+          details?: Array<{ path?: string; message?: string }>;
+          debugMessage?: string;
+          debugName?: string;
+        };
+      };
   try {
-    body = (await res.json()) as ApiSuccess<T> | { error: { message: string } };
+    body = (await res.json()) as
+      | ApiSuccess<T>
+      | {
+          error: {
+            message: string;
+            code?: string;
+            details?: Array<{ path?: string; message?: string }>;
+            debugMessage?: string;
+            debugName?: string;
+          };
+        };
   } catch {
     throw new Error(`Request failed: ${res.status}`);
   }
   if (!res.ok || "error" in body) {
-    throw new Error("error" in body ? body.error.message : `Request failed: ${res.status}`);
+    if ("error" in body) {
+      const details = Array.isArray(body.error.details)
+        ? body.error.details
+            .map((d) => {
+              const path = d.path ? `${d.path}: ` : "";
+              return `${path}${d.message ?? ""}`.trim();
+            })
+            .filter(Boolean)
+            .join("; ")
+        : "";
+      const debug = body.error.debugMessage
+        ? ` [${body.error.debugName ?? "error"}: ${body.error.debugMessage}]`
+        : "";
+      const extra = [details, debug].filter(Boolean).join(" ");
+      throw new Error(extra ? `${body.error.message} (${extra})` : body.error.message);
+    }
+    throw new Error(`Request failed: ${res.status}`);
   }
   const result: ApiResult<T> = { data: body.data, meta: body.meta };
   if (etagHeader) {
@@ -94,7 +146,7 @@ export async function apiGetResult<T>(
   path: string,
   options?: ApiRequestOptions,
 ): Promise<ApiResult<T>> {
-  const res = await fetch(`${API_URL}${path}${buildQuery(options?.query)}`, {
+  const res = await fetch(`${apiUrl()}${path}${buildQuery(options?.query)}`, {
     headers: requestHeaders(options),
     cache: "no-store",
   });
@@ -125,55 +177,31 @@ export async function apiSendResult<T>(
   if (payload !== undefined) {
     init.body = JSON.stringify(payload);
   }
-  const res = await fetch(`${API_URL}${path}${buildQuery(options?.query)}`, init);
+  const res = await fetch(`${apiUrl()}${path}${buildQuery(options?.query)}`, init);
   return parseResponse<T>(res);
 }
 
 export async function apiFetchRaw(path: string): Promise<Response> {
-  return fetch(`${API_URL}${path}`, {
+  return fetch(`${apiUrl()}${path}`, {
     headers: requestHeaders(),
     cache: "no-store",
   });
 }
 
 // ---------------------------------------------------------------------------
-// Auth
+// Auth (delegates to @forge/web-kit — Cognito access_token only)
 // ---------------------------------------------------------------------------
 
-export type AuthTenant = {
-  tenantId: string;
-  slug: string;
-  displayName: string;
-  tenantStatus: string;
-  membershipId: string | null;
-  membershipStatus: string;
-  isDefaultTenant: boolean;
-  selectable: boolean;
-};
-
-export type AuthMe = {
-  userId: string;
-  personId: string | null;
-  tenantId: string;
-  organizationIds: string[];
-  permissions: string[];
-  activeProducts: string[];
-  activeModules: string[];
-  isPlatformAdmin: boolean;
-  authProvider: string;
-  tenants: AuthTenant[];
-};
-
 export function authMe(): Promise<AuthMe> {
-  return apiGet<AuthMe>("/api/v1/auth/me");
+  return webKitAuthMe();
 }
 
 export function selectTenant(tenantId: string): Promise<AuthMe> {
-  return apiSend<AuthMe>("/api/v1/auth/select-tenant", "POST", { tenantId });
+  return webKitSelectTenant(tenantId);
 }
 
 export function logoutAll(): Promise<{ sessionVersion: number }> {
-  return apiSend<{ sessionVersion: number }>("/api/v1/auth/logout-all", "POST");
+  return webKitLogoutAll();
 }
 
 // ---------------------------------------------------------------------------

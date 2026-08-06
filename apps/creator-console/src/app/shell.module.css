@@ -1,47 +1,53 @@
+/* Creator Console shell — Sneat tokens via @forge/design-system */
+
 .body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Source Sans 3", "Segoe UI", sans-serif;
-  background:
-    radial-gradient(circle at top left, rgba(20, 83, 45, 0.12), transparent 40%),
-    linear-gradient(180deg, #f3f6f2 0%, #e7eee8 100%);
-  color: #14201a;
+  font-family: var(--forge-font-sans);
+  background: var(--forge-color-bg);
+  color: var(--forge-color-heading);
 }
 
 .shell {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: var(--forge-menu-width) 1fr;
   min-height: calc(100vh - 32px);
 }
 
 .nav {
   padding: 1.5rem 1rem;
-  border-right: 1px solid rgba(20, 32, 26, 0.12);
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(8px);
+  border-right: 1px solid var(--forge-color-border);
+  background: var(--forge-color-surface);
+  box-shadow: var(--forge-shadow-sm);
 }
 
 .brand {
   margin: 0 0 1.25rem;
-  font-family: "Fraunces", Georgia, serif;
-  font-size: 1.35rem;
-  letter-spacing: -0.02em;
+  font-family: var(--forge-font-sans);
+  font-size: var(--forge-text-xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--forge-color-heading);
 }
 
 .navLink {
   display: block;
-  padding: 0.45rem 0.35rem;
-  color: inherit;
+  padding: 0.45rem 0.65rem;
+  color: var(--forge-color-heading);
   text-decoration: none;
-  border-radius: 6px;
+  border-radius: var(--forge-radius-md);
+  min-height: 2.75rem;
 }
 
 .navLink:hover {
-  background: rgba(20, 83, 45, 0.08);
+  background: var(--forge-color-primary-soft);
+  color: var(--forge-color-primary);
+  text-decoration: none;
 }
 
 .navLinkActive {
-  background: rgba(20, 83, 45, 0.12);
+  background: var(--forge-color-primary-soft);
+  color: var(--forge-color-primary);
   font-weight: 600;
 }
 
@@ -55,26 +61,27 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  opacity: 0.55;
+  color: var(--forge-color-muted);
 }
 
 .session {
   margin: 0 0 1rem;
   padding: 0.65rem 0.5rem;
-  border-radius: 8px;
-  background: rgba(20, 83, 45, 0.06);
-  font-size: 0.85rem;
+  border-radius: var(--forge-radius-lg);
+  background: var(--forge-color-surface-2);
+  border: 1px solid var(--forge-color-border-light);
+  font-size: var(--forge-text-sm);
 }
 
 .sessionLabel {
   margin: 0;
-  opacity: 0.65;
-  font-size: 0.75rem;
+  color: var(--forge-color-muted);
+  font-size: var(--forge-text-xs);
 }
 
 .sessionValue {
   margin: 0 0 0.35rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--forge-font-mono);
   font-size: 0.8rem;
 }
 
@@ -83,19 +90,20 @@
   padding: 0;
   border: 0;
   background: none;
-  color: #14532d;
+  color: var(--forge-color-primary);
   font: inherit;
   font-size: 0.8rem;
   cursor: pointer;
   text-decoration: underline;
+  min-height: var(--forge-touch-min);
 }
 
 .authError {
   margin: 0 0 0.75rem;
   padding: 0.45rem 0.5rem;
-  border-radius: 6px;
-  background: rgba(153, 27, 27, 0.08);
-  color: #7f1d1d;
+  border-radius: var(--forge-radius-md);
+  background: color-mix(in srgb, var(--forge-color-danger) 10%, transparent);
+  color: var(--forge-color-danger);
   font-size: 0.8rem;
 }
 
@@ -110,6 +118,6 @@
 
   .nav {
     border-right: 0;
-    border-bottom: 1px solid rgba(20, 32, 26, 0.12);
+    border-bottom: 1px solid var(--forge-color-border);
   }
 }
