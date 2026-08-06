@@ -41,7 +41,7 @@ function IncidentsInner() {
     } finally {
       setLoading(false);
     }
-  }, [me?.tenantId, controls.page, controls.pageSize, controls.search, controls.setTotal]);
+  }, [me?.tenantId, controls]);
 
   useEffect(() => {
     void load();

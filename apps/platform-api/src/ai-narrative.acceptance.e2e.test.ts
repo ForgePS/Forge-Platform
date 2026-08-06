@@ -71,9 +71,6 @@ describe.skipIf(!ENABLED)("AI Narrative foundation E2E (live API)", () => {
     const unauth = await api("POST", "/api/v1/ai/narratives", { acknowledgeWarning: true }, "none");
     expect(unauth.status).toBeGreaterThanOrEqual(401);
 
-    const createIncident = await api("POST", "/api/v1/tenants/self/neris/incidents", {
-      // Fallback path: controller uses principal.tenantId for /api/v1/ai — incident create uses tenant path
-    });
     // Prefer explicit incident create using discovered tenant from overview
     const overview = await api("GET", "/api/v1/ai/management/overview");
     expect(overview.status).toBeLessThan(500);
