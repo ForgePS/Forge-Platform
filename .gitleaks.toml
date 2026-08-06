@@ -15,8 +15,8 @@ paths = [
   '''(?i)\.ai-.*''',
   '''(?i)docs/testing/evidence/.*''',
   '''(?i)docs/forge-experience/evidence/.*''',
+  '''(?i)docs/sprints/AI-NARRATIVE-ACCEPTANCE-report\.md''',
 ]
-
-[[allowlist.regexes]]
-description = "ECR image repository:tag pairs documented in sprint reports"
-regex = '''forge-development-ecr-[a-z0-9-]+:[A-Za-z0-9._-]+'''
+regexes = [
+  '''forge-development-ecr-[a-z0-9-]+:[A-Za-z0-9._-]+''',
+]
