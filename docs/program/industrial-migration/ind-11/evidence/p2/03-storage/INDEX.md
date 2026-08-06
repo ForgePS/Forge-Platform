@@ -1,12 +1,14 @@
 # Phase 3 Storage evidence index
 
-**Status:** Staging S3 copy + Aurora metadata + presign smoke COMPLETE — N4/M4/O3 still open  
+**Status:** Staging copy + Aurora metadata + presign smoke + **prod-twin remount COMPLETE** — N4/O3 still open  
 **Prep:** `../../61-producers-p2-phase3-prep.md`  
 **Freeze:** `storage-inventory-2026-08-06T01-06-44-696Z.json` · bucket `forge-industrial-safety.firebasestorage.app`  
-**Map:** `s3-map-staging-2026-08-06T11-13-35-876Z.json` → `forge-development-documents-511343547817-us-east-1` · tenant `0882c865-59c2-49a6-ab88-ce6ca89be30c`  
-**Copy:** `s3-copy-staging-result-2026-08-06T11-42-50-933Z.json` · reconcile `s3-copy-staging-reconcile.json`  
-**Metadata:** `aurora-document-metadata-result.json` (9077 documents / 9077 AVAILABLE versions)  
-**Presign:** `presign-smoke.json` (certificate / equipment / LOTO — 3/3 HTTP 200)
+**Map (staging):** `s3-map-staging-latest.json` → tenant `0882c865-59c2-49a6-ab88-ce6ca89be30c`  
+**Map (prod-twin):** `s3-map-prod-twin-latest.json` → tenant `5da680d3-50f5-46ac-8b85-6cf454b6a0da`  
+**Copy:** `s3-copy-staging-result.json` · reconcile `s3-copy-staging-reconcile.json`  
+**Metadata:** `aurora-document-metadata-result.json` (9077 AVAILABLE on staging)  
+**Presign:** `presign-smoke.json` (3/3 HTTP 200)  
+**Remount:** `s3-remount-prod-twin-result.json` · reconcile `s3-remount-prod-twin-reconcile.json` (9077/9077)
 
 | Artifact | Purpose |
 | --- | --- |
@@ -14,12 +16,12 @@
 | `av-approach-decision.md` | **SIGNED** — Option B waiver to 2026-09-05 |
 | `APPROVE-PRODUCERS-STORAGE-COPY.md` | **SIGNED** — staging Storage → S3 |
 | `APPROVE-PRODUCERS-STORAGE-AURORA-METADATA.md` | **SIGNED** — staging platform document upsert |
+| `APPROVE-PRODUCERS-STORAGE-COPY-PROD-TWIN.md` | **SIGNED** — staging → prod-twin remount |
 | `storage-inventory-*` | Freeze + summary |
-| `s3-map-staging-*` | Dry-run key map |
-| `s3-copy-staging-result.json` | Latest copy result (9074 copied + 3 skipped, 0 errors) |
-| `s3-copy-staging-reconcile.json` | S3 list count/bytes vs inventory |
-| `s3-copy-staging-objects-*.json` | Per-object status sidecar |
-| `aurora-document-probe-*` | Read-only table/count probe |
-| `aurora-document-metadata-dry-run-*` | N1/N2 dry-run evidence |
-| `aurora-document-metadata-result.json` | N1/N2 apply result (9077 AVAILABLE) |
-| `presign-smoke.json` | N3 download path smoke (**PASS**) |
+| `s3-map-staging-*` / `s3-map-prod-twin-*` | Key maps |
+| `s3-copy-staging-result.json` | Staging copy result |
+| `s3-copy-staging-reconcile.json` | Staging S3 list vs inventory |
+| `aurora-document-metadata-result.json` | N1/N2 apply (9077 AVAILABLE) |
+| `presign-smoke.json` | N3 download smoke (**PASS**) |
+| `s3-remount-prod-twin-result.json` | M4 remount (9057 copied + 20 skipped) |
+| `s3-remount-prod-twin-reconcile.json` | Prod-twin prefix vs map (**PASS**) |

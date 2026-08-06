@@ -1,14 +1,15 @@
 # Producers P2 — Phase 3 Prep Checklist (Storage → S3)
 
 **Date:** 2026-08-05  
-**Status:** Staging S3 copy + Aurora metadata + **N3 presign smoke COMPLETE** — N4 URL rewrite / M4 prod-twin / O3 exit still open  
+**Status:** Staging S3 copy + Aurora metadata + N3 presign + **M4 prod-twin remount COMPLETE** — N4 URL rewrite / O3 exit still open  
 **Phase 2 exit:** [`60-producers-p2-phase2-exit.md`](60-producers-p2-phase2-exit.md) **GREEN**  
 **Plan:** [`56-producers-p2-execution-plan.md`](56-producers-p2-execution-plan.md)  
 **Foundational plan:** [`../32-file-migration-plan.md`](../32-file-migration-plan.md)  
 **Freeze:** `evidence/p2/03-storage/storage-inventory-2026-08-06T01-06-44-696Z.json`  
 **Copy:** `evidence/p2/03-storage/s3-copy-staging-result.json` · reconcile `s3-copy-staging-reconcile.json`  
 **Metadata:** `evidence/p2/03-storage/aurora-document-metadata-result.json` (9077 AVAILABLE)  
-**Presign:** `evidence/p2/03-storage/presign-smoke.json`
+**Presign:** `evidence/p2/03-storage/presign-smoke.json`  
+**Prod-twin remount:** `evidence/p2/03-storage/s3-remount-prod-twin-result.json` · reconcile `s3-remount-prod-twin-reconcile.json`
 
 ## Locked targets
 
@@ -55,7 +56,7 @@
 | M1 | Dry-run key map Storage path → S3 key for prod-twin **or** staging tenant | **DONE** — staging map, 9077 unique keys, 0 collisions (`s3-map-staging-summary.json`) |
 | M2 | Parallel copy with checksum verify (staging bucket / prefix) | **DONE** — 9074 copied + 3 skipped, 0 errors (~13.4 min, concurrency 10) |
 | M3 | Object count + sample checksum reconciliation | **DONE** — S3 list 9077 objects / 16 516 836 986 bytes = inventory |
-| M4 | Repeat to prod-twin prefix after staging green (or single shared prefix policy — decide in M1) | PENDING — staging green; prod-twin remap TBD |
+| M4 | Repeat to prod-twin prefix after staging green (or single shared prefix policy — decide in M1) | **DONE** — S3 CopyObject remount 9057 copied + 20 skipped, reconcile 9077/9077 |
 
 ### N. Aurora metadata + download path
 
@@ -143,8 +144,8 @@ Scripts: `ind11b-p2-storage-inventory-plan.mjs`, `ind11b-p2-run-storage-inventor
 ## Immediate next actions
 
 1. URL rewrite pass for Firebase permanent URLs in loaded records (N4) once domain data is on staging (Phase 4).  
-2. Optionally remount same bytes onto prod-twin keys (M4) after N3 green.  
-3. Draft Phase 3 exit note (O3) when N4/M4 policy is decided.
+2. Optional: upsert prod-twin `platform_documents` metadata (same as N1/N2, separate approval).  
+3. Draft Phase 3 exit note (O3).
 
 ## References
 

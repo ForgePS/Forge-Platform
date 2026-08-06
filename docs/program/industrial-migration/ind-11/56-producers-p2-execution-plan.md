@@ -276,7 +276,7 @@ Role: Program Owner
 
 1. Wire staging S3 keys into Aurora document metadata (N1/N2). **DONE**  
 2. Presigned download smoke for equipment / LOTO / certificate (N3). **DONE**  
-3. Decide prod-twin remount (M4) vs staging-only until Phase 5. / N4 URL rewrite after domain load.  
+3. Decide prod-twin remount (M4) vs staging-only until Phase 5. **DONE** (remounted) / N4 URL rewrite after domain load. / O3 exit.  
 
 Phase 3 prep: [`61-producers-p2-phase3-prep.md`](61-producers-p2-phase3-prep.md).
 
