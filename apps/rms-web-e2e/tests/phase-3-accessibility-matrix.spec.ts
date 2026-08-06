@@ -49,15 +49,11 @@ test.describe("Phase 3 specialty accessibility matrix @phase3", () => {
     }
 
     // Text zoom to 200% — content remains readable / no critical clip of primary heading.
-    await page.evaluate(() => {
-      document.documentElement.style.zoom = "200%";
-    });
+    await page.evaluate("document.documentElement.style.zoom = '200%'");
     await expect(
       page.getByRole("heading", { name: /officer review|specialty review/i }).first(),
     ).toBeVisible();
-    await page.evaluate(() => {
-      document.documentElement.style.zoom = "100%";
-    });
+    await page.evaluate("document.documentElement.style.zoom = '100%'");
 
     // Restricted casualty messaging: masked list path should not expose names in UI chrome.
     await openIncidentSection(page, incidentId, "OVERVIEW");

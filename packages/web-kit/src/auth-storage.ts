@@ -1,3 +1,5 @@
+import { assertAccessTokenShape } from "./access-token.js";
+
 const DEV_PRINCIPAL_KEY = "forge-dev-principal";
 const BEARER_TOKEN_KEY = "forge-bearer-token";
 const REFRESH_TOKEN_KEY = "forge-refresh-token";
@@ -26,6 +28,7 @@ export function getBearerToken(): string | null {
 }
 
 export function setBearerToken(token: string): void {
+  assertAccessTokenShape(token);
   localStorage.setItem(BEARER_TOKEN_KEY, token);
 }
 

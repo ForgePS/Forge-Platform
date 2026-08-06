@@ -24,7 +24,11 @@ const VIEWPORTS = [
 
 async function assertNoHorizontalScroll(page: import("@playwright/test").Page): Promise<void> {
   const overflow = await page.evaluate(() => {
-    const doc = document.documentElement;
+    const doc = (
+      globalThis as typeof globalThis & {
+        document: { documentElement: { scrollWidth: number; clientWidth: number } };
+      }
+    ).document.documentElement;
     return {
       scrollWidth: doc.scrollWidth,
       clientWidth: doc.clientWidth,
