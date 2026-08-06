@@ -47,6 +47,35 @@ export async function checkDatabaseHealth(connectionString: string): Promise<boo
   }
 }
 
+export type OutboxHealth = {
+  ok: boolean;
+  pending: number | null;
+  failed: number | null;
+};
+
+/** Lightweight outbox probe for readiness (pending + failed counts). */
+export async function checkOutboxHealth(connectionString: string): Promise<OutboxHealth> {
+  const client = postgres(connectionString, { max: 1 });
+  try {
+    const rows = await client<{ pending: string; failed: string }[]>`
+      select
+        count(*) filter (where status = 'PENDING')::text as pending,
+        count(*) filter (where status = 'FAILED')::text as failed
+      from outbox_events
+    `;
+    const row = rows[0];
+    return {
+      ok: true,
+      pending: row ? Number(row.pending) : 0,
+      failed: row ? Number(row.failed) : 0,
+    };
+  } catch {
+    return { ok: false, pending: null, failed: null };
+  } finally {
+    await client.end({ timeout: 5 });
+  }
+}
+
 /** Prepares PostgreSQL session tenant context for RLS. */
 export async function setTenantContext(
   sqlClient: postgres.Sql,

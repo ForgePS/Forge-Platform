@@ -38,7 +38,11 @@ async function main(): Promise<void> {
   const db = drizzle(client, { schema });
   const now = new Date();
 
-  let [tenant] = await db.select().from(tenants).where(eq(tenants.tenantKey, "forge-platform")).limit(1);
+  let [tenant] = await db
+    .select()
+    .from(tenants)
+    .where(eq(tenants.tenantKey, "forge-platform"))
+    .limit(1);
   if (!tenant) {
     const tenantId = createId();
     await db.insert(tenants).values({
@@ -193,7 +197,9 @@ async function main(): Promise<void> {
         .onConflictDoNothing();
     }
     // Ensure creator permissions exist even if template rows are incomplete.
-    const allPerms = await db.select({ id: permissions.id, code: permissions.code }).from(permissions);
+    const allPerms = await db
+      .select({ id: permissions.id, code: permissions.code })
+      .from(permissions);
     for (const perm of allPerms) {
       if (perm.code.startsWith("platform.")) {
         await db

@@ -1,10 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import type { ImportApi } from "../api.js";
 import { clearImportTenantCache, setCachedJobs, getCachedJobs } from "../cache.js";
 import { initiateProtectedDownload } from "../download.js";
-import { dashboardStatusBuckets, serializeJobFilters, type ImportJobFilterState } from "../filters.js";
+import {
+  dashboardStatusBuckets,
+  serializeJobFilters,
+  type ImportJobFilterState,
+} from "../filters.js";
 import { actionAllowed, disabledReason } from "../permissions.js";
 import { formatImportError, sanitizeErrorMessage } from "../safe-error.js";
 import {
@@ -135,6 +147,8 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
   useEffect(() => {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
+      // Abort the latest in-flight request on unmount (ref is reassigned per request).
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional latest-ref abort
       abortRef.current?.abort();
     };
   }, []);
@@ -232,10 +246,7 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
     };
   }, [api, jobId, loadJob, view]);
 
-  const buckets = useMemo(
-    () => dashboardStatusBuckets(jobs.map((j) => String(j.status))),
-    [jobs],
-  );
+  const buckets = useMemo(() => dashboardStatusBuckets(jobs.map((j) => String(j.status))), [jobs]);
 
   if (!tenantId) {
     return <ImportEmptyState title="Select a tenant to open Import Center." />;
@@ -366,9 +377,12 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
     if (!jobId) return;
     setLoading(true);
     try {
-      await api.putMappings(jobId, mappings.length ? mappings : [
-        { sourceColumn: "col1", targetField: "field1", isRequired: true, ordinal: 0 },
-      ]);
+      await api.putMappings(
+        jobId,
+        mappings.length
+          ? mappings
+          : [{ sourceColumn: "col1", targetField: "field1", isRequired: true, ordinal: 0 }],
+      );
       await loadJob(jobId);
       setView("validation");
     } catch (err) {
@@ -405,7 +419,9 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
       return;
     }
     if (!jobId) return;
-    if (!window.confirm("Queue this import for execution? Row data is not sent from the browser.")) {
+    if (
+      !window.confirm("Queue this import for execution? Row data is not sent from the browser.")
+    ) {
       return;
     }
     setLoading(true);
@@ -504,14 +520,18 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
       <header style={{ marginBottom: "1.25rem" }}>
         <h1 style={{ margin: 0 }}>Import Center</h1>
         <p style={{ margin: "0.35rem 0 0", color: "#555" }}>
-          Shared Universal Import Platform — product-neutral workflow. Server state is authoritative.
+          Shared Universal Import Platform — product-neutral workflow. Server state is
+          authoritative.
         </p>
       </header>
 
       <ProductionScannerRestrictionBanner appEnv={appEnv} />
       <PrivilegedAccessBanner visible={privileged && view !== "dashboard"} />
 
-      <nav aria-label="Import Center sections" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
+      <nav
+        aria-label="Import Center sections"
+        style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}
+      >
         {(
           [
             ["dashboard", "Overview"],
@@ -534,7 +554,13 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
       {jobId && view !== "dashboard" && view !== "new" ? (
         <ol
           aria-label="Import workflow steps"
-          style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", listStyle: "none", padding: 0 }}
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "0.5rem",
+            listStyle: "none",
+            padding: 0,
+          }}
         >
           {WORKFLOW_STEP_ORDER.filter((s) => s.view !== "new").map((step) => (
             <li key={step.view}>
@@ -564,7 +590,13 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
       {view === "dashboard" ? (
         <section aria-labelledby="import-dashboard-heading">
           <h2 id="import-dashboard-heading">Overview</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(9rem,1fr))", gap: "0.75rem" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(9rem,1fr))",
+              gap: "0.75rem",
+            }}
+          >
             {Object.entries(buckets).map(([key, value]) => (
               <div key={key} style={panel}>
                 <div style={{ fontSize: "0.8rem", color: "#555" }}>{key}</div>
@@ -588,7 +620,12 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
                 id="import-status"
                 value={filters.status ?? ""}
                 onChange={(e) =>
-                  setFilters((f) => { const next = { ...f, page: 1 }; if (e.target.value) next.status = e.target.value; else delete next.status; return next; })
+                  setFilters((f) => {
+                    const next = { ...f, page: 1 };
+                    if (e.target.value) next.status = e.target.value;
+                    else delete next.status;
+                    return next;
+                  })
                 }
                 style={{ display: "block", marginTop: "0.25rem" }}
               >
@@ -623,13 +660,20 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
               <table style={tableStyle}>
                 <thead>
                   <tr>
-                    {["Name", "File", "Record", "Status", "Malware", "Progress", "Updated", "Actions"].map(
-                      (h) => (
-                        <th key={h} style={thtd} scope="col">
-                          {h}
-                        </th>
-                      ),
-                    )}
+                    {[
+                      "Name",
+                      "File",
+                      "Record",
+                      "Status",
+                      "Malware",
+                      "Progress",
+                      "Updated",
+                      "Actions",
+                    ].map((h) => (
+                      <th key={h} style={thtd} scope="col">
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -651,9 +695,7 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
                       <td style={thtd}>
                         <button
                           type="button"
-                          onClick={() =>
-                            navigate(resolveImportWorkflowView(row.status), row.id)
-                          }
+                          onClick={() => navigate(resolveImportWorkflowView(row.status), row.id)}
                         >
                           Open
                         </button>
@@ -670,7 +712,10 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
       {view === "new" ? (
         <section aria-labelledby="new-import-heading" style={panel}>
           <h2 id="new-import-heading">New import</h2>
-          <p>Options come from server configuration. Unavailable products stay disabled when APIs omit them.</p>
+          <p>
+            Options come from server configuration. Unavailable products stay disabled when APIs
+            omit them.
+          </p>
           {(
             [
               ["displayName", "Import name"],
@@ -680,7 +725,11 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
               ["recordCategory", "Record type"],
             ] as const
           ).map(([key, label]) => (
-            <label key={key} htmlFor={`new-${key}`} style={{ display: "block", marginBottom: "0.75rem" }}>
+            <label
+              key={key}
+              htmlFor={`new-${key}`}
+              style={{ display: "block", marginBottom: "0.75rem" }}
+            >
               {label}
               <input
                 id={`new-${key}`}
@@ -717,8 +766,8 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
             />
           </label>
           <p style={{ fontSize: "0.85rem", color: "#555" }}>
-            Drag-and-drop is available via the file picker. Large files are not parsed in the browser.
-            Presigned URLs are never logged.
+            Drag-and-drop is available via the file picker. Large files are not parsed in the
+            browser. Presigned URLs are never logged.
           </p>
           {uploadProgress != null ? (
             <ImportProgressBar percent={uploadProgress} label="Upload progress" />
@@ -735,10 +784,14 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
           <p>
             Verdict: <MalwareVerdictBadge verdict={malwareVerdict} />
           </p>
-          <p>Job status: <ImportStatusBadge status={String(job.status)} /></p>
+          <p>
+            Job status: <ImportStatusBadge status={String(job.status)} />
+          </p>
           <p>Hash: {hashFragment(job.file?.contentHash)}</p>
           <p>Scan attempts are managed by the server. No malware override control is available.</p>
-          {job.status === "SCAN_FAILED" || malwareVerdict === "SCAN_TIMEOUT" || malwareVerdict === "SCAN_FAILED" ? (
+          {job.status === "SCAN_FAILED" ||
+          malwareVerdict === "SCAN_TIMEOUT" ||
+          malwareVerdict === "SCAN_FAILED" ? (
             <div>
               <label htmlFor="rescan-reason">
                 Rescan justification
@@ -780,8 +833,8 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
             <li>Security hold: {job.securityHold || quarantined ? "yes" : "no"}</li>
           </ul>
           <p role="status">
-            Mapping, validation, approval, execution, and normal downloads are blocked. Malware payload
-            details are not shown. Quarantine release is unavailable in this sprint.
+            Mapping, validation, approval, execution, and normal downloads are blocked. Malware
+            payload details are not shown. Quarantine release is unavailable in this sprint.
           </p>
           <button
             type="button"
@@ -848,11 +901,7 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
                       </td>
                       <td style={thtd}>{row.isRequired ? "Yes" : "No"}</td>
                       <td style={thtd}>
-                        {row.isSensitive ? (
-                          <SensitiveValue value="[MASKED]" sensitive />
-                        ) : (
-                          "No"
-                        )}
+                        {row.isSensitive ? <SensitiveValue value="[MASKED]" sensitive /> : "No"}
                       </td>
                     </tr>
                   ))}
@@ -1015,17 +1064,17 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
             Load candidates
           </button>
           <ul>
-            {(duplicates as Array<{ id: string; confidence?: number; confidenceBand?: string }>).map(
-              (d) => (
-                <li key={d.id}>
-                  {d.id.slice(0, 8)}…{" "}
-                  <DuplicateConfidenceBadge
-                    confidence={Number(d.confidence ?? 0)}
-                    {...(d.confidenceBand ? { band: d.confidenceBand } : {})}
-                  />
-                </li>
-              ),
-            )}
+            {(
+              duplicates as Array<{ id: string; confidence?: number; confidenceBand?: string }>
+            ).map((d) => (
+              <li key={d.id}>
+                {d.id.slice(0, 8)}…{" "}
+                <DuplicateConfidenceBadge
+                  confidence={Number(d.confidence ?? 0)}
+                  {...(d.confidenceBand ? { band: d.confidenceBand } : {})}
+                />
+              </li>
+            ))}
           </ul>
           <button type="button" onClick={() => navigate("approval", jobId)}>
             Continue to approval
@@ -1044,8 +1093,7 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
             </li>
             <li>Status: {job.status}</li>
           </ul>
-          {quarantined ||
-          (malwareVerdict !== "CLEAN" && malwareVerdict !== "OVERRIDE_APPROVED") ? (
+          {quarantined || (malwareVerdict !== "CLEAN" && malwareVerdict !== "OVERRIDE_APPROVED") ? (
             <p role="alert">Approval is blocked until malware verdict is acceptable.</p>
           ) : (
             <button
@@ -1075,8 +1123,7 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
           <button
             type="button"
             disabled={
-              Boolean(disabledReason(hasPermission, "import.execute")) ||
-              job.status !== "APPROVED"
+              Boolean(disabledReason(hasPermission, "import.execute")) || job.status !== "APPROVED"
             }
             onClick={() => void handleExecute()}
           >
@@ -1101,7 +1148,8 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
             disabled={Boolean(disabledReason(hasPermission, "import.execute"))}
             onClick={() => {
               if (!jobId) return;
-              if (!window.confirm("Request cancellation? Completed rows may remain committed.")) return;
+              if (!window.confirm("Request cancellation? Completed rows may remain committed."))
+                return;
               void api.cancelExecution(jobId, {}).catch(reportError);
             }}
           >
@@ -1197,8 +1245,8 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
         <section style={panel}>
           <h2>Import profiles</h2>
           <p>
-            Profile management requires import.profile.manage. Selection uses published profiles from
-            the Import Platform API.
+            Profile management requires import.profile.manage. Selection uses published profiles
+            from the Import Platform API.
           </p>
           {!actionAllowed(hasPermission, "import.profile.manage") ? (
             <p role="status">Profile administration is hidden without import.profile.manage.</p>

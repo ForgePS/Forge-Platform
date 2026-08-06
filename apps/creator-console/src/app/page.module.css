@@ -1,6 +1,6 @@
 .page h1 {
   margin: 0 0 0.35rem;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--forge-font-sans);
   font-size: 1.75rem;
   letter-spacing: -0.02em;
 }
@@ -18,25 +18,25 @@
 .error {
   margin: 0 0 1rem;
   padding: 0.65rem 0.85rem;
-  border-radius: 8px;
-  background: rgba(153, 27, 27, 0.08);
-  color: #7f1d1d;
+  border-radius: var(--forge-radius-lg);
+  background: color-mix(in srgb, var(--forge-color-danger) 10%, transparent);
+  color: var(--forge-color-danger);
 }
 
 .success {
   margin: 0 0 1rem;
   padding: 0.65rem 0.85rem;
-  border-radius: 8px;
-  background: rgba(20, 83, 45, 0.1);
-  color: #14532d;
+  border-radius: var(--forge-radius-lg);
+  background: color-mix(in srgb, var(--forge-color-success) 14%, transparent);
+  color: var(--forge-color-success);
 }
 
 .panel {
   margin: 0 0 1.5rem;
   padding: 1rem 1.1rem;
-  border: 1px solid rgba(20, 32, 26, 0.12);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--forge-color-border);
+  border-radius: var(--forge-radius-lg);
+  background: var(--forge-color-surface);
 }
 
 .panel h2 {
@@ -64,10 +64,10 @@
 .formRow select,
 .formRow textarea {
   padding: 0.45rem 0.55rem;
-  border: 1px solid rgba(20, 32, 26, 0.2);
-  border-radius: 6px;
+  border: 1px solid var(--forge-color-border);
+  border-radius: var(--forge-radius-md);
   font: inherit;
-  background: #fff;
+  background: var(--forge-color-surface);
 }
 
 .actions {
@@ -79,10 +79,10 @@
 
 .button {
   appearance: none;
-  border: 1px solid rgba(20, 83, 45, 0.35);
-  background: #14532d;
-  color: #f3f6f2;
-  border-radius: 6px;
+  border: 1px solid transparent;
+  background: var(--forge-color-primary);
+  color: #fff;
+  border-radius: var(--forge-radius-md);
   padding: 0.45rem 0.85rem;
   font: inherit;
   cursor: pointer;
@@ -95,10 +95,10 @@
 
 .buttonSecondary {
   appearance: none;
-  border: 1px solid rgba(20, 32, 26, 0.25);
+  border: 1px solid var(--forge-color-border);
   background: transparent;
-  color: #14201a;
-  border-radius: 6px;
+  color: var(--forge-color-heading);
+  border-radius: var(--forge-radius-md);
   padding: 0.45rem 0.85rem;
   font: inherit;
   cursor: pointer;
@@ -111,10 +111,10 @@
 
 .buttonDanger {
   appearance: none;
-  border: 1px solid rgba(127, 29, 29, 0.4);
-  background: #7f1d1d;
-  color: #f3f6f2;
-  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--forge-color-danger) 40%, transparent);
+  background: var(--forge-color-danger);
+  color: #fff;
+  border-radius: var(--forge-radius-md);
   padding: 0.45rem 0.85rem;
   font: inherit;
   cursor: pointer;
@@ -123,6 +123,29 @@
 .buttonDanger:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.permList {
+  max-height: 22rem;
+  overflow: auto;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border: 1px solid var(--forge-color-border);
+  border-radius: var(--forge-radius-md);
+  background: color-mix(in srgb, var(--forge-color-surface) 88%, var(--forge-color-border));
+}
+
+.permItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.permItem input {
+  margin-top: 0.2rem;
 }
 
 .table {
@@ -135,7 +158,7 @@
 .table td {
   text-align: left;
   padding: 0.5rem 0.4rem;
-  border-bottom: 1px solid rgba(20, 32, 26, 0.1);
+  border-bottom: 1px solid var(--forge-color-border-light);
   vertical-align: top;
 }
 
@@ -179,8 +202,8 @@
   margin: 0;
   padding: 0.75rem;
   overflow: auto;
-  border-radius: 8px;
-  background: rgba(20, 32, 26, 0.04);
+  border-radius: var(--forge-radius-lg);
+  background: var(--forge-color-surface-2);
   font-size: 0.85rem;
 }
 
@@ -193,9 +216,9 @@
 
 .statCard {
   padding: 0.85rem 1rem;
-  border: 1px solid rgba(20, 32, 26, 0.12);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--forge-color-border);
+  border-radius: var(--forge-radius-lg);
+  background: var(--forge-color-surface);
 }
 
 .statLabel {
@@ -206,7 +229,7 @@
 
 .statValue {
   margin: 0;
-  font-family: Fraunces, Georgia, serif;
+  font-family: var(--forge-font-sans);
   font-size: 1.65rem;
   letter-spacing: -0.02em;
 }
@@ -233,7 +256,7 @@
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(20, 32, 26, 0.35);
+  background: rgba(35, 52, 70, 0.45);
 }
 
 .dialogBackdropButton {
@@ -250,10 +273,10 @@
   z-index: 1;
   width: min(100%, 28rem);
   padding: 1rem 1.1rem;
-  border-radius: 10px;
-  background: #f3f6f2;
-  border: 1px solid rgba(20, 32, 26, 0.15);
-  box-shadow: 0 12px 40px rgba(20, 32, 26, 0.15);
+  border-radius: var(--forge-radius-lg);
+  background: var(--forge-color-surface);
+  border: 1px solid var(--forge-color-border);
+  box-shadow: 0 12px 40px var(--forge-color-border);
 }
 
 .dialogTitle {
@@ -270,8 +293,8 @@
   display: inline-block;
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
-  background: rgba(20, 83, 45, 0.12);
-  color: #14532d;
+  background: var(--forge-color-primary-soft);
+  color: var(--forge-color-primary);
   font-size: 0.8rem;
 }
 
@@ -279,8 +302,8 @@
   display: inline-block;
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
-  background: rgba(180, 83, 9, 0.12);
-  color: #92400e;
+  background: color-mix(in srgb, var(--forge-color-warning) 14%, transparent);
+  color: var(--forge-color-warning);
   font-size: 0.8rem;
 }
 
@@ -288,7 +311,7 @@
   display: inline-block;
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
-  background: rgba(153, 27, 27, 0.1);
-  color: #7f1d1d;
+  background: color-mix(in srgb, var(--forge-color-danger) 12%, transparent);
+  color: var(--forge-color-danger);
   font-size: 0.8rem;
 }

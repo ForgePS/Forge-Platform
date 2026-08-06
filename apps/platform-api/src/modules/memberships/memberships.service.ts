@@ -197,7 +197,13 @@ export class MembershipsService {
           toStatus: data.status,
           principal,
         });
-        await this.syncAccessProjection(tx, tenantId, data.userId, data.status, data.isDefaultTenant);
+        await this.syncAccessProjection(
+          tx,
+          tenantId,
+          data.userId,
+          data.status,
+          data.isDefaultTenant,
+        );
 
         await this.outbox.write(tx, {
           tenantId,
@@ -250,12 +256,19 @@ export class MembershipsService {
       tenantId,
       async (tx) => {
         const before = await this.requireMembership(tx, tenantId, membershipId);
-        const version = this.assertVersion(tenantId, membershipId, before.recordVersion, expectedVersion);
+        const version = this.assertVersion(
+          tenantId,
+          membershipId,
+          before.recordVersion,
+          expectedVersion,
+        );
 
         const [updated] = await tx
           .update(userTenantMemberships)
           .set({
-            ...(data.isDefaultTenant === undefined ? {} : { isDefaultTenant: data.isDefaultTenant }),
+            ...(data.isDefaultTenant === undefined
+              ? {}
+              : { isDefaultTenant: data.isDefaultTenant }),
             ...(data.expiresAt === undefined
               ? {}
               : { expiresAt: data.expiresAt === null ? null : new Date(data.expiresAt) }),
@@ -545,7 +558,11 @@ export class MembershipsService {
 
         await tx
           .update(userTenantMemberships)
-          .set({ recordVersion: version + 1, updatedByUserId: principal.userId, updatedAt: new Date() })
+          .set({
+            recordVersion: version + 1,
+            updatedByUserId: principal.userId,
+            updatedAt: new Date(),
+          })
           .where(
             and(
               eq(userTenantMemberships.id, membershipId),
@@ -636,7 +653,11 @@ export class MembershipsService {
 
         await tx
           .update(userTenantMemberships)
-          .set({ recordVersion: version + 1, updatedByUserId: principal.userId, updatedAt: new Date() })
+          .set({
+            recordVersion: version + 1,
+            updatedByUserId: principal.userId,
+            updatedAt: new Date(),
+          })
           .where(
             and(
               eq(userTenantMemberships.id, membershipId),
@@ -699,7 +720,11 @@ export class MembershipsService {
       throw new ForgeError("NOT_FOUND", `Unknown role code: ${missing.join(", ")}`);
     }
 
-    await this.assertGrantable(tx, input.principal, [...roleByCode.values()].map((r) => r.id));
+    await this.assertGrantable(
+      tx,
+      input.principal,
+      [...roleByCode.values()].map((r) => r.id),
+    );
 
     const now = new Date();
     for (const requested of input.roles) {
@@ -742,16 +767,10 @@ export class MembershipsService {
         continue;
       }
       if (isCreatorOnlyPermission(row.code) && !principal.isPlatformAdmin) {
-        throw new ForgeError(
-          "FORBIDDEN",
-          "Tenant administrators cannot grant creator permissions",
-        );
+        throw new ForgeError("FORBIDDEN", "Tenant administrators cannot grant creator permissions");
       }
       if (!principal.isPlatformAdmin && !principal.permissions.has(row.code)) {
-        throw new ForgeError(
-          "FORBIDDEN",
-          "Cannot grant a permission the caller does not hold",
-        );
+        throw new ForgeError("FORBIDDEN", "Cannot grant a permission the caller does not hold");
       }
     }
   }
@@ -1006,11 +1025,7 @@ export class MembershipsService {
     return current;
   }
 
-  private async requireMembership(
-    tx: DatabaseTransaction,
-    tenantId: string,
-    membershipId: string,
-  ) {
+  private async requireMembership(tx: DatabaseTransaction, tenantId: string, membershipId: string) {
     const row = await tx.query.userTenantMemberships.findFirst({
       where: and(
         eq(userTenantMemberships.id, membershipId),

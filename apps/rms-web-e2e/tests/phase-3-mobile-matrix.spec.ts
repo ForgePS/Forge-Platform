@@ -24,7 +24,11 @@ const VIEWPORTS = [
 
 async function assertNoHorizontalScroll(page: import("@playwright/test").Page): Promise<void> {
   const overflow = await page.evaluate(() => {
-    const doc = document.documentElement;
+    const doc = (
+      globalThis as typeof globalThis & {
+        document: { documentElement: { scrollWidth: number; clientWidth: number } };
+      }
+    ).document.documentElement;
     return {
       scrollWidth: doc.scrollWidth,
       clientWidth: doc.clientWidth,
@@ -60,7 +64,9 @@ test.describe("Phase 3 specialty mobile matrix @phase3", () => {
       await activateSpecialtySection(page, tenantId!, incidentId, "FIRE_PROTECTION");
 
       await openIncidentSection(page, incidentId, "REVIEW");
-      await expect(page.getByRole("heading", { name: /officer review|specialty review/i }).first()).toBeVisible({
+      await expect(
+        page.getByRole("heading", { name: /officer review|specialty review/i }).first(),
+      ).toBeVisible({
         timeout: 20_000,
       });
       await assertNoHorizontalScroll(page);

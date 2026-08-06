@@ -1,0 +1,70 @@
+/*
+ * Industrial content styles on top of vendored Sneat Free (core/theme-default).
+ * Shell layout/menu/navbar come from /public/sneat CSS — do not redefine them here.
+ */
+
+.ind-content h1 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.ind-content h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.ind-content p {
+  margin: 0 0 0.75rem;
+}
+
+.ind-muted {
+  color: #a1acb8;
+}
+
+/* Module workspace cards keep legacy .ind-* hooks used across components */
+.ind-panel,
+.ind-card {
+  background: #fff;
+  border: 1px solid #d9dee3;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.25rem 1rem rgba(161, 172, 184, 0.45);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.ind-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ind-table th,
+.ind-table td {
+  border-bottom: 1px solid #ebeef0;
+  padding: 0.65rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ind-table th {
+  color: #566a7f;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ind-state {
+  /* Fallback if used outside GateCard */
+  max-width: 32rem;
+  margin: 3rem auto;
+  padding: 1.5rem;
+}
+
+.ind-banner {
+  padding: 0.5rem 1rem;
+  background: #fff2e2;
+  border-bottom: 1px solid #ffd9a8;
+  color: #8a5a00;
+  font-size: 0.875rem;
+}

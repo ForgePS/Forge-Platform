@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { tenantDetailHref } from "@/hooks/use-tenant-id";
+import { tenantDetailHref, useTenantId } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
 import { apiGet } from "@/lib/api";
 import styles from "../page.module.css";
@@ -21,8 +20,7 @@ type AuditEvent = {
 };
 
 function AuditInner() {
-  const searchParams = useSearchParams();
-  const tenantId = searchParams.get("tenantId");
+  const tenantId = useTenantId();
 
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(Boolean(tenantId));
@@ -69,9 +67,7 @@ function AuditInner() {
       <div className={styles.panel}>
         <h2>Recent events</h2>
         {loading ? <p className={styles.muted}>Loading…</p> : null}
-        {!loading && events.length === 0 ? (
-          <p className={styles.muted}>No audit events.</p>
-        ) : null}
+        {!loading && events.length === 0 ? <p className={styles.muted}>No audit events.</p> : null}
         {events.length > 0 ? (
           <table className={styles.table}>
             <thead>

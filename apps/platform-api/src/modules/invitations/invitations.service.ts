@@ -51,7 +51,10 @@ export class InvitationsService {
   // Reads
   // -------------------------------------------------------------------------
 
-  async list(tenantId: string, filters: { status?: string | undefined; email?: string | undefined }) {
+  async list(
+    tenantId: string,
+    filters: { status?: string | undefined; email?: string | undefined },
+  ) {
     return withTenantTransaction(this.db, tenantId, async (tx) => {
       const conditions = [eq(userInvitations.tenantId, tenantId)];
       if (filters.status) {
@@ -95,9 +98,7 @@ export class InvitationsService {
     // Cognito provisioning happens outside the DB transaction so a Cognito
     // failure does not leave a half-written invitation, and a DB failure can
     // still roll the Cognito user back via deleteUser.
-    let provisioned:
-      | Awaited<ReturnType<CognitoAdminService["createOrGetUser"]>>
-      | null = null;
+    let provisioned: Awaited<ReturnType<CognitoAdminService["createOrGetUser"]>> | null = null;
     if (data.send) {
       try {
         provisioned = await this.cognito.createOrGetUser({
@@ -161,10 +162,7 @@ export class InvitationsService {
             ),
           });
           if (existingMembership && existingMembership.status !== "REVOKED") {
-            throw new ForgeError(
-              "CONFLICT",
-              "User already has a membership in this tenant",
-            );
+            throw new ForgeError("CONFLICT", "User already has a membership in this tenant");
           }
 
           const membershipId = createId();
@@ -400,12 +398,7 @@ export class InvitationsService {
     );
   }
 
-  async revoke(
-    tenantId: string,
-    invitationId: string,
-    reason: string,
-    principal: ForgePrincipal,
-  ) {
+  async revoke(tenantId: string, invitationId: string, reason: string, principal: ForgePrincipal) {
     return withTenantTransaction(
       this.db,
       tenantId,
@@ -499,11 +492,7 @@ export class InvitationsService {
     }
 
     return withTenantTransaction(this.db, resolved.tenantId, async (tx) => {
-      const invitation = await this.requireInvitation(
-        tx,
-        resolved.tenantId,
-        resolved.invitationId,
-      );
+      const invitation = await this.requireInvitation(tx, resolved.tenantId, resolved.invitationId);
       // Re-check under the tenant transaction in case of a concurrent accept.
       if (invitation.status === "ACCEPTED") {
         throw new ForgeError("CONFLICT", "Invitation has already been accepted");
@@ -716,11 +705,7 @@ export class InvitationsService {
     );
   }
 
-  private async requireInvitation(
-    tx: DatabaseTransaction,
-    tenantId: string,
-    invitationId: string,
-  ) {
+  private async requireInvitation(tx: DatabaseTransaction, tenantId: string, invitationId: string) {
     const row = await tx.query.userInvitations.findFirst({
       where: and(eq(userInvitations.id, invitationId), eq(userInvitations.tenantId, tenantId)),
     });
@@ -733,9 +718,8 @@ export class InvitationsService {
 
 /** Strips hash and Cognito credential material from API responses. */
 function sanitizeInvitation<T extends Record<string, unknown>>(invitation: T) {
-  const {
-    invitationTokenHash: _hash,
-    ...rest
-  } = invitation as T & { invitationTokenHash?: string };
+  const { invitationTokenHash: _hash, ...rest } = invitation as T & {
+    invitationTokenHash?: string;
+  };
   return rest;
 }

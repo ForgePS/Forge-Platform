@@ -32,6 +32,8 @@ export {
   type DevPrincipal,
 } from "./auth-storage.js";
 
+export { InvalidAccessTokenError, assertAccessTokenShape } from "./access-token.js";
+
 export {
   authMe,
   selectTenant,

@@ -34,9 +34,7 @@ export class ForgeApiCloudFront extends Construct {
     });
 
     const corsOrigins =
-      allowedBrowserOrigins.length > 0
-        ? allowedBrowserOrigins.join(" ")
-        : "https://localhost";
+      allowedBrowserOrigins.length > 0 ? allowedBrowserOrigins.join(" ") : "https://localhost";
 
     const responseHeaders = new cloudfront.ResponseHeadersPolicy(this, "SecureHeaders", {
       responseHeadersPolicyName: resourceName(config, "cfrhp", "api"),
@@ -55,7 +53,8 @@ export class ForgeApiCloudFront extends Construct {
         },
         xssProtection: { protection: true, modeBlock: true, override: true },
         contentSecurityPolicy: {
-          contentSecurityPolicy: "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+          contentSecurityPolicy:
+            "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
           override: true,
         },
       },
@@ -73,7 +72,8 @@ export class ForgeApiCloudFront extends Construct {
           "X-Tenant-Id",
         ],
         accessControlAllowMethods: ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"],
-        accessControlAllowOrigins: allowedBrowserOrigins.length > 0 ? allowedBrowserOrigins : ["https://localhost"],
+        accessControlAllowOrigins:
+          allowedBrowserOrigins.length > 0 ? allowedBrowserOrigins : ["https://localhost"],
         accessControlExposeHeaders: ["ETag", "X-Correlation-Id", "X-Request-Id"],
         accessControlMaxAge: cdk.Duration.hours(1),
         originOverride: true,

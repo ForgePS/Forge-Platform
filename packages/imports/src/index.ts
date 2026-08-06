@@ -130,10 +130,7 @@ export {
   type LockAcquisition,
 } from "./execution/engine.js";
 
-export {
-  IMPORT_EXECUTION_ASL,
-  IMPORT_EXECUTION_SFN_STATUS,
-} from "./execution/step-functions.js";
+export { IMPORT_EXECUTION_ASL, IMPORT_EXECUTION_SFN_STATUS } from "./execution/step-functions.js";
 
 export {
   MALWARE_VERDICTS,
@@ -256,10 +253,7 @@ export {
   type ImportUploadDetectMessage,
 } from "./messages.js";
 
-export {
-  detectImportFormat,
-  type FormatDetectionResult,
-} from "./formats/detect.js";
+export { detectImportFormat, type FormatDetectionResult } from "./formats/detect.js";
 
 export {
   IMPORT_TEMPLATES,
@@ -296,10 +290,7 @@ export type {
 
 export { StubFileDetector, StructureFileDetector } from "./formats/detector.js";
 export { StubValidator } from "./validation/validator.js";
-export {
-  StubDuplicateDetector,
-  ConfigurableDuplicateDetector,
-} from "./duplicates/detector.js";
+export { StubDuplicateDetector, ConfigurableDuplicateDetector } from "./duplicates/detector.js";
 export {
   detectDuplicates,
   buildMergeCandidate,
@@ -360,11 +351,7 @@ export {
   type ResolveDuplicateInput,
   type PatchImportProfileS4Input,
 } from "./s4-dto.js";
-export {
-  StubColumnMapper,
-  StubPreviewGenerator,
-  StubProgressReporter,
-} from "./pipeline/stubs.js";
+export { StubColumnMapper, StubPreviewGenerator, StubProgressReporter } from "./pipeline/stubs.js";
 export {
   StubSchemaLoader,
   StubTransformer,

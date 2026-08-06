@@ -25,9 +25,7 @@ export interface ForgeImportExecutionStateMachineProps {
 export class ForgeImportExecutionStateMachine extends Construct {
   readonly stateMachine: sfn.StateMachine;
   readonly deploymentStatus:
-    | "DEPLOYED_AND_ACTIVE"
-    | "DEPLOYED_NOT_ACTIVE"
-    | "DEFINITION_COMPLETE_DEPLOYMENT_PENDING";
+    "DEPLOYED_AND_ACTIVE" | "DEPLOYED_NOT_ACTIVE" | "DEFINITION_COMPLETE_DEPLOYMENT_PENDING";
 
   constructor(scope: Construct, id: string, props: ForgeImportExecutionStateMachineProps) {
     super(scope, id);
@@ -132,7 +130,7 @@ export class ForgeImportExecutionStateMachine extends Construct {
     );
 
     const logGroup = new logs.LogGroup(this, "ImportExecutionLogs", {
-      logGroupName: `/forge/${props.config.environment}/import-execution-sfn`,
+      logGroupName: `/forge/${props.config.environmentName}/import-execution-sfn`,
       retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });

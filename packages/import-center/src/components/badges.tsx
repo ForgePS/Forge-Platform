@@ -72,7 +72,13 @@ export function SensitiveValue({
       data-sensitive={sensitive ? "true" : undefined}
       data-privileged={privileged ? "true" : undefined}
       data-never-returnable={neverReturnable ? "true" : undefined}
-      title={neverReturnable ? "Never-returnable credential" : sensitive ? "Sensitive (masked)" : undefined}
+      title={
+        neverReturnable
+          ? "Never-returnable credential"
+          : sensitive
+            ? "Sensitive (masked)"
+            : undefined
+      }
     >
       {text}
       {sensitive ? (
@@ -87,7 +93,10 @@ export function SensitiveValue({
 export function PrivilegedAccessBanner({ visible }: { visible: boolean }) {
   if (!visible) return null;
   return (
-    <div role="status" style={{ padding: "0.75rem", border: "1px solid #a11", marginBottom: "1rem" }}>
+    <div
+      role="status"
+      style={{ padding: "0.75rem", border: "1px solid #a11", marginBottom: "1rem" }}
+    >
       Privileged sensitive access is active for this session. Credentials and secrets remain
       non-returnable. Do not copy values into tickets or chat.
     </div>
@@ -130,13 +139,7 @@ export function ImportEmptyState({ title, children }: { title: string; children?
   );
 }
 
-export function ImportProgressBar({
-  percent,
-  label,
-}: {
-  percent: number;
-  label?: string;
-}) {
+export function ImportProgressBar({ percent, label }: { percent: number; label?: string }) {
   const safe = Math.max(0, Math.min(100, percent));
   return (
     <div

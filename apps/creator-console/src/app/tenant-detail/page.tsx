@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { apiGet, apiSend } from "@/lib/api";
+import { apiGetResult, apiSend, toIfMatch } from "@/lib/api";
 import styles from "../page.module.css";
 
 type Tenant = {
@@ -17,6 +17,7 @@ type Tenant = {
   timezone: string;
   defaultLocale: string;
   dataRegion: string;
+  recordVersion: number;
 };
 
 function TenantDetailInner() {
@@ -24,6 +25,7 @@ function TenantDetailInner() {
   const tenantId = searchParams.get("tenantId");
 
   const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [etag, setEtag] = useState<string | null>(null);
   const [loading, setLoading] = useState(Boolean(tenantId));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -34,7 +36,9 @@ function TenantDetailInner() {
     setLoading(true);
     setError(null);
     try {
-      setTenant(await apiGet<Tenant>(`/api/v1/platform/tenants/${tenantId}`));
+      const result = await apiGetResult<Tenant>(`/api/v1/platform/tenants/${tenantId}`);
+      setTenant(result.data);
+      setEtag(result.etag ?? toIfMatch(result.data.recordVersion));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load tenant");
     } finally {
@@ -46,12 +50,31 @@ function TenantDetailInner() {
     void load();
   }, [load]);
 
+  async function resolveIfMatch(): Promise<string> {
+    if (!tenantId) {
+      throw new Error("Missing tenantId");
+    }
+    const fresh = await apiGetResult<Tenant>(`/api/v1/platform/tenants/${tenantId}`);
+    setTenant(fresh.data);
+    const next = fresh.etag ?? toIfMatch(fresh.data.recordVersion);
+    setEtag(next);
+    return next;
+  }
+
   async function activate() {
     if (!tenantId) return;
     setBusy(true);
     setError(null);
     try {
-      setTenant(await apiSend<Tenant>(`/api/v1/platform/tenants/${tenantId}/activate`, "POST"));
+      const ifMatch = await resolveIfMatch();
+      const updated = await apiSend<Tenant>(
+        `/api/v1/platform/tenants/${tenantId}/activate`,
+        "POST",
+        undefined,
+        { ifMatch },
+      );
+      setTenant(updated);
+      setEtag(toIfMatch(updated.recordVersion));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Activate failed");
     } finally {
@@ -68,11 +91,15 @@ function TenantDetailInner() {
     setBusy(true);
     setError(null);
     try {
-      setTenant(
-        await apiSend<Tenant>(`/api/v1/platform/tenants/${tenantId}/suspend`, "POST", {
-          reason: suspendReason,
-        }),
+      const ifMatch = await resolveIfMatch();
+      const updated = await apiSend<Tenant>(
+        `/api/v1/platform/tenants/${tenantId}/suspend`,
+        "POST",
+        { reason: suspendReason },
+        { ifMatch },
       );
+      setTenant(updated);
+      setEtag(toIfMatch(updated.recordVersion));
       setSuspendReason("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Suspend failed");
@@ -126,10 +153,21 @@ function TenantDetailInner() {
               <dd>{tenant.defaultLocale}</dd>
               <dt>Region</dt>
               <dd>{tenant.dataRegion}</dd>
+              {etag ? (
+                <>
+                  <dt>Version</dt>
+                  <dd className={styles.mono}>{tenant.recordVersion}</dd>
+                </>
+              ) : null}
             </dl>
 
             <div className={styles.actions} style={{ marginTop: "1rem" }}>
-              <button className={styles.button} type="button" disabled={busy} onClick={activate}>
+              <button
+                className={styles.button}
+                type="button"
+                disabled={busy}
+                onClick={() => void activate()}
+              >
                 Activate
               </button>
             </div>
@@ -149,7 +187,7 @@ function TenantDetailInner() {
                   className={styles.buttonDanger}
                   type="button"
                   disabled={busy}
-                  onClick={suspend}
+                  onClick={() => void suspend()}
                 >
                   Suspend
                 </button>

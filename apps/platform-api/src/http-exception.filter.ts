@@ -66,7 +66,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           ? body
           : typeof body === "object" && body && "message" in body
             ? Array.isArray((body as { message: unknown }).message)
-              ? ((body as { message: string[] }).message.join(", "))
+              ? (body as { message: string[] }).message.join(", ")
               : String((body as { message: unknown }).message)
             : exception.message;
       const code =

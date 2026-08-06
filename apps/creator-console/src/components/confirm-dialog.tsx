@@ -45,12 +45,7 @@ export function ConfirmDialog({
         aria-label="Close dialog"
         onClick={onCancel}
       />
-      <div
-        className={styles.dialog}
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-      >
+      <div className={styles.dialog} role="alertdialog" aria-modal="true" aria-labelledby={titleId}>
         <h2 id={titleId} className={styles.dialogTitle}>
           {title}
         </h2>

@@ -54,83 +54,88 @@ export class UsersService {
     const token = randomBytes(32).toString("base64url");
     const tokenHash = hashToken(token);
 
-    return withTenantTransaction(this.db, tenantId, async (tx) => {
-      const existing = await tx.query.users.findFirst({
-        where: and(eq(users.tenantId, tenantId), eq(users.primaryEmail, data.email)),
-      });
+    return withTenantTransaction(
+      this.db,
+      tenantId,
+      async (tx) => {
+        const existing = await tx.query.users.findFirst({
+          where: and(eq(users.tenantId, tenantId), eq(users.primaryEmail, data.email)),
+        });
 
-      let userId = existing?.id;
-      const now = new Date();
-      if (!existing) {
-        userId = createId();
-        await tx.insert(users).values({
-          id: userId,
+        let userId = existing?.id;
+        const now = new Date();
+        if (!existing) {
+          userId = createId();
+          await tx.insert(users).values({
+            id: userId,
+            tenantId,
+            personId: data.personId,
+            primaryEmail: data.email,
+            status: "INVITED",
+            invitedAt: now,
+            createdAt: now,
+            updatedAt: now,
+          });
+          await tx.insert(userTenantAccess).values({
+            id: createId(),
+            tenantId,
+            userId,
+            status: "ACTIVE",
+            isDefaultTenant: true,
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+
+        const invitationId = createId();
+        const expiresAt = new Date(now.getTime() + data.expiresInHours * 3600_000);
+        await tx.insert(userInvitations).values({
+          id: invitationId,
           tenantId,
+          email: data.email,
           personId: data.personId,
-          primaryEmail: data.email,
-          status: "INVITED",
-          invitedAt: now,
+          invitationTokenHash: tokenHash,
+          expiresAt,
+          status: "PENDING",
+          invitedByUserId: principal.userId,
           createdAt: now,
-          updatedAt: now,
         });
-        await tx.insert(userTenantAccess).values({
-          id: createId(),
+
+        await this.outbox.write(tx, {
           tenantId,
-          userId,
-          status: "ACTIVE",
-          isDefaultTenant: true,
-          createdAt: now,
-          updatedAt: now,
+          aggregateType: "user",
+          aggregateId: userId!,
+          eventType: DOMAIN_EVENT_TYPES.USER_INVITED,
+          payload: { userId, email: data.email, invitationId, tenantId },
+          correlationId: principal.correlationId,
+          actorUserId: principal.userId,
         });
-      }
+        await this.audit.writeInTransaction(tx, {
+          tenantId,
+          actorUserId: principal.userId,
+          actorPersonId: principal.personId,
+          actorType: "USER",
+          action: "user.invite",
+          resourceType: "user_invitation",
+          resourceId: invitationId,
+          result: "SUCCESS",
+          riskLevel: "MEDIUM",
+          correlationId: principal.correlationId,
+          requestId: principal.requestId,
+          after: { invitationId, email: data.email, expiresAt },
+        });
 
-      const invitationId = createId();
-      const expiresAt = new Date(now.getTime() + data.expiresInHours * 3600_000);
-      await tx.insert(userInvitations).values({
-        id: invitationId,
-        tenantId,
-        email: data.email,
-        personId: data.personId,
-        invitationTokenHash: tokenHash,
-        expiresAt,
-        status: "PENDING",
-        invitedByUserId: principal.userId,
-        createdAt: now,
-      });
-
-      await this.outbox.write(tx, {
-        tenantId,
-        aggregateType: "user",
-        aggregateId: userId!,
-        eventType: DOMAIN_EVENT_TYPES.USER_INVITED,
-        payload: { userId, email: data.email, invitationId, tenantId },
-        correlationId: principal.correlationId,
-        actorUserId: principal.userId,
-      });
-      await this.audit.writeInTransaction(tx, {
-        tenantId,
-        actorUserId: principal.userId,
-        actorPersonId: principal.personId,
-        actorType: "USER",
-        action: "user.invite",
-        resourceType: "user_invitation",
-        resourceId: invitationId,
-        result: "SUCCESS",
-        riskLevel: "MEDIUM",
-        correlationId: principal.correlationId,
-        requestId: principal.requestId,
-        after: { invitationId, email: data.email, expiresAt },
-      });
-
-      // Return plaintext token once; only hash is persisted.
-      return {
-        invitationId,
-        userId,
-        email: data.email,
-        expiresAt,
-        token,
-      };
-    }, principal.userId);
+        // Return plaintext token once; only hash is persisted.
+        return {
+          invitationId,
+          userId,
+          email: data.email,
+          expiresAt,
+          token,
+        };
+      },
+      principal.userId,
+    );
   }
 
   async acceptInvitation(input: unknown, ids: { correlationId: string; requestId: string }) {
@@ -261,54 +266,59 @@ export class UsersService {
     expectedVersion: ExpectedVersion,
   ) {
     const data = patchUserSchema.parse(input);
-    return withTenantTransaction(this.db, tenantId, async (tx) => {
-      const before = await tx.query.users.findFirst({
-        where: and(eq(users.id, userId), eq(users.tenantId, tenantId)),
-      });
-      if (!before) {
-        throw new ForgeError("NOT_FOUND", "User not found");
-      }
-      const version = before.recordVersion;
-      if (expectedVersion !== "*" && version !== expectedVersion) {
-        throw concurrencyConflict({
+    return withTenantTransaction(
+      this.db,
+      tenantId,
+      async (tx) => {
+        const before = await tx.query.users.findFirst({
+          where: and(eq(users.id, userId), eq(users.tenantId, tenantId)),
+        });
+        if (!before) {
+          throw new ForgeError("NOT_FOUND", "User not found");
+        }
+        const version = before.recordVersion;
+        if (expectedVersion !== "*" && version !== expectedVersion) {
+          throw concurrencyConflict({
+            tenantId,
+            resourceType: "user",
+            resourceId: userId,
+            expectedVersion,
+            actualVersion: version,
+          });
+        }
+        const [updated] = await tx
+          .update(users)
+          .set({ ...data, recordVersion: version + 1, updatedAt: new Date() })
+          .where(and(eq(users.id, userId), eq(users.recordVersion, version)))
+          .returning();
+        if (!updated) {
+          throw concurrencyConflict({
+            tenantId,
+            resourceType: "user",
+            resourceId: userId,
+            expectedVersion,
+            actualVersion: null,
+          });
+        }
+        await this.audit.writeInTransaction(tx, {
           tenantId,
+          actorUserId: principal.userId,
+          actorPersonId: principal.personId,
+          actorType: "USER",
+          action: "user.update",
           resourceType: "user",
           resourceId: userId,
-          expectedVersion,
-          actualVersion: version,
+          result: "SUCCESS",
+          riskLevel: "LOW",
+          correlationId: principal.correlationId,
+          requestId: principal.requestId,
+          before,
+          after: updated,
         });
-      }
-      const [updated] = await tx
-        .update(users)
-        .set({ ...data, recordVersion: version + 1, updatedAt: new Date() })
-        .where(and(eq(users.id, userId), eq(users.recordVersion, version)))
-        .returning();
-      if (!updated) {
-        throw concurrencyConflict({
-          tenantId,
-          resourceType: "user",
-          resourceId: userId,
-          expectedVersion,
-          actualVersion: null,
-        });
-      }
-      await this.audit.writeInTransaction(tx, {
-        tenantId,
-        actorUserId: principal.userId,
-        actorPersonId: principal.personId,
-        actorType: "USER",
-        action: "user.update",
-        resourceType: "user",
-        resourceId: userId,
-        result: "SUCCESS",
-        riskLevel: "LOW",
-        correlationId: principal.correlationId,
-        requestId: principal.requestId,
-        before,
-        after: updated,
-      });
-      return updated;
-    }, principal.userId);
+        return updated;
+      },
+      principal.userId,
+    );
   }
 
   async disable(
@@ -317,57 +327,62 @@ export class UsersService {
     principal: ForgePrincipal,
     expectedVersion: ExpectedVersion,
   ) {
-    return withTenantTransaction(this.db, tenantId, async (tx) => {
-      const before = await tx.query.users.findFirst({
-        where: and(eq(users.id, userId), eq(users.tenantId, tenantId)),
-      });
-      if (!before) {
-        throw new ForgeError("NOT_FOUND", "User not found");
-      }
-      const version = before.recordVersion;
-      if (expectedVersion !== "*" && version !== expectedVersion) {
-        throw concurrencyConflict({
-          tenantId,
-          resourceType: "user",
-          resourceId: userId,
-          expectedVersion,
-          actualVersion: version,
+    return withTenantTransaction(
+      this.db,
+      tenantId,
+      async (tx) => {
+        const before = await tx.query.users.findFirst({
+          where: and(eq(users.id, userId), eq(users.tenantId, tenantId)),
         });
-      }
-      const now = new Date();
-      const [updated] = await tx
-        .update(users)
-        .set({
-          status: "DISABLED",
-          disabledAt: now,
-          updatedAt: now,
-          recordVersion: version + 1,
-          // Force-invalidate existing sessions when the account is disabled.
-          sessionVersion: before.sessionVersion + 1,
-          sessionsRevokedAt: now,
-        })
-        .where(and(eq(users.id, userId), eq(users.recordVersion, version)))
-        .returning();
-      if (!updated) {
-        throw concurrencyConflict({
+        if (!before) {
+          throw new ForgeError("NOT_FOUND", "User not found");
+        }
+        const version = before.recordVersion;
+        if (expectedVersion !== "*" && version !== expectedVersion) {
+          throw concurrencyConflict({
+            tenantId,
+            resourceType: "user",
+            resourceId: userId,
+            expectedVersion,
+            actualVersion: version,
+          });
+        }
+        const now = new Date();
+        const [updated] = await tx
+          .update(users)
+          .set({
+            status: "DISABLED",
+            disabledAt: now,
+            updatedAt: now,
+            recordVersion: version + 1,
+            // Force-invalidate existing sessions when the account is disabled.
+            sessionVersion: before.sessionVersion + 1,
+            sessionsRevokedAt: now,
+          })
+          .where(and(eq(users.id, userId), eq(users.recordVersion, version)))
+          .returning();
+        if (!updated) {
+          throw concurrencyConflict({
+            tenantId,
+            resourceType: "user",
+            resourceId: userId,
+            expectedVersion,
+            actualVersion: null,
+          });
+        }
+        await this.outbox.write(tx, {
           tenantId,
-          resourceType: "user",
-          resourceId: userId,
-          expectedVersion,
-          actualVersion: null,
+          aggregateType: "user",
+          aggregateId: userId,
+          eventType: DOMAIN_EVENT_TYPES.USER_DISABLED,
+          payload: { userId, tenantId },
+          correlationId: principal.correlationId,
+          actorUserId: principal.userId,
         });
-      }
-      await this.outbox.write(tx, {
-        tenantId,
-        aggregateType: "user",
-        aggregateId: userId,
-        eventType: DOMAIN_EVENT_TYPES.USER_DISABLED,
-        payload: { userId, tenantId },
-        correlationId: principal.correlationId,
-        actorUserId: principal.userId,
-      });
-      return updated;
-    }, principal.userId);
+        return updated;
+      },
+      principal.userId,
+    );
   }
 
   async enable(
@@ -376,52 +391,57 @@ export class UsersService {
     principal: ForgePrincipal,
     expectedVersion: ExpectedVersion,
   ) {
-    return withTenantTransaction(this.db, tenantId, async (tx) => {
-      const before = await tx.query.users.findFirst({
-        where: and(eq(users.id, userId), eq(users.tenantId, tenantId)),
-      });
-      if (!before) {
-        throw new ForgeError("NOT_FOUND", "User not found");
-      }
-      const version = before.recordVersion;
-      if (expectedVersion !== "*" && version !== expectedVersion) {
-        throw concurrencyConflict({
-          tenantId,
-          resourceType: "user",
-          resourceId: userId,
-          expectedVersion,
-          actualVersion: version,
+    return withTenantTransaction(
+      this.db,
+      tenantId,
+      async (tx) => {
+        const before = await tx.query.users.findFirst({
+          where: and(eq(users.id, userId), eq(users.tenantId, tenantId)),
         });
-      }
-      const [updated] = await tx
-        .update(users)
-        .set({
-          status: "ACTIVE",
-          disabledAt: null,
-          recordVersion: version + 1,
-          updatedAt: new Date(),
-        })
-        .where(and(eq(users.id, userId), eq(users.recordVersion, version)))
-        .returning();
-      if (!updated) {
-        throw concurrencyConflict({
+        if (!before) {
+          throw new ForgeError("NOT_FOUND", "User not found");
+        }
+        const version = before.recordVersion;
+        if (expectedVersion !== "*" && version !== expectedVersion) {
+          throw concurrencyConflict({
+            tenantId,
+            resourceType: "user",
+            resourceId: userId,
+            expectedVersion,
+            actualVersion: version,
+          });
+        }
+        const [updated] = await tx
+          .update(users)
+          .set({
+            status: "ACTIVE",
+            disabledAt: null,
+            recordVersion: version + 1,
+            updatedAt: new Date(),
+          })
+          .where(and(eq(users.id, userId), eq(users.recordVersion, version)))
+          .returning();
+        if (!updated) {
+          throw concurrencyConflict({
+            tenantId,
+            resourceType: "user",
+            resourceId: userId,
+            expectedVersion,
+            actualVersion: null,
+          });
+        }
+        await this.outbox.write(tx, {
           tenantId,
-          resourceType: "user",
-          resourceId: userId,
-          expectedVersion,
-          actualVersion: null,
+          aggregateType: "user",
+          aggregateId: userId,
+          eventType: DOMAIN_EVENT_TYPES.USER_ACTIVATED,
+          payload: { userId, tenantId },
+          correlationId: principal.correlationId,
+          actorUserId: principal.userId,
         });
-      }
-      await this.outbox.write(tx, {
-        tenantId,
-        aggregateType: "user",
-        aggregateId: userId,
-        eventType: DOMAIN_EVENT_TYPES.USER_ACTIVATED,
-        payload: { userId, tenantId },
-        correlationId: principal.correlationId,
-        actorUserId: principal.userId,
-      });
-      return updated;
-    }, principal.userId);
+        return updated;
+      },
+      principal.userId,
+    );
   }
 }

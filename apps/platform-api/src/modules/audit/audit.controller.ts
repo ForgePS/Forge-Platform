@@ -2,7 +2,10 @@ import { Controller, Get, Param, Post, Query, Req } from "@nestjs/common";
 import { ForgeError } from "@forge/errors";
 import { ok } from "../../common/api-response.js";
 import { getRequestIds, type RequestWithIds } from "../../common/request-ids.js";
-import { RequireAnyPermission, RequirePermission } from "../auth-context/require-permission.decorator.js";
+import {
+  RequireAnyPermission,
+  RequirePermission,
+} from "../auth-context/require-permission.decorator.js";
 import { AuditService } from "./audit.service.js";
 
 @Controller("api/v1/tenants/:tenantId/audit-events")

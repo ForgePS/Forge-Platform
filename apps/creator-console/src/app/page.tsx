@@ -49,7 +49,7 @@ type DashboardStats = {
   recentAudit: AuditEvent[];
   health: HealthPayload | null;
   ready: ReadyPayload | null;
-  queueHealth: "unavailable" | null;
+  queueHealth: "ok" | "degraded" | "unavailable" | null;
 };
 
 function DashboardInner() {
@@ -74,12 +74,26 @@ function DashboardInner() {
     };
 
     try {
-      const [healthResult, readyResult] = await Promise.allSettled([
-        fetchHealth(),
-        fetchReady(),
-      ]);
+      const [healthResult, readyResult] = await Promise.allSettled([fetchHealth(), fetchReady()]);
       if (healthResult.status === "fulfilled") next.health = healthResult.value;
-      if (readyResult.status === "fulfilled") next.ready = readyResult.value;
+      if (readyResult.status === "fulfilled" && readyResult.value) {
+        next.ready = readyResult.value;
+        const checks = readyResult.value.checks;
+        if (checks.outbox === false) {
+          next.queueHealth = "unavailable";
+        } else if (
+          checks.outbox === true &&
+          ((checks.outboxFailed ?? 0) > 0 || (checks.outboxPending ?? 0) > 100)
+        ) {
+          next.queueHealth = "degraded";
+        } else if (checks.outbox === true) {
+          next.queueHealth = "ok";
+        } else {
+          next.queueHealth = "unavailable";
+        }
+      } else {
+        next.queueHealth = "unavailable";
+      }
 
       const tenants = await apiGet<Tenant[]>("/api/v1/platform/tenants");
       next.activeTenants = tenants.filter((tenant) => tenant.status === "ACTIVE").length;
@@ -92,9 +106,7 @@ function DashboardInner() {
             listInvitations({ tenantId }),
             listMemberships(tenantId),
             apiGet<User[]>(`/api/v1/tenants/${tenantId}/users`),
-            apiGet<AuditEvent[]>(
-              `/api/v1/tenants/${tenantId}/audit-events?page=1&pageSize=5`,
-            ),
+            apiGet<AuditEvent[]>(`/api/v1/tenants/${tenantId}/audit-events?page=1&pageSize=5`),
             apiGet<Subscription[]>(`/api/v1/tenants/${tenantId}/subscriptions`),
           ]);
 
@@ -140,20 +152,40 @@ function DashboardInner() {
 
   return (
     <section className={styles.page}>
-      <h1>Dashboard</h1>
-      <p className={styles.lead}>
-        Live platform metrics from the API.{" "}
-        {!me ? (
-          <>
-            <Link href="/login">Sign in</Link> to load tenant-scoped stats.
-          </>
-        ) : (
-          <>
-            Tenant <span className={styles.mono}>{me.tenantId}</span> ·{" "}
-            <Link href="/select-tenant">Switch tenant</Link>
-          </>
-        )}
-      </p>
+      <div className="forge-page-header">
+        <div>
+          <h1 className="forge-page-header__title">Creator Console</h1>
+          <p className="forge-page-header__subtitle">
+            Platform operations, customer management and system administration.
+            {!me ? (
+              <>
+                {" "}
+                <Link href="/login">Sign in</Link> to load tenant-scoped stats.
+              </>
+            ) : (
+              <>
+                {" "}
+                Tenant <span className={styles.mono}>{me.tenantId}</span> ·{" "}
+                <Link href="/select-tenant">Switch tenant</Link>
+              </>
+            )}
+          </p>
+        </div>
+        <div className="forge-page-actions">
+          <Link className="forge-btn" href="/tenants">
+            + New Tenant
+          </Link>
+          <Link className="forge-btn forge-btn--outline" href="/users">
+            + Invite User
+          </Link>
+          <Link className="forge-btn forge-btn--secondary" href="/entitlements">
+            + Assign Product
+          </Link>
+          <Link className="forge-btn forge-btn--secondary" href="/onboarding">
+            + Start Onboarding
+          </Link>
+        </div>
+      </div>
 
       {authError ? <p className={styles.error}>{authError}</p> : null}
       {error ? <p className={styles.error}>{error}</p> : null}
@@ -161,33 +193,48 @@ function DashboardInner() {
 
       {stats ? (
         <>
-          <div className={styles.statGrid}>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Active tenants</p>
-              <p className={styles.statValue}>{stats.activeTenants ?? "—"}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Pending invitations</p>
-              <p className={styles.statValue}>
+          <div className="forge-metric-grid">
+            <article className="forge-metric-card">
+              <p className="forge-metric-card__label">Active tenants</p>
+              <p className="forge-metric-card__value">{stats.activeTenants ?? "—"}</p>
+            </article>
+            <article className="forge-metric-card">
+              <p className="forge-metric-card__label">Pending invitations</p>
+              <p className="forge-metric-card__value">
                 {stats.pendingInvitations ?? (me ? "—" : "N/A")}
               </p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Active users</p>
-              <p className={styles.statValue}>{stats.activeUsers ?? (me ? "—" : "N/A")}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Suspended memberships</p>
-              <p className={styles.statValue}>
+            </article>
+            <article className="forge-metric-card">
+              <p className="forge-metric-card__label">Active users</p>
+              <p className="forge-metric-card__value">{stats.activeUsers ?? (me ? "—" : "N/A")}</p>
+            </article>
+            <article className="forge-metric-card">
+              <p className="forge-metric-card__label">Suspended memberships</p>
+              <p className="forge-metric-card__value">
                 {stats.suspendedMemberships ?? (me ? "—" : "N/A")}
               </p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Active subscriptions</p>
-              <p className={styles.statValue}>
+            </article>
+            <article className="forge-metric-card">
+              <p className="forge-metric-card__label">Active subscriptions</p>
+              <p className="forge-metric-card__value">
                 {stats.activeSubscriptions ?? (me ? "—" : "N/A")}
               </p>
-            </div>
+            </article>
+            <article className="forge-metric-card">
+              <p className="forge-metric-card__label">Queue health</p>
+              <p className="forge-metric-card__value" style={{ fontSize: "1.1rem" }}>
+                {stats.queueHealth === "ok"
+                  ? "Healthy"
+                  : stats.queueHealth === "degraded"
+                    ? "Degraded"
+                    : "Unavailable"}
+              </p>
+              <p className="forge-metric-card__hint">
+                {stats.ready?.checks.outbox
+                  ? `Outbox pending ${stats.ready.checks.outboxPending ?? 0} · failed ${stats.ready.checks.outboxFailed ?? 0}`
+                  : "Outbox probe unavailable"}
+              </p>
+            </article>
           </div>
 
           <div className={styles.panel}>
@@ -213,7 +260,13 @@ function DashboardInner() {
               </dd>
               <dt>Queue</dt>
               <dd>
-                <span className={styles.badgeWarn}>{stats.queueHealth ?? "unavailable"}</span>
+                {stats.queueHealth === "ok" ? (
+                  <span className={styles.badgeOk}>ok</span>
+                ) : stats.queueHealth === "degraded" ? (
+                  <span className={styles.badgeWarn}>degraded</span>
+                ) : (
+                  <span className={styles.badgeWarn}>{stats.queueHealth ?? "unavailable"}</span>
+                )}
               </dd>
               <dt>Environment</dt>
               <dd>{stats.health?.environment ?? appEnv}</dd>
@@ -229,6 +282,7 @@ function DashboardInner() {
             <p className={styles.linkRow}>
               <Link href="/health">Platform health detail</Link>
               <Link href="/deployment">Deployment information</Link>
+              <Link href="/migrations">Data migration</Link>
             </p>
           </div>
 

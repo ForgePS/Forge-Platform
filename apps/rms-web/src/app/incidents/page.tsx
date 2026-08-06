@@ -41,7 +41,7 @@ function IncidentsInner() {
     } finally {
       setLoading(false);
     }
-  }, [me?.tenantId, controls.page, controls.pageSize, controls.search, controls.setTotal]);
+  }, [me?.tenantId, controls]);
 
   useEffect(() => {
     void load();
@@ -86,7 +86,12 @@ function IncidentsInner() {
             <FxTable
               caption="Incidents"
               loading={loading}
-              empty={<FxTableEmpty title="No incidents found." description="Create a manual incident to get started." />}
+              empty={
+                <FxTableEmpty
+                  title="No incidents found."
+                  description="Create a manual incident to get started."
+                />
+              }
               rows={items}
               rowKey={(row) => row.id}
               columns={[
@@ -100,8 +105,7 @@ function IncidentsInner() {
                 {
                   id: "description",
                   header: "Description",
-                  accessor: (row) =>
-                    row.dispatchDescription ?? row.primaryIncidentTypeCode ?? "—",
+                  accessor: (row) => row.dispatchDescription ?? row.primaryIncidentTypeCode ?? "—",
                 },
               ]}
               rowActions={(row) => <Link href={`/incidents/${row.id}/`}>Open</Link>}
@@ -112,7 +116,9 @@ function IncidentsInner() {
             {listControls}
             <div className={styles.panel}>
               {loading ? <p className={styles.muted}>Loading…</p> : null}
-              {!loading && items.length === 0 ? <p className={styles.muted}>No incidents found.</p> : null}
+              {!loading && items.length === 0 ? (
+                <p className={styles.muted}>No incidents found.</p>
+              ) : null}
               {items.length > 0 ? (
                 <table className={styles.table}>
                   <thead>

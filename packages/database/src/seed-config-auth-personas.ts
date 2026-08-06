@@ -83,11 +83,7 @@ const PERSONAS = [
     key: "standard_user",
     email: "config-standard@forge.test",
     roleCode: "CONFIG_STANDARD_USER",
-    permissions: [
-      "platform.organization.read",
-      "platform.person.read",
-      "platform.permission.read",
-    ],
+    permissions: ["platform.organization.read", "platform.person.read", "platform.permission.read"],
   },
   {
     key: "update_only",
@@ -266,12 +262,11 @@ export async function seedConfigAuthPersonas(options?: {
 
 async function main(): Promise<void> {
   const result = await seedConfigAuthPersonas();
-  console.info(JSON.stringify({ ok: true, ...result }, null, 2));
+  console.warn(JSON.stringify({ ok: true, ...result }, null, 2));
 }
 
 const isDirect =
-  process.argv[1] &&
-  pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url;
+  process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url;
 
 if (
   isDirect ||
