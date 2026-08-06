@@ -62,10 +62,10 @@
 | --- | --- | --- |
 | R1 | Idempotent load onto `producers-rice-mill-staging` (fail-closed flags) | **DONE** — waves 1–3 `errorCount: 0` |
 | R2 | Row count parity report vs Q5 freeze (100% or signed exceptions) | **DONE** — see `parity-counts-result.json` / `staging-load-summary.json` |
-| R3 | RLS verify: forge_app cannot read cross-tenant; staging isolated from twin/A | PENDING |
+| R3 | RLS verify: forge_app cannot read cross-tenant; staging isolated from twin/A | **DONE** — `rls-isolation-result.json` PASS |
 | R4 | N4 Firebase → S3 URL rewrite on staging domain fields / attachment links | PENDING (deferred from Phase 3) |
 | R5 | Optional: upsert prod-twin `platform_documents` if twin UAT needs docs list | PENDING |
-| R6 | API + browser smoke day-1 modules on staging host | PENDING |
+| R6 | API + browser smoke day-1 modules on staging host | **DONE** — `api-smoke-staging.json` PASS (dev-principal; QR/docs routes 404 on tip) |
 
 ### S. Staging UAT
 
@@ -150,10 +150,10 @@ Phase 4 **staging load** may start when:
 
 ## Immediate next actions
 
-1. R3 RLS isolation verify (staging vs twin vs Tenant A).  
-2. R6 API/browser smoke + S1/S2 staging UAT.  
-3. Restore live Firebase extract tooling before final delta / prod-twin load.  
-4. R4 N4 URL rewrite once domain attachment fields need S3 keys.  
+1. S1/S2 staging UAT checklist + Producers lead sign-off.  
+2. Restore live Firebase extract tooling before final delta / prod-twin load.  
+3. R4 N4 URL rewrite once domain attachment fields need S3 keys.  
+4. Cognito operator re-smoke optional (`FORGE_P2_PHASE4_SMOKE_MODE=cognito`) when smoke passwords available.  
 
 ## References
 
