@@ -15,7 +15,7 @@ export default function IndustrialSettingsPage() {
         module workspaces until shared settings APIs are ready.
       </p>
       <div className="row g-3">
-        <div className="col-md-4">
+        <div className="col-12 col-sm-6 col-md-4">
           <div className="card h-100">
             <div className="card-body">
               <h2 className="h6">Organization</h2>
@@ -24,7 +24,7 @@ export default function IndustrialSettingsPage() {
             </div>
           </div>
         </div>
-        <div className="col-md-4">
+        <div className="col-12 col-sm-6 col-md-4">
           <div className="card h-100">
             <div className="card-body">
               <h2 className="h6">Notifications</h2>
@@ -33,7 +33,7 @@ export default function IndustrialSettingsPage() {
             </div>
           </div>
         </div>
-        <div className="col-md-4">
+        <div className="col-12 col-sm-6 col-md-4">
           <div className="card h-100">
             <div className="card-body">
               <h2 className="h6">Reports</h2>

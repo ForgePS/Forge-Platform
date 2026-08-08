@@ -81,6 +81,7 @@ function ShellBody({ children }: { children: ReactNode }) {
   const { me, loading, error, logout, loginWithCognito, chooseTenant, hasPermission } = useAuth();
   const [flags, setFlags] = useState<Record<string, boolean>>({});
   const [menuOpen, setMenuOpen] = useState(false);
+  const [tenantSwitching, setTenantSwitching] = useState(false);
 
   const signOut = async () => {
     clearAllOfflineData();
@@ -140,6 +141,31 @@ function ShellBody({ children }: { children: ReactNode }) {
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  // FORGE-UI-S5: Escape closes drawer; lock body scroll while open.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
+  // Collapse overlay drawer when viewport crosses into desktop nav.
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1200px)");
+    const onChange = () => {
+      if (mq.matches) setMenuOpen(false);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   if (isPublicAuthRoute) {
     return <>{children}</>;
@@ -233,8 +259,21 @@ function ShellBody({ children }: { children: ReactNode }) {
     flags,
   });
   const groups = [...new Set(nav.map((n) => n.group))];
+  const selectableTenants = me.tenants.filter((t) => t.selectable);
   const tenantLabel =
-    me.tenants.find((t) => t.tenantId === me.tenantId)?.displayName ?? me.tenantId;
+    selectableTenants.find((t) => t.tenantId === me.tenantId)?.displayName ??
+    me.tenants.find((t) => t.tenantId === me.tenantId)?.displayName ??
+    me.tenantId;
+
+  const onTenantChange = async (nextTenantId: string) => {
+    if (!nextTenantId || nextTenantId === me.tenantId || tenantSwitching) return;
+    setTenantSwitching(true);
+    try {
+      await chooseTenant(nextTenantId);
+    } finally {
+      setTenantSwitching(false);
+    }
+  };
 
   return (
     <div className="layout-wrapper layout-content-navbar">
@@ -249,6 +288,8 @@ function ShellBody({ children }: { children: ReactNode }) {
               type="button"
               className="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none btn btn-link p-0 border-0"
               aria-label="Close menu"
+              aria-expanded={menuOpen}
+              aria-controls="layout-menu"
               onClick={() => setMenuOpen(false)}
             >
               <i className="bx bx-chevron-left bx-sm align-middle" />
@@ -312,24 +353,52 @@ function ShellBody({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 className="nav-item nav-link px-0 me-xl-4 btn btn-link"
-                aria-label="Open menu"
-                onClick={() => setMenuOpen(true)}
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={menuOpen}
+                aria-controls="layout-menu"
+                onClick={() => setMenuOpen((open) => !open)}
               >
-                <i className="bx bx-menu bx-sm" />
+                <i className="bx bx-menu bx-sm" aria-hidden="true" />
               </button>
             </div>
 
-            <div className="navbar-nav-right d-flex align-items-center w-100" id="navbar-collapse">
-              <div className="navbar-nav align-items-center flex-grow-1">
-                <div className="nav-item d-flex align-items-center text-muted small">
-                  <i className="bx bx-buildings me-2" />
-                  Tenant: {tenantLabel}
-                </div>
+            <div className="navbar-nav-right d-flex align-items-center flex-wrap gap-2 w-100" id="navbar-collapse">
+              <div className="navbar-nav align-items-center flex-grow-1 min-w-0">
+                <label className="nav-item ind-tenant-switcher mb-0">
+                  <i className="bx bx-buildings flex-shrink-0" aria-hidden="true" />
+                  <span className="ind-tenant-switcher__label">Tenant</span>
+                  {selectableTenants.length > 1 ? (
+                    <select
+                      className="form-select form-select-sm"
+                      aria-label="Switch tenant"
+                      value={me.tenantId ?? ""}
+                      disabled={tenantSwitching}
+                      onChange={(event) => void onTenantChange(event.target.value)}
+                    >
+                      {selectableTenants.map((t) => (
+                        <option key={t.tenantId} value={t.tenantId}>
+                          {t.displayName}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="text-muted small text-truncate" title={tenantLabel}>
+                      {tenantLabel}
+                    </span>
+                  )}
+                  {tenantSwitching ? (
+                    <span className="text-muted small flex-shrink-0" role="status">
+                      Switching…
+                    </span>
+                  ) : null}
+                </label>
               </div>
-              <ul className="navbar-nav flex-row align-items-center ms-auto">
-                <li className="nav-item navbar-dropdown dropdown-user dropdown">
-                  <span className="nav-link hide-arrow d-flex align-items-center gap-2">
-                    <span className="fw-semibold d-none d-md-inline">{me.userId.slice(0, 8)}…</span>
+              <ul className="navbar-nav flex-row align-items-center ms-auto flex-shrink-0">
+                <li className="nav-item">
+                  <span className="nav-link hide-arrow d-flex align-items-center gap-2 px-0">
+                    <span className="fw-semibold d-none d-sm-inline text-truncate" style={{ maxWidth: "8rem" }}>
+                      {me.userId.slice(0, 8)}…
+                    </span>
                     <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => void signOut()}>
                       Sign out
                     </button>
@@ -346,9 +415,13 @@ function ShellBody({ children }: { children: ReactNode }) {
             </div>
             <footer className="content-footer footer bg-footer-theme">
               <div className="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
-                <div className="mb-2 mb-md-0">
-                  © {new Date().getFullYear()} Forge Industrial Safety · Sneat Free theme ·{" "}
-                  {INDUSTRIAL_MODULE_REGISTRY.length} modules · Firebase remains production SoT
+                <div className="mb-2 mb-md-0 small text-muted">
+                  © {new Date().getFullYear()} Forge Industrial Safety · {INDUSTRIAL_MODULE_REGISTRY.length}{" "}
+                  modules
+                  <span className="d-none d-md-inline">
+                    {" "}
+                    · Sneat Free theme · Firebase remains production SoT
+                  </span>
                 </div>
               </div>
             </footer>
@@ -356,11 +429,16 @@ function ShellBody({ children }: { children: ReactNode }) {
         </div>
       </div>
 
-      <div
-        className="layout-overlay layout-menu-toggle"
-        role="presentation"
-        onClick={() => setMenuOpen(false)}
-      />
+      {menuOpen ? (
+        <button
+          type="button"
+          className="layout-overlay layout-menu-toggle"
+          aria-label="Close navigation"
+          onClick={() => setMenuOpen(false)}
+        />
+      ) : (
+        <div className="layout-overlay layout-menu-toggle" aria-hidden="true" />
+      )}
     </div>
   );
 }

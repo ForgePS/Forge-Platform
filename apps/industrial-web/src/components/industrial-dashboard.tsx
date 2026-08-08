@@ -30,9 +30,9 @@ export function IndustrialDashboard() {
   const featured = available.length > 0 ? available.slice(0, 12) : INDUSTRIAL_MODULE_REGISTRY.filter((m) => m.code !== "CORE").slice(0, 12);
 
   return (
-    <div className="ind-content">
+    <div className="ind-content ind-dashboard">
       <div className="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
-        <div>
+        <div className="min-w-0 flex-grow-1">
           <h1 className="mb-1">Industrial dashboard</h1>
           <p className="text-muted mb-0">
             {me?.tenantId
@@ -40,18 +40,21 @@ export function IndustrialDashboard() {
               : "Sign in and select a tenant to see authorized modules."}
           </p>
         </div>
-        <div className="d-flex gap-2 flex-wrap">
+        <div className="ind-dashboard-actions">
           <Link className="btn btn-outline-primary" href="/modules/personnel">
             Personnel
           </Link>
           <Link className="btn btn-outline-primary" href="/modules/incidents">
             Incidents
           </Link>
+          <Link className="btn btn-outline-secondary" href="/settings">
+            Settings
+          </Link>
         </div>
       </div>
 
       <div className="row g-3 mb-4">
-        <div className="col-md-4">
+        <div className="col-12 col-sm-6 col-md-4">
           <div className="card h-100">
             <div className="card-body">
               <div className="text-muted text-uppercase small">Product</div>
@@ -62,7 +65,7 @@ export function IndustrialDashboard() {
             </div>
           </div>
         </div>
-        <div className="col-md-4">
+        <div className="col-12 col-sm-6 col-md-4">
           <div className="card h-100">
             <div className="card-body">
               <div className="text-muted text-uppercase small">Access</div>
@@ -75,7 +78,7 @@ export function IndustrialDashboard() {
             </div>
           </div>
         </div>
-        <div className="col-md-4">
+        <div className="col-12 col-sm-6 col-md-4">
           <div className="card h-100">
             <div className="card-body">
               <div className="text-muted text-uppercase small">Modules visible</div>
@@ -98,7 +101,7 @@ export function IndustrialDashboard() {
               : "FOUNDATION";
           const availableFlag = "available" in mod ? Boolean((mod as { available?: boolean }).available) : true;
           return (
-            <div className="col-sm-6 col-lg-4 col-xl-3" key={code}>
+            <div className="col-12 col-sm-6 col-lg-4 col-xl-3" key={code}>
               {availableFlag ? (
                 <Link href={route} className="card h-100 text-decoration-none">
                   <div className="card-body">
