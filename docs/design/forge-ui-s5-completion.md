@@ -62,4 +62,5 @@ Manual device capture screenshots are deferred (local CSS/responsive contracts v
 
 - Optional: attach mobile screenshot evidence for Producers staging UAT
 - Later: brand pack when Forge logos are available
-- Redeploy Industrial to pick up S5 + tenant switcher on industrial-dev / tenant hosts
+- Industrial-dev redeployed with S5 + tenant switcher (see Redeployed note below)
+**Redeployed:** 2026-08-08 — `pnpm deploy:industrial-web` → bucket `forge-development-industrial-511343547817-us-east-1`, CloudFront invalidation `I8I10IDT85D1V25FAFA21YTNJA`. Live `https://industrial-dev.forgepublicsafety.com/` returns 200 with vendored `/sneat/*` assets.
