@@ -305,8 +305,14 @@ function ShellBody({ children }: { children: ReactNode }) {
                 <div>Dashboard</div>
               </Link>
             </li>
-            <li className={pathname === "/settings" ? "menu-item active" : "menu-item"}>
-              <Link href="/settings" className="menu-link" onClick={() => setMenuOpen(false)}>
+            <li className={pathname === "/profile" || pathname === "/profile/" ? "menu-item active" : "menu-item"}>
+              <Link href="/profile/" className="menu-link" onClick={() => setMenuOpen(false)}>
+                <i className="menu-icon tf-icons bx bx-user" />
+                <div>My profile</div>
+              </Link>
+            </li>
+            <li className={pathname === "/settings" || pathname === "/settings/" ? "menu-item active" : "menu-item"}>
+              <Link href="/settings/" className="menu-link" onClick={() => setMenuOpen(false)}>
                 <i className="menu-icon tf-icons bx bx-cog" />
                 <div>Settings</div>
               </Link>
@@ -396,9 +402,16 @@ function ShellBody({ children }: { children: ReactNode }) {
               <ul className="navbar-nav flex-row align-items-center ms-auto flex-shrink-0">
                 <li className="nav-item">
                   <span className="nav-link hide-arrow d-flex align-items-center gap-2 px-0">
-                    <span className="fw-semibold d-none d-sm-inline text-truncate" style={{ maxWidth: "8rem" }}>
-                      {me.userId.slice(0, 8)}…
-                    </span>
+                    <Link
+                      href="/profile/"
+                      className="avatar avatar-sm text-decoration-none"
+                      aria-label="Open my profile"
+                      title="My profile"
+                    >
+                      <span className="avatar-initial rounded-circle bg-label-primary">
+                        {(me.isPlatformAdmin ? "PA" : me.userId.slice(0, 2)).toUpperCase()}
+                      </span>
+                    </Link>
                     <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => void signOut()}>
                       Sign out
                     </button>

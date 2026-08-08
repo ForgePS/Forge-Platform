@@ -583,6 +583,26 @@
   width: auto;
 }
 
+.ind-profile-dl {
+  display: grid;
+  gap: 0.75rem 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  margin: 0;
+}
+
+.ind-profile-dl dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ind-muted);
+  margin: 0 0 0.15rem;
+}
+
+.ind-profile-dl dd {
+  margin: 0;
+  color: var(--ind-heading);
+}
+
 /* -------------------------------------------------------------------------- */
 /* FORGE-UI-S5 responsive hardening                                           */
 /* -------------------------------------------------------------------------- */
