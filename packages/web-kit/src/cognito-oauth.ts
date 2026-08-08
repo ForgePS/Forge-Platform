@@ -45,9 +45,11 @@ function readPublicEnv(): {
   const domain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN;
   const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
   const userPoolId = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
+  // Prefer the live browser origin so one static build can OAuth on industrial-dev,
+  // producers-rice-mill, CloudFront, and localhost without redirect_mismatch.
   const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    (typeof window !== "undefined" ? window.location.origin : undefined);
+    (typeof window !== "undefined" ? window.location.origin : undefined) ??
+    process.env.NEXT_PUBLIC_APP_URL;
 
   return {
     ...(domain ? { domain } : {}),
