@@ -85,14 +85,19 @@ function asPayload(value: unknown): BrandingPayload {
     logoUrl: (typeof loginRaw.logoUrl === "string" && loginRaw.logoUrl.trim()) || "",
     brandLabel,
     headline:
-      (typeof loginRaw.headline === "string" && loginRaw.headline.trim()) || EMPTY_LOGIN.headline,
-    body: (typeof loginRaw.body === "string" && loginRaw.body.trim()) || EMPTY_LOGIN.body,
+      (typeof loginRaw.headline === "string" && loginRaw.headline.trim()) ||
+      EMPTY_LOGIN.headline ||
+      "",
+    body:
+      (typeof loginRaw.body === "string" && loginRaw.body.trim()) || EMPTY_LOGIN.body || "",
     statusText:
       (typeof loginRaw.statusText === "string" && loginRaw.statusText.trim()) ||
-      EMPTY_LOGIN.statusText,
+      EMPTY_LOGIN.statusText ||
+      "",
     buttonLabel:
       (typeof loginRaw.buttonLabel === "string" && loginRaw.buttonLabel.trim()) ||
-      EMPTY_LOGIN.buttonLabel,
+      EMPTY_LOGIN.buttonLabel ||
+      "",
   };
   return {
     ...EMPTY,

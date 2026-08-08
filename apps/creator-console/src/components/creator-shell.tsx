@@ -228,11 +228,16 @@ export function CreatorShell({ children }: { children: ReactNode }) {
                     <ThemeModeToggle />
                     {me ? (
                       <>
-                        <span className="avatar avatar-sm d-none d-md-inline-flex">
+                        <Link
+                          href="/profile/"
+                          className="avatar avatar-sm d-none d-md-inline-flex text-decoration-none"
+                          aria-label="Open my profile"
+                          title="My profile"
+                        >
                           <span className="avatar-initial rounded-circle bg-label-primary">
                             {(me.isPlatformAdmin ? "PA" : me.userId.slice(0, 2)).toUpperCase()}
                           </span>
-                        </span>
+                        </Link>
                         <button
                           type="button"
                           className="btn btn-sm btn-outline-secondary"

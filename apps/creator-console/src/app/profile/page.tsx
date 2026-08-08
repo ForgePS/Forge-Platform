@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { FormEvent, Suspense, useCallback, useEffect, useState } from "react";
-import { TenantRequired } from "@/components/tenant-required";
+import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useAuth } from "@forge/web-kit";
 import { apiGetResult, apiSend, toIfMatch } from "@/lib/api";
+import { personDetailHref } from "@/hooks/use-tenant-id";
 import styles from "../page.module.css";
 
 type Person = {
@@ -35,6 +35,19 @@ type PersonForm = {
   dateOfBirth: string;
 };
 
+function emptyForm(): PersonForm {
+  return {
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    suffix: "",
+    preferredName: "",
+    email: "",
+    phone: "",
+    dateOfBirth: "",
+  };
+}
+
 function formFromPerson(person: Person): PersonForm {
   return {
     firstName: person.firstName ?? "",
@@ -48,21 +61,24 @@ function formFromPerson(person: Person): PersonForm {
   };
 }
 
-function PersonDetailInner() {
-  const searchParams = useSearchParams();
-  const personId = searchParams.get("personId");
-  const tenantId = searchParams.get("tenantId");
-
+export default function MyProfilePage() {
+  const { me, loading: authLoading } = useAuth();
   const [person, setPerson] = useState<Person | null>(null);
-  const [form, setForm] = useState<PersonForm | null>(null);
+  const [form, setForm] = useState<PersonForm>(emptyForm);
   const [etag, setEtag] = useState<string | null>(null);
-  const [loading, setLoading] = useState(Boolean(tenantId && personId));
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const load = useCallback(async () => {
-    if (!tenantId || !personId) return;
+  const tenantId = me?.tenantId ?? null;
+  const personId = me?.personId ?? null;
+
+  const loadPerson = useCallback(async () => {
+    if (!tenantId || !personId) {
+      setPerson(null);
+      return;
+    }
     setLoading(true);
     setError(null);
     setSaved(false);
@@ -72,19 +88,20 @@ function PersonDetailInner() {
       setForm(formFromPerson(result.data));
       setEtag(result.etag ?? toIfMatch(result.data.recordVersion));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load person");
+      setError(err instanceof Error ? err.message : "Failed to load profile");
+      setPerson(null);
     } finally {
       setLoading(false);
     }
   }, [tenantId, personId]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void loadPerson();
+  }, [loadPerson]);
 
   async function onSave(event: FormEvent) {
     event.preventDefault();
-    if (!tenantId || !personId || !form) return;
+    if (!tenantId || !personId) return;
     setSaving(true);
     setError(null);
     setSaved(false);
@@ -121,44 +138,68 @@ function PersonDetailInner() {
     }
   }
 
-  if (!tenantId || !personId) {
+  if (authLoading) {
     return (
       <section className={styles.page}>
-        <h1>Person detail</h1>
-        <TenantRequired />
+        <h1>My profile</h1>
+        <p className={styles.muted}>Loading session…</p>
       </section>
     );
   }
 
-  const q = `?tenantId=${encodeURIComponent(tenantId)}`;
+  if (!me) {
+    return (
+      <section className={styles.page}>
+        <h1>My profile</h1>
+        <p className={styles.error}>Sign in to view your profile.</p>
+        <Link href="/login/">Sign in</Link>
+      </section>
+    );
+  }
 
   return (
     <section className={styles.page}>
-      <h1>Person detail</h1>
+      <h1>My profile</h1>
       <p className={styles.lead}>
-        <Link href={`/persons${q}`}>← Persons</Link>
-        {" · "}
-        <Link href="/profile/">My profile</Link>
+        Account for the signed-in Creator user. Person demographics can be edited when a linked
+        person record exists on the active tenant.
       </p>
 
       {error ? <p className={styles.error}>{error}</p> : null}
-      {saved ? <p className={styles.success}>Person saved.</p> : null}
-      {loading ? <p className={styles.muted}>Loading…</p> : null}
+      {saved ? <p className={styles.success}>Profile saved.</p> : null}
 
-      {person && form ? (
+      <div className={styles.panel}>
+        <h2>Session</h2>
+        <dl className={styles.dl}>
+          <dt>User ID</dt>
+          <dd className={styles.mono}>{me.userId}</dd>
+          <dt>Active tenant</dt>
+          <dd className={styles.mono}>{me.tenantId ?? "—"}</dd>
+          <dt>Person ID</dt>
+          <dd className={styles.mono}>{me.personId ?? "—"}</dd>
+          <dt>Role</dt>
+          <dd>{me.isPlatformAdmin ? "Platform admin" : "Tenant member"}</dd>
+        </dl>
+      </div>
+
+      {!personId || !tenantId ? (
         <div className={styles.panel}>
-          <h2>{person.displayName}</h2>
-          <dl className={styles.dl}>
-            <dt>ID</dt>
-            <dd className={styles.mono}>{person.id}</dd>
-            <dt>Forge #</dt>
-            <dd className={styles.mono}>{person.forgePersonNumber}</dd>
-            <dt>Status</dt>
-            <dd>{person.status}</dd>
-            <dt>Record source</dt>
-            <dd>{person.recordSource}</dd>
-          </dl>
-
+          <h2>Editable person profile unavailable</h2>
+          <p className={styles.muted}>
+            This Cognito user has no linked person on the active tenant, so name/email/phone cannot
+            be edited here yet. Link or create a person under{" "}
+            <Link href="/persons/">Persons</Link>, then reopen this page.
+          </p>
+        </div>
+      ) : loading ? (
+        <p className={styles.muted}>Loading person…</p>
+      ) : person ? (
+        <div className={styles.panel}>
+          <h2>{person.displayName || "Person profile"}</h2>
+          <p className={styles.muted}>
+            Forge # <span className={styles.mono}>{person.forgePersonNumber}</span> ·{" "}
+            <Link href={personDetailHref(person.id, tenantId)}>Open person detail</Link>
+          </p>
           <form className={styles.form} onSubmit={(e) => void onSave(e)}>
             {(
               [
@@ -173,32 +214,33 @@ function PersonDetailInner() {
               ] as const
             ).map(([key, label, required]) => (
               <div className={styles.formRow} key={key}>
-                <label htmlFor={`person-${key}`}>{label}</label>
+                <label htmlFor={`profile-${key}`}>{label}</label>
                 <input
-                  id={`person-${key}`}
+                  id={`profile-${key}`}
                   type={key === "email" ? "email" : key === "dateOfBirth" ? "date" : "text"}
                   required={required}
                   value={form[key]}
-                  onChange={(e) => setForm((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))}
+                  onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                  autoComplete={key === "email" ? "email" : "off"}
                 />
               </div>
             ))}
             <div className={styles.actions}>
               <button type="submit" className={styles.button} disabled={saving}>
-                {saving ? "Saving…" : "Save changes"}
+                {saving ? "Saving…" : "Save profile"}
+              </button>
+              <button
+                type="button"
+                className={styles.buttonSecondary}
+                disabled={saving}
+                onClick={() => void loadPerson()}
+              >
+                Reset
               </button>
             </div>
           </form>
         </div>
       ) : null}
     </section>
-  );
-}
-
-export default function PersonDetailPage() {
-  return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
-      <PersonDetailInner />
-    </Suspense>
   );
 }

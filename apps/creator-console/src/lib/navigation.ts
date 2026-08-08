@@ -17,6 +17,7 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
     label: "Access",
     items: [
       { id: "login", label: "Login", route: "/login" },
+      { id: "profile", label: "My profile", route: "/profile" },
       { id: "select-tenant", label: "Select tenant", route: "/select-tenant" },
       { id: "invitations", label: "Invitations", route: "/invitations" },
       { id: "memberships", label: "Memberships", route: "/memberships" },
