@@ -5,6 +5,7 @@
  * Usage:
  *   node scripts/sync-static-site.mjs --app console
  *   node scripts/sync-static-site.mjs --app rms
+ *   node scripts/sync-static-site.mjs --app industrial
  *   node scripts/sync-static-site.mjs --app rms --skip-build
  *
  * Environment (optional — resolved from CloudFormation exports when omitted):
@@ -13,14 +14,14 @@
  *   FORGE_{APP}_DISTRIBUTION_ID CloudFront distribution ID
  *   AWS_PROFILE / AWS_REGION
  *
- * RMS build env (resolved for --app rms when not already set):
+ * RMS / Industrial build env (resolved when not already set):
  *   NEXT_PUBLIC_API_URL        from ForgeCompute-ApiHttpsDomain (https://{domain})
- *   NEXT_PUBLIC_APP_URL        from ForgeFrontend-RmsDomain (https://{domain})
+ *   NEXT_PUBLIC_APP_URL        from ForgeFrontend-{App}Domain (https://{domain})
  *   NEXT_PUBLIC_COGNITO_DOMAIN from ForgeIdentity-CognitoDomain or FORGE_COGNITO_DOMAIN
- *   NEXT_PUBLIC_COGNITO_CLIENT_ID from ForgeIdentity-RmsClientId or FORGE_RMS_COGNITO_CLIENT_ID
+ *   NEXT_PUBLIC_COGNITO_CLIENT_ID from ForgeIdentity-{App}ClientId or FORGE_*_COGNITO_CLIENT_ID
  *   NEXT_PUBLIC_COGNITO_USER_POOL_ID from ForgeIdentity-UserPoolId
  *
- * Deployed RMS builds must NOT set NEXT_PUBLIC_ALLOW_DEV_PRINCIPAL.
+ * Deployed builds must NOT set NEXT_PUBLIC_ALLOW_DEV_PRINCIPAL.
  */
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -46,6 +47,11 @@ const APPS = {
     outDir: "apps/tenant-admin/out",
     stackExportPrefix: "ForgeFrontend-TenantAdmin",
   },
+  industrial: {
+    packageName: "@forge/industrial-web",
+    outDir: "apps/industrial-web/out",
+    stackExportPrefix: "ForgeFrontend-Industrial",
+  },
 };
 
 function parseArgs(argv) {
@@ -65,14 +71,14 @@ function parseArgs(argv) {
       skipBuild = true;
     } else if (arg === "--help" || arg === "-h") {
       console.log(
-        `Usage: node scripts/sync-static-site.mjs --app console|rms|tenantadmin [--environment development] [--skip-build]`,
+        `Usage: node scripts/sync-static-site.mjs --app console|rms|tenantadmin|industrial [--environment development] [--skip-build]`,
       );
       process.exit(0);
     }
   }
 
   if (!app || !APPS[app]) {
-    console.error("Required: --app console|rms|tenantadmin");
+    console.error("Required: --app console|rms|tenantadmin|industrial");
     process.exit(1);
   }
 
@@ -232,6 +238,95 @@ function resolveTenantAdminBuildEnv(environment) {
   return buildEnv;
 }
 
+function resolveIndustrialBuildEnv(environment) {
+  const buildEnv = { ...process.env };
+
+  if (!buildEnv.NEXT_PUBLIC_API_URL) {
+    if (environment === "development") {
+      buildEnv.NEXT_PUBLIC_API_URL = "https://api-dev.forgepublicsafety.com";
+      console.log(`Resolved NEXT_PUBLIC_API_URL=${buildEnv.NEXT_PUBLIC_API_URL} (canonical)`);
+    } else {
+      const apiDomain =
+        resolveExport("ForgeCompute-ApiHttpsDomain") ?? process.env.FORGE_API_HTTPS_DOMAIN;
+      const apiUrl = toHttpsOrigin(apiDomain);
+      if (apiUrl) {
+        buildEnv.NEXT_PUBLIC_API_URL = apiUrl;
+        console.log(`Resolved NEXT_PUBLIC_API_URL=${apiUrl}`);
+      } else {
+        console.warn(
+          "Missing NEXT_PUBLIC_API_URL — set it or export ForgeCompute-ApiHttpsDomain from the Compute stack.",
+        );
+      }
+    }
+  }
+
+  if (!buildEnv.NEXT_PUBLIC_APP_URL) {
+    if (environment === "development") {
+      buildEnv.NEXT_PUBLIC_APP_URL = "https://industrial-dev.forgepublicsafety.com";
+      console.log(`Resolved NEXT_PUBLIC_APP_URL=${buildEnv.NEXT_PUBLIC_APP_URL} (canonical)`);
+    } else {
+      const appDomain =
+        resolveExport("ForgeFrontend-IndustrialDomain") ?? process.env.FORGE_INDUSTRIAL_APP_DOMAIN;
+      const appUrl = toHttpsOrigin(appDomain);
+      if (appUrl) {
+        buildEnv.NEXT_PUBLIC_APP_URL = appUrl;
+        console.log(`Resolved NEXT_PUBLIC_APP_URL=${appUrl}`);
+      } else {
+        console.warn(
+          "Missing NEXT_PUBLIC_APP_URL — set it or export ForgeFrontend-IndustrialDomain from the Frontend stack.",
+        );
+      }
+    }
+  }
+
+  if (!buildEnv.NEXT_PUBLIC_APP_ENV) {
+    buildEnv.NEXT_PUBLIC_APP_ENV = environment;
+  }
+
+  if (!buildEnv.NEXT_PUBLIC_COGNITO_USER_POOL_ID) {
+    const poolId =
+      resolveExport("ForgeIdentity-UserPoolId") ?? process.env.FORGE_COGNITO_USER_POOL_ID;
+    if (poolId) {
+      buildEnv.NEXT_PUBLIC_COGNITO_USER_POOL_ID = poolId;
+      console.log(`Resolved NEXT_PUBLIC_COGNITO_USER_POOL_ID=${poolId}`);
+    }
+  }
+
+  if (!buildEnv.NEXT_PUBLIC_COGNITO_CLIENT_ID) {
+    const clientId =
+      resolveExport("ForgeIdentity-IndustrialClientId") ??
+      process.env.FORGE_INDUSTRIAL_COGNITO_CLIENT_ID;
+    if (clientId) {
+      buildEnv.NEXT_PUBLIC_COGNITO_CLIENT_ID = clientId;
+      console.log(`Resolved NEXT_PUBLIC_COGNITO_CLIENT_ID=${clientId}`);
+    } else {
+      console.warn(
+        "Missing NEXT_PUBLIC_COGNITO_CLIENT_ID — set FORGE_INDUSTRIAL_COGNITO_CLIENT_ID or export ForgeIdentity-IndustrialClientId.",
+      );
+    }
+  }
+
+  if (!buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN) {
+    const domain =
+      resolveExport("ForgeIdentity-CognitoDomain") ?? process.env.FORGE_COGNITO_DOMAIN;
+    if (domain) {
+      buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN = domain;
+      console.log(`Resolved NEXT_PUBLIC_COGNITO_DOMAIN=${domain}`);
+    } else if (environment === "development") {
+      buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN =
+        "forge-development-547817.auth.us-east-1.amazoncognito.com";
+      console.log(`Resolved NEXT_PUBLIC_COGNITO_DOMAIN=${buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN} (canonical)`);
+    } else {
+      console.warn(
+        "Missing NEXT_PUBLIC_COGNITO_DOMAIN — set FORGE_COGNITO_DOMAIN.",
+      );
+    }
+  }
+
+  delete buildEnv.NEXT_PUBLIC_ALLOW_DEV_PRINCIPAL;
+  return buildEnv;
+}
+
 /** Creator Console must bake the live API edge URL; localhost default breaks browser Import Center. */
 function resolveConsoleBuildEnv(environment) {
   const buildEnv = { ...process.env };
@@ -271,11 +366,13 @@ if (!skipBuild) {
   const buildEnv =
     app === "rms"
       ? resolveRmsBuildEnv(environment)
-      : app === "tenantadmin"
-        ? resolveTenantAdminBuildEnv(environment)
-        : app === "console"
-          ? resolveConsoleBuildEnv(environment)
-          : { ...process.env };
+      : app === "industrial"
+        ? resolveIndustrialBuildEnv(environment)
+        : app === "tenantadmin"
+          ? resolveTenantAdminBuildEnv(environment)
+          : app === "console"
+            ? resolveConsoleBuildEnv(environment)
+            : { ...process.env };
   run("pnpm", ["--filter", appConfig.packageName, "build"], {
     cwd: repoRoot,
     env: buildEnv,
@@ -296,7 +393,7 @@ const distributionId =
 
 if (!bucket) {
   console.error(
-    `Set ${envKeyForApp(app, "BUCKET")} or deploy ForgeFrontend with enable${app === "console" ? "Console" : "Rms"}Hosting for ${environment}.`,
+    `Set ${envKeyForApp(app, "BUCKET")} or ensure CloudFormation export ${appConfig.stackExportPrefix}Bucket exists for ${environment}.`,
   );
   process.exit(1);
 }
