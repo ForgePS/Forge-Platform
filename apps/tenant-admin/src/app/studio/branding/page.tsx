@@ -1,5 +1,5 @@
-import { ConfigStudioPage } from "@/components/config-studio";
+import { BrandingStudioPage } from "@/components/branding-studio";
 
 export default function Page() {
-  return <ConfigStudioPage namespace="branding" title="Branding" />;
+  return <BrandingStudioPage />;
 }

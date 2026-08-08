@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AuthProvider, apiGet, useAuth } from "@forge/web-kit";
@@ -9,18 +9,70 @@ import { INDUSTRIAL_MODULE_REGISTRY, INDUSTRIAL_PRODUCT_CODE } from "@forge/cont
 import { buildIndustrialNavigation, featureFlagForModule } from "@/lib/navigation";
 import { clearAllOfflineData } from "@/lib/offline/cache";
 import { NetworkStatusBanner } from "@/lib/offline/network-status";
+import { ThemeModeToggle, useIndustrialThemeMode } from "@/components/theme-mode-toggle";
+import { useLoginBranding } from "@/hooks/use-login-branding";
+import { useTenantBranding } from "@/hooks/use-tenant-branding";
 
 const appEnv = process.env.NEXT_PUBLIC_APP_ENV ?? process.env.APP_ENV ?? "local";
 
-function brandMark() {
+function defaultBrandMark(primaryColor = "#696cff") {
   return (
     <svg width="25" viewBox="0 0 25 42" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path
-        fill="#696cff"
-        d="M13.79.36L3.4 7.44C.57 9.69-.38 12.48.56 15.8c.13.43.54 2 .2.56 2.56 3.12 4.28 5.32 5.6 7.65 6.06l-.05.04-4.96 3.3C.45 26.3.09 28.51 1.56 31.17c1.27 1.64 3.65 2.09 5.53 1.37 1.26-.48 4.36-2.54 9.33-6.16 1.61-1.88 2.28-3.92 1.99-6.14-.44-2.7-2.23-4.66-5.36-5.86l-2.13-.9L18.62 7.98 13.79.36z"
+        fill={primaryColor}
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12.017 0 0 6.948v14.346l8.505 4.886V16.42l7.445-4.283v17.201l-3.878 2.231v4.886L24.034 28.5V6.948L12.017 0Z"
       />
     </svg>
   );
+}
+
+/** When logoUrl is set, show full logo only (no short-name text). Falls back to mark + label. */
+function BrandLockup({
+  logoUrl,
+  label,
+  primaryColor = "#696cff",
+  href,
+  onClick,
+  textClassName = "app-brand-text demo menu-text fw-bolder ms-2",
+}: {
+  logoUrl?: string;
+  label: string;
+  primaryColor?: string;
+  href?: string;
+  onClick?: () => void;
+  textClassName?: string;
+}) {
+  const [logoFailed, setLogoFailed] = useState(false);
+  const showFullLogo = Boolean(logoUrl?.trim()) && !logoFailed;
+
+  const inner = showFullLogo ? (
+    <span className="app-brand-logo demo app-brand-full-logo">
+      <img
+        src={logoUrl}
+        alt={label}
+        className="app-brand-full-logo-img"
+        onError={() => setLogoFailed(true)}
+      />
+    </span>
+  ) : (
+    <>
+      <span className="app-brand-logo demo">{defaultBrandMark(primaryColor)}</span>
+      <span className={textClassName}>{label}</span>
+    </>
+  );
+
+  const linkClassName = showFullLogo ? "app-brand-link app-brand-link--full-logo" : "app-brand-link";
+
+  if (href) {
+    return (
+      <Link href={href} className={linkClassName} {...(onClick ? { onClick } : {})}>
+        {inner}
+      </Link>
+    );
+  }
+  return <div className={linkClassName}>{inner}</div>;
 }
 
 function iconForModule(code: string, group: string): string {
@@ -48,11 +100,17 @@ function GateCard({
   body,
   muted,
   children,
+  brandLabel = "Industrial",
+  logoUrl,
+  primaryColor,
 }: {
   title: string;
   body: string;
   muted?: string;
   children?: ReactNode;
+  brandLabel?: string;
+  logoUrl?: string;
+  primaryColor?: string;
 }) {
   return (
     <div className="container-xxl">
@@ -61,8 +119,12 @@ function GateCard({
           <div className="card">
             <div className="card-body">
               <div className="app-brand justify-content-center mb-4">
-                <span className="app-brand-logo demo">{brandMark()}</span>
-                <span className="app-brand-text demo text-body fw-bolder ms-2">Industrial</span>
+                <BrandLockup
+                  label={brandLabel}
+                  textClassName="app-brand-text demo text-body fw-bolder ms-2"
+                  {...(logoUrl ? { logoUrl } : {})}
+                  {...(primaryColor ? { primaryColor } : {})}
+                />
               </div>
               <h4 className="mb-2">{title}</h4>
               <p className="mb-4">{body}</p>
@@ -79,8 +141,29 @@ function GateCard({
 function ShellBody({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { me, loading, error, logout, loginWithCognito, chooseTenant, hasPermission } = useAuth();
+  const {
+    productDisplayName,
+    appShortName,
+    logoUrl,
+    primaryColor,
+    secondaryColor,
+    accentColor,
+  } = useTenantBranding();
+  const { login, primaryColor: loginPrimaryColor } = useLoginBranding();
+  const themeMode = useIndustrialThemeMode();
   const [flags, setFlags] = useState<Record<string, boolean>>({});
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Dark forest brand primaries clash on dark surfaces — keep Sneat purple in dark mode.
+  const brandStyle = (
+    themeMode === "dark"
+      ? {}
+      : {
+          ...(primaryColor ? { ["--bs-primary"]: primaryColor } : {}),
+          ...(secondaryColor ? { ["--ind-brand-secondary"]: secondaryColor } : {}),
+          ...(accentColor && !primaryColor ? { ["--bs-primary"]: accentColor } : {}),
+        }
+  ) as CSSProperties;
 
   const signOut = async () => {
     clearAllOfflineData();
@@ -113,9 +196,18 @@ function ShellBody({ children }: { children: ReactNode }) {
       try {
         const boot = await apiGet<{
           industrialEnabled: boolean;
+          flags?: Record<string, boolean>;
           modules: Array<{ code: string; awsEnabled: boolean; featureFlagKey?: string }>;
         }>("/api/v1/industrial/bootstrap");
         if (cancelled) return;
+        if (boot.flags && Object.keys(boot.flags).length > 0) {
+          setFlags(
+            Object.fromEntries(
+              Object.entries(boot.flags).map(([key, value]) => [key, Boolean(value)]),
+            ),
+          );
+          return;
+        }
         const next: Record<string, boolean> = {
           "industrial.enabled": Boolean(boot.industrialEnabled),
         };
@@ -145,23 +237,31 @@ function ShellBody({ children }: { children: ReactNode }) {
     return <>{children}</>;
   }
 
+  const gatePrimary = loginPrimaryColor || primaryColor || undefined;
+  const gateBrand = {
+    brandLabel: login.brandLabel,
+    ...(login.logoUrl ? { logoUrl: login.logoUrl } : logoUrl ? { logoUrl } : {}),
+    ...(gatePrimary ? { primaryColor: gatePrimary } : {}),
+  };
+
   if (loading) {
-    return <GateCard title="Forge Industrial Safety" body="Loading your session…" />;
+    return <GateCard title={productDisplayName} body="Loading your session…" {...gateBrand} />;
   }
 
   if (error || !me) {
     return (
       <GateCard
-        title="Welcome to Forge Industrial Safety"
-        body="Sign in is required to continue."
-        muted={error ? error : "Unauthenticated"}
+        title={login.headline}
+        body={login.body}
+        muted={error ? error : login.statusText}
+        {...gateBrand}
       >
         <button
           type="button"
           className="btn btn-primary d-grid w-100"
           onClick={() => void loginWithCognito()}
         >
-          Sign in
+          {login.buttonLabel}
         </button>
       </GateCard>
     );
@@ -174,6 +274,7 @@ function ShellBody({ children }: { children: ReactNode }) {
         title="Select a tenant"
         body="Choose a tenant to continue."
         muted="No tenant selected"
+        {...gateBrand}
       >
         <div className="d-grid gap-2">
           {selectable.map((t) => (
@@ -196,8 +297,9 @@ function ShellBody({ children }: { children: ReactNode }) {
     return (
       <GateCard
         title="Product not entitled"
-        body="This tenant is not entitled to Forge Industrial Safety."
+        body={`This tenant is not entitled to ${productDisplayName}.`}
         muted="Unauthorized product access"
+        {...gateBrand}
       >
         {alternates.length > 0 ? (
           <div className="d-grid gap-2 mb-3">
@@ -229,8 +331,9 @@ function ShellBody({ children }: { children: ReactNode }) {
     return (
       <GateCard
         title="Access denied"
-        body="You do not have permission to access Forge Industrial Safety."
+        body={`You do not have permission to access ${productDisplayName}.`}
         muted="Missing industrial.access"
+        {...gateBrand}
       />
     );
   }
@@ -245,14 +348,17 @@ function ShellBody({ children }: { children: ReactNode }) {
     me.tenants.find((t) => t.tenantId === me.tenantId)?.displayName ?? me.tenantId;
 
   return (
-    <div className="layout-wrapper layout-content-navbar">
+    <div className="layout-wrapper layout-content-navbar" style={brandStyle}>
       <div className="layout-container">
         <aside id="layout-menu" className="layout-menu menu-vertical menu bg-menu-theme">
           <div className="app-brand demo">
-            <Link href="/" className="app-brand-link" onClick={() => setMenuOpen(false)}>
-              <span className="app-brand-logo demo">{brandMark()}</span>
-              <span className="app-brand-text demo menu-text fw-bolder ms-2">Industrial</span>
-            </Link>
+            <BrandLockup
+              href="/"
+              label={appShortName}
+              primaryColor={primaryColor || "#696cff"}
+              onClick={() => setMenuOpen(false)}
+              {...(logoUrl ? { logoUrl } : {})}
+            />
             <button
               type="button"
               className="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none btn btn-link p-0 border-0"
@@ -331,23 +437,29 @@ function ShellBody({ children }: { children: ReactNode }) {
 
             <div className="navbar-nav-right d-flex align-items-center w-100" id="navbar-collapse">
               <div className="navbar-nav align-items-center flex-grow-1">
-                <div className="nav-item d-flex align-items-center text-muted small">
-                  <i className="bx bx-buildings me-2" />
-                  Tenant: {tenantLabel}
+                <div className="nav-item d-flex align-items-center text-body-secondary small">
+                  <i className="bx bx-buildings me-2 fs-5" />
+                  <span>
+                    <span className="text-muted">Tenant:</span>{" "}
+                    <span className="fw-semibold text-heading">{tenantLabel}</span>
+                  </span>
                 </div>
               </div>
               <ul className="navbar-nav flex-row align-items-center ms-auto">
-                <li className="nav-item navbar-dropdown dropdown-user dropdown">
-                  <span className="nav-link hide-arrow d-flex align-items-center gap-2">
-                    <span className="fw-semibold d-none d-md-inline">{me.userId.slice(0, 8)}…</span>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-secondary"
-                      onClick={() => void signOut()}
-                    >
-                      Sign out
-                    </button>
+                <li className="nav-item d-flex align-items-center gap-2">
+                  <ThemeModeToggle />
+                  <span className="avatar avatar-sm d-none d-md-inline-flex">
+                    <span className="avatar-initial rounded-circle bg-label-primary">
+                      {me.userId.slice(0, 2).toUpperCase()}
+                    </span>
                   </span>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => void signOut()}
+                  >
+                    Sign out
+                  </button>
                 </li>
               </ul>
             </div>
@@ -361,7 +473,7 @@ function ShellBody({ children }: { children: ReactNode }) {
             <footer className="content-footer footer bg-footer-theme">
               <div className="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
                 <div className="mb-2 mb-md-0">
-                  © {new Date().getFullYear()} Forge Industrial Safety · Sneat Free theme ·{" "}
+                  © {new Date().getFullYear()} {productDisplayName} · {appShortName} shell ·{" "}
                   {INDUSTRIAL_MODULE_REGISTRY.length} modules · Firebase remains production SoT
                 </div>
               </div>

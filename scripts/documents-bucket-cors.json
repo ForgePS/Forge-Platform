@@ -1,0 +1,18 @@
+{
+  "CORSRules": [
+    {
+      "AllowedOrigins": [
+        "https://creator-dev.forgepublicsafety.com",
+        "https://admin-dev.forgepublicsafety.com",
+        "https://industrial-dev.forgepublicsafety.com",
+        "http://localhost:3003",
+        "http://localhost:3004",
+        "http://localhost:3005"
+      ],
+      "AllowedMethods": ["PUT", "GET", "HEAD"],
+      "AllowedHeaders": ["*"],
+      "ExposeHeaders": ["ETag", "x-amz-request-id"],
+      "MaxAgeSeconds": 3000
+    }
+  ]
+}

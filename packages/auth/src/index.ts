@@ -26,10 +26,18 @@ function getJwks(region: string, userPoolId: string) {
   return { issuer, jwks };
 }
 
+function rejectNonJwtBearer(token: string) {
+  const trimmed = token.trim();
+  if (!trimmed || trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    throw new Error("Bearer token must be a compact JWT, not JWKS or JSON");
+  }
+}
+
 export async function verifyCognitoAccessToken(
   token: string,
   options: CognitoVerifierOptions,
 ): Promise<CognitoTokenClaims> {
+  rejectNonJwtBearer(token);
   const { issuer, jwks } = getJwks(options.region, options.userPoolId);
   const { payload } = await jwtVerify(token, jwks, {
     issuer,
@@ -40,7 +48,8 @@ export async function verifyCognitoAccessToken(
   if (!claims.sub) {
     throw new Error("Token missing subject");
   }
-  if (claims.token_use && claims.token_use !== "access" && claims.token_use !== "id") {
+  // Cognito access tokens carry token_use=access; id tokens are not accepted for API auth.
+  if (claims.token_use !== "access") {
     throw new Error("Unexpected token_use");
   }
 

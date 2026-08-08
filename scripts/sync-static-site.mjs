@@ -44,6 +44,11 @@ const APPS = {
     outDir: "apps/rms-web/out",
     stackExportPrefix: "ForgeFrontend-Rms",
   },
+  industrial: {
+    packageName: "@forge/industrial-web",
+    outDir: "apps/industrial-web/out",
+    stackExportPrefix: "ForgeFrontend-Industrial",
+  },
   tenantadmin: {
     packageName: "@forge/tenant-admin",
     outDir: "apps/tenant-admin/out",
@@ -68,14 +73,14 @@ function parseArgs(argv) {
       skipBuild = true;
     } else if (arg === "--help" || arg === "-h") {
       console.log(
-        `Usage: node scripts/sync-static-site.mjs --app console|rms|tenantadmin [--environment development] [--skip-build]`,
+        `Usage: node scripts/sync-static-site.mjs --app console|rms|industrial|tenantadmin [--environment development] [--skip-build]`,
       );
       process.exit(0);
     }
   }
 
   if (!app || !APPS[app]) {
-    console.error("Required: --app console|rms|tenantadmin");
+    console.error("Required: --app console|rms|industrial|tenantadmin");
     process.exit(1);
   }
 
@@ -143,6 +148,7 @@ const DEVELOPMENT_CANONICAL = {
   api: "https://api-dev.forgepublicsafety.com",
   console: "https://creator-dev.forgepublicsafety.com",
   rms: "https://rms-dev.forgepublicsafety.com",
+  industrial: "https://industrial-dev.forgepublicsafety.com",
   tenantadmin: "https://admin-dev.forgepublicsafety.com",
 };
 
@@ -257,6 +263,24 @@ function resolveTenantAdminBuildEnv(environment) {
   return buildEnv;
 }
 
+function resolveIndustrialBuildEnv(environment) {
+  const buildEnv = { ...process.env };
+  resolveApiBuildUrl(environment, buildEnv);
+  resolveAppBuildUrl(environment, buildEnv, {
+    appKey: "industrial",
+    exportName: "ForgeFrontend-IndustrialDomain",
+    envFallback: "FORGE_INDUSTRIAL_APP_DOMAIN",
+  });
+  resolveSharedCognitoBuildEnv(buildEnv);
+  resolveCognitoClientId(buildEnv, {
+    exportName: "ForgeIdentity-IndustrialClientId",
+    envFallback: "FORGE_INDUSTRIAL_COGNITO_CLIENT_ID",
+    label: "Industrial Safety",
+  });
+  delete buildEnv.NEXT_PUBLIC_ALLOW_DEV_PRINCIPAL;
+  return buildEnv;
+}
+
 /** Creator Console must bake live API + Cognito; localhost defaults break Hosted UI / Import Center. */
 function resolveConsoleBuildEnv(environment) {
   const buildEnv = { ...process.env };
@@ -272,6 +296,17 @@ function resolveConsoleBuildEnv(environment) {
     envFallback: "FORGE_CONSOLE_COGNITO_CLIENT_ID",
     label: "Creator Console",
   });
+  if (!buildEnv.NEXT_PUBLIC_INDUSTRIAL_APP_URL) {
+    if (environment === "development") {
+      buildEnv.NEXT_PUBLIC_INDUSTRIAL_APP_URL = DEVELOPMENT_CANONICAL.industrial;
+    } else {
+      const industrialDomain =
+        resolveExport("ForgeFrontend-IndustrialDomain") ??
+        process.env.FORGE_INDUSTRIAL_APP_DOMAIN;
+      const industrialUrl = toHttpsOrigin(industrialDomain);
+      if (industrialUrl) buildEnv.NEXT_PUBLIC_INDUSTRIAL_APP_URL = industrialUrl;
+    }
+  }
   // Development browser E2E uses forge-dev-principal from localStorage (no ALLOW flag required).
   delete buildEnv.NEXT_PUBLIC_ALLOW_DEV_PRINCIPAL;
   return buildEnv;
@@ -286,11 +321,13 @@ if (!skipBuild) {
   const buildEnv =
     app === "rms"
       ? resolveRmsBuildEnv(environment)
-      : app === "tenantadmin"
-        ? resolveTenantAdminBuildEnv(environment)
-        : app === "console"
-          ? resolveConsoleBuildEnv(environment)
-          : { ...process.env };
+      : app === "industrial"
+        ? resolveIndustrialBuildEnv(environment)
+        : app === "tenantadmin"
+          ? resolveTenantAdminBuildEnv(environment)
+          : app === "console"
+            ? resolveConsoleBuildEnv(environment)
+            : { ...process.env };
   run("pnpm", ["--filter", appConfig.packageName, "build"], {
     cwd: repoRoot,
     env: buildEnv,
@@ -310,7 +347,7 @@ const distributionId =
 
 if (!bucket) {
   console.error(
-    `Set ${envKeyForApp(app, "BUCKET")} or deploy ForgeFrontend with enable${app === "console" ? "Console" : "Rms"}Hosting for ${environment}.`,
+    `Set ${envKeyForApp(app, "BUCKET")} or deploy ForgeFrontend with enableConsole/Rms/Industrial/TenantAdminHosting for ${environment}.`,
   );
   process.exit(1);
 }

@@ -1,0 +1,16 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Temporary bridge export ForgeIdentity-IndustrialClientId until ForgeIdentity CDK deploys IndustrialWeb client.
+Parameters:
+  IndustrialClientId:
+    Type: String
+    Description: Existing Industrial Cognito app client ID
+Resources:
+  # CloudFormation requires at least one resource; noop wait handle.
+  BridgeMarker:
+    Type: AWS::CloudFormation::WaitConditionHandle
+Outputs:
+  IndustrialClientId:
+    Description: Industrial Safety Cognito client ID
+    Value: !Ref IndustrialClientId
+    Export:
+      Name: ForgeIdentity-IndustrialClientId

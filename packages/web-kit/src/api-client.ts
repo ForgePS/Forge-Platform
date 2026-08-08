@@ -1,4 +1,4 @@
-import { getBearerToken, getDevPrincipal } from "./auth-storage.js";
+import { getBearerToken, getDevPrincipal, getSelectedTenantId } from "./auth-storage.js";
 
 export type ApiSuccess<T> = {
   data: T;
@@ -96,6 +96,11 @@ function requestHeaders(options?: ApiRequestOptions, withJson = false): Record<s
     Accept: "application/json",
     ...authHeaders(),
   };
+  // Routes without :tenantId (e.g. /industrial/bootstrap) resolve tenant from this header.
+  const selectedTenantId = getSelectedTenantId();
+  if (selectedTenantId) {
+    headers["X-Tenant-Id"] = selectedTenantId;
+  }
   if (withJson) {
     headers["Content-Type"] = "application/json";
   }

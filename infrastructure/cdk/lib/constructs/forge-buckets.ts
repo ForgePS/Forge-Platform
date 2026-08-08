@@ -53,6 +53,22 @@ export class ForgeBuckets extends Construct {
       ...common,
       bucketName: uniqueBucketName(config, "documents"),
       lifecycleRules: [{ abortIncompleteMultipartUploadAfter: cdk.Duration.days(7) }],
+      cors: [
+        {
+          allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET, s3.HttpMethods.HEAD],
+          allowedOrigins: [
+            "https://creator-dev.forgepublicsafety.com",
+            "https://admin-dev.forgepublicsafety.com",
+            "https://industrial-dev.forgepublicsafety.com",
+            "http://localhost:3003",
+            "http://localhost:3004",
+            "http://localhost:3005",
+          ],
+          allowedHeaders: ["*"],
+          exposedHeaders: ["ETag", "x-amz-request-id"],
+          maxAge: 3000,
+        },
+      ],
     });
 
     this.imports = new s3.Bucket(this, "Imports", {

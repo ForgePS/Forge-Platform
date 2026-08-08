@@ -39,7 +39,7 @@ export default async function ModulePage({ params }: { params: Promise<{ module:
   if (module === "equipment") {
     return <EquipmentWorkspace moduleName={name} />;
   }
-  if (module === "loto") {
+  if (module === "loto" || module === "lockout-tagout") {
     return <LotoWorkspace moduleName={name} />;
   }
   if (module === "personnel") {

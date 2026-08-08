@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
+import { INDUSTRIAL_PRODUCT_CODE } from "@forge/contracts";
 import { apiGetResult, apiSend, toIfMatch } from "@/lib/api";
 import styles from "../page.module.css";
 
@@ -20,6 +21,14 @@ type Tenant = {
   recordVersion: number;
 };
 
+type EntitlementSnapshot = {
+  products?: Array<{ productCode: string; status?: string }>;
+};
+
+const INDUSTRIAL_APP_URL =
+  process.env.NEXT_PUBLIC_INDUSTRIAL_APP_URL?.replace(/\/$/, "") ??
+  "https://industrial-dev.forgepublicsafety.com";
+
 function TenantDetailInner() {
   const searchParams = useSearchParams();
   const tenantId = searchParams.get("tenantId");
@@ -30,6 +39,7 @@ function TenantDetailInner() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [suspendReason, setSuspendReason] = useState("");
+  const [industrialEntitled, setIndustrialEntitled] = useState(false);
 
   const load = useCallback(async () => {
     if (!tenantId) return;
@@ -39,6 +49,21 @@ function TenantDetailInner() {
       const result = await apiGetResult<Tenant>(`/api/v1/platform/tenants/${tenantId}`);
       setTenant(result.data);
       setEtag(result.etag ?? toIfMatch(result.data.recordVersion));
+      try {
+        const ents = await apiGetResult<EntitlementSnapshot>(
+          `/api/v1/tenants/${tenantId}/entitlements`,
+        );
+        const products = ents.data.products ?? [];
+        setIndustrialEntitled(
+          products.some(
+            (p) =>
+              p.productCode === INDUSTRIAL_PRODUCT_CODE &&
+              (!p.status || p.status === "ACTIVE" || p.status === "ENTITLED"),
+          ),
+        );
+      } catch {
+        setIndustrialEntitled(false);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load tenant");
     } finally {
@@ -160,6 +185,19 @@ function TenantDetailInner() {
                 </>
               ) : null}
             </dl>
+
+            {industrialEntitled ? (
+              <div className={styles.actions} style={{ marginTop: "1rem" }}>
+                <a
+                  className={styles.button}
+                  href={`${INDUSTRIAL_APP_URL}/`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open Industrial Console
+                </a>
+              </div>
+            ) : null}
 
             <div className={styles.actions} style={{ marginTop: "1rem" }}>
               <button

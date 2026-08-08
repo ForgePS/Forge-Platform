@@ -1,0 +1,262 @@
+﻿/*
+ * Sneat Free (MIT) — theme complements for industrial-web.
+ * Free core.css sets Bootstrap dark body colors but leaves Sneat surface tokens
+ * (--bs-paper-bg, menu/navbar) on light values. That yields white cards on a dark
+ * canvas. This file restores coherent light + dark surfaces.
+ */
+
+/* ---- Light: layout hooks used by vertical-menu Free ---- */
+.bg-menu-theme {
+  background-color: var(--bs-menu-bg, var(--bs-paper-bg, #fff)) !important;
+  color: var(--bs-heading-color, #566a7f);
+}
+
+.bg-menu-theme .menu-inner > .menu-item > .menu-link {
+  color: var(--bs-heading-color, #566a7f);
+}
+
+.bg-menu-theme .menu-inner > .menu-item.active > .menu-link:not(.menu-toggle),
+.bg-menu-theme .menu-inner > .menu-item.active > .menu-link.menu-toggle {
+  color: var(--bs-primary, #696cff);
+}
+
+.bg-menu-theme .menu-header {
+  color: #a1acb8;
+}
+
+.bg-navbar-theme {
+  background-color: var(--bs-navbar-bg, var(--bs-paper-bg, #fff)) !important;
+  color: var(--bs-heading-color, #566a7f);
+}
+
+.bg-footer-theme {
+  background-color: transparent !important;
+  color: var(--bs-secondary-color, #a1acb8);
+}
+
+/* ---- Dark: Sneat surface tokens (missing from Free core dark block) ---- */
+[data-bs-theme="dark"] {
+  color-scheme: dark;
+
+  /* Keep Sneat purple — do not inherit tenant brand greens into dark surfaces */
+  --bs-primary: #696cff;
+  --bs-primary-rgb: 105, 108, 255;
+
+  /* Align canvas + surfaces (Sneat-like dark) */
+  --bs-body-bg: #141828;
+  --bs-body-bg-rgb: 20, 24, 40;
+  --bs-body-color: #b2b3ca;
+  --bs-body-color-rgb: 178, 179, 202;
+  --bs-emphasis-color: #fff;
+  --bs-heading-color: #cfd3ec;
+  --bs-secondary-color: rgba(178, 179, 202, 0.78);
+
+  --bs-base-color: #e6e6f1;
+  --bs-base-color-rgb: 230, 230, 241;
+
+  /* Chrome surfaces (menu/navbar) stay mid; cards lift above the canvas */
+  --bs-paper-bg: #2f3349;
+  --bs-paper-bg-rgb: 47, 51, 73;
+  --bs-card-bg: #505574;
+  --bs-card-bg-rgb: 80, 85, 116;
+
+  --bs-border-color: #5c6180;
+  --bs-border-color-translucent: rgba(255, 255, 255, 0.12);
+
+  --bs-menu-bg: #2f3349;
+  --bs-menu-bg-rgb: 47, 51, 73;
+  --bs-menu-color: #b2b3ca;
+  --bs-menu-hover-bg: rgba(124, 125, 182, 0.16);
+  --bs-menu-hover-color: #cfd3ec;
+  --bs-menu-active-color: #696cff;
+  --bs-menu-header-color: #7b7d95;
+
+  --bs-navbar-bg: #2f3349;
+  --bs-navbar-box-shadow: 0 0.125rem 0.5rem 0 rgba(0, 0, 0, 0.35);
+  --bs-navbar-border-color: #444964;
+
+  --bs-dropdown-bg: var(--bs-card-bg);
+  --bs-modal-bg: var(--bs-card-bg);
+  --bs-offcanvas-bg: var(--bs-card-bg);
+  --bs-toast-bg: var(--bs-card-bg-rgb);
+
+  --bs-box-shadow: 0 0.1875rem 0.5rem 0 rgba(0, 0, 0, 0.32);
+  --bs-box-shadow-xs: 0 0.0625rem 0.3175rem 0 rgba(0, 0, 0, 0.24);
+  --bs-box-shadow-sm: 0 0.125rem 0.375rem 0 rgba(0, 0, 0, 0.28);
+  --bs-box-shadow-lg: 0 0.25rem 0.75rem 0 rgba(0, 0, 0, 0.4);
+  --bs-box-shadow-xl: 0 0.3125rem 1.375rem 0 rgba(0, 0, 0, 0.45);
+  --bs-floating-component-shadow: 0 0.1875rem 0.5rem 0 rgba(0, 0, 0, 0.35);
+
+  --bs-link-color: #a5a7ff;
+  --bs-link-hover-color: #b7b9ff;
+  --bs-custom-link-color: #a5a7ff;
+
+  --bs-bg-label-tint-amount: 72%;
+}
+
+[data-bs-theme="dark"] body {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .layout-wrapper,
+[data-bs-theme="dark"] .layout-page,
+[data-bs-theme="dark"] .content-wrapper {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .bg-menu-theme {
+  background-color: var(--bs-menu-bg) !important;
+  color: var(--bs-menu-color);
+  box-shadow: 0 0.125rem 0.5rem 0 rgba(0, 0, 0, 0.28);
+}
+
+[data-bs-theme="dark"] .bg-menu-theme .app-brand .app-brand-text,
+[data-bs-theme="dark"] .bg-menu-theme .menu-inner > .menu-item > .menu-link {
+  color: var(--bs-menu-color);
+}
+
+[data-bs-theme="dark"] .bg-menu-theme .menu-inner > .menu-item:not(.active) > .menu-link:hover {
+  background-color: var(--bs-menu-hover-bg);
+  color: var(--bs-menu-hover-color);
+}
+
+[data-bs-theme="dark"] .bg-menu-theme .menu-inner > .menu-item.active > .menu-link:not(.menu-toggle) {
+  color: var(--bs-menu-active-color);
+  background-color: rgba(var(--bs-primary-rgb, 105, 108, 255), 0.16);
+}
+
+[data-bs-theme="dark"] .bg-menu-theme .menu-header,
+[data-bs-theme="dark"] .bg-menu-theme .menu-header .menu-header-text {
+  color: var(--bs-menu-header-color) !important;
+}
+
+[data-bs-theme="dark"] .bg-navbar-theme {
+  background-color: var(--bs-navbar-bg) !important;
+  color: var(--bs-heading-color);
+  box-shadow: var(--bs-navbar-box-shadow);
+  border-color: var(--bs-navbar-border-color);
+}
+
+[data-bs-theme="dark"] .bg-footer-theme {
+  color: var(--bs-secondary-color) !important;
+}
+
+[data-bs-theme="dark"] .card,
+[data-bs-theme="dark"] .accordion,
+[data-bs-theme="dark"] .dropdown-menu,
+[data-bs-theme="dark"] .modal-content,
+[data-bs-theme="dark"] .offcanvas,
+[data-bs-theme="dark"] .toast {
+  background-color: var(--bs-card-bg);
+  color: var(--bs-body-color);
+  border-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .card .card-header,
+[data-bs-theme="dark"] .card .card-footer {
+  background-color: transparent;
+  border-color: var(--bs-border-color);
+  color: var(--bs-heading-color);
+}
+
+[data-bs-theme="dark"] .table {
+  --bs-table-color: var(--bs-body-color);
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--bs-border-color);
+  --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.06);
+  color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select {
+  color: var(--bs-heading-color);
+  background-color: #25293c;
+  border-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus {
+  color: var(--bs-heading-color);
+  background-color: #25293c;
+  border-color: var(--bs-primary);
+}
+
+[data-bs-theme="dark"] .form-control::placeholder {
+  color: rgba(178, 179, 202, 0.55);
+}
+
+[data-bs-theme="dark"] .form-label,
+[data-bs-theme="dark"] .text-heading,
+[data-bs-theme="dark"] h1,
+[data-bs-theme="dark"] h2,
+[data-bs-theme="dark"] h3,
+[data-bs-theme="dark"] h4,
+[data-bs-theme="dark"] h5,
+[data-bs-theme="dark"] h6,
+[data-bs-theme="dark"] .h1,
+[data-bs-theme="dark"] .h2,
+[data-bs-theme="dark"] .h3,
+[data-bs-theme="dark"] .h4,
+[data-bs-theme="dark"] .h5,
+[data-bs-theme="dark"] .h6 {
+  color: var(--bs-heading-color);
+}
+
+[data-bs-theme="dark"] .text-muted,
+[data-bs-theme="dark"] .text-body-secondary {
+  color: var(--bs-secondary-color) !important;
+}
+
+[data-bs-theme="dark"] .btn-outline-primary {
+  color: #a5a7ff;
+  border-color: #696cff;
+}
+
+[data-bs-theme="dark"] .btn-outline-primary:hover {
+  color: #fff;
+  background-color: #696cff;
+  border-color: #696cff;
+}
+
+[data-bs-theme="dark"] .btn-outline-secondary {
+  color: #b2b3ca;
+  border-color: #555977;
+}
+
+[data-bs-theme="dark"] .btn-outline-secondary:hover {
+  color: #fff;
+  background-color: #555977;
+  border-color: #555977;
+}
+
+[data-bs-theme="dark"] .alert {
+  border-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .alert-primary {
+  background-color: rgba(105, 108, 255, 0.16);
+  color: #c5c6ff;
+}
+
+[data-bs-theme="dark"] .alert-danger {
+  background-color: rgba(255, 62, 29, 0.16);
+  color: #ffb4a8;
+}
+
+[data-bs-theme="dark"] .alert-secondary {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .authentication-wrapper .card,
+[data-bs-theme="dark"] .authentication-inner .card {
+  background-color: var(--bs-card-bg);
+  border-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .layout-overlay {
+  background: rgba(15, 17, 28, 0.6);
+}

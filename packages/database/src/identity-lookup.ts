@@ -49,6 +49,19 @@ function asRows<T>(result: unknown): T[] {
   return [];
 }
 
+/** postgres.js / raw execute may return timestamps as Date or ISO string. */
+function asDate(value: unknown): Date | null {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  if (typeof value === "string" || typeof value === "number") {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
 export async function lookupIdentity(
   db: IdentityLookupExecutor,
   provider: string,
@@ -60,7 +73,7 @@ export async function lookupIdentity(
     tenant_id: string;
     user_status: string;
     session_version: number;
-    sessions_revoked_at: Date | null;
+    sessions_revoked_at: Date | string | null;
   }>(await db.execute(sql`select * from forge_lookup_identity(${provider}, ${subject})`));
 
   const row = rows[0];
@@ -71,7 +84,7 @@ export async function lookupIdentity(
         tenantId: row.tenant_id,
         userStatus: row.user_status,
         sessionVersion: Number(row.session_version),
-        sessionsRevokedAt: row.sessions_revoked_at,
+        sessionsRevokedAt: asDate(row.sessions_revoked_at),
       }
     : null;
 }
@@ -183,3 +196,39 @@ export async function lookupCadConnection(
       }
     : null;
 }
+
+export interface ResolvedTenantDomain {
+  domainId: string;
+  tenantId: string;
+  domain: string;
+  domainType: string;
+  verificationStatus: string;
+}
+
+/** Resolve tenant by verified vanity hostname without tenant GUC (ADR-029). */
+export async function lookupTenantByDomain(
+  db: IdentityLookupExecutor,
+  domain: string,
+): Promise<ResolvedTenantDomain | null> {
+  const normalized = domain.trim().toLowerCase();
+  if (!normalized) return null;
+  const rows = asRows<{
+    domain_id: string;
+    tenant_id: string;
+    domain: string;
+    domain_type: string;
+    verification_status: string;
+  }>(await db.execute(sql`select * from forge_lookup_tenant_domain(${normalized})`));
+
+  const row = rows[0];
+  return row
+    ? {
+        domainId: row.domain_id,
+        tenantId: row.tenant_id,
+        domain: row.domain,
+        domainType: row.domain_type,
+        verificationStatus: row.verification_status,
+      }
+    : null;
+}
+

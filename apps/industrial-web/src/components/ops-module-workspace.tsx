@@ -33,8 +33,15 @@ export function OpsModuleWorkspace({
   const cfg = OPS_MODULE_CONFIG[module];
   const { me } = useAuth();
   const permissions = new Set(me?.permissions ?? []);
-  const canView = permissions.has(cfg.viewPerm) || permissions.has("industrial.admin");
-  const canManage = permissions.has(cfg.managePerm) || permissions.has("industrial.admin");
+  const canView =
+    Boolean(me?.isPlatformAdmin) ||
+    permissions.has(cfg.viewPerm) ||
+    permissions.has("industrial.admin") ||
+    permissions.has("industrial.access");
+  const canManage =
+    Boolean(me?.isPlatformAdmin) ||
+    permissions.has(cfg.managePerm) ||
+    permissions.has("industrial.admin");
 
   const [bootstrap, setBootstrap] = useState<Bootstrap | null>(null);
   const [items, setItems] = useState<Array<Record<string, unknown>>>([]);
@@ -117,11 +124,13 @@ export function OpsModuleWorkspace({
 
   if (!canView) {
     return (
-      <section className="ind-unavailable" role="alert">
-        <h1>{moduleName}</h1>
-        <p>You do not have permission to view this module.</p>
-        <p className="ind-muted">Missing {cfg.viewPerm}</p>
-      </section>
+      <div className="card">
+        <div className="card-body">
+          <h4 className="card-title mb-2">{moduleName}</h4>
+          <p className="mb-1">You do not have permission to view this module.</p>
+          <p className="text-muted small mb-0">Missing {cfg.viewPerm}</p>
+        </div>
+      </div>
     );
   }
 
@@ -136,10 +145,12 @@ export function OpsModuleWorkspace({
 
   if (!bootstrap) {
     return (
-      <section className="ind-state" role="status" aria-live="polite">
-        <h1>{moduleName}</h1>
-        <p>Checking module availability…</p>
-      </section>
+      <div className="card" role="status" aria-live="polite">
+        <div className="card-body">
+          <h4 className="card-title mb-2">{moduleName}</h4>
+          <p className="text-muted mb-0">Checking module availability…</p>
+        </div>
+      </div>
     );
   }
 
@@ -165,126 +176,169 @@ export function OpsModuleWorkspace({
   }
 
   return (
-    <section className="ind-ops" aria-labelledby="ops-module-title">
-      <header className="ind-ops-header">
-        <h1 id="ops-module-title">{moduleName}</h1>
-        <p className="ind-muted">
-          AWS candidate module · Production data authority remains Firebase · Flag {cfg.flagKey}
-        </p>
-      </header>
+    <div className="ind-ops">
+      <div className="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
+        <div>
+          <h4 className="fw-bold mb-1" id="ops-module-title">
+            {moduleName}
+          </h4>
+          <p className="text-muted mb-0 small">
+            AWS candidate module · Production data authority remains Firebase · Flag {cfg.flagKey}
+          </p>
+        </div>
+      </div>
 
-      <form
-        className="ind-ops-filters"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void loadList();
-        }}
-        aria-label={`${moduleName} filters`}
-      >
-        <label>
-          Search
-          <input
-            type="search"
-            value={q}
-            onChange={(ev) => setQ(ev.target.value)}
-            autoComplete="off"
-          />
-        </label>
-        <label>
-          Status
-          <input
-            type="text"
-            value={status}
-            onChange={(ev) => setStatus(ev.target.value)}
-            placeholder="Optional"
-            autoComplete="off"
-          />
-        </label>
-        <button type="submit">Apply filters</button>
-        <button
-          type="button"
-          onClick={() => {
-            setQ("");
-            setStatus("");
-            void loadList("", "");
-          }}
-        >
-          Clear
-        </button>
-      </form>
+      <div className="card mb-4">
+        <div className="card-body">
+          <form
+            className="row g-3 align-items-end"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void loadList();
+            }}
+            aria-label={`${moduleName} filters`}
+          >
+            <div className="col-md-5">
+              <label className="form-label" htmlFor={`ops-search-${module}`}>
+                Search
+              </label>
+              <input
+                id={`ops-search-${module}`}
+                className="form-control"
+                type="search"
+                value={q}
+                onChange={(ev) => setQ(ev.target.value)}
+                autoComplete="off"
+              />
+            </div>
+            <div className="col-md-3">
+              <label className="form-label" htmlFor={`ops-status-${module}`}>
+                Status
+              </label>
+              <input
+                id={`ops-status-${module}`}
+                className="form-control"
+                type="text"
+                value={status}
+                onChange={(ev) => setStatus(ev.target.value)}
+                placeholder="Optional"
+                autoComplete="off"
+              />
+            </div>
+            <div className="col-md-4 d-flex flex-wrap gap-2">
+              <button type="submit" className="btn btn-primary">
+                Apply filters
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => {
+                  setQ("");
+                  setStatus("");
+                  void loadList("", "");
+                }}
+              >
+                Clear
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
 
       {error ? (
-        <p className="ind-error" role="alert">
+        <div className="alert alert-danger" role="alert">
           {error}
-        </p>
+        </div>
       ) : null}
 
-      {loading ? (
-        <p role="status" aria-live="polite">
-          Loading…
-        </p>
-      ) : items.length === 0 ? (
-        <p className="ind-muted">No records yet for this tenant.</p>
-      ) : (
-        <div className="ind-ops-table-wrap" role="region" aria-label={`${moduleName} list`}>
-          <table className="ind-ops-table">
-            <thead>
-              <tr>
-                <th scope="col">Record</th>
-                <th scope="col">Status</th>
-                <th scope="col">Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((row) => {
-                const title = String(row[cfg.titleField] ?? row.title ?? row.name ?? row.id ?? "—");
-                return (
-                  <tr key={String(row.id)}>
-                    <td>{title}</td>
-                    <td>{String(row.status ?? "—")}</td>
-                    <td>
-                      {row.updatedAt ? new Date(String(row.updatedAt)).toLocaleString() : "—"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      <div className="card mb-4">
+        <div className="card-header d-flex justify-content-between align-items-center">
+          <h5 className="card-title mb-0">Records</h5>
+          {loading ? (
+            <span className="text-muted small" role="status" aria-live="polite">
+              Loading…
+            </span>
+          ) : null}
         </div>
-      )}
+        <div className="table-responsive text-nowrap">
+          {loading ? null : items.length === 0 ? (
+            <div className="card-body">
+              <p className="text-muted mb-0">No records yet for this tenant.</p>
+            </div>
+          ) : (
+            <table className="table table-hover mb-0" aria-label={`${moduleName} list`}>
+              <thead>
+                <tr>
+                  <th>Record</th>
+                  <th>Status</th>
+                  <th>Updated</th>
+                </tr>
+              </thead>
+              <tbody className="table-border-bottom-0">
+                {items.map((row) => {
+                  const title = String(
+                    row[cfg.titleField] ?? row.title ?? row.name ?? row.id ?? "—",
+                  );
+                  return (
+                    <tr key={String(row.id)}>
+                      <td className="fw-medium">{title}</td>
+                      <td>
+                        <span className="badge bg-label-secondary">{String(row.status ?? "—")}</span>
+                      </td>
+                      <td className="text-muted small">
+                        {row.updatedAt ? new Date(String(row.updatedAt)).toLocaleString() : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
 
       {canManage ? (
-        <form
-          className="ind-ops-create"
-          onSubmit={(e) => void onCreate(e)}
-          aria-label="Create record"
-        >
-          <h2>Create</h2>
-          {cfg.createFields.map((field) => (
-            <label key={field.name}>
-              {field.label}
-              <input
-                type={field.type ?? "text"}
-                required={field.required}
-                value={form[field.name] ?? ""}
-                onChange={(ev) => setForm((prev) => ({ ...prev, [field.name]: ev.target.value }))}
-              />
-            </label>
-          ))}
-          <button type="submit" disabled={creating}>
-            {creating ? "Saving…" : "Create"}
-          </button>
-        </form>
+        <div className="card">
+          <div className="card-header">
+            <h5 className="card-title mb-0">Create</h5>
+          </div>
+          <div className="card-body">
+            <form className="row g-3" onSubmit={(e) => void onCreate(e)} aria-label="Create record">
+              {cfg.createFields.map((field) => (
+                <div className="col-md-6" key={field.name}>
+                  <label className="form-label" htmlFor={`ops-create-${module}-${field.name}`}>
+                    {field.label}
+                  </label>
+                  <input
+                    id={`ops-create-${module}-${field.name}`}
+                    className="form-control"
+                    type={field.type ?? "text"}
+                    required={field.required}
+                    value={form[field.name] ?? ""}
+                    onChange={(ev) =>
+                      setForm((prev) => ({ ...prev, [field.name]: ev.target.value }))
+                    }
+                  />
+                </div>
+              ))}
+              <div className="col-12">
+                <button type="submit" className="btn btn-primary" disabled={creating}>
+                  {creating ? "Saving…" : "Create"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       ) : (
-        <p className="ind-muted">Create/edit requires {cfg.managePerm}.</p>
+        <p className="text-muted small">Create/edit requires {cfg.managePerm}.</p>
       )}
 
       {(module === "training" || module === "forms") && (
-        <p className="ind-muted" role="note">
+        <p className="text-muted small mt-3 mb-0" role="note">
           Certification panels and advanced form-builder tooling remain deferred until dependent
           platforms are ready. Historical form submissions preserve definition snapshots.
         </p>
       )}
-    </section>
+    </div>
   );
 }

@@ -120,6 +120,29 @@ const payloadSchemas: Record<ConfigNamespace, z.ZodType> = {
     secondaryColor: z.string().max(32).optional(),
     accentColor: z.string().max(32).optional(),
     logoUrl: z.string().url().optional().or(z.literal("")),
+    iconUrl: z.string().url().optional().or(z.literal("")),
+    /** Full product lockup shown in app headers / browser title contexts. */
+    productDisplayName: z.string().max(120).optional(),
+    /** Short sidebar brand label when no logoUrl (e.g. Bridge). Hidden when logoUrl is set. */
+    appShortName: z.string().max(64).optional(),
+    /** @deprecated Prefer branding.login.brandLabel. Kept for older payloads. */
+    loginShortName: z.string().max(64).optional(),
+    /** Dedicated Sign-in / gate screen copy and lockup. */
+    login: z
+      .object({
+        logoUrl: z.string().url().optional().or(z.literal("")),
+        /** Next to mark when no login logo. */
+        brandLabel: z.string().max(64).optional(),
+        /** “Welcome to …” headline. */
+        headline: z.string().max(160).optional(),
+        /** Supporting body under the headline. */
+        body: z.string().max(280).optional(),
+        /** Muted status line when unauthenticated. */
+        statusText: z.string().max(120).optional(),
+        /** Primary CTA label. */
+        buttonLabel: z.string().max(64).optional(),
+      })
+      .optional(),
     emailFromName: z.string().max(120).optional(),
     emailFromAddress: z.string().email().optional().or(z.literal("")),
     customCss: z.string().max(20000).optional(),
@@ -484,6 +507,16 @@ export const DEFAULT_PAYLOADS: Record<ConfigNamespace, unknown> = {
     primaryColor: "#14532d",
     secondaryColor: "#14201a",
     accentColor: "#166534",
+    productDisplayName: "Forge Industrial Safety",
+    appShortName: "Bridge",
+    loginShortName: "Industrial",
+    login: {
+      brandLabel: "Industrial",
+      headline: "Welcome to Forge Industrial Safety",
+      body: "Sign in is required to continue.",
+      statusText: "Unauthenticated",
+      buttonLabel: "Sign in",
+    },
     emailFromName: "Forge",
   },
   navigation: {
@@ -571,3 +604,60 @@ export const DEFAULT_PAYLOADS: Record<ConfigNamespace, unknown> = {
 };
 
 export const packageStatus = "ACTIVE" as const;
+
+/** Defaults used when branding.login fields (or legacy flat fields) are absent. */
+export const DEFAULT_LOGIN_BRANDING = {
+  brandLabel: "Industrial",
+  headline: "Welcome to Forge Industrial Safety",
+  body: "Sign in is required to continue.",
+  statusText: "Unauthenticated",
+  buttonLabel: "Sign in",
+  logoUrl: "",
+} as const;
+
+export type ResolvedLoginBranding = {
+  logoUrl: string;
+  brandLabel: string;
+  headline: string;
+  body: string;
+  statusText: string;
+  buttonLabel: string;
+};
+
+type BrandingLike = {
+  logoUrl?: string | null;
+  loginShortName?: string | null;
+  productDisplayName?: string | null;
+  login?: {
+    logoUrl?: string | null;
+    brandLabel?: string | null;
+    headline?: string | null;
+    body?: string | null;
+    statusText?: string | null;
+    buttonLabel?: string | null;
+  } | null;
+};
+
+/**
+ * Resolve Sign-in / gate copy from a branding payload.
+ * Prefer nested `login.*`; fall back to legacy flat fields when missing.
+ */
+export function resolveLoginBranding(branding: BrandingLike | null | undefined): ResolvedLoginBranding {
+  const login = branding?.login ?? undefined;
+  const product = branding?.productDisplayName?.trim();
+  const legacyHeadline = product ? `Welcome to ${product}` : DEFAULT_LOGIN_BRANDING.headline;
+  const brandLabel =
+    login?.brandLabel?.trim() ||
+    branding?.loginShortName?.trim() ||
+    DEFAULT_LOGIN_BRANDING.brandLabel;
+  const logoUrl =
+    login?.logoUrl?.trim() || branding?.logoUrl?.trim() || DEFAULT_LOGIN_BRANDING.logoUrl;
+  return {
+    logoUrl,
+    brandLabel,
+    headline: login?.headline?.trim() || legacyHeadline,
+    body: login?.body?.trim() || DEFAULT_LOGIN_BRANDING.body,
+    statusText: login?.statusText?.trim() || DEFAULT_LOGIN_BRANDING.statusText,
+    buttonLabel: login?.buttonLabel?.trim() || DEFAULT_LOGIN_BRANDING.buttonLabel,
+  };
+}

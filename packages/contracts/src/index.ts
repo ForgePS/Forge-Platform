@@ -407,12 +407,24 @@ import {
   ACADEMY_AI_NARRATIVE_PERMISSIONS,
   INDUSTRIAL_AI_NARRATIVE_PERMISSIONS,
 } from "@forge/ai-contracts";
+import { INDUSTRIAL_PERMISSIONS as _INDUSTRIAL_PERMISSIONS } from "./industrial.js";
 
-/** All seeded permission codes (platform + RMS + product AI + import). */
+export {
+  INDUSTRIAL_PRODUCT_CODE,
+  INDUSTRIAL_PERMISSIONS,
+  INDUSTRIAL_MODULE_REGISTRY,
+  INDUSTRIAL_FEATURE_FLAGS,
+  type IndustrialPermission,
+  type IndustrialMigrationStatus,
+  type IndustrialModuleRegistryEntry,
+} from "./industrial.js";
+
+/** All seeded permission codes (platform + RMS + industrial + product AI + import). */
 export const ALL_PERMISSIONS = [
   ...PLATFORM_PERMISSIONS,
   ...IMPORT_PERMISSIONS,
   ..._RMS_PERMISSIONS,
+  ..._INDUSTRIAL_PERMISSIONS,
   ...INDUSTRIAL_AI_NARRATIVE_PERMISSIONS,
   ...ACADEMY_AI_NARRATIVE_PERMISSIONS,
 ] as const;

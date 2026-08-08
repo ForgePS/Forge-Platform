@@ -6,6 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   transpilePackages: [
+    "@forge/contracts",
     "@forge/ui",
     "@forge/design-system",
     "@forge/import-center",

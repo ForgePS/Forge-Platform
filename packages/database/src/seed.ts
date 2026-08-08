@@ -1,4 +1,9 @@
-import { ALL_PERMISSIONS, STARTER_TEMPLATES, isCreatorOnlyPermission } from "@forge/contracts";
+import {
+  ALL_PERMISSIONS,
+  INDUSTRIAL_FEATURE_FLAGS,
+  STARTER_TEMPLATES,
+  isCreatorOnlyPermission,
+} from "@forge/contracts";
 import { and, eq } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -429,6 +434,30 @@ const FEATURES = [
     valueType: "BOOLEAN",
     defaultValueJson: false as const,
   },
+  ...INDUSTRIAL_FEATURE_FLAGS.map((key) => {
+    if (key === "industrial.enabled") {
+      return {
+        key,
+        name: "Forge Industrial Safety",
+        description:
+          "Master switch for Forge Industrial Safety shell (CORE). Default true for foundation bootstrap.",
+        valueType: "BOOLEAN" as const,
+        defaultValueJson: true as const,
+      };
+    }
+    const moduleSlug = key.replace(/^industrial\.module\./, "").replace(/\.enabled$/, "");
+    const label = moduleSlug
+      .split("_")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+    return {
+      key,
+      name: `Industrial ${label} module`,
+      description: `Enable Industrial ${label} on AWS. Default false.`,
+      valueType: "BOOLEAN" as const,
+      defaultValueJson: false as const,
+    };
+  }),
   {
     key: "ai.narrative.academy.enabled",
     name: "AI Narrative for Forge Academy",

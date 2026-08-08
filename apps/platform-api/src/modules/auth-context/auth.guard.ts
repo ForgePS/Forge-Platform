@@ -28,7 +28,8 @@ export class AuthGuard implements CanActivate {
       if (error instanceof ForgeError) {
         throw error;
       }
-      throw new ForgeError("UNAUTHORIZED", "Authentication failed", { cause: error });
+      const detail = error instanceof Error && error.message ? `: ${error.message}` : "";
+      throw new ForgeError("UNAUTHORIZED", `Authentication failed${detail}`, { cause: error });
     }
     return true;
   }

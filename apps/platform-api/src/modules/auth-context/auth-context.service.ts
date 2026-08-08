@@ -143,13 +143,17 @@ export class AuthContextService {
 
     const access = await this.resolveTenantAccess(userId!, routeTenantId);
 
-    const homeTenantId = access?.tenantId ?? user.tenantId;
-    const permissionBundle = await this.loadPermissions(homeTenantId, userId!);
+    // Platform-admin detection must use the user's home tenant roles. A PSA can
+    // also hold a membership on a customer tenant (e.g. Producers); using the
+    // route-tenant membership as "home" would drop platform.* permissions and
+    // cause TENANT_MISMATCH / FORBIDDEN on Creator Console tenant detail.
+    const homeTenantId = user.tenantId;
+    const homePermissionBundle = await this.loadPermissions(homeTenantId, userId!);
     const isSuper =
-      permissionBundle.roleCodes.has(PLATFORM_SUPER_ADMIN) ||
-      (permissionBundle.permissionCodes.has("platform.tenant.create") &&
-        permissionBundle.permissionCodes.has("platform.tenant.suspend") &&
-        permissionBundle.permissionCodes.has("platform.entitlement.manage"));
+      homePermissionBundle.roleCodes.has(PLATFORM_SUPER_ADMIN) ||
+      (homePermissionBundle.permissionCodes.has("platform.tenant.create") &&
+        homePermissionBundle.permissionCodes.has("platform.tenant.suspend") &&
+        homePermissionBundle.permissionCodes.has("platform.entitlement.manage"));
 
     if (!access && !isSuper) {
       throw new ForgeError("FORBIDDEN", "No active access to the requested tenant");
@@ -166,9 +170,23 @@ export class AuthContextService {
       throw new ForgeError("NOT_FOUND", "Tenant not found");
     }
 
-    let effectivePermissions = permissionBundle;
-    if (access && homeTenantId !== tenantId && !isSuper) {
-      effectivePermissions = await this.loadPermissions(tenantId, userId!);
+    // When a PSA also has a customer-tenant membership (e.g. Producers Industrial),
+    // merge home platform permissions with that tenant's roles. Keeping only the
+    // home bundle drops industrial.access and blocks Industrial shell access.
+    let effectivePermissions = homePermissionBundle;
+    if (access && homeTenantId !== tenantId) {
+      const selected = await this.loadPermissions(tenantId, userId!);
+      if (isSuper) {
+        effectivePermissions = {
+          roleCodes: new Set([...homePermissionBundle.roleCodes, ...selected.roleCodes]),
+          permissionCodes: new Set([
+            ...homePermissionBundle.permissionCodes,
+            ...selected.permissionCodes,
+          ]),
+        };
+      } else {
+        effectivePermissions = selected;
+      }
     }
 
     const entitlements = tenant
@@ -255,7 +273,18 @@ export class AuthContextService {
       throw new ForgeError("TENANT_INACTIVE", "Selected tenant is not active");
     }
 
-    const permissions = await this.loadPermissions(tenantId, principal.userId);
+    // Platform admins keep platform permissions when switching into a customer
+    // tenant, merged with any membership roles on that tenant (Industrial, etc.).
+    const selectedPermissions = await this.loadPermissions(tenantId, principal.userId);
+    const permissions = principal.isPlatformAdmin
+      ? {
+          permissionCodes: new Set([
+            ...principal.permissions,
+            ...selectedPermissions.permissionCodes,
+          ]),
+          roleCodes: new Set([PLATFORM_SUPER_ADMIN, ...selectedPermissions.roleCodes]),
+        }
+      : selectedPermissions;
     const entitlements = await this.loadEntitlements(tenantId, access?.membershipId ?? null);
     const summaryPrincipal: ForgePrincipal = {
       ...principal,
@@ -263,6 +292,8 @@ export class AuthContextService {
       permissions: permissions.permissionCodes,
       activeProducts: entitlements.products,
       activeModules: entitlements.modules,
+      isPlatformAdmin:
+        principal.isPlatformAdmin || permissions.roleCodes.has(PLATFORM_SUPER_ADMIN),
     };
     return this.toClientSummary(summaryPrincipal);
   }

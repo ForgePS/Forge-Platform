@@ -13,6 +13,7 @@
     "clean": "rimraf .next"
   },
   "dependencies": {
+    "@forge/contracts": "workspace:*",
     "@forge/design-system": "workspace:*",
     "@forge/import-center": "workspace:*",
     "@forge/ui": "workspace:*",

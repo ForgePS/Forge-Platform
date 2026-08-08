@@ -702,7 +702,7 @@ export function SeasonalWorkforceWorkspace({ onGoToRoster }: { onGoToRoster?: ()
           <code>{SEASONAL_LIFECYCLE_FLAG}</code> is off.
         </p>
         {onGoToRoster ? (
-          <button type="button" onClick={onGoToRoster}>
+          <button type="button" className="btn btn-outline-secondary" onClick={onGoToRoster}>
             Open standard personnel roster
           </button>
         ) : null}
@@ -813,7 +813,7 @@ export function SeasonalWorkforceWorkspace({ onGoToRoster }: { onGoToRoster?: ()
         </form>
       ) : null}
 
-      <div className="ind-seasonal-tabs" role="tablist" aria-label="Seasonal sections">
+      <div className="btn-group flex-wrap mb-4" role="tablist" aria-label="Seasonal sections">
         {(
           [
             ["dashboard", "Dashboard"],
@@ -827,7 +827,7 @@ export function SeasonalWorkforceWorkspace({ onGoToRoster }: { onGoToRoster?: ()
             type="button"
             role="tab"
             aria-selected={tab === id}
-            className={tab === id ? "is-active" : undefined}
+            className={`btn ${tab === id ? "btn-primary" : "btn-outline-secondary"}`}
             onClick={() => setTab(id)}
           >
             {label}

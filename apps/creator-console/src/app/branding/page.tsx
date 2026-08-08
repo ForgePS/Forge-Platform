@@ -104,6 +104,14 @@ function BrandingInner() {
         <Link href={`/configuration${tenantQuery(tenantId)}`}>Configuration</Link> ·{" "}
         <Link href={`/audit${tenantQuery(tenantId)}`}>Audit history</Link>
       </p>
+      <p className={styles.success}>
+        Prefer{" "}
+        <Link href={`/studio/branding${tenantQuery(tenantId)}`}>
+          Configuration Studio → Branding
+        </Link>{" "}
+        to edit logos and product wording (draft → publish). This legacy page only updates colors
+        and email fields on the older branding record.
+      </p>
 
       {!canRead ? (
         <p className={styles.error}>Missing permission: platform.configuration.update</p>

@@ -57,6 +57,7 @@ const observability = new ObservabilityStack(app, "ForgeObservability", {
 const publicRmsUrl = "https://d3ud5uzwd9js2z.cloudfront.net";
 const publicCreatorUrl = "https://ddztl9s33wu40.cloudfront.net";
 const publicTenantAdminUrl = "https://d1uxdl4szvsixc.cloudfront.net";
+const publicIndustrialUrl = "https://industrial-dev.forgepublicsafety.com";
 const cognitoDomain = `forge-${config.environmentName}-${config.account.slice(-6)}.auth.${config.region}.amazoncognito.com`;
 
 const compute = new ComputeStack(app, "ForgeCompute", {
@@ -90,10 +91,21 @@ const compute = new ComputeStack(app, "ForgeCompute", {
   cognitoClientIds: [
     identity.cognito.rmsClient.userPoolClientId,
     identity.cognito.creatorClient.userPoolClientId,
+    identity.cognito.industrialClient.userPoolClientId,
   ].join(","),
   cognitoDomain,
   // S8 DEF-S8-021: Tenant Admin must call API from browser with X-Forge-Dev-Principal.
-  browserOrigins: [publicRmsUrl, publicCreatorUrl, publicTenantAdminUrl],
+  browserOrigins: [
+    publicRmsUrl,
+    publicCreatorUrl,
+    publicTenantAdminUrl,
+    publicIndustrialUrl,
+    "https://creator-dev.forgepublicsafety.com",
+    "https://admin-dev.forgepublicsafety.com",
+    "https://rms-dev.forgepublicsafety.com",
+    "https://industrial-dev.forgepublicsafety.com",
+    "https://producers-rice-mill.forgepublicsafety.com",
+  ],
   publicRmsUrl,
   publicCreatorUrl,
 });

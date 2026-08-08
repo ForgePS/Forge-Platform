@@ -4,6 +4,7 @@ import {
   comparePayloads,
   hashConfigPayload,
   resolveEffectiveVersion,
+  resolveLoginBranding,
   validateConfigPayload,
 } from "./index.js";
 
@@ -12,8 +13,77 @@ describe("@forge/configuration", () => {
     const parsed = validateConfigPayload("branding", {
       primaryColor: "#14532d",
       emailFromName: "Forge",
+      productDisplayName: "Forge Industrial Safety",
+      appShortName: "Bridge",
+      logoUrl: "https://cdn.example.com/logo.svg",
     });
-    expect(parsed).toMatchObject({ primaryColor: "#14532d" });
+    expect(parsed).toMatchObject({
+      primaryColor: "#14532d",
+      productDisplayName: "Forge Industrial Safety",
+      appShortName: "Bridge",
+    });
+  });
+
+  it("validates nested login branding", () => {
+    const parsed = validateConfigPayload("branding", {
+      login: {
+        brandLabel: "Producers",
+        headline: "Welcome to Producers Rice Mill",
+        body: "Sign in with your company account.",
+        statusText: "Signed out",
+        buttonLabel: "Continue",
+        logoUrl: "https://cdn.example.com/login-logo.svg",
+      },
+    });
+    expect(parsed).toMatchObject({
+      login: {
+        brandLabel: "Producers",
+        headline: "Welcome to Producers Rice Mill",
+        buttonLabel: "Continue",
+      },
+    });
+  });
+
+  it("resolves login branding with nested fields", () => {
+    expect(
+      resolveLoginBranding({
+        loginShortName: "Legacy",
+        productDisplayName: "Legacy Product",
+        logoUrl: "https://cdn.example.com/sidebar.svg",
+        login: {
+          brandLabel: "Producers",
+          headline: "Welcome to Producers",
+          body: "Use SSO.",
+          statusText: "Signed out",
+          buttonLabel: "Continue",
+          logoUrl: "https://cdn.example.com/login.svg",
+        },
+      }),
+    ).toEqual({
+      brandLabel: "Producers",
+      headline: "Welcome to Producers",
+      body: "Use SSO.",
+      statusText: "Signed out",
+      buttonLabel: "Continue",
+      logoUrl: "https://cdn.example.com/login.svg",
+    });
+  });
+
+  it("resolves login branding from legacy flat fields", () => {
+    expect(
+      resolveLoginBranding({
+        loginShortName: "Industrial",
+        productDisplayName: "Forge Industrial Safety",
+        logoUrl: "https://cdn.example.com/logo.svg",
+      }),
+    ).toEqual({
+      brandLabel: "Industrial",
+      headline: "Welcome to Forge Industrial Safety",
+      body: "Sign in is required to continue.",
+      statusText: "Unauthenticated",
+      buttonLabel: "Sign in",
+      logoUrl: "https://cdn.example.com/logo.svg",
+    });
   });
 
   it("hashes payloads stably", () => {

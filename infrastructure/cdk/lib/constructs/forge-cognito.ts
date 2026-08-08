@@ -12,6 +12,7 @@ export class ForgeCognito extends Construct {
   readonly academyClient: cognito.UserPoolClient;
   readonly rmsClient: cognito.UserPoolClient;
   readonly creatorClient: cognito.UserPoolClient;
+  readonly industrialClient: cognito.UserPoolClient;
   readonly departmentClient: cognito.UserPoolClient;
   readonly studentClient: cognito.UserPoolClient;
 
@@ -64,6 +65,10 @@ export class ForgeCognito extends Construct {
     this.creatorClient = this.userPool.addClient("CreatorConsole", {
       ...clientProps,
       userPoolClientName: resourceName(config, "cognito", "creator-console"),
+    });
+    this.industrialClient = this.userPool.addClient("IndustrialWeb", {
+      ...clientProps,
+      userPoolClientName: resourceName(config, "cognito", "industrial-web"),
     });
     this.departmentClient = this.userPool.addClient("DepartmentPortal", {
       ...clientProps,

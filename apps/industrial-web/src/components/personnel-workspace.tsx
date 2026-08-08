@@ -47,12 +47,12 @@ export function PersonnelWorkspace({ moduleName }: { moduleName: string }) {
   return (
     <div className="ind-personnel">
       {showSwitcher ? (
-        <div className="ind-personnel-switcher" role="tablist" aria-label="Personnel views">
+        <div className="btn-group mb-4" role="tablist" aria-label="Personnel views">
           <button
             type="button"
             role="tab"
             aria-selected={view === "roster"}
-            className={view === "roster" ? "is-active" : undefined}
+            className={`btn ${view === "roster" ? "btn-primary" : "btn-outline-secondary"}`}
             onClick={() => setView("roster")}
           >
             Roster
@@ -61,7 +61,7 @@ export function PersonnelWorkspace({ moduleName }: { moduleName: string }) {
             type="button"
             role="tab"
             aria-selected={view === "seasonal"}
-            className={view === "seasonal" ? "is-active" : undefined}
+            className={`btn ${view === "seasonal" ? "btn-primary" : "btn-outline-secondary"}`}
             onClick={() => setView("seasonal")}
             title={seasonalOn ? undefined : "Seasonal lifecycle flag is off for this tenant"}
           >

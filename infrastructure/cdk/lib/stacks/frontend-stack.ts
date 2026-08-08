@@ -3,6 +3,7 @@ import { Construct } from "constructs";
 import type { ForgeEnvironmentConfig } from "../config/environment-schema.js";
 import { ForgeBudgets } from "../constructs/forge-budgets.js";
 import { ForgeConsoleHosting } from "../constructs/forge-console-hosting.js";
+import { ForgeIndustrialHosting } from "../constructs/forge-industrial-hosting.js";
 import { ForgeRmsHosting } from "../constructs/forge-rms-hosting.js";
 import { ForgeTenantAdminHosting } from "../constructs/forge-tenant-admin-hosting.js";
 import { stackName } from "../utils/naming.js";
@@ -13,12 +14,13 @@ export interface FrontendStackProps extends cdk.StackProps {
 }
 
 /**
- * Static frontends (Creator Console, RMS Web, Tenant Admin) and environment cost budgets.
+ * Static frontends (Creator Console, RMS Web, Tenant Admin, Industrial) and environment cost budgets.
  * Kept separate from Compute so UI deploys do not recycle the API service.
  */
 export class FrontendStack extends cdk.Stack {
   readonly console?: ForgeConsoleHosting;
   readonly rms?: ForgeRmsHosting;
+  readonly industrial?: ForgeIndustrialHosting;
   readonly tenantAdmin?: ForgeTenantAdminHosting;
 
   constructor(scope: Construct, id: string, props: FrontendStackProps) {
@@ -63,6 +65,28 @@ export class FrontendStack extends cdk.Stack {
         `${id}-RmsDistributionId`,
         this.rms.distribution.distributionId,
         "RMS Web CloudFront distribution ID",
+      );
+    }
+
+    if (props.config.features.enableIndustrialHosting) {
+      this.industrial = new ForgeIndustrialHosting(this, "Industrial", { config: props.config });
+      exportValue(
+        this,
+        `${id}-IndustrialDomain`,
+        this.industrial.distribution.distributionDomainName,
+        "Industrial Safety CloudFront domain",
+      );
+      exportValue(
+        this,
+        `${id}-IndustrialBucket`,
+        this.industrial.bucket.bucketName,
+        "Industrial Safety origin bucket",
+      );
+      exportValue(
+        this,
+        `${id}-IndustrialDistributionId`,
+        this.industrial.distribution.distributionId,
+        "Industrial Safety CloudFront distribution ID",
       );
     }
 

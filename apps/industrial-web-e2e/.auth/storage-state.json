@@ -1,0 +1,62 @@
+{
+  "cookies": [
+    {
+      "name": "csrf-state",
+      "value": "\"\"",
+      "domain": "forge-development-547817.auth.us-east-1.amazoncognito.com",
+      "path": "/",
+      "expires": 1785799857.889208,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "csrf-state-legacy",
+      "value": "\"\"",
+      "domain": "forge-development-547817.auth.us-east-1.amazoncognito.com",
+      "path": "/",
+      "expires": 1785799857.890058,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "cognito",
+      "value": "\"H4sIAAAAAAAA/wHiAB3/cDpf+0SEfK14UxVEI2GZHlYktlVW1gJ5cVt0cnR2JgFgTag5mys6qil2ufXpmEqTW7oGMOEZUNHahX2hYkMyGDyLcnb7TyKE0bJDZ0zJrIFIf6QZV7Fwp7AzTLAbHwnkD0+kd3ELb8lf+qn1OMQWbFYqUkv0M3fhS/LQJqV2fYR+0rubaV26uWr5CE1rXcvUEzMGOIdYXX6VmlVnorT+oA6puDOyKxFuVjrSDxatZg6Gltwq+ygePjq982qiF+okyQzynVFQlC60b62McpVnjkkWZ6cM7TAUxfGQPnCAEk3K0FRxa4/iAAAA.H4sIAAAAAAAA/wtYyGElPvHjD+FGwznz7Y/qxdsyelUv+rm4684i33dnmGwBuD42vyAAAAA=.4\"",
+      "domain": ".forge-development-547817.auth.us-east-1.amazoncognito.com",
+      "path": "/",
+      "expires": 1785803158.944524,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://d2ed3566n8x2gi.cloudfront.net",
+      "localStorage": [
+        {
+          "name": "forge-bearer-token",
+          "value": "eyJraWQiOiI2Y2VZc2xCa2N0MmNJU3V0K1ozQndCc29QYWJya1hyWnlwVldIWXBING1BPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJiNDM4MzQzOC0wMGIxLTcwOGEtYjMxZC1mMzRkYWFhMDVjNjIiLCJpc3MiOiJodHRwczovL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tL3VzLWVhc3QtMV9WWWpVRkxYRzQiLCJ2ZXJzaW9uIjoyLCJjbGllbnRfaWQiOiIzcmxzOTgzNWo0cXMzam1jaGIzdWg3a2V0bSIsIm9yaWdpbl9qdGkiOiI2OGVlYmNmYS04OGE2LTQyOGQtOWM2ZC02ODZhNjg5OWFhNmYiLCJldmVudF9pZCI6IjQ2OWNmOTc2LWUxZDEtNDQzOS1iZmUzLTExODRlZDg1ZDUwOCIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3ODU3OTk1NTksImV4cCI6MTc4NTgwMzE1OSwiaWF0IjoxNzg1Nzk5NTU5LCJqdGkiOiI5NWM4NGRkNC03OGE1LTQ5ZGQtOGNmMC1hYzMwMTc5YTExNWUiLCJ1c2VybmFtZSI6ImI0MzgzNDM4LTAwYjEtNzA4YS1iMzFkLWYzNGRhYWEwNWM2MiJ9.Z4YcYpJuEDqW6SUPJqWzFzzrqVzznes6EawytFRWz_mwV6pnsyKbBECpx_GV0bchrwmN9d5RAftjsFmGecv-mjcFtZXkQqckjTESA-5A0vrdcVg5MhCLF__KVJ-8QkEHBV7OS0DkJt4wYPuJRQJ593Sx_RYi8jhc5BWnvlDi-XCm6ZZo2ZotU7kKS68qMO1lg3BaFTKkbtMcdW4bnLsgzzUjYocneoHox-ZOyvZEoytuxmCVKI0b-4UVWztoO8uJ0KiMEoozKDO95JjtmIgDMF8tUetarPAGWEfxe4NsvXyA8AykUHZ7FppPsfk7sg86vh9LMv4LCxxJNi9fGSqvMQ"
+        },
+        {
+          "name": "forge-refresh-token",
+          "value": "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ.EW9M7KHSYWEI_ALgX2infJJqkVVy3BSBiBR09bK7uqlby_e2T9cjTfog8UNUYB0uI95iAMKpwLRAOEhLk0_81wpK4x-XFb5htR7DPrYmipux581EkhZ-B-Z0gd2Primpzdrje9Nzh3dCdAAm8_F36Nat-lJbCvgvReP7zFxZ8fx_xN02aQRLgn0WGTyHazfY_2SV2iFKtwEptQeaMA0_Ru6YpvIZbCekbmihDBo1P4Qwv89apLm31U21QKEaXHI-_b-y-m4ZFotrvJ0eaSzQAxhsP_XTeMh0iaurrQU-ngSQwlvmriIO3e9t2546iXunZyK_qBwt63hvEQflC_eE1Q.MbPnmV4DwTzRXVIf.N02cJfyL6ycTYfndXYZaFocN7H4n6eJvuH4mUrvWtCaWfqPxK0b7dkT47LIUqoR5kL-LRVPRsUsFcFZJSEpDJNH_zArwxE6sZJ8_n5kEanXZN4uO08f79ZTtGnap60F6l5fCEDdZfbEh0GKTEZMr9Sw7RsvsQ6tZifnTbpauSwSXBH8IpcNkglyaFRDOhAyhnC_juzsT6Fx90fU34oGHaE9BpPxZ70pGjG2-fcRLWY4IkO3MERilAps0wuA97r0TxfmsziBYMwK7WdM_PsgPEaFcNt054fpHrroB4BCCj3UF-txU4Pbou-gAo9KfszBX1KIK2uiSxg-EWZ_ll8-LJrQ0j8g4ovUAkLV5Hab_IkINavWmfRum_F10PE4GZmZJ198a7g5ns9OcSd-yrnTa9bBqM7rGr0YQOfE45gBhEaV0IZkwAeUvjApuE1vApW49Egaf-AoSIAZpwT1kmqN9X3L88txSkWFguXbcTUEw3gFUP1K2gnCCOxOW8i0RVdeUc1qYcc4cqKEMk0LK5bWKxGN4YaWcRSvCaFz6zM2y5TsFoW8k6S50tza9U8PwSw5QcJl7lfIwWUkNJw_jRvfPWA6CyOPQ7Ej9eNvh_ifQjh9JlTWugojgjFtAdHnc8_9DKbxXJYJLQLE-_t2XByN86jsnHMUlmXFOaZWWN1jZOglfV6gMXJjzdtXXYK5onZ2oXB0NdL-yiqz7lJda4biY7X6kgLFk65gsZeWhhFNMPJGX0ZgphgLdWBwf1i5Iy3Gb0vJVVyYfp81pdXIWbLyOCaXA2A5BSGRLAVS6Tea6q965ZBYr3ofkISpwlI93USrrOE3fhMIMs37aL2V8lrP-NsDPhAKDdfMBEQqBuWi9uoSJ-Oybd5jE011Bz4Qp_4zpKg1WnWuXbj7-URpSRUFgIs85sM_dfD1QDwC9AY0ub1W1IS-UoIfoJRPhRz-2fcF-RH2i5bWEWtdjEL-WgTaVjLNe6UwwfBD699AfmMyJ4_bhuQ-ynQ59sSoVX3zQqJXTyXXumZcY-OAWH3drN58gDo9hM4zCjgz9UJJjzLTWy8gH-6VfDUBD2ZLMsxoRFDNLrvFah8s-d8xuRnFPEWMtu6NjgDc3xz7pIekRMvT_t_zN_8lapGPE2qLobMP5HB0V7JjWQfkMgwrSeOy7azI4CKzxSijwu_Jcqv6COcw8uu9w31kX3Smo0XDyrc8OyU5v7tQ3qGPfGrjBC3LRS3DNrRXEZ7VVHdOTAe502wuj0ZOr5WTEiuA7dSeyvYWzKByb1neuhX7eDd_nAsDVB48WoeB5Ql0eJSD1AR1b1WZe-rvX4BPz9y4aAssSbg.RkUUJjD5NYSxfWvM6xCmZg"
+        }
+      ]
+    },
+    {
+      "origin": "https://forge-development-547817.auth.us-east-1.amazoncognito.com",
+      "localStorage": [
+        {
+          "name": "amznfbgid",
+          "value": "X38-8354674-1287471:1785799558"
+        },
+        {
+          "name": "Amazon.AWS.Cognito.ContextData.LS_UBID",
+          "value": "uy6vumq2qcqsbvpadq5v:1785799558442"
+        }
+      ]
+    }
+  ]
+}

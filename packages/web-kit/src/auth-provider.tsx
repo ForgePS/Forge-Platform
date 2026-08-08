@@ -12,7 +12,7 @@ import {
 } from "react";
 import { configureApiClient } from "./api-client.js";
 import { authMe, logoutAll, selectTenant, type AuthMe } from "./auth-api.js";
-import { clearAuthStorage, getRefreshToken } from "./auth-storage.js";
+import { clearAuthStorage, getRefreshToken, setSelectedTenantId } from "./auth-storage.js";
 import { buildLogoutUrl, redirectToCognitoLogin, refreshAccessToken } from "./cognito-oauth.js";
 
 export type AuthContextValue = {
@@ -48,13 +48,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     configureApiClient({ onUnauthorized: clearSession });
   }, [clearSession]);
 
+  const applyMe = useCallback((next: AuthMe | null) => {
+    setMe(next);
+    if (next?.tenantId) {
+      setSelectedTenantId(next.tenantId);
+    }
+  }, []);
+
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      setMe(await authMe());
+      applyMe(await authMe());
     } catch (err) {
-      setMe(null);
+      applyMe(null);
       const status = err && typeof err === "object" && "status" in err ? Number(err.status) : 0;
       if (status !== 401) {
         setError(err instanceof Error ? err.message : "Authentication failed");
@@ -62,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyMe]);
 
   useEffect(() => {
     async function bootstrap() {
@@ -76,9 +83,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             clearSession();
           }
         }
-        setMe(await authMe());
+        applyMe(await authMe());
       } catch (err) {
-        setMe(null);
+        applyMe(null);
         // Unauthenticated visitors (no bearer / no linked session) are expected
         // on public routes — do not surface as a blocking shell error.
         const status = err && typeof err === "object" && "status" in err ? Number(err.status) : 0;
@@ -91,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     void bootstrap();
-  }, [clearSession]);
+  }, [applyMe, clearSession]);
 
   const loginWithCognito = useCallback(async () => {
     setError(null);
@@ -116,11 +123,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [clearSession]);
 
-  const chooseTenant = useCallback(async (tenantId: string) => {
-    setError(null);
-    const updated = await selectTenant(tenantId);
-    setMe(updated);
-  }, []);
+  const chooseTenant = useCallback(
+    async (tenantId: string) => {
+      setError(null);
+      // Persist before the POST so select-tenant (and follow-on calls) are scoped.
+      setSelectedTenantId(tenantId);
+      const updated = await selectTenant(tenantId);
+      applyMe(updated);
+    },
+    [applyMe],
+  );
 
   const signOutAll = logout;
 

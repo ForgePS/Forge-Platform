@@ -68,6 +68,7 @@ export const forgeEnvironmentConfigSchema = z
         academy: z.string().optional(),
         rms: z.string().optional(),
         creator: z.string().optional(),
+        industrial: z.string().optional(),
         api: z.string().optional(),
       })
       .optional(),
@@ -106,6 +107,8 @@ export const forgeEnvironmentConfigSchema = z
       enableConsoleHosting: z.boolean().default(true),
       /** CloudFront + S3 static hosting for RMS Web (NERIS Phase 2). */
       enableRmsHosting: z.boolean().default(true),
+      /** CloudFront + S3 static hosting for Industrial Safety. */
+      enableIndustrialHosting: z.boolean().default(true),
       /** CloudFront + S3 static hosting for Tenant Admin (Configuration Platform). */
       enableTenantAdminHosting: z.boolean().default(true),
       monthlyBudgetUsd: z.number().positive().optional(),

@@ -8,12 +8,16 @@ export function ModuleUnavailable({
   status?: string;
 }) {
   return (
-    <section className="ind-unavailable" aria-labelledby="module-unavailable-title">
-      <h1 id="module-unavailable-title">{moduleName}</h1>
-      <p>{moduleUnavailableMessage(moduleName)}</p>
-      <p className="ind-muted">
-        Status: {status} · AWS feature flag default OFF · Production authority: Firebase
-      </p>
-    </section>
+    <div className="card" aria-labelledby="module-unavailable-title">
+      <div className="card-body">
+        <h4 className="card-title mb-2" id="module-unavailable-title">
+          {moduleName}
+        </h4>
+        <p className="mb-2">{moduleUnavailableMessage(moduleName)}</p>
+        <p className="text-muted small mb-0">
+          Status: {status} · AWS feature flag default OFF · Production authority: Firebase
+        </p>
+      </div>
+    </div>
   );
 }

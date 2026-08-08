@@ -89,6 +89,51 @@ const MEMBER_PERMISSIONS = [
   "platform.permission.read",
 ] as const;
 
+const INDUSTRIAL_ACCESS = "industrial.access" as const;
+const INDUSTRIAL_ADMIN = "industrial.admin" as const;
+const INDUSTRIAL_OPS_VIEW = [
+  "industrial.personnel.view",
+  "industrial.training.view",
+  "industrial.forms.view",
+  "industrial.inspections.view",
+  "industrial.incidents.view",
+  "industrial.jsa.view",
+  "industrial.observations.view",
+] as const;
+const INDUSTRIAL_OPS_MANAGE = [
+  "industrial.personnel.manage",
+  "industrial.training.manage",
+  "industrial.forms.manage",
+  "industrial.inspections.manage",
+  "industrial.incidents.manage",
+  "industrial.jsa.manage",
+  "industrial.observations.manage",
+] as const;
+
+const INDUSTRIAL_ADMIN_PERMISSIONS = [
+  ...ADMIN_PERMISSIONS,
+  INDUSTRIAL_ACCESS,
+  INDUSTRIAL_ADMIN,
+  ...INDUSTRIAL_OPS_VIEW,
+  ...INDUSTRIAL_OPS_MANAGE,
+] as const;
+const INDUSTRIAL_MANAGER_PERMISSIONS = [
+  ...MANAGER_PERMISSIONS,
+  INDUSTRIAL_ACCESS,
+  ...INDUSTRIAL_OPS_VIEW,
+  ...INDUSTRIAL_OPS_MANAGE,
+] as const;
+const INDUSTRIAL_SUPERVISOR_PERMISSIONS = [
+  ...SUPERVISOR_PERMISSIONS,
+  INDUSTRIAL_ACCESS,
+  ...INDUSTRIAL_OPS_VIEW,
+] as const;
+const INDUSTRIAL_MEMBER_PERMISSIONS = [
+  ...MEMBER_PERMISSIONS,
+  INDUSTRIAL_ACCESS,
+  ...INDUSTRIAL_OPS_VIEW,
+] as const;
+
 export const FORGE_INDUSTRIAL_TEMPLATE: StarterTemplate = {
   code: "INDUSTRIAL_STARTER",
   name: "Forge Industrial Starter",
@@ -112,10 +157,26 @@ export const FORGE_INDUSTRIAL_TEMPLATE: StarterTemplate = {
     },
   ],
   roles: [
-    { code: "INDUSTRIAL_TENANT_ADMIN", name: "Tenant Admin", permissions: ADMIN_PERMISSIONS },
-    { code: "INDUSTRIAL_SAFETY_MANAGER", name: "Safety Manager", permissions: MANAGER_PERMISSIONS },
-    { code: "INDUSTRIAL_SUPERVISOR", name: "Supervisor", permissions: SUPERVISOR_PERMISSIONS },
-    { code: "INDUSTRIAL_EMPLOYEE", name: "Employee", permissions: MEMBER_PERMISSIONS },
+    {
+      code: "INDUSTRIAL_TENANT_ADMIN",
+      name: "Tenant Admin",
+      permissions: INDUSTRIAL_ADMIN_PERMISSIONS,
+    },
+    {
+      code: "INDUSTRIAL_SAFETY_MANAGER",
+      name: "Safety Manager",
+      permissions: INDUSTRIAL_MANAGER_PERMISSIONS,
+    },
+    {
+      code: "INDUSTRIAL_SUPERVISOR",
+      name: "Supervisor",
+      permissions: INDUSTRIAL_SUPERVISOR_PERMISSIONS,
+    },
+    {
+      code: "INDUSTRIAL_EMPLOYEE",
+      name: "Employee",
+      permissions: INDUSTRIAL_MEMBER_PERMISSIONS,
+    },
   ],
 };
 

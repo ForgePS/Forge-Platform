@@ -4,6 +4,7 @@ import { LOCAL_PLACEHOLDER_ENV, loadEnvironmentAsync } from "@forge/environment"
 import { createLogger } from "@forge/observability";
 import { AppModule } from "./app.module.js";
 import { CorrelationIdMiddleware } from "./correlation.middleware.js";
+import { parseCorsOrigins } from "./common/cors-origins.js";
 
 async function bootstrap(): Promise<void> {
   const env = await loadEnvironmentAsync({ ...LOCAL_PLACEHOLDER_ENV, ...process.env });
@@ -23,12 +24,9 @@ async function bootstrap(): Promise<void> {
     max: 120,
   });
   app.use(rateLimit.use.bind(rateLimit));
+  const corsOrigins = parseCorsOrigins(env.CORS_ORIGINS);
   app.enableCors({
-    origin: env.CORS_ORIGINS
-      ? env.CORS_ORIGINS.split(",")
-          .map((value) => value.trim())
-          .filter(Boolean)
-      : false,
+    origin: corsOrigins.length > 0 ? corsOrigins : false,
     credentials: true,
     allowedHeaders: [
       "Authorization",
@@ -41,6 +39,7 @@ async function bootstrap(): Promise<void> {
       "X-Forge-Dev-User",
       "X-Tenant-Id",
     ],
+    exposedHeaders: ["ETag", "X-Correlation-Id", "X-Request-Id"],
   });
   app.use(
     (

@@ -1,17 +1,19 @@
 .page h1 {
   margin: 0 0 0.35rem;
   font-family: var(--forge-font-sans);
-  font-size: 1.75rem;
+  font-size: 1.375rem;
+  font-weight: 600;
   letter-spacing: -0.02em;
+  color: var(--bs-heading-color, var(--forge-color-heading));
 }
 
 .lead {
   margin: 0 0 1.25rem;
-  opacity: 0.8;
+  color: var(--bs-secondary-color, var(--forge-color-muted));
 }
 
 .muted {
-  opacity: 0.75;
+  color: var(--bs-secondary-color, var(--forge-color-muted));
   font-size: 0.95rem;
 }
 
@@ -33,15 +35,18 @@
 
 .panel {
   margin: 0 0 1.5rem;
-  padding: 1rem 1.1rem;
+  padding: 1.25rem;
   border: 1px solid var(--forge-color-border);
   border-radius: var(--forge-radius-lg);
   background: var(--forge-color-surface);
+  box-shadow: var(--forge-shadow-md);
 }
 
 .panel h2 {
   margin: 0 0 0.85rem;
   font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--bs-heading-color, var(--forge-color-heading));
 }
 
 .form {
@@ -63,11 +68,12 @@
 .formRow input,
 .formRow select,
 .formRow textarea {
-  padding: 0.45rem 0.55rem;
+  padding: 0.45rem 0.75rem;
   border: 1px solid var(--forge-color-border);
   border-radius: var(--forge-radius-md);
   font: inherit;
-  background: var(--forge-color-surface);
+  background: var(--bs-body-bg, var(--forge-color-surface));
+  color: var(--bs-body-color, inherit);
 }
 
 .actions {
@@ -83,9 +89,11 @@
   background: var(--forge-color-primary);
   color: #fff;
   border-radius: var(--forge-radius-md);
-  padding: 0.45rem 0.85rem;
+  padding: 0.45rem 0.95rem;
   font: inherit;
+  font-weight: 500;
   cursor: pointer;
+  box-shadow: 0 0.125rem 0.25rem rgba(105, 108, 255, 0.4);
 }
 
 .button:disabled {
@@ -97,10 +105,11 @@
   appearance: none;
   border: 1px solid var(--forge-color-border);
   background: transparent;
-  color: var(--forge-color-heading);
+  color: var(--bs-heading-color, var(--forge-color-heading));
   border-radius: var(--forge-radius-md);
-  padding: 0.45rem 0.85rem;
+  padding: 0.45rem 0.95rem;
   font: inherit;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -115,8 +124,9 @@
   background: var(--forge-color-danger);
   color: #fff;
   border-radius: var(--forge-radius-md);
-  padding: 0.45rem 0.85rem;
+  padding: 0.45rem 0.95rem;
   font: inherit;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -219,6 +229,7 @@
   border: 1px solid var(--forge-color-border);
   border-radius: var(--forge-radius-lg);
   background: var(--forge-color-surface);
+  box-shadow: var(--forge-shadow-md);
 }
 
 .statLabel {

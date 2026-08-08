@@ -147,8 +147,12 @@ export class ForgeEcs extends Construct {
       alb: this.alb,
       allowedBrowserOrigins: props.browserOrigins,
     });
+    const canonicalApiHost = config.domains?.api ?? config.edge.apiHostname;
     const publicApiUrl =
-      props.publicApiUrl ?? `https://${this.apiHttps.distribution.distributionDomainName}`;
+      props.publicApiUrl ??
+      (canonicalApiHost
+        ? `https://${canonicalApiHost}`
+        : `https://${this.apiHttps.distribution.distributionDomainName}`);
 
     if (props.enableWaf) {
       this.webAcl = new wafv2.CfnWebACL(this, "AlbWebAcl", {

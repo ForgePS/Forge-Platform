@@ -2,12 +2,12 @@
 
 import type { ReactNode } from "react";
 import { AuthProvider } from "@forge/web-kit";
-import { ShellInner } from "./shell-inner";
+import { CreatorShell } from "./creator-shell";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
-      <ShellInner>{children}</ShellInner>
+      <CreatorShell>{children}</CreatorShell>
     </AuthProvider>
   );
 }

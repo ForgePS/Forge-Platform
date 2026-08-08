@@ -50,6 +50,7 @@ export interface CostProfileKnobs {
     enableCloudTrail: boolean;
     enableConsoleHosting: boolean;
     enableRmsHosting: boolean;
+    enableIndustrialHosting: boolean;
     enableTenantAdminHosting: boolean;
     monthlyBudgetUsd: number;
     budgetAlertThresholds: number[];
@@ -117,6 +118,7 @@ export const developerCostProfile: CostProfile = {
       enableCloudTrail: true,
       enableConsoleHosting: true,
       enableRmsHosting: true,
+      enableIndustrialHosting: true,
       enableTenantAdminHosting: true,
       monthlyBudgetUsd: 100,
       budgetAlertThresholds: [50, 80, 100, 120],
@@ -171,6 +173,7 @@ export const integrationCostProfile: CostProfile = {
       enableCloudTrail: true,
       enableConsoleHosting: true,
       enableRmsHosting: true,
+      enableIndustrialHosting: true,
       enableTenantAdminHosting: true,
       monthlyBudgetUsd: 200,
       budgetAlertThresholds: [50, 80, 100, 120],
@@ -225,6 +228,7 @@ export const productionCostProfile: CostProfile = {
       enableCloudTrail: true,
       enableConsoleHosting: true,
       enableRmsHosting: true,
+      enableIndustrialHosting: true,
       enableTenantAdminHosting: true,
       monthlyBudgetUsd: 5000,
       budgetAlertThresholds: [50, 80, 100, 120],
