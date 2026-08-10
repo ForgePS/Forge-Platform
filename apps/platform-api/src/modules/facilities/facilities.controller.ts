@@ -14,7 +14,9 @@ export class FacilitiesController {
   constructor(private readonly facilities: FacilitiesService) {}
 
   @Post()
-  @RequirePermission("tenant.facilities.manage")
+  @RequirePermission("tenant.facilities.manage", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
   @Idempotent({ resourceType: "facility" })
   async create(
     @Param("tenantId") tenantId: string,
@@ -29,7 +31,9 @@ export class FacilitiesController {
   }
 
   @Get()
-  @RequirePermission("tenant.facilities.read")
+  @RequirePermission("tenant.facilities.read", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
   async list(@Param("tenantId") tenantId: string, @Req() req: RequestWithIds) {
     const data = await this.facilities.list(tenantId);
     return ok(data, getRequestIds(req), {
@@ -40,7 +44,9 @@ export class FacilitiesController {
   }
 
   @Get(":facilityId")
-  @RequirePermission("tenant.facilities.read")
+  @RequirePermission("tenant.facilities.read", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
   async get(
     @Param("tenantId") tenantId: string,
     @Param("facilityId") facilityId: string,
@@ -53,7 +59,9 @@ export class FacilitiesController {
   }
 
   @Patch(":facilityId")
-  @RequirePermission("tenant.facilities.manage")
+  @RequirePermission("tenant.facilities.manage", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
   async patch(
     @Param("tenantId") tenantId: string,
     @Param("facilityId") facilityId: string,

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   evaluateAuthorization,
   evaluateTenantOperationalState,
+  requireEntitlement,
   resolveEffectivePermissionCodes,
   resolveFeatureValue,
 } from "./index.js";
@@ -116,6 +117,95 @@ describe("evaluateAuthorization", () => {
       });
       expect(operational.canUseProducts).toBe(true);
     }
+  });
+});
+
+describe("permission + entitlement matrix", () => {
+  const permissionCode = "tenant.facilities.read";
+
+  it("permission + entitlement = allow", () => {
+    const decision = evaluateAuthorization({
+      principal: principal({
+        permissions: new Set([permissionCode]),
+        activeProducts: new Set(["FORGE_INDUSTRIAL"]),
+      }),
+      permissionCode,
+      resourceType: "facility",
+      resourceTenantId: "tenant-a",
+      tenantOperationalState: operationalActive(),
+      roleEffects: [{ effect: "ALLOW", organizationId: null }],
+      requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+    });
+    expect(decision.allowed).toBe(true);
+  });
+
+  it("permission + no entitlement = deny", () => {
+    const decision = evaluateAuthorization({
+      principal: principal({
+        permissions: new Set([permissionCode]),
+        activeProducts: new Set(),
+      }),
+      permissionCode,
+      resourceType: "facility",
+      resourceTenantId: "tenant-a",
+      tenantOperationalState: operationalActive(),
+      roleEffects: [{ effect: "ALLOW", organizationId: null }],
+      requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.reasonCode).toBe("PRODUCT_ENTITLEMENT_REQUIRED");
+  });
+
+  it("entitlement + no permission = deny", () => {
+    const decision = evaluateAuthorization({
+      principal: principal({
+        permissions: new Set(),
+        activeProducts: new Set(["FORGE_INDUSTRIAL"]),
+      }),
+      permissionCode,
+      resourceType: "facility",
+      resourceTenantId: "tenant-a",
+      tenantOperationalState: operationalActive(),
+      roleEffects: [{ effect: "ALLOW", organizationId: null }],
+      requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.reasonCode).toBe("PERMISSION_MISSING");
+  });
+
+  it("cross-tenant entitlement denied", () => {
+    const decision = evaluateAuthorization({
+      principal: principal({
+        permissions: new Set([permissionCode]),
+        activeProducts: new Set(["FORGE_INDUSTRIAL"]),
+      }),
+      permissionCode,
+      resourceType: "facility",
+      resourceTenantId: "tenant-other",
+      tenantOperationalState: operationalActive(),
+      roleEffects: [{ effect: "ALLOW", organizationId: null }],
+      requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.reasonCode).toBe("TENANT_MISMATCH");
+  });
+});
+
+describe("requireEntitlement", () => {
+  it("denies missing module entitlement", () => {
+    expect(
+      requireEntitlement(principal({ activeModules: new Set() }), {
+        moduleCode: "PERSONNEL",
+      }),
+    ).toEqual({ allowed: false, reasonCode: "MODULE_ENTITLEMENT_REQUIRED" });
+  });
+
+  it("allows when product present", () => {
+    expect(
+      requireEntitlement(principal({ activeProducts: new Set(["FORGE_RMS"]) }), {
+        productCode: "FORGE_RMS",
+      }),
+    ).toEqual({ allowed: true, reasonCode: "ALLOW" });
   });
 });
 

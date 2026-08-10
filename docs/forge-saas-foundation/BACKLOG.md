@@ -268,3 +268,69 @@ LOW
 
 Blocking Current Sprint:
 NO
+
+---
+
+## BACKLOG-013
+
+Discovered During:
+MK-S5
+
+Description:
+Wire `requiresEntitlement` on remaining product controllers (RMS NERIS, CAD, Industrial, Import specialty, AI narrative). MK-S5 only gated facilities as the representative Industrial surface.
+
+Reason Deferred:
+Directive forbids uncontrolled all-product rewrite.
+
+Suggested Sprint:
+Product tracks + incremental SaaS follow-ups
+
+Priority:
+MEDIUM
+
+Blocking Current Sprint:
+NO
+
+---
+
+## BACKLOG-014
+
+Discovered During:
+MK-S5
+
+Description:
+Enforce `quantityLimit` (seats) on `tenant_module_entitlements` and auto-grant products/modules from `subscription_plans.configurationJson` when billing sync lands.
+
+Reason Deferred:
+MK-S9 billing domain; not required for MK-S5 catalog/helpers.
+
+Suggested Sprint:
+MK-S9
+
+Priority:
+MEDIUM
+
+Blocking Current Sprint:
+NO
+
+---
+
+## BACKLOG-015
+
+Discovered During:
+MK-S5
+
+Description:
+Module codes such as `CORE` are reused across products; principal `activeModules` is a flat set. Prefer product-scoped module checks or namespaced codes for stronger gates.
+
+Reason Deferred:
+Requires product migration; facilities gate uses productCode only.
+
+Suggested Sprint:
+Product tracks / MK-S11 Creator module UX
+
+Priority:
+LOW
+
+Blocking Current Sprint:
+NO

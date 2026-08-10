@@ -11,7 +11,10 @@ export interface ForgeNavigationItem {
   permission?: string;
   /** Any of these permissions grants visibility when set. */
   anyOfPermissions?: readonly string[];
+  /** Product code required (e.g. FORGE_INDUSTRIAL). */
   entitlement?: string;
+  /** Module code required in addition to any product entitlement. */
+  moduleEntitlement?: string;
   featureFlag?: string;
   children?: ForgeNavigationItem[];
 }
@@ -25,6 +28,7 @@ export interface ForgeNavigationGroup {
 export interface ForgeNavigationContext {
   permissions?: ReadonlySet<string> | readonly string[];
   products?: ReadonlySet<string> | readonly string[];
+  modules?: ReadonlySet<string> | readonly string[];
   featureFlags?: Readonly<Record<string, boolean>>;
   /** Platform super-admin bypasses permission checks in the UI layer. */
   isPlatformAdmin?: boolean;
@@ -51,7 +55,11 @@ function isVisible(item: ForgeNavigationItem, ctx: ForgeNavigationContext): bool
   if (!hasPermission(ctx, item.permission, item.anyOfPermissions)) return false;
   if (item.entitlement) {
     const products = asSet(ctx.products);
-    if (!products.has(item.entitlement)) return false;
+    if (!ctx.isPlatformAdmin && !products.has(item.entitlement)) return false;
+  }
+  if (item.moduleEntitlement) {
+    const modules = asSet(ctx.modules);
+    if (!ctx.isPlatformAdmin && !modules.has(item.moduleEntitlement)) return false;
   }
   if (item.featureFlag && ctx.featureFlags && !ctx.featureFlags[item.featureFlag]) {
     return false;

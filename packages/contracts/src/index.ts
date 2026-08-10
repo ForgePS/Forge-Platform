@@ -272,6 +272,27 @@ export type {
   SaasPersonaRoleTemplateCode,
 } from "./rbac-domain.js";
 
+// ---------------------------------------------------------------------------
+// Entitlements (FORGE-SAAS MK-S5)
+// ---------------------------------------------------------------------------
+
+export {
+  PLATFORM_PRODUCT_CODES,
+  PLATFORM_PRODUCT_CATALOG,
+  getEntitlements,
+  getTenantProducts,
+  getTenantModules,
+  isProductEnabled,
+  isModuleEnabled,
+  isModuleEntitlementWithinWindow,
+  isPlatformProductCode,
+} from "./entitlement-domain.js";
+export type {
+  PlatformProductCode,
+  EntitlementSnapshot,
+  EntitlementSetLike,
+} from "./entitlement-domain.js";
+
 export const createMembershipInputSchema = z.object({
   userId: z.string().uuid(),
   status: z.enum(["PENDING", "ACTIVE"]).default("PENDING"),

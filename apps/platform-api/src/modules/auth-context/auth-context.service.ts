@@ -4,7 +4,11 @@ import {
   evaluateTenantOperationalState,
   resolveEffectivePermissionCodes,
 } from "@forge/authorization";
-import { isMembershipStatusActive, SUBSCRIPTION_STATUSES } from "@forge/contracts";
+import {
+  isMembershipStatusActive,
+  isModuleEntitlementWithinWindow,
+  SUBSCRIPTION_STATUSES,
+} from "@forge/contracts";
 import {
   lookupIdentity,
   lookupUserTenants,
@@ -490,9 +494,14 @@ export class AuthContextService {
           }
         }
 
+        const now = new Date();
         const tenantModulesSet = new Set<string>();
         const tm = await tx
-          .select({ code: platformModules.code })
+          .select({
+            code: platformModules.code,
+            startsAt: tenantModuleEntitlements.startsAt,
+            endsAt: tenantModuleEntitlements.endsAt,
+          })
           .from(tenantModuleEntitlements)
           .innerJoin(platformModules, eq(platformModules.id, tenantModuleEntitlements.moduleId))
           .where(
@@ -502,7 +511,9 @@ export class AuthContextService {
             ),
           );
         for (const row of tm) {
-          tenantModulesSet.add(row.code);
+          if (isModuleEntitlementWithinWindow(row, now)) {
+            tenantModulesSet.add(row.code);
+          }
         }
         for (const code of [...modules]) {
           if (!tenantModulesSet.has(code)) {
@@ -522,8 +533,13 @@ export class AuthContextService {
         products.add(row.code);
       }
 
+      const now = new Date();
       const tm = await tx
-        .select({ code: platformModules.code })
+        .select({
+          code: platformModules.code,
+          startsAt: tenantModuleEntitlements.startsAt,
+          endsAt: tenantModuleEntitlements.endsAt,
+        })
         .from(tenantModuleEntitlements)
         .innerJoin(platformModules, eq(platformModules.id, tenantModuleEntitlements.moduleId))
         .where(
@@ -533,7 +549,9 @@ export class AuthContextService {
           ),
         );
       for (const row of tm) {
-        modules.add(row.code);
+        if (isModuleEntitlementWithinWindow(row, now)) {
+          modules.add(row.code);
+        }
       }
 
       return { products, modules };

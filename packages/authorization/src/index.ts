@@ -238,3 +238,30 @@ export function resolveFeatureValue<T>(layers: {
   if (layers.global !== undefined) return layers.global;
   return layers.defaultValue;
 }
+
+/**
+ * Product/module entitlement gate independent of permission evaluation.
+ * Platform admins bypass both checks.
+ */
+export function requireEntitlement(
+  principal: ForgePrincipal,
+  entitlement: { productCode?: string; moduleCode?: string },
+): AuthorizationDecision {
+  if (entitlement.productCode) {
+    if (
+      !principal.activeProducts.has(entitlement.productCode) &&
+      !principal.isPlatformAdmin
+    ) {
+      return { allowed: false, reasonCode: "PRODUCT_ENTITLEMENT_REQUIRED" };
+    }
+  }
+  if (entitlement.moduleCode) {
+    if (
+      !principal.activeModules.has(entitlement.moduleCode) &&
+      !principal.isPlatformAdmin
+    ) {
+      return { allowed: false, reasonCode: "MODULE_ENTITLEMENT_REQUIRED" };
+    }
+  }
+  return { allowed: true, reasonCode: "ALLOW" };
+}

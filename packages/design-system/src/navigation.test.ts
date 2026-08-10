@@ -24,6 +24,7 @@ const groups: ForgeNavigationGroup[] = [
         label: "LOTO",
         route: "/modules/loto",
         entitlement: "FORGE_INDUSTRIAL",
+        moduleEntitlement: "LOCKOUT_TAGOUT",
         featureFlag: "industrial.module.loto.enabled",
       },
     ],
@@ -40,6 +41,7 @@ describe("filterNavigationGroups", () => {
     const filtered = filterNavigationGroups(groups, {
       isPlatformAdmin: true,
       products: ["FORGE_INDUSTRIAL"],
+      modules: ["LOCKOUT_TAGOUT"],
       featureFlags: { "industrial.module.loto.enabled": true },
     });
     expect(filtered.flatMap((g) => g.items).map((i) => i.id)).toContain("migrations");
@@ -50,7 +52,18 @@ describe("filterNavigationGroups", () => {
     const filtered = filterNavigationGroups(groups, {
       isPlatformAdmin: true,
       products: ["FORGE_INDUSTRIAL"],
+      modules: ["LOCKOUT_TAGOUT"],
       featureFlags: { "industrial.module.loto.enabled": false },
+    });
+    expect(filtered.find((g) => g.id === "industrial")).toBeUndefined();
+  });
+
+  it("hides module when product entitled but module not", () => {
+    const filtered = filterNavigationGroups(groups, {
+      permissions: ["platform.tenant.read"],
+      products: ["FORGE_INDUSTRIAL"],
+      modules: [],
+      featureFlags: { "industrial.module.loto.enabled": true },
     });
     expect(filtered.find((g) => g.id === "industrial")).toBeUndefined();
   });

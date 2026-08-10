@@ -67,7 +67,24 @@ export {
   type CognitoTokenResponse,
 } from "./cognito-oauth.js";
 
-export { AuthProvider, useAuth, usePermission, useAnyPermission, useAllPermissions, type AuthContextValue } from "./auth-provider.js";
+export {
+  AuthProvider,
+  useAuth,
+  usePermission,
+  useAnyPermission,
+  useAllPermissions,
+  useProductEnabled,
+  useModuleEnabled,
+  type AuthContextValue,
+} from "./auth-provider.js";
+
+export {
+  sessionProductEnabled,
+  sessionModuleEnabled,
+  sessionEntitlements,
+  filterNavigationForSession,
+  type SessionEntitlementSource,
+} from "./entitlements.js";
 
 export { useFeatureFlag, useFeatureFlags } from "./use-feature-flags.js";
 

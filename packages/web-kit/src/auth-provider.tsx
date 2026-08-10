@@ -34,6 +34,8 @@ export type AuthContextValue = {
   hasPermission: (code: string) => boolean;
   hasAnyPermission: (codes: string[]) => boolean;
   hasAllPermissions: (codes: string[]) => boolean;
+  hasProduct: (productCode: string) => boolean;
+  hasModule: (moduleCode: string) => boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -207,6 +209,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [hasPermission],
   );
 
+  const hasProduct = useCallback(
+    (productCode: string) => {
+      if (!me) return false;
+      if (me.isPlatformAdmin) return true;
+      return me.activeProducts.includes(productCode);
+    },
+    [me],
+  );
+
+  const hasModule = useCallback(
+    (moduleCode: string) => {
+      if (!me) return false;
+      if (me.isPlatformAdmin) return true;
+      return me.activeModules.includes(moduleCode);
+    },
+    [me],
+  );
+
   const value = useMemo(
     () => ({
       me,
@@ -220,6 +240,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       hasPermission,
       hasAnyPermission,
       hasAllPermissions,
+      hasProduct,
+      hasModule,
     }),
     [
       me,
@@ -233,6 +255,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       hasPermission,
       hasAnyPermission,
       hasAllPermissions,
+      hasProduct,
+      hasModule,
     ],
   );
 
@@ -262,4 +286,14 @@ export function useAnyPermission(codes: string[]): boolean {
 export function useAllPermissions(codes: string[]): boolean {
   const { hasAllPermissions } = useAuth();
   return hasAllPermissions(codes);
+}
+
+export function useProductEnabled(productCode: string): boolean {
+  const { hasProduct } = useAuth();
+  return hasProduct(productCode);
+}
+
+export function useModuleEnabled(moduleCode: string): boolean {
+  const { hasModule } = useAuth();
+  return hasModule(moduleCode);
 }
