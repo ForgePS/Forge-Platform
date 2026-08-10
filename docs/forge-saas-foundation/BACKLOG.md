@@ -334,3 +334,25 @@ LOW
 
 Blocking Current Sprint:
 NO
+
+---
+
+## BACKLOG-016
+
+Discovered During:
+MK-S6
+
+Description:
+Enforce facility ACL on product APIs using membership `facility_ids_json` (currently a stored scope hint). Optional scheduled job to mark invitations EXPIRED when past `expiresAt`.
+
+Reason Deferred:
+MK-S6 stores and validates facility IDs; product surface enforcement and cron expire are follow-ups.
+
+Suggested Sprint:
+Product tracks / MK-S16 ops
+
+Priority:
+LOW
+
+Blocking Current Sprint:
+NO

@@ -182,28 +182,26 @@ export const createPersonInputSchema = z.object({
 export type CreatePersonInput = z.infer<typeof createPersonInputSchema>;
 
 // ---------------------------------------------------------------------------
-// Invitations (ADR-020)
+// Invitations (ADR-020 / FORGE-SAAS MK-S6)
 // ---------------------------------------------------------------------------
 
-export const INVITATION_STATUSES = [
-  "DRAFT",
-  "PENDING",
-  "SENT",
-  "ACCEPTED",
-  "EXPIRED",
-  "REVOKED",
-  "FAILED",
-] as const;
-
-export type InvitationStatus = (typeof INVITATION_STATUSES)[number];
-
-/** Statuses from which no further transition is permitted. */
-export const TERMINAL_INVITATION_STATUSES = [
-  "ACCEPTED",
-  "EXPIRED",
-  "REVOKED",
-  "FAILED",
-] as const satisfies readonly InvitationStatus[];
+export {
+  INVITATION_STORAGE_STATUSES as INVITATION_STATUSES,
+  TERMINAL_INVITATION_STORAGE_STATUSES as TERMINAL_INVITATION_STATUSES,
+  ACTIVE_INVITATION_STORAGE_STATUSES,
+  SAAS_INVITATION_STATUS_ALIASES,
+  isInvitationStorageStatus,
+  resolveInvitationStatusAlias,
+  isTerminalInvitationStatus,
+  isActiveInvitationStatus,
+  invitationStatusesForSaasPending,
+  emailsMatchForInvitationAccept,
+  INVITATION_RESEND_EXTEND_HOURS,
+} from "./invitation-domain.js";
+export type {
+  InvitationStorageStatus as InvitationStatus,
+  SaasInvitationStatusAlias,
+} from "./invitation-domain.js";
 
 export const createInvitationInputSchema = z.object({
   tenantId: z.string().uuid(),
@@ -211,6 +209,8 @@ export const createInvitationInputSchema = z.object({
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
   organizationId: z.string().uuid().optional(),
+  /** Tenant-owned facility IDs scoping the invited membership. */
+  facilityIds: z.array(z.string().uuid()).max(100).default([]),
   roleCodes: z.array(z.string().min(1).max(64)).max(20).default([]),
   productCodes: z.array(z.string().min(1).max(64)).max(20).default([]),
   moduleCodes: z.array(z.string().min(1).max(64)).max(50).default([]),
@@ -225,9 +225,22 @@ export const acceptInvitationInputSchema = z.object({
   token: z.string().min(16).max(512),
   /** Cognito subject of the authenticated identity accepting the invitation. */
   cognitoSubject: z.string().min(1).max(255).optional(),
+  /**
+   * When provided, must match the invitation email (case-insensitive).
+   * Use to bind the accepting identity email to the invite.
+   */
+  email: z.string().email().max(320).optional(),
 });
 
 export type AcceptInvitationInput = z.infer<typeof acceptInvitationInputSchema>;
+
+export const setMembershipFacilityScopeInputSchema = z.object({
+  facilityIds: z.array(z.string().uuid()).max(100),
+});
+
+export type SetMembershipFacilityScopeInput = z.infer<
+  typeof setMembershipFacilityScopeInputSchema
+>;
 
 // ---------------------------------------------------------------------------
 // Memberships (ADR-021)

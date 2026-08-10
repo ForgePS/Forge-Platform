@@ -204,6 +204,13 @@
       "when": 1754500000000,
       "tag": "0028_mk_s1_tenant_domain",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1754840000000,
+      "tag": "0029_mk_s6_invitations",
+      "breakpoints": true
     }
   ]
 }

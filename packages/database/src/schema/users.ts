@@ -100,6 +100,8 @@ export const userInvitations = pgTable(
     roleCodesJson: jsonb("role_codes_json").notNull().default([]),
     productCodesJson: jsonb("product_codes_json").notNull().default([]),
     moduleCodesJson: jsonb("module_codes_json").notNull().default([]),
+    /** Tenant-owned facility IDs granted with the invitation (MK-S6). */
+    facilityIdsJson: jsonb("facility_ids_json").notNull().default([]),
     cognitoUsername: varchar("cognito_username", { length: 255 }),
     cognitoSubject: varchar("cognito_subject", { length: 255 }),
     // FK added in SQL to avoid a schema module cycle with user_tenant_memberships.

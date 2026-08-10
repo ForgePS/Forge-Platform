@@ -35,6 +35,8 @@ export const userTenantMemberships = pgTable(
     isDefaultTenant: boolean("is_default_tenant").notNull().default(false),
     // FK added in SQL to avoid a schema module cycle with user_invitations.
     invitationId: uuid("invitation_id"),
+    /** Tenant-owned facility IDs scoping this membership (MK-S6). */
+    facilityIdsJson: jsonb("facility_ids_json").notNull().default([]),
     activatedAt: timestamp("activated_at", { withTimezone: true }),
     suspendedAt: timestamp("suspended_at", { withTimezone: true }),
     suspensionReason: text("suspension_reason"),

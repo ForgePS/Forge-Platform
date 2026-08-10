@@ -22,9 +22,10 @@ export class MembershipsController {
     @Param("tenantId") tenantId: string,
     @Query("status") status: string | undefined,
     @Query("userId") userId: string | undefined,
+    @Query("q") q: string | undefined,
     @Req() req: RequestWithIds,
   ) {
-    const data = await this.memberships.list(tenantId, { status, userId });
+    const data = await this.memberships.list(tenantId, { status, userId, q });
     return ok(data, getRequestIds(req), {
       page: 1,
       pageSize: data.length,
@@ -181,6 +182,26 @@ export class MembershipsController {
   ) {
     const expected = requireIfMatch(req, "membership");
     const data = await this.memberships.setProducts(
+      tenantId,
+      membershipId,
+      body,
+      principal,
+      expected,
+    );
+    return ok(data, getRequestIds(req));
+  }
+
+  @Put(":membershipId/facilities")
+  @RequirePermission("platform.membership.manage")
+  async setFacilityScope(
+    @Param("tenantId") tenantId: string,
+    @Param("membershipId") membershipId: string,
+    @Body() body: unknown,
+    @Principal() principal: ForgePrincipal,
+    @Req() req: RequestWithIds,
+  ) {
+    const expected = requireIfMatch(req, "membership");
+    const data = await this.memberships.setFacilityScope(
       tenantId,
       membershipId,
       body,

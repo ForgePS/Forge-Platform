@@ -3,12 +3,14 @@ import {
   createMembershipInputSchema,
   isCreatorOnlyPermission,
   patchMembershipInputSchema,
+  setMembershipFacilityScopeInputSchema,
   setMembershipProductsInputSchema,
   setMembershipRolesInputSchema,
   type MembershipStatus,
 } from "@forge/contracts";
 import {
   createId,
+  facilities,
   membershipHistory,
   membershipModuleAccess,
   membershipProductAccess,
@@ -30,7 +32,7 @@ import {
 import { ForgeError } from "@forge/errors";
 import { DOMAIN_EVENT_TYPES } from "@forge/events";
 import type { ForgePrincipal } from "@forge/tenant-context";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, ilike, inArray, isNull } from "drizzle-orm";
 import { concurrencyConflict } from "../../common/concurrency.js";
 import { DATABASE } from "../../tokens.js";
 import { AuditService } from "../audit/audit.service.js";
@@ -62,7 +64,11 @@ export class MembershipsService {
 
   async list(
     tenantId: string,
-    filters: { status?: string | undefined; userId?: string | undefined },
+    filters: {
+      status?: string | undefined;
+      userId?: string | undefined;
+      q?: string | undefined;
+    },
   ) {
     return withTenantTransaction(this.db, tenantId, async (tx) => {
       const conditions = [eq(userTenantMemberships.tenantId, tenantId)];
@@ -72,6 +78,10 @@ export class MembershipsService {
       if (filters.userId) {
         conditions.push(eq(userTenantMemberships.userId, filters.userId));
       }
+      const q = filters.q?.trim();
+      if (q) {
+        conditions.push(ilike(users.primaryEmail, `%${q}%`));
+      }
       return tx
         .select({
           id: userTenantMemberships.id,
@@ -79,6 +89,7 @@ export class MembershipsService {
           userId: userTenantMemberships.userId,
           status: userTenantMemberships.status,
           isDefaultTenant: userTenantMemberships.isDefaultTenant,
+          facilityIdsJson: userTenantMemberships.facilityIdsJson,
           activatedAt: userTenantMemberships.activatedAt,
           suspendedAt: userTenantMemberships.suspendedAt,
           expiresAt: userTenantMemberships.expiresAt,
@@ -594,6 +605,95 @@ export class MembershipsService {
         });
 
         return this.loadRoles(tx, membershipId);
+      },
+      principal.userId,
+    );
+  }
+
+  async setFacilityScope(
+    tenantId: string,
+    membershipId: string,
+    input: unknown,
+    principal: ForgePrincipal,
+    expectedVersion: ExpectedVersion,
+  ) {
+    const data = setMembershipFacilityScopeInputSchema.parse(input);
+    return withTenantTransaction(
+      this.db,
+      tenantId,
+      async (tx) => {
+        const membership = await this.requireMembership(tx, tenantId, membershipId);
+        const version = this.assertVersion(
+          tenantId,
+          membershipId,
+          membership.recordVersion,
+          expectedVersion,
+        );
+        const unique = [...new Set(data.facilityIds)];
+        if (unique.length > 0) {
+          const rows = await tx
+            .select({ id: facilities.id })
+            .from(facilities)
+            .where(and(eq(facilities.tenantId, tenantId), inArray(facilities.id, unique)));
+          if (rows.length !== unique.length) {
+            throw new ForgeError(
+              "BAD_REQUEST",
+              "One or more facilityIds do not belong to this tenant",
+            );
+          }
+        }
+
+        const [updated] = await tx
+          .update(userTenantMemberships)
+          .set({
+            facilityIdsJson: unique,
+            recordVersion: version + 1,
+            updatedByUserId: principal.userId,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(userTenantMemberships.id, membershipId),
+              eq(userTenantMemberships.recordVersion, version),
+            ),
+          )
+          .returning();
+        if (!updated) {
+          throw concurrencyConflict({
+            tenantId,
+            resourceType: "membership",
+            resourceId: membershipId,
+            expectedVersion,
+            actualVersion: null,
+          });
+        }
+
+        await this.recordHistory(tx, {
+          tenantId,
+          membershipId,
+          action: "membership.facility_scope.set",
+          fromStatus: membership.status,
+          toStatus: membership.status,
+          principal,
+          metadata: { facilityIds: unique },
+        });
+
+        await this.audit.writeInTransaction(tx, {
+          tenantId,
+          actorUserId: principal.userId,
+          actorPersonId: principal.personId,
+          actorType: "USER",
+          action: "membership.facility_scope.set",
+          resourceType: "membership",
+          resourceId: membershipId,
+          result: "SUCCESS",
+          riskLevel: "MEDIUM",
+          correlationId: principal.correlationId,
+          requestId: principal.requestId,
+          after: { facilityIds: unique },
+        });
+
+        return this.loadDetail(tx, tenantId, membershipId);
       },
       principal.userId,
     );

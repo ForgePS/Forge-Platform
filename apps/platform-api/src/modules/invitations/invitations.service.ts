@@ -3,12 +3,17 @@ import { Inject, Injectable } from "@nestjs/common";
 import {
   acceptInvitationInputSchema,
   createInvitationInputSchema,
+  emailsMatchForInvitationAccept,
+  ACTIVE_INVITATION_STORAGE_STATUSES,
+  INVITATION_RESEND_EXTEND_HOURS,
+  isTerminalInvitationStatus,
   TERMINAL_INVITATION_STATUSES,
   type InvitationStatus,
 } from "@forge/contracts";
 import {
   authenticationIdentities,
   createId,
+  facilities,
   lookupInvitation,
   userInvitations,
   users,
@@ -27,14 +32,12 @@ import { MembershipsService } from "../memberships/memberships.service.js";
 import { OutboxService } from "../outbox/outbox.service.js";
 import { CognitoAdminService } from "../cognito/cognito-admin.service.js";
 
-const ACTIVE_INVITATION_STATUSES = ["DRAFT", "PENDING", "SENT"] as const;
-
 function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
 function isTerminal(status: string): boolean {
-  return (TERMINAL_INVITATION_STATUSES as readonly string[]).includes(status);
+  return isTerminalInvitationStatus(status);
 }
 
 @Injectable()
@@ -121,7 +124,7 @@ export class InvitationsService {
             where: and(
               eq(userInvitations.tenantId, tenantId),
               eq(userInvitations.email, email),
-              inArray(userInvitations.status, [...ACTIVE_INVITATION_STATUSES]),
+              inArray(userInvitations.status, [...ACTIVE_INVITATION_STORAGE_STATUSES]),
             ),
           });
           if (duplicate) {
@@ -174,11 +177,16 @@ export class InvitationsService {
             userId: user.id,
             status: "PENDING",
             isDefaultTenant: true,
+            facilityIdsJson: data.facilityIds,
             createdByUserId: principal.userId,
             updatedByUserId: principal.userId,
             createdAt: now,
             updatedAt: now,
           });
+
+          if (data.facilityIds.length > 0) {
+            await this.assertFacilitiesInTenant(tx, tenantId, data.facilityIds);
+          }
 
           await this.memberships.applyRoles(tx, {
             tenantId,
@@ -201,7 +209,7 @@ export class InvitationsService {
             fromStatus: null,
             toStatus: "PENDING",
             principal,
-            metadata: { invitationId },
+            metadata: { invitationId, facilityIds: data.facilityIds },
           });
 
           const status: InvitationStatus = data.send ? "SENT" : "DRAFT";
@@ -218,6 +226,7 @@ export class InvitationsService {
             roleCodesJson: data.roleCodes,
             productCodesJson: data.productCodes,
             moduleCodesJson: data.moduleCodes,
+            facilityIdsJson: data.facilityIds,
             cognitoUsername: provisioned?.username ?? null,
             cognitoSubject: provisioned?.subject ?? null,
             membershipId,
@@ -348,6 +357,9 @@ export class InvitationsService {
     const token = randomBytes(32).toString("base64url");
     const tokenHash = hashToken(token);
     const now = new Date();
+    const expiresAt = new Date(
+      now.getTime() + INVITATION_RESEND_EXTEND_HOURS * 3600_000,
+    );
 
     return withTenantTransaction(
       this.db,
@@ -359,6 +371,7 @@ export class InvitationsService {
             invitationTokenHash: tokenHash,
             status: "SENT",
             sentAt: invitation.sentAt ?? now,
+            expiresAt,
             resendCount: invitation.resendCount + 1,
             lastResentAt: now,
             updatedAt: now,
@@ -391,7 +404,7 @@ export class InvitationsService {
           riskLevel: "MEDIUM",
           correlationId: principal.correlationId,
           requestId: principal.requestId,
-          after: { resendCount: updated.resendCount },
+          after: { resendCount: updated.resendCount, expiresAt },
         });
 
         return { ...sanitizeInvitation(updated), token };
@@ -504,6 +517,12 @@ export class InvitationsService {
         resolved.tenantId,
         resolved.invitationId,
       );
+      if (data.email && !emailsMatchForInvitationAccept(invitation.email, data.email)) {
+        throw new ForgeError(
+          "FORBIDDEN",
+          "Accepting email does not match the invitation email",
+        );
+      }
       // Re-check under the tenant transaction in case of a concurrent accept.
       if (invitation.status === "ACCEPTED") {
         throw new ForgeError("CONFLICT", "Invitation has already been accepted");
@@ -604,6 +623,15 @@ export class InvitationsService {
       };
 
       if (invitation.membershipId) {
+        const facilityIds = Array.isArray(invitation.facilityIdsJson)
+          ? (invitation.facilityIdsJson as string[])
+          : [];
+        if (facilityIds.length > 0) {
+          await tx
+            .update(userTenantMemberships)
+            .set({ facilityIdsJson: facilityIds, updatedAt: now })
+            .where(eq(userTenantMemberships.id, invitation.membershipId));
+        }
         await this.memberships.activateInTransaction(tx, {
           tenantId: invitation.tenantId,
           membershipId: invitation.membershipId,
@@ -728,6 +756,25 @@ export class InvitationsService {
       throw new ForgeError("NOT_FOUND", "Invitation not found");
     }
     return row;
+  }
+
+  private async assertFacilitiesInTenant(
+    tx: DatabaseTransaction,
+    tenantId: string,
+    facilityIds: readonly string[],
+  ): Promise<void> {
+    const unique = [...new Set(facilityIds)];
+    if (unique.length === 0) return;
+    const rows = await tx
+      .select({ id: facilities.id })
+      .from(facilities)
+      .where(and(eq(facilities.tenantId, tenantId), inArray(facilities.id, unique)));
+    if (rows.length !== unique.length) {
+      throw new ForgeError(
+        "BAD_REQUEST",
+        "One or more facilityIds do not belong to this tenant",
+      );
+    }
   }
 }
 
