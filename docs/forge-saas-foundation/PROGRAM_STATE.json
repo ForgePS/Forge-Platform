@@ -1,0 +1,34 @@
+{
+  "program": "FORGE-SAAS-CORE",
+  "currentAuthorizedSprint": "MK-S0",
+  "lastCompletedSprint": "MK-S0",
+  "status": "ACTIVE",
+  "productionAuthorized": false,
+  "automaticSprintAdvance": false,
+  "baselineEstablished": true,
+  "lastCommit": null,
+  "knownBlockers": [],
+  "deferredItems": [
+    "BACKLOG-001",
+    "BACKLOG-002",
+    "BACKLOG-003",
+    "BACKLOG-004",
+    "BACKLOG-005",
+    "BACKLOG-006",
+    "BACKLOG-007",
+    "BACKLOG-008",
+    "BACKLOG-009",
+    "BACKLOG-010"
+  ],
+  "baselineVerification": {
+    "date": "2026-08-10",
+    "typecheck": "FAIL_HISTORICAL_rms-web-e2e",
+    "lint": "FAIL_HISTORICAL_imports_unused_var",
+    "testUnit": "FAIL_HISTORICAL_creator-console_web-kit_resolve",
+    "coreSaasBuild": "PASS",
+    "infraValidate": "PASS",
+    "fullBuild": "NOT_RUN",
+    "productionCheck": "NOT_APPLICABLE",
+    "productionOperations": "NONE"
+  }
+}
