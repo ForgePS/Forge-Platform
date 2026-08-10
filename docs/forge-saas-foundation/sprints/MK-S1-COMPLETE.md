@@ -4,7 +4,7 @@
 **Sprint:** MK-S1  
 **Completed:** 2026-08-10  
 **Verdict:** PASS  
-**Repair passes used:** 1
+**Repair passes used:** 2
 
 ## Objective achieved
 
@@ -52,12 +52,21 @@ One authoritative tenant domain is documented and hardened:
 | `@forge/authorization` unit | 9 passed |
 | `@forge/platform-api` unit | 53 passed (includes tenants 8, facilities 3, entitlements 2) |
 | Typecheck (platform-api + domain packages) | PASS after Repair Pass 1 |
-| Build (contracts, authz, events, database) | PASS |
+| Build (contracts without untracked analytics) | PASS after Repair Pass 2 |
 | Production operations | NONE |
 
 ## Repair Pass 1
 
 Fixed `exactOptionalPropertyTypes` issue when passing optional audit `metadata` from `TenantsService.transition`.
+
+## Repair Pass 2
+
+Removed accidental unfinished `industrial-analytics` re-export from `packages/contracts/src/index.ts` that had been mixed in from unrelated WIP during commit staging.
+
+## Commits
+
+- `7cef4b1` feat(saas): establish MK-S1 canonical tenant domain
+- `17d138a` fix(saas): remove incomplete industrial-analytics re-export from MK-S1
 
 ## Next sprint
 

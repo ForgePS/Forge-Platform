@@ -6,7 +6,7 @@
   "productionAuthorized": false,
   "automaticSprintAdvance": false,
   "baselineEstablished": true,
-  "lastCommit": null,
+  "lastCommit": "17d138ac8c91ec3daef35e793bdaf9095b89b028",
   "knownBlockers": [],
   "deferredItems": [
     "BACKLOG-001",
@@ -38,6 +38,10 @@
     "unitPlatformApi": "53 passed",
     "typecheckAffected": "PASS",
     "productionOperations": "NONE",
-    "repairPasses": 1
+    "repairPasses": 2,
+    "commits": [
+      "7cef4b16c8109f83afc74dc526f0f1e24cd2e3c9",
+      "17d138ac8c91ec3daef35e793bdaf9095b89b028"
+    ]
   }
 }
