@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { verifyCognitoAccessToken } from "@forge/auth";
 import { evaluateTenantOperationalState } from "@forge/authorization";
-import { SUBSCRIPTION_STATUSES } from "@forge/contracts";
+import { isMembershipStatusActive, SUBSCRIPTION_STATUSES } from "@forge/contracts";
 import {
   lookupIdentity,
   lookupUserTenants,
@@ -154,7 +154,7 @@ export class AuthContextService {
     if (!access && !isSuper) {
       throw new ForgeError("FORBIDDEN", "No active access to the requested tenant");
     }
-    if (access && access.status !== "ACTIVE" && !isSuper) {
+    if (access && !isMembershipStatusActive(access.status) && !isSuper) {
       throw new ForgeError("FORBIDDEN", "Membership is not active for the requested tenant");
     }
 
@@ -238,7 +238,8 @@ export class AuthContextService {
         membershipId: row.membershipId,
         membershipStatus: row.membershipStatus,
         isDefaultTenant: row.isDefaultTenant,
-        selectable: row.membershipStatus === "ACTIVE" && tenantSession.canAuthenticate,
+        selectable:
+          isMembershipStatusActive(row.membershipStatus) && tenantSession.canAuthenticate,
       };
     });
   }
@@ -248,7 +249,7 @@ export class AuthContextService {
     tenantId: string,
   ): Promise<ReturnType<AuthContextService["toClientSummary"]>> {
     const access = await this.resolveTenantAccess(principal.userId, tenantId);
-    if (!access || access.status !== "ACTIVE") {
+    if (!access || !isMembershipStatusActive(access.status)) {
       if (!principal.isPlatformAdmin) {
         throw new ForgeError("FORBIDDEN", "No active membership for the selected tenant");
       }

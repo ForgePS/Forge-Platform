@@ -50,6 +50,8 @@ export {
   type EffectiveFeature,
 } from "./auth-api.js";
 
+export { switchActiveTenant } from "./tenant-switch.js";
+
 export {
   buildAuthorizeUrl,
   buildLogoutUrl,

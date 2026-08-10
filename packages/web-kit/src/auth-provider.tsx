@@ -20,6 +20,7 @@ import {
   setActiveTenantId,
 } from "./auth-storage.js";
 import { buildLogoutUrl, redirectToCognitoLogin, refreshAccessToken } from "./cognito-oauth.js";
+import { switchActiveTenant } from "./tenant-switch.js";
 
 export type AuthContextValue = {
   me: AuthMe | null;
@@ -167,13 +168,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const chooseTenant = useCallback(async (tenantId: string) => {
     setError(null);
-    setActiveTenantId(tenantId);
     try {
-      const updated = await selectTenant(tenantId);
+      const updated = await switchActiveTenant({
+        tenantId,
+        previousTenantId: getActiveTenantId(),
+        selectTenant,
+        setActiveTenantId,
+        clearActiveTenantId,
+      });
+      // Replace the entire AuthMe summary so prior tenant capabilities cannot linger.
       setMe(updated);
     } catch (err) {
-      clearActiveTenantId();
       setError(err instanceof Error ? err.message : "Tenant switch failed");
+      throw err;
     }
   }, []);
 

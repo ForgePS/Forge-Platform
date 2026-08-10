@@ -233,16 +233,18 @@ export type AcceptInvitationInput = z.infer<typeof acceptInvitationInputSchema>;
 // Memberships (ADR-021)
 // ---------------------------------------------------------------------------
 
-export const MEMBERSHIP_STATUSES = [
-  "PENDING",
-  "ACTIVE",
-  "SUSPENDED",
-  "EXPIRED",
-  "REVOKED",
-  "ARCHIVED",
-] as const;
-
-export type MembershipStatus = (typeof MEMBERSHIP_STATUSES)[number];
+export {
+  MEMBERSHIP_STATUSES,
+  SAAS_MEMBERSHIP_STATUS_ALIASES,
+  isMembershipStatus,
+  resolveMembershipStatusAlias,
+  isMembershipStatusActive,
+  membershipStatusBlocksTenantSelection,
+} from "./membership-domain.js";
+export type {
+  MembershipStatus,
+  SaasMembershipStatusAlias,
+} from "./membership-domain.js";
 
 export const createMembershipInputSchema = z.object({
   userId: z.string().uuid(),
