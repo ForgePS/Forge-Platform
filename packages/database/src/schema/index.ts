@@ -8,6 +8,7 @@ export * from "./users.js";
 export * from "./authorization.js";
 export * from "./memberships.js";
 export * from "./entitlements.js";
+export * from "./billing.js";
 export * from "./onboarding.js";
 export * from "./audit.js";
 export * from "./events.js";

@@ -57,16 +57,19 @@ Description:
 No Stripe (or other PSP) adapter; subscriptions use `billingProvider` default `NONE`. Provider-neutral billing domain exists partially.
 
 Reason Deferred:
-Billing provider integration is MK-S9/MK-S10.
+MK-S9 shipped provider-neutral domain + STUB webhook. **Live Stripe/PSP adapter** and production webhook endpoints remain deferred.
 
 Suggested Sprint:
-MK-S9
+MK-S10 / PSP adapter track
 
 Priority:
 HIGH
 
 Blocking Current Sprint:
 NO
+
+Resolution Note (MK-S9):
+Domain models, status normalizer, stub webhook with signature + idempotency + entitlement sync via EntitlementsService. Live Stripe still open.
 
 ---
 

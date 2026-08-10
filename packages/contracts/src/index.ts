@@ -410,6 +410,36 @@ export type {
   OnboardingActivationErrorCode,
 } from "./onboarding-domain.js";
 
+export {
+  SAAS_SUBSCRIPTION_STATUSES,
+  OPERATIONAL_SUBSCRIPTION_STATUSES,
+  BILLING_PROVIDERS,
+  BILLING_TYPES,
+  BILLING_FEE_TYPES,
+  BILLING_CONTRACT_STATUSES,
+  BILLING_ORDER_STATUSES,
+  BILLING_INVOICE_STATUSES,
+  PRICE_INTERVALS,
+  BILLING_PROVIDER_EVENT_STATUSES,
+  BILLING_LOGICAL_MODELS,
+  BILLING_WEBHOOK_ENTITLEMENT_INVARIANT,
+  toSaasSubscriptionStatus,
+  toOperationalSubscriptionStatus,
+  billingWebhookEnvelopeSchema,
+  createBillingCustomerInputSchema,
+  createBillingContractInputSchema,
+  createBillingFeeInputSchema,
+} from "./billing-domain.js";
+export type {
+  SaasSubscriptionStatus,
+  OperationalSubscriptionStatus,
+  BillingProviderCode,
+  BillingType,
+  BillingFeeType,
+  BillingLogicalModel,
+  BillingWebhookEnvelope,
+} from "./billing-domain.js";
+
 export const startOnboardingInputSchema = z.object({
   customerType: z.enum(CUSTOMER_TYPES),
   templateCode: z.string().min(1).max(64).optional(),

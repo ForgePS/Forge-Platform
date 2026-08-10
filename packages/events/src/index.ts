@@ -33,6 +33,8 @@ export const DOMAIN_EVENT_TYPES = {
   ROLE_REVOKED: "platform.role.revoked.v1",
   ENTITLEMENT_CHANGED: "platform.entitlement.changed.v1",
   SUBSCRIPTION_CHANGED: "platform.subscription.changed.v1",
+  BILLING_PROVIDER_EVENT_RECEIVED: "platform.billing.provider_event.received.v1",
+  BILLING_CONTRACT_CHANGED: "platform.billing.contract.changed.v1",
   FEATURE_CHANGED: "platform.feature.changed.v1",
   CONFIGURATION_CHANGED: "platform.configuration.changed.v1",
   CONFIGURATION_VERSION_PUBLISHED: "platform.configuration.version.published.v1",

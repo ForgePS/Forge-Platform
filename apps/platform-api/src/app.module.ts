@@ -26,6 +26,7 @@ import { NerisModule } from "./modules/neris/neris.module.js";
 import { NerisIncidentsModule } from "./modules/neris-incidents/neris-incidents.module.js";
 import { CadModule } from "./modules/cad/cad.module.js";
 import { AiNarrativeModule } from "./modules/ai-narrative/ai-narrative.module.js";
+import { BillingModule } from "./modules/billing/billing.module.js";
 import { OnboardingModule } from "./modules/onboarding/onboarding.module.js";
 import { OrganizationsModule } from "./modules/organizations/organizations.module.js";
 import { FacilitiesModule } from "./modules/facilities/facilities.module.js";
@@ -61,6 +62,7 @@ export class AppModule {
         ProductsModule,
         EntitlementsModule,
         SubscriptionsModule,
+        BillingModule,
         FeatureFlagsModule,
         ConfigurationModule,
         ImportsModule,
