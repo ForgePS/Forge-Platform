@@ -2,15 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { filterNavigationGroups } from "@forge/design-system";
+import type { ForgeLinkRender } from "@forge/ui";
 import {
   EnvironmentBanner,
   ForgeAppShell,
+  ForgeFacilitySelector,
+  ForgeHelpMenu,
   ForgeNotificationMenu,
+  ForgeProductSwitcher,
+  ForgeSearchTrigger,
+  ForgeShellState,
   ForgeTenantSwitcher,
   ForgeUserMenu,
 } from "@forge/ui";
-import { useAuth } from "@forge/web-kit";
+import { filterNavigationForSession, useAuth } from "@forge/web-kit";
 import { CREATOR_NAV_GROUPS } from "@/lib/navigation";
 import styles from "../app/shell.module.css";
 
@@ -20,11 +25,7 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
   const { me, loading, error, logout, chooseTenant } = useAuth();
 
-  const groups = filterNavigationGroups(CREATOR_NAV_GROUPS, {
-    permissions: me?.permissions ?? [],
-    products: me?.activeProducts ?? [],
-    ...(me?.isPlatformAdmin ? { isPlatformAdmin: true } : {}),
-  });
+  const groups = filterNavigationForSession(CREATOR_NAV_GROUPS, me);
 
   const tenants =
     me?.tenants.map((t) => ({
@@ -33,8 +34,28 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
       selectable: t.selectable,
     })) ?? [];
 
+  const products =
+    me?.activeProducts.map((code) => ({
+      id: code,
+      name: code,
+    })) ?? [];
+
   const activeTenantLabel =
     tenants.find((t) => t.tenantId === me?.tenantId)?.displayName ?? me?.tenantId ?? "—";
+
+  const renderLink: ForgeLinkRender = ({ href, className, children: linkChildren, "aria-current": ariaCurrent, onClick }) => {
+    const props: {
+      href: string;
+      className?: string;
+      "aria-current"?: "page";
+      onClick?: () => void;
+      children: React.ReactNode;
+    } = { href, children: linkChildren };
+    if (className) props.className = className;
+    if (ariaCurrent) props["aria-current"] = ariaCurrent;
+    if (onClick) props.onClick = onClick;
+    return <Link {...props} />;
+  };
 
   return (
     <ForgeAppShell
@@ -44,21 +65,11 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
       groups={groups}
       activePath={pathname}
       envBanner={<EnvironmentBanner environment={appEnv} />}
-      renderLink={({ href, className, children: linkChildren, "aria-current": ariaCurrent, onClick }) => {
-        const props: {
-          href: string;
-          className?: string;
-          "aria-current"?: "page";
-          onClick?: () => void;
-          children: React.ReactNode;
-        } = { href, children: linkChildren };
-        if (className) props.className = className;
-        if (ariaCurrent) props["aria-current"] = ariaCurrent;
-        if (onClick) props.onClick = onClick;
-        return <Link {...props} />;
-      }}
+      renderLink={renderLink}
       session={
-        !loading && me ? (
+        loading ? (
+          <ForgeShellState state="loading" title="Loading session…" />
+        ) : me ? (
           <>
             <p style={{ margin: 0, color: "var(--forge-color-muted)", fontSize: "var(--forge-text-xs)" }}>
               Signed in
@@ -71,23 +82,42 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
           </>
         ) : error ? (
           <p className={styles.authError}>{error}</p>
-        ) : null
+        ) : (
+          <ForgeShellState state="empty" title="Not signed in" description="Sign in to manage tenants." />
+        )
       }
       topbarCenter={<span>Creator Console · {activeTenantLabel}</span>}
       topbarRight={
         <>
-          {me && tenants.length > 1 ? (
+          <ForgeSearchTrigger />
+          {me ? (
+            <ForgeProductSwitcher
+              products={products}
+              {...(products[0]?.id ? { activeProductId: products[0].id } : {})}
+              state={products.length === 0 ? "empty" : "ready"}
+            />
+          ) : null}
+          <ForgeFacilitySelector facilities={[]} state={me ? "empty" : "unauthorized"} />
+          {me ? (
             <ForgeTenantSwitcher
               tenants={tenants}
               activeTenantId={me.tenantId}
               onSelect={(id) => void chooseTenant(id)}
+              disabled={tenants.filter((t) => t.selectable !== false).length <= 1}
+              state={tenants.length === 0 ? "empty" : "ready"}
             />
           ) : null}
+          <ForgeHelpMenu href="/profile/" renderLink={renderLink} label="Help" />
           <ForgeNotificationMenu />
           {me ? (
             <ForgeUserMenu
               label={me.isPlatformAdmin ? "Platform admin" : "Signed in"}
               onSignOut={() => void logout()}
+              renderLink={renderLink}
+              items={[
+                { label: "Profile", href: "/profile/" },
+                { label: "Settings", href: "/studio/tenant-profile/" },
+              ]}
             />
           ) : null}
         </>

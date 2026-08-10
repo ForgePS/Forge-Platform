@@ -369,7 +369,7 @@ function ShellBody({ children }: { children: ReactNode }) {
             </div>
 
             <div className="navbar-nav-right d-flex align-items-center flex-wrap gap-2 w-100" id="navbar-collapse">
-              <div className="navbar-nav align-items-center flex-grow-1 min-w-0">
+              <div className="navbar-nav align-items-center flex-grow-1 min-w-0 gap-2 flex-wrap">
                 <label className="nav-item ind-tenant-switcher mb-0">
                   <i className="bx bx-buildings flex-shrink-0" aria-hidden="true" />
                   <span className="ind-tenant-switcher__label">Tenant</span>
@@ -398,24 +398,54 @@ function ShellBody({ children }: { children: ReactNode }) {
                     </span>
                   ) : null}
                 </label>
+                <label className="nav-item ind-tenant-switcher mb-0">
+                  <i className="bx bx-map flex-shrink-0" aria-hidden="true" />
+                  <span className="ind-tenant-switcher__label">Facility</span>
+                  <span className="text-muted small" title="Facility selector empty until catalog loads">
+                    No facilities
+                  </span>
+                </label>
               </div>
               <ul className="navbar-nav flex-row align-items-center ms-auto flex-shrink-0">
-                <li className="nav-item">
-                  <span className="nav-link hide-arrow d-flex align-items-center gap-2 px-0">
-                    <Link
-                      href="/profile/"
-                      className="avatar avatar-sm text-decoration-none"
-                      aria-label="Open my profile"
-                      title="My profile"
-                    >
-                      <span className="avatar-initial rounded-circle bg-label-primary">
-                        {(me.isPlatformAdmin ? "PA" : me.userId.slice(0, 2)).toUpperCase()}
-                      </span>
-                    </Link>
-                    <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => void signOut()}>
-                      Sign out
-                    </button>
-                  </span>
+                <li className="nav-item d-flex align-items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    title="Search not connected (MK-S18)"
+                    disabled
+                    aria-label="Search"
+                  >
+                    Search
+                  </button>
+                  <Link
+                    href="/settings/"
+                    className="btn btn-sm btn-outline-secondary text-decoration-none"
+                    title="Settings"
+                  >
+                    Settings
+                  </Link>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    title="Help center not connected"
+                    disabled
+                    aria-label="Help"
+                  >
+                    Help
+                  </button>
+                  <Link
+                    href="/profile/"
+                    className="avatar avatar-sm text-decoration-none"
+                    aria-label="Open my profile"
+                    title="My profile"
+                  >
+                    <span className="avatar-initial rounded-circle bg-label-primary">
+                      {(me.isPlatformAdmin ? "PA" : me.userId.slice(0, 2)).toUpperCase()}
+                    </span>
+                  </Link>
+                  <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => void signOut()}>
+                    Sign out
+                  </button>
                 </li>
               </ul>
             </div>

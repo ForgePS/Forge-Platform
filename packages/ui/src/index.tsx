@@ -23,13 +23,19 @@ export { ForgeTopbar } from "./shell/ForgeTopbar.js";
 export { ForgeBreadcrumbs } from "./shell/ForgeBreadcrumbs.js";
 export { ForgePageHeader, ForgePageActions } from "./shell/ForgePageHeader.js";
 export {
+  ForgeFacilitySelector,
+  ForgeHelpMenu,
   ForgeNotificationMenu,
   ForgeProductSwitcher,
+  ForgeSearchTrigger,
   ForgeTenantSwitcher,
   ForgeUserMenu,
 } from "./shell/ForgeChrome.js";
+export type { ForgeUserMenuItem } from "./shell/ForgeChrome.js";
+export { ForgeShellState } from "./shell/ForgeShellState.js";
+export type { ForgeShellAreaState } from "./shell/ForgeShellState.js";
 export type { ForgeBreadcrumbItem } from "./shell/ForgeBreadcrumbs.js";
-export type { ForgeLinkRender, ForgeShellTenant } from "./shell/types.js";
+export type { ForgeLinkRender, ForgeShellFacility, ForgeShellTenant } from "./shell/types.js";
 export { flattenNavItems, isNavActive } from "./shell/types.js";
 
 export {

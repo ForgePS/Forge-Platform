@@ -189,10 +189,10 @@ Description:
 Dual UI tracks: Industrial uses vendored Sneat Free; RMS uses `@forge/fx-*`; Creator/Tenant Admin use `@forge/ui` + design-system. SaaS shell sprint must not force a redesign of operational modules.
 
 Reason Deferred:
-Shell unification is MK-S8 with explicit preserve-existing guidance.
+Originally deferred to MK-S8. **MK-S8 acceptance:** multi-track preserved; shared *behaviors* (chrome affordances + shell states) via `@forge/ui` / docs; Industrial remains Sneat; RMS untouched. Full visual unification remains out of scope.
 
 Suggested Sprint:
-MK-S8
+MK-S8 (behaviors done); visual unification never required by Forge SaaS program
 
 Priority:
 MEDIUM
@@ -200,6 +200,8 @@ MEDIUM
 Blocking Current Sprint:
 NO
 
+Resolution Note (MK-S8):
+Documented in `SHELL.md`. Chrome parity landed without module redesign.
 ---
 
 ## BACKLOG-010

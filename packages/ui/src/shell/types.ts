@@ -15,6 +15,11 @@ export type ForgeShellTenant = {
   selectable?: boolean;
 };
 
+export type ForgeShellFacility = {
+  id: string;
+  name: string;
+};
+
 export type ForgeShellNavProps = {
   groups: ForgeNavigationGroup[];
   activePath: string;
