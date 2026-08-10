@@ -159,6 +159,9 @@ export class AuthorizationService {
       if (!before) {
         throw new ForgeError("NOT_FOUND", "Role not found");
       }
+      if (before.isSystemManaged) {
+        throw new ForgeError("FORBIDDEN", "System-managed roles cannot be modified");
+      }
       const version = before.recordVersion;
       if (expectedVersion !== "*" && version !== expectedVersion) {
         throw concurrencyConflict({
@@ -215,6 +218,12 @@ export class AuthorizationService {
       });
       if (!role) {
         throw new ForgeError("NOT_FOUND", "Role not found");
+      }
+      if (role.isSystemManaged) {
+        throw new ForgeError(
+          "FORBIDDEN",
+          "System-managed role permissions cannot be modified",
+        );
       }
       const version = role.recordVersion;
       if (expectedVersion !== "*" && version !== expectedVersion) {

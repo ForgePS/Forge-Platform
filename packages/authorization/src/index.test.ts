@@ -2,9 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   evaluateAuthorization,
   evaluateTenantOperationalState,
+  resolveEffectivePermissionCodes,
   resolveFeatureValue,
 } from "./index.js";
 import type { ForgePrincipal } from "@forge/tenant-context";
+import {
+  SAAS_ROLE_PERSONAS,
+  permissionsForSaasPersona,
+  saasPersonaHasPermission,
+} from "@forge/contracts";
 
 function principal(overrides: Partial<ForgePrincipal> = {}): ForgePrincipal {
   return {
@@ -24,6 +30,13 @@ function principal(overrides: Partial<ForgePrincipal> = {}): ForgePrincipal {
   };
 }
 
+function operationalActive() {
+  return evaluateTenantOperationalState({
+    tenantStatus: "ACTIVE",
+    subscriptionStatus: "ACTIVE",
+  });
+}
+
 describe("evaluateAuthorization", () => {
   it("denies cross-tenant access", () => {
     const decision = evaluateAuthorization({
@@ -31,10 +44,7 @@ describe("evaluateAuthorization", () => {
       permissionCode: "platform.person.read",
       resourceType: "person",
       resourceTenantId: "tenant-b",
-      tenantOperationalState: evaluateTenantOperationalState({
-        tenantStatus: "ACTIVE",
-        subscriptionStatus: "ACTIVE",
-      }),
+      tenantOperationalState: operationalActive(),
       roleEffects: [{ effect: "ALLOW", organizationId: null }],
     });
     expect(decision.allowed).toBe(false);
@@ -47,10 +57,7 @@ describe("evaluateAuthorization", () => {
       permissionCode: "platform.person.read",
       resourceType: "person",
       resourceTenantId: "tenant-a",
-      tenantOperationalState: evaluateTenantOperationalState({
-        tenantStatus: "ACTIVE",
-        subscriptionStatus: "ACTIVE",
-      }),
+      tenantOperationalState: operationalActive(),
       roleEffects: [
         { effect: "ALLOW", organizationId: null },
         { effect: "DENY", organizationId: null },
@@ -109,6 +116,62 @@ describe("evaluateAuthorization", () => {
       });
       expect(operational.canUseProducts).toBe(true);
     }
+  });
+});
+
+describe("resolveEffectivePermissionCodes", () => {
+  it("deny wins over allow for the same code", () => {
+    const effective = resolveEffectivePermissionCodes([
+      { code: "platform.person.create", effect: "ALLOW" },
+      { code: "platform.person.create", effect: "DENY" },
+      { code: "platform.person.read", effect: "ALLOW" },
+    ]);
+    expect(effective.has("platform.person.create")).toBe(false);
+    expect(effective.has("platform.person.read")).toBe(true);
+  });
+});
+
+describe("SaaS persona authorization matrix", () => {
+  const actions = [
+    "platform.organization.read",
+    "platform.person.read",
+    "platform.person.create",
+    "platform.membership.manage",
+    "platform.role.assign",
+    "platform.audit.read",
+  ] as const;
+
+  for (const persona of SAAS_ROLE_PERSONAS) {
+    for (const permissionCode of actions) {
+      it(`${persona} ${saasPersonaHasPermission(persona, permissionCode) ? "allows" : "denies"} ${permissionCode}`, () => {
+        const decision = evaluateAuthorization({
+          principal: principal({
+            permissions: new Set(permissionsForSaasPersona(persona)),
+          }),
+          permissionCode,
+          resourceType: "platform",
+          resourceTenantId: "tenant-a",
+          tenantOperationalState: operationalActive(),
+          roleEffects: [{ effect: "ALLOW", organizationId: null }],
+        });
+        expect(decision.allowed).toBe(saasPersonaHasPermission(persona, permissionCode));
+      });
+    }
+  }
+
+  it("other tenant is denied for owner with matching permission", () => {
+    const decision = evaluateAuthorization({
+      principal: principal({
+        permissions: new Set(permissionsForSaasPersona("owner")),
+      }),
+      permissionCode: "platform.membership.manage",
+      resourceType: "platform",
+      resourceTenantId: "tenant-other",
+      tenantOperationalState: operationalActive(),
+      roleEffects: [{ effect: "ALLOW", organizationId: null }],
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.reasonCode).toBe("TENANT_MISMATCH");
   });
 });
 

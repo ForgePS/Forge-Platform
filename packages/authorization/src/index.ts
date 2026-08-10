@@ -23,6 +23,33 @@ export interface AuthorizationDecision {
   reasonCode: string;
 }
 
+export interface PermissionEffectRow {
+  code: string;
+  effect: PermissionEffect;
+}
+
+/**
+ * Union of role permission rows with deny-wins (ADR-015).
+ * DENY removes a code even if another role granted ALLOW.
+ */
+export function resolveEffectivePermissionCodes(
+  rows: ReadonlyArray<PermissionEffectRow>,
+): Set<string> {
+  const allowed = new Set<string>();
+  const denied = new Set<string>();
+  for (const row of rows) {
+    if (row.effect === "DENY") {
+      denied.add(row.code);
+    } else {
+      allowed.add(row.code);
+    }
+  }
+  for (const code of denied) {
+    allowed.delete(code);
+  }
+  return allowed;
+}
+
 /** Read permissions stay available in READ_ONLY subscription mode (ADR-019). */
 export function isReadPermission(permissionCode: string): boolean {
   return permissionCode.endsWith(".read");

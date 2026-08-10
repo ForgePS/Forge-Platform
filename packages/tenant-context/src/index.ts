@@ -35,6 +35,10 @@ export function hasAnyPermission(principal: ForgePrincipal, codes: string[]): bo
   return codes.some((code) => principal.permissions.has(code));
 }
 
+export function hasAllPermissions(principal: ForgePrincipal, codes: string[]): boolean {
+  return codes.every((code) => principal.permissions.has(code));
+}
+
 export function hasProduct(principal: ForgePrincipal, productCode: string): boolean {
   return principal.activeProducts.has(productCode);
 }

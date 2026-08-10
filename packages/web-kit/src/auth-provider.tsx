@@ -32,6 +32,8 @@ export type AuthContextValue = {
   chooseTenant: (tenantId: string) => Promise<void>;
   signOutAll: () => Promise<void>;
   hasPermission: (code: string) => boolean;
+  hasAnyPermission: (codes: string[]) => boolean;
+  hasAllPermissions: (codes: string[]) => boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -195,6 +197,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [me],
   );
 
+  const hasAnyPermission = useCallback(
+    (codes: string[]) => codes.some((code) => hasPermission(code)),
+    [hasPermission],
+  );
+
+  const hasAllPermissions = useCallback(
+    (codes: string[]) => codes.length > 0 && codes.every((code) => hasPermission(code)),
+    [hasPermission],
+  );
+
   const value = useMemo(
     () => ({
       me,
@@ -206,8 +218,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       chooseTenant,
       signOutAll,
       hasPermission,
+      hasAnyPermission,
+      hasAllPermissions,
     }),
-    [me, loading, error, refresh, loginWithCognito, logout, chooseTenant, signOutAll, hasPermission],
+    [
+      me,
+      loading,
+      error,
+      refresh,
+      loginWithCognito,
+      logout,
+      chooseTenant,
+      signOutAll,
+      hasPermission,
+      hasAnyPermission,
+      hasAllPermissions,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -224,4 +250,16 @@ export function useAuth(): AuthContextValue {
 export function usePermission(code: string): boolean {
   const { hasPermission } = useAuth();
   return hasPermission(code);
+}
+
+/** True when the session has at least one of the listed permission codes. */
+export function useAnyPermission(codes: string[]): boolean {
+  const { hasAnyPermission } = useAuth();
+  return hasAnyPermission(codes);
+}
+
+/** True when the session has every listed permission code. Empty list is false. */
+export function useAllPermissions(codes: string[]): boolean {
+  const { hasAllPermissions } = useAuth();
+  return hasAllPermissions(codes);
 }

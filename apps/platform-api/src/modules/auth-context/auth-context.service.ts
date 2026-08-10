@@ -1,6 +1,9 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { verifyCognitoAccessToken } from "@forge/auth";
-import { evaluateTenantOperationalState } from "@forge/authorization";
+import {
+  evaluateTenantOperationalState,
+  resolveEffectivePermissionCodes,
+} from "@forge/authorization";
 import { isMembershipStatusActive, SUBSCRIPTION_STATUSES } from "@forge/contracts";
 import {
   lookupIdentity,
@@ -413,7 +416,7 @@ export class AuthContextService {
 
       const roleCodes = new Set(roleRows.map((a) => a.roleCode));
       const roleIds = roleRows.map((a) => a.roleId);
-      const permissionCodes = new Set<string>();
+      let permissionCodes = new Set<string>();
 
       if (roleIds.length > 0) {
         const perms = await tx
@@ -425,11 +428,12 @@ export class AuthContextService {
           .innerJoin(permissions, eq(permissions.id, rolePermissions.permissionId))
           .where(inArray(rolePermissions.roleId, roleIds));
 
-        for (const p of perms) {
-          if (p.effect !== "DENY") {
-            permissionCodes.add(p.code);
-          }
-        }
+        permissionCodes = resolveEffectivePermissionCodes(
+          perms.map((p) => ({
+            code: p.code,
+            effect: p.effect === "DENY" ? "DENY" : "ALLOW",
+          })),
+        );
       }
 
       return { roleCodes, permissionCodes };

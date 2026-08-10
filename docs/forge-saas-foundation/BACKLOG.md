@@ -224,3 +224,47 @@ NO
 
 Resolution Note (MK-S1):
 Canonical `facilities` table + `FacilitiesService` ownership checks landed. Adapter cutover not done.
+
+---
+
+## BACKLOG-011
+
+Discovered During:
+MK-S4
+
+Description:
+Migrate remaining product-surface authorization checks (RMS, Industrial, Import specialty paths, role-name conditionals if any) onto permission codes + `@RequirePermission` / central evaluation. MK-S4 only covered core SaaS controllers and evaluation hardening.
+
+Reason Deferred:
+Directive forbids uncontrolled all-product rewrite in MK-S4.
+
+Suggested Sprint:
+Product tracks + incremental SaaS follow-ups
+
+Priority:
+MEDIUM
+
+Blocking Current Sprint:
+NO
+
+---
+
+## BACKLOG-012
+
+Discovered During:
+MK-S4
+
+Description:
+Tenant custom-role management UI (list/create/edit permissions, assign to memberships). API + schema support already exist (`AuthorizationService`, `isSystemManaged=false` roles).
+
+Reason Deferred:
+MK-S4 required architecture only; full UI not required unless trivial.
+
+Suggested Sprint:
+MK-S7 / admin UX track
+
+Priority:
+LOW
+
+Blocking Current Sprint:
+NO

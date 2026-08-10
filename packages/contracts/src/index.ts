@@ -246,6 +246,32 @@ export type {
   SaasMembershipStatusAlias,
 } from "./membership-domain.js";
 
+// ---------------------------------------------------------------------------
+// RBAC (FORGE-SAAS MK-S4)
+// ---------------------------------------------------------------------------
+
+export {
+  CORE_SAAS_PERMISSIONS,
+  TENANT_OWNER_PERMISSIONS,
+  TENANT_ADMIN_PERMISSIONS,
+  STANDARD_USER_PERMISSIONS,
+  READ_ONLY_USER_PERMISSIONS,
+  SAAS_ROLE_PERSONAS,
+  SAAS_PERSONA_TO_ROLE_TEMPLATE,
+  SAAS_PERSONA_PERMISSIONS,
+  isSaasRolePersona,
+  resolveSaasRolePersona,
+  roleTemplateCodeForSaasPersona,
+  permissionsForSaasPersona,
+  saasPersonaHasPermission,
+  isSaasMutationPermission,
+} from "./rbac-domain.js";
+export type {
+  CoreSaasPermission,
+  SaasRolePersona,
+  SaasPersonaRoleTemplateCode,
+} from "./rbac-domain.js";
+
 export const createMembershipInputSchema = z.object({
   userId: z.string().uuid(),
   status: z.enum(["PENDING", "ACTIVE"]).default("PENDING"),

@@ -1,4 +1,12 @@
-import { ALL_PERMISSIONS, STARTER_TEMPLATES, isCreatorOnlyPermission } from "@forge/contracts";
+import {
+  ALL_PERMISSIONS,
+  READ_ONLY_USER_PERMISSIONS,
+  STANDARD_USER_PERMISSIONS,
+  STARTER_TEMPLATES,
+  TENANT_ADMIN_PERMISSIONS,
+  TENANT_OWNER_PERMISSIONS,
+  isCreatorOnlyPermission,
+} from "@forge/contracts";
 import { and, eq } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -138,44 +146,16 @@ const ROLE_TEMPLATES = [
     ],
   },
   {
+    code: "TENANT_OWNER",
+    name: "Tenant Owner",
+    roleType: "TENANT",
+    permissions: [...TENANT_OWNER_PERMISSIONS],
+  },
+  {
     code: "TENANT_ADMIN",
     name: "Tenant Admin",
     roleType: "TENANT",
-    permissions: [
-      "platform.tenant.read",
-      "platform.tenant.update",
-      "platform.organization.read",
-      "platform.organization.create",
-      "platform.person.read",
-      "platform.person.create",
-      "platform.person.update",
-      "platform.person.merge",
-      "platform.user.invite",
-      "platform.role.assign",
-      "platform.permission.read",
-      "platform.audit.read",
-      "platform.feature.manage",
-      "platform.entitlement.manage",
-      "platform.configuration.update",
-      "platform.configuration.publish",
-      "tenant.configuration.update",
-      "tenant.configuration.publish",
-      "platform.sensitive_data.read",
-      "platform.invitation.read",
-      "platform.invitation.manage",
-      "platform.membership.read",
-      "platform.membership.manage",
-      "import.view",
-      "import.upload",
-      "import.map",
-      "import.validate",
-      "import.preview",
-      "import.approve",
-      "import.execute",
-      "import.rollback",
-      "import.profile.manage",
-      "import.error.reprocess",
-    ],
+    permissions: [...TENANT_ADMIN_PERMISSIONS],
   },
   {
     code: "CONFIGURATION_MANAGER",
@@ -233,22 +213,13 @@ const ROLE_TEMPLATES = [
     code: "STANDARD_USER",
     name: "Standard User",
     roleType: "TENANT",
-    permissions: [
-      "platform.organization.read",
-      "platform.person.read",
-      "platform.permission.read",
-    ],
+    permissions: [...STANDARD_USER_PERMISSIONS],
   },
   {
     code: "READ_ONLY_USER",
     name: "Read Only User",
     roleType: "TENANT",
-    permissions: [
-      "platform.organization.read",
-      "platform.person.read",
-      "platform.permission.read",
-      "platform.audit.read",
-    ],
+    permissions: [...READ_ONLY_USER_PERMISSIONS],
   },
 ] as const;
 
