@@ -39,6 +39,10 @@ export interface StarterTemplate {
   organizationTypeCode: string;
   modules: readonly StarterTemplateModule[];
   roles: readonly StarterTemplateRole[];
+  /** Optional onboarding step overrides (MK-S7). */
+  onboarding?: {
+    skipStepKeys?: readonly string[];
+  };
 }
 
 const ADMIN_PERMISSIONS = [

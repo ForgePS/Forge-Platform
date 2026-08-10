@@ -25,7 +25,10 @@ function principal(): ForgePrincipal {
   };
 }
 
-function createMocks(initialStatus = "PROVISIONING") {
+function createMocks(
+  initialStatus = "PROVISIONING",
+  options?: { openOnboardingSession?: boolean },
+) {
   const outboxTypes: string[] = [];
   const auditActions: string[] = [];
   let inserted: Record<string, unknown> | null = null;
@@ -61,6 +64,13 @@ function createMocks(initialStatus = "PROVISIONING") {
     query: {
       tenants: {
         findFirst: vi.fn(async () => ({ ...current })),
+      },
+      customerOnboardingSessions: {
+        findFirst: vi.fn(async () =>
+          options?.openOnboardingSession
+            ? { id: "sess-1", status: "IN_PROGRESS", tenantId: current.id }
+            : null,
+        ),
       },
     },
   };
@@ -147,6 +157,24 @@ describe("TenantsService lifecycle", () => {
     expect(row.status).toBe("ACTIVE");
     expect(mocks.outboxTypes).toContain(DOMAIN_EVENT_TYPES.TENANT_ACTIVATED);
     expect(mocks.auditActions).toContain("tenant.activate");
+  });
+
+  it("blocks direct activate while onboarding session is IN_PROGRESS", async () => {
+    mocks = createMocks("PROVISIONING", { openOnboardingSession: true });
+    await expect(
+      mocks.service.activate("33333333-3333-4333-8333-333333333333", principal(), "*"),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+  });
+
+  it("allows activate from onboarding even with IN_PROGRESS session", async () => {
+    mocks = createMocks("PROVISIONING", { openOnboardingSession: true });
+    const row = await mocks.service.activate(
+      "33333333-3333-4333-8333-333333333333",
+      principal(),
+      "*",
+      { fromOnboarding: true },
+    );
+    expect(row.status).toBe("ACTIVE");
   });
 
   it("starts trial from PROVISIONING", async () => {

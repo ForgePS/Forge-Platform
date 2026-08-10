@@ -246,7 +246,7 @@ Paginated list (`page`, `pageSize`), get by id, and `POST /export`.
 
 ## Customer onboarding (planned contract)
 
-Schema and ADR are in place ([ADR-027](../decisions/ADR-027-customer-onboarding-sessions.md)); HTTP handlers ship in Sprint 1E Wave 5. The v1 contract targets:
+Schema and ADR are in place ([ADR-027](../decisions/ADR-027-customer-onboarding-sessions.md)). HTTP handlers and MK-S7 hardening (templates GET, default facility on activate, open-session activate bypass block) are live. The v1 contract targets:
 
 | Method | Path | Permission |
 | --- | --- | --- |

@@ -1,17 +1,9 @@
 import { Inject, Injectable } from "@nestjs/common";
 import {
-  ONBOARDING_STEPS,
-  completeOnboardingStepInputSchema,
-  findStarterTemplate,
-  findStarterTemplateForCustomerType,
-  startOnboardingInputSchema,
-  type OnboardingStepKey,
-  type StarterTemplate,
-} from "@forge/contracts";
-import {
   createId,
   customerOnboardingSessions,
   customerOnboardingSteps,
+  facilities,
   organizations,
   permissions,
   rolePermissions,
@@ -43,6 +35,18 @@ import { OrganizationsService } from "../organizations/organizations.service.js"
 import { OutboxService } from "../outbox/outbox.service.js";
 import { SubscriptionsService } from "../subscriptions/subscriptions.service.js";
 import { TenantsService, type ExpectedVersion } from "../tenants/tenants.service.js";
+import {
+  DEFAULT_ONBOARDING_FACILITY,
+  ONBOARDING_STEPS,
+  STARTER_TEMPLATES,
+  completeOnboardingStepInputSchema,
+  findStarterTemplate,
+  findStarterTemplateForCustomerType,
+  resolveOnboardingSteps,
+  startOnboardingInputSchema,
+  type OnboardingStepKey,
+  type StarterTemplate,
+} from "@forge/contracts";
 
 type StepStatus = "PENDING" | "COMPLETED" | "SKIPPED" | "FAILED";
 
@@ -185,6 +189,13 @@ export class OnboardingService {
       productCodes: template ? [template.productCode] : [],
       moduleCodes: template?.modules.map((mod) => mod.code) ?? [],
     };
+    const resolvedSteps = resolveOnboardingSteps(template?.onboarding ?? null, [
+      ...ONBOARDING_STEPS,
+    ]);
+    const firstOpenStep =
+      resolvedSteps.find(
+        (step) => step.key !== "CREATE_TENANT" && step.key !== "SELECT_CUSTOMER_TYPE",
+      )?.number ?? resolvedSteps.length;
 
     await withTenantTransaction(
       this.db,
@@ -203,7 +214,7 @@ export class OnboardingService {
           customerType: data.customerType,
           templateCode: template?.code ?? data.templateCode ?? null,
           status: "IN_PROGRESS",
-          currentStep: 3,
+          currentStep: firstOpenStep,
           sessionDataJson: sessionData,
           activationErrorsJson: [],
           startedByUserId: principal.userId,
@@ -211,11 +222,10 @@ export class OnboardingService {
           updatedAt: now,
         });
 
-        for (const step of ONBOARDING_STEPS) {
-          const status: StepStatus =
-            step.key === "CREATE_TENANT" || step.key === "SELECT_CUSTOMER_TYPE"
-              ? "COMPLETED"
-              : "PENDING";
+        for (const step of resolvedSteps) {
+          const autoComplete =
+            step.key === "CREATE_TENANT" || step.key === "SELECT_CUSTOMER_TYPE";
+          const status: StepStatus = autoComplete ? "COMPLETED" : "PENDING";
           await tx.insert(customerOnboardingSteps).values({
             id: createId(),
             tenantId: tenant.id,
@@ -230,8 +240,7 @@ export class OnboardingService {
                   ? { customerType: data.customerType, templateCode: template?.code ?? null }
                   : {},
             validationErrorsJson: [],
-            completedByUserId:
-              status === "COMPLETED" ? principal.userId : null,
+            completedByUserId: status === "COMPLETED" ? principal.userId : null,
             completedAt: status === "COMPLETED" ? now : null,
             createdAt: now,
             updatedAt: now,
@@ -556,8 +565,12 @@ export class OnboardingService {
         }
         const version = this.assertSessionVersion(current.recordVersion, expectedVersion, tenantId, sessionId);
 
-        const stepDef = ONBOARDING_STEPS.find((step) => step.key === parsed.stepKey);
-        const nextStepNumber = stepDef ? Math.min(stepDef.number + 1, ONBOARDING_STEPS.length) : current.currentStep;
+        const stepRow = steps.find((step) => step.stepKey === parsed.stepKey);
+        if (!stepRow) {
+          throw new ForgeError("NOT_FOUND", "Onboarding step not found");
+        }
+        const maxStep = Math.max(...steps.map((step) => step.stepNumber), 1);
+        const nextStepNumber = Math.min(stepRow.stepNumber + 1, maxStep);
 
         const [updatedSession] = await tx
           .update(customerOnboardingSessions)
@@ -585,10 +598,6 @@ export class OnboardingService {
           });
         }
 
-        const stepRow = steps.find((step) => step.stepKey === parsed.stepKey);
-        if (!stepRow) {
-          throw new ForgeError("NOT_FOUND", "Onboarding step not found");
-        }
         await tx
           .update(customerOnboardingSteps)
           .set({
@@ -686,11 +695,14 @@ export class OnboardingService {
       });
     }
 
+    await this.ensureDefaultFacility(tenantId, principal, sessionData);
+
     const tenantBefore = await this.tenants.getById(tenantId);
     const activatedTenant = await this.tenants.activate(
       tenantId,
       principal,
       tenantBefore.recordVersion,
+      { fromOnboarding: true },
     );
 
     const now = new Date();
@@ -710,7 +722,7 @@ export class OnboardingService {
           .update(customerOnboardingSessions)
           .set({
             status: "COMPLETED",
-            currentStep: ONBOARDING_STEPS.length,
+            currentStep: steps.length,
             activationErrorsJson: [],
             completedAt: now,
             recordVersion: version + 1,
@@ -886,9 +898,86 @@ export class OnboardingService {
           message: "Branding defaults must be configured",
         });
       }
+
+      // Facility may be auto-created at activate; absence alone is not a hard
+      // fail here — ensureDefaultFacility runs after checks pass.
     });
 
     return errors;
+  }
+
+  /**
+   * Ensures at least one facility exists for the tenant (MK-S7).
+   * Creates `default` / Primary Facility when the catalog is empty.
+   */
+  async ensureDefaultFacility(
+    tenantId: string,
+    principal: ForgePrincipal,
+    sessionData: OnboardingSessionData,
+  ): Promise<{ id: string; created: boolean }> {
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const existing = await tx.query.facilities.findFirst({
+        where: eq(facilities.tenantId, tenantId),
+      });
+      if (existing) {
+        return { id: existing.id, created: false };
+      }
+      const byKey = await tx.query.facilities.findFirst({
+        where: and(
+          eq(facilities.tenantId, tenantId),
+          eq(facilities.facilityKey, DEFAULT_ONBOARDING_FACILITY.facilityKey),
+        ),
+      });
+      if (byKey) {
+        return { id: byKey.id, created: false };
+      }
+      const now = new Date();
+      const id = createId();
+      await tx.insert(facilities).values({
+        id,
+        tenantId,
+        organizationId: sessionData.primaryOrganizationId ?? null,
+        facilityKey: DEFAULT_ONBOARDING_FACILITY.facilityKey,
+        name: DEFAULT_ONBOARDING_FACILITY.name,
+        facilityType: DEFAULT_ONBOARDING_FACILITY.facilityType,
+        status: "ACTIVE",
+        createdAt: now,
+        updatedAt: now,
+        createdByUserId: principal.userId,
+        updatedByUserId: principal.userId,
+      });
+      await this.audit.writeInTransaction(tx, {
+        tenantId,
+        actorUserId: principal.userId,
+        actorPersonId: principal.personId,
+        actorType: "USER",
+        action: "facility.create",
+        resourceType: "facility",
+        resourceId: id,
+        result: "SUCCESS",
+        riskLevel: "LOW",
+        correlationId: principal.correlationId,
+        requestId: principal.requestId,
+        after: { facilityKey: DEFAULT_ONBOARDING_FACILITY.facilityKey, source: "onboarding" },
+      });
+      return { id, created: true };
+    }, principal.userId);
+  }
+
+  listTemplates() {
+    return STARTER_TEMPLATES.map((template) => ({
+      code: template.code,
+      name: template.name,
+      customerType: template.customerType,
+      productCode: template.productCode,
+      organizationTypeCode: template.organizationTypeCode,
+      modules: template.modules,
+      roles: template.roles.map((role) => ({ code: role.code, name: role.name })),
+      onboarding: {
+        steps: resolveOnboardingSteps(template.onboarding ?? null, [...ONBOARDING_STEPS]),
+        skipStepKeys: template.onboarding?.skipStepKeys ?? [],
+      },
+    }));
   }
 
   private async ensureStarterRoles(
@@ -1126,13 +1215,13 @@ export class OnboardingService {
     steps: (typeof customerOnboardingSteps.$inferSelect)[],
     stepKey: OnboardingStepKey,
   ): void {
-    const target = ONBOARDING_STEPS.find((step) => step.key === stepKey);
+    const target = steps.find((step) => step.stepKey === stepKey);
     if (!target) {
       throw new ForgeError("BAD_REQUEST", `Unknown onboarding step ${stepKey}`);
     }
     const incompletePrior = steps.some(
       (step) =>
-        step.stepNumber < target.number &&
+        step.stepNumber < target.stepNumber &&
         step.status !== "COMPLETED" &&
         step.status !== "SKIPPED",
     );

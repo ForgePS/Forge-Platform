@@ -9,11 +9,22 @@ import { Principal } from "../auth-context/principal.decorator.js";
 import { RequirePermission } from "../auth-context/require-permission.decorator.js";
 import { OnboardingService } from "./onboarding.service.js";
 
-@Controller("api/v1/platform/onboarding/sessions")
+@Controller("api/v1/platform/onboarding")
 export class OnboardingController {
   constructor(private readonly onboarding: OnboardingService) {}
 
-  @Post()
+  @Get("templates")
+  @RequirePermission("platform.onboarding.manage", { allowWhenSuspended: true })
+  async templates(@Req() req: RequestWithIds) {
+    const data = this.onboarding.listTemplates();
+    return ok(data, getRequestIds(req), {
+      page: 1,
+      pageSize: data.length,
+      total: data.length,
+    });
+  }
+
+  @Post("sessions")
   @RequirePermission("platform.onboarding.manage", { allowWhenSuspended: true })
   @Idempotent({ resourceType: "onboarding_session" })
   async start(
@@ -27,7 +38,7 @@ export class OnboardingController {
     return ok(data, getRequestIds(req));
   }
 
-  @Get()
+  @Get("sessions")
   @RequirePermission("platform.onboarding.manage", { allowWhenSuspended: true })
   async list(@Req() req: RequestWithIds) {
     const data = await this.onboarding.listSessions();
@@ -38,7 +49,7 @@ export class OnboardingController {
     });
   }
 
-  @Get(":sessionId")
+  @Get("sessions/:sessionId")
   @RequirePermission("platform.onboarding.manage", { allowWhenSuspended: true })
   async get(
     @Param("sessionId") sessionId: string,
@@ -51,7 +62,7 @@ export class OnboardingController {
     return ok(data, getRequestIds(req));
   }
 
-  @Post(":sessionId/steps/:stepKey/complete")
+  @Post("sessions/:sessionId/steps/:stepKey/complete")
   @RequirePermission("platform.onboarding.manage", { allowWhenSuspended: true })
   async completeStep(
     @Param("sessionId") sessionId: string,
@@ -75,7 +86,7 @@ export class OnboardingController {
     return ok(data, getRequestIds(req));
   }
 
-  @Post(":sessionId/activate")
+  @Post("sessions/:sessionId/activate")
   @RequirePermission("platform.onboarding.manage", { allowWhenSuspended: true })
   async activate(
     @Param("sessionId") sessionId: string,

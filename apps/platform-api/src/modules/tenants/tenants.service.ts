@@ -7,6 +7,7 @@ import {
 } from "@forge/contracts";
 import {
   createId,
+  customerOnboardingSessions,
   tenants,
   type Database,
   withTenantTransaction,
@@ -277,7 +278,28 @@ export class TenantsService {
     }, principal.userId);
   }
 
-  async activate(tenantId: string, principal: ForgePrincipal, expectedVersion: ExpectedVersion) {
+  async activate(
+    tenantId: string,
+    principal: ForgePrincipal,
+    expectedVersion: ExpectedVersion,
+    options?: { fromOnboarding?: boolean },
+  ) {
+    if (!options?.fromOnboarding) {
+      await withTenantTransaction(this.db, tenantId, async (tx) => {
+        const open = await tx.query.customerOnboardingSessions.findFirst({
+          where: and(
+            eq(customerOnboardingSessions.tenantId, tenantId),
+            eq(customerOnboardingSessions.status, "IN_PROGRESS"),
+          ),
+        });
+        if (open) {
+          throw new ForgeError(
+            "CONFLICT",
+            "Tenant has an in-progress onboarding session; complete onboarding activation instead",
+          );
+        }
+      });
+    }
     return this.transition(tenantId, "ACTIVE", principal, expectedVersion, {
       auditAction: "tenant.activate",
       eventType: DOMAIN_EVENT_TYPES.TENANT_ACTIVATED,

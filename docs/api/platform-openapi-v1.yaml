@@ -1377,8 +1377,8 @@ paths:
   /api/v1/platform/onboarding/templates:
     get:
       tags: [Onboarding]
-      summary: List starter templates (planned Wave 5)
-      description: Contract target per ADR-027; HTTP handler not yet deployed.
+      summary: List starter templates
+      description: Starter templates with resolved onboarding steps (MK-S7).
       security:
         - bearerAuth: []
         - devPrincipal: []

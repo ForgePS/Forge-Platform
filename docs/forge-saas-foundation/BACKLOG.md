@@ -356,3 +356,47 @@ LOW
 
 Blocking Current Sprint:
 NO
+
+---
+
+## BACKLOG-017
+
+Discovered During:
+MK-S7
+
+Description:
+Full dynamic onboarding step engine (persist product-defined step graphs, Creator Console path sync, reorder/insert custom steps beyond skip overrides).
+
+Reason Deferred:
+MK-S7 ships resolveOnboardingSteps + template skip keys on the fixed ADR-027 checklist; deeper engine is larger than one sprint.
+
+Suggested Sprint:
+MK-S11 / Creator Console track
+
+Priority:
+MEDIUM
+
+Blocking Current Sprint:
+NO
+
+---
+
+## BACKLOG-018
+
+Discovered During:
+MK-S7
+
+Description:
+Seed tenant notification defaults and feature-flag defaults during onboarding activate (SES/template wiring still out of band per BACKLOG-004).
+
+Reason Deferred:
+No notification delivery engine yet; facility/settings/product gates closed for MK-S7.
+
+Suggested Sprint:
+MK-S8 / notifications track after SES adapter
+
+Priority:
+MEDIUM
+
+Blocking Current Sprint:
+NO

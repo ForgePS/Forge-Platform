@@ -395,6 +395,21 @@ export const ONBOARDING_STEPS = [
 
 export type OnboardingStepKey = (typeof ONBOARDING_STEPS)[number]["key"];
 
+export {
+  DEFAULT_ONBOARDING_STEPS,
+  REQUIRED_ONBOARDING_STEP_KEYS,
+  ONBOARDING_ACTIVATION_ERROR_CODES,
+  DEFAULT_ONBOARDING_FACILITY,
+  resolveOnboardingSteps,
+  isRequiredOnboardingStepKey,
+} from "./onboarding-domain.js";
+export type {
+  DefaultOnboardingStepKey,
+  OnboardingStepDefinition,
+  OnboardingStepOverrides,
+  OnboardingActivationErrorCode,
+} from "./onboarding-domain.js";
+
 export const startOnboardingInputSchema = z.object({
   customerType: z.enum(CUSTOMER_TYPES),
   templateCode: z.string().min(1).max(64).optional(),
