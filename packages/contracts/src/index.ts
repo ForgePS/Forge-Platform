@@ -438,34 +438,6 @@ export {
   type IndustrialModuleRegistryEntry,
 } from "./industrial.js";
 
-export {
-  INDUSTRIAL_ANALYTICS_DOMAINS,
-  ANALYTICS_SEVERITY_OPTIONS,
-  ANALYTICS_STATUS_OPTIONS,
-  type IndustrialAnalyticsDomain,
-  type AnalyticsFilterContext,
-  type AnalyticsFilterOption,
-  type AnalyticsFilterOptions,
-  type AnalyticsCompareMode,
-  type AnalyticsQuery,
-  type AnalyticsKpi,
-  type AnalyticsSeriesPoint,
-  type AnalyticsNamedCount,
-  type AnalyticsLink,
-  type AnalyticsModuleActivity,
-  type AnalyticsOverview,
-  type AnalyticsBodyPartCount,
-  type AnalyticsIncidents,
-  type AnalyticsInspections,
-  type AnalyticsPersonnel,
-  type AnalyticsLoto,
-  type AnalyticsDot,
-  type AnalyticsWorkersComp,
-  type AnalyticsEvidenceRef,
-  type AnalyticsFinding,
-  type AnalyticsIntelligence,
-  type AnalyticsDomainStub,
-} from "./industrial-analytics.js";
 
 /** All seeded permission codes (platform + RMS + industrial + product AI + import). */
 export const ALL_PERMISSIONS = [
