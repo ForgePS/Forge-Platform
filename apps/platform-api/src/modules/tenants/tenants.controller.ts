@@ -79,6 +79,20 @@ export class TenantsController {
     return ok(data, getRequestIds(req));
   }
 
+  @Post(":tenantId/start-trial")
+  @RequirePermission("platform.tenant.update", { allowWhenSuspended: true })
+  async startTrial(
+    @Param("tenantId") tenantId: string,
+    @Principal() principal: ForgePrincipal,
+    @Req() req: RequestWithIds,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const expected = requireIfMatch(req, "tenant");
+    const data = await this.tenants.startTrial(tenantId, principal, expected);
+    setETag(res, data.recordVersion);
+    return ok(data, getRequestIds(req));
+  }
+
   @Post(":tenantId/suspend")
   @RequirePermission("platform.tenant.suspend", { allowWhenSuspended: true })
   async suspend(
@@ -104,6 +118,20 @@ export class TenantsController {
   ) {
     const expected = requireIfMatch(req, "tenant");
     const data = await this.tenants.archive(tenantId, principal, expected);
+    setETag(res, data.recordVersion);
+    return ok(data, getRequestIds(req));
+  }
+
+  @Post(":tenantId/cancel")
+  @RequirePermission("platform.tenant.suspend", { allowWhenSuspended: true })
+  async cancel(
+    @Param("tenantId") tenantId: string,
+    @Principal() principal: ForgePrincipal,
+    @Req() req: RequestWithIds,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const expected = requireIfMatch(req, "tenant");
+    const data = await this.tenants.cancel(tenantId, principal, expected);
     setETag(res, data.recordVersion);
     return ok(data, getRequestIds(req));
   }

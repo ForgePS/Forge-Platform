@@ -146,7 +146,8 @@ export function evaluateTenantOperationalState(input: {
   tenantStatus: string;
   subscriptionStatus: string | null;
 }): TenantOperationalState {
-  const tenantActive = input.tenantStatus === "ACTIVE";
+  const tenantProductEligible =
+    input.tenantStatus === "ACTIVE" || input.tenantStatus === "TRIAL";
   const subscriptionWritable = isWritableSubscription(input.subscriptionStatus);
 
   if (input.tenantStatus === "SUSPENDED") {
@@ -160,7 +161,11 @@ export function evaluateTenantOperationalState(input: {
     };
   }
 
-  if (input.tenantStatus === "ARCHIVED" || input.tenantStatus === "DECOMMISSIONED") {
+  if (
+    input.tenantStatus === "ARCHIVED" ||
+    input.tenantStatus === "CANCELED" ||
+    input.tenantStatus === "DECOMMISSIONED"
+  ) {
     return {
       tenantStatus: input.tenantStatus,
       subscriptionStatus: input.subscriptionStatus,
@@ -185,8 +190,9 @@ export function evaluateTenantOperationalState(input: {
   return {
     tenantStatus: input.tenantStatus,
     subscriptionStatus: input.subscriptionStatus,
-    canAuthenticate: tenantActive || input.tenantStatus === "PROVISIONING",
-    canUseProducts: tenantActive && subscriptionWritable,
+    canAuthenticate:
+      tenantProductEligible || input.tenantStatus === "PROVISIONING",
+    canUseProducts: tenantProductEligible && subscriptionWritable,
     canManageBilling: true,
     reasonCode: null,
   };

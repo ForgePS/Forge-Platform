@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DOMAIN_EVENT_TYPES } from "@forge/events";
+import { ForgeError } from "@forge/errors";
 import type { ForgePrincipal } from "@forge/tenant-context";
 import { TenantsService } from "./tenants.service.js";
 
@@ -120,6 +121,23 @@ describe("TenantsService lifecycle", () => {
     expect(row.status).toBe("PROVISIONING");
   });
 
+  it("reads tenant by id", async () => {
+    const row = await mocks.service.getById("33333333-3333-4333-8333-333333333333");
+    expect(row.tenantKey).toBe("acme-fire");
+  });
+
+  it("updates tenant display fields", async () => {
+    mocks = createMocks("ACTIVE");
+    const row = await mocks.service.patch(
+      "33333333-3333-4333-8333-333333333333",
+      { displayName: "Acme Fire Updated" },
+      principal(),
+      "*",
+    );
+    expect(row.displayName).toBe("Acme Fire Updated");
+    expect(mocks.auditActions).toContain("tenant.update");
+  });
+
   it("activates from PROVISIONING to ACTIVE", async () => {
     const row = await mocks.service.activate(
       "33333333-3333-4333-8333-333333333333",
@@ -129,6 +147,26 @@ describe("TenantsService lifecycle", () => {
     expect(row.status).toBe("ACTIVE");
     expect(mocks.outboxTypes).toContain(DOMAIN_EVENT_TYPES.TENANT_ACTIVATED);
     expect(mocks.auditActions).toContain("tenant.activate");
+  });
+
+  it("starts trial from PROVISIONING", async () => {
+    const row = await mocks.service.startTrial(
+      "33333333-3333-4333-8333-333333333333",
+      principal(),
+      "*",
+    );
+    expect(row.status).toBe("TRIAL");
+    expect(mocks.outboxTypes).toContain(DOMAIN_EVENT_TYPES.TENANT_STATUS_CHANGED);
+  });
+
+  it("rejects invalid tenant status transitions", async () => {
+    mocks = createMocks("ARCHIVED");
+    await expect(
+      mocks.service.activate("33333333-3333-4333-8333-333333333333", principal(), "*"),
+    ).rejects.toBeInstanceOf(ForgeError);
+    await expect(
+      mocks.service.activate("33333333-3333-4333-8333-333333333333", principal(), "*"),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
   });
 
   it("suspend sets SUSPENDED with reason", async () => {
@@ -143,5 +181,16 @@ describe("TenantsService lifecycle", () => {
     expect(row.suspensionReason).toBe("Non-payment");
     expect(mocks.outboxTypes).toContain(DOMAIN_EVENT_TYPES.TENANT_SUSPENDED);
     expect(mocks.auditActions).toContain("tenant.suspend");
+  });
+
+  it("cancels an active tenant", async () => {
+    mocks = createMocks("ACTIVE");
+    const row = await mocks.service.cancel(
+      "33333333-3333-4333-8333-333333333333",
+      principal(),
+      "*",
+    );
+    expect(row.status).toBe("CANCELED");
+    expect(mocks.auditActions).toContain("tenant.cancel");
   });
 });

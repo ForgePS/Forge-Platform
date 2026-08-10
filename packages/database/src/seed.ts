@@ -57,6 +57,7 @@ for (const template of STARTER_TEMPLATES) {
 const ORG_TYPES = [
   { code: "FIRE_DEPARTMENT", name: "Fire Department" },
   { code: "FIRE_ACADEMY", name: "Fire Academy" },
+  { code: "DEPARTMENT", name: "Department" },
   { code: "MUNICIPALITY", name: "Municipality" },
   { code: "WATER_UTILITY", name: "Water Utility" },
   { code: "VENDOR", name: "Vendor" },
@@ -83,6 +84,8 @@ const ROLE_TEMPLATES = [
       "platform.tenant.suspend",
       "platform.organization.read",
       "platform.organization.create",
+      "tenant.facilities.read",
+      "tenant.facilities.manage",
       "platform.person.read",
       "platform.user.invite",
       "platform.role.assign",
@@ -118,6 +121,7 @@ const ROLE_TEMPLATES = [
     permissions: [
       "platform.tenant.read",
       "platform.organization.read",
+      "tenant.facilities.read",
       "platform.person.read",
       "platform.permission.read",
       "platform.audit.read",

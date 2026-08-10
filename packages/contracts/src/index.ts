@@ -32,6 +32,8 @@ export const PLATFORM_PERMISSIONS = [
   "platform.tenant.suspend",
   "platform.organization.read",
   "platform.organization.create",
+  "tenant.facilities.read",
+  "tenant.facilities.manage",
   "platform.person.read",
   "platform.person.create",
   "platform.person.update",
@@ -127,6 +129,23 @@ export const createTenantInputSchema = z.object({
 });
 
 export type CreateTenantInput = z.infer<typeof createTenantInputSchema>;
+
+export {
+  TENANT_STATUSES,
+  LEGACY_INACTIVE_TENANT_STATUSES,
+  isTenantStatus,
+  TENANT_STATUS_TRANSITIONS,
+  canTransitionTenantStatus,
+  assertTenantStatusTransition,
+  facilityBelongsToTenant,
+  createFacilityInputSchema,
+  patchFacilityInputSchema,
+} from "./tenant-domain.js";
+export type {
+  TenantStatus,
+  CreateFacilityInput,
+  PatchFacilityInput,
+} from "./tenant-domain.js";
 
 export const createOrganizationInputSchema = z.object({
   organizationTypeCode: z.string().min(1).max(64),
@@ -418,6 +437,35 @@ export {
   type IndustrialMigrationStatus,
   type IndustrialModuleRegistryEntry,
 } from "./industrial.js";
+
+export {
+  INDUSTRIAL_ANALYTICS_DOMAINS,
+  ANALYTICS_SEVERITY_OPTIONS,
+  ANALYTICS_STATUS_OPTIONS,
+  type IndustrialAnalyticsDomain,
+  type AnalyticsFilterContext,
+  type AnalyticsFilterOption,
+  type AnalyticsFilterOptions,
+  type AnalyticsCompareMode,
+  type AnalyticsQuery,
+  type AnalyticsKpi,
+  type AnalyticsSeriesPoint,
+  type AnalyticsNamedCount,
+  type AnalyticsLink,
+  type AnalyticsModuleActivity,
+  type AnalyticsOverview,
+  type AnalyticsBodyPartCount,
+  type AnalyticsIncidents,
+  type AnalyticsInspections,
+  type AnalyticsPersonnel,
+  type AnalyticsLoto,
+  type AnalyticsDot,
+  type AnalyticsWorkersComp,
+  type AnalyticsEvidenceRef,
+  type AnalyticsFinding,
+  type AnalyticsIntelligence,
+  type AnalyticsDomainStub,
+} from "./industrial-analytics.js";
 
 /** All seeded permission codes (platform + RMS + industrial + product AI + import). */
 export const ALL_PERMISSIONS = [

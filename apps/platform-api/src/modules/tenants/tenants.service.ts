@@ -1,5 +1,10 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { createTenantInputSchema, type CreateTenantInput } from "@forge/contracts";
+import {
+  assertTenantStatusTransition,
+  createTenantInputSchema,
+  type CreateTenantInput,
+  type TenantStatus,
+} from "@forge/contracts";
 import {
   createId,
   tenants,
@@ -57,6 +62,17 @@ export class TenantsService {
       });
     }
     return current;
+  }
+
+  private assertTransition(from: string, to: TenantStatus): void {
+    try {
+      assertTenantStatusTransition(from, to);
+    } catch (error) {
+      throw new ForgeError(
+        "CONFLICT",
+        error instanceof Error ? error.message : "Invalid tenant status transition",
+      );
+    }
   }
 
   async create(input: unknown, principal: ForgePrincipal) {
@@ -185,28 +201,35 @@ export class TenantsService {
     }, principal.userId);
   }
 
-  async activate(tenantId: string, principal: ForgePrincipal, expectedVersion: ExpectedVersion) {
+  private async transition(
+    tenantId: string,
+    nextStatus: TenantStatus,
+    principal: ForgePrincipal,
+    expectedVersion: ExpectedVersion,
+    options: {
+      auditAction: string;
+      eventType: string;
+      riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+      extras?: Record<string, unknown>;
+      metadata?: Record<string, unknown>;
+    },
+  ) {
     return withTenantTransaction(this.db, tenantId, async (tx) => {
       const before = await tx.query.tenants.findFirst({ where: eq(tenants.id, tenantId) });
       if (!before) {
         throw new ForgeError("NOT_FOUND", "Tenant not found");
       }
-      if (before.status !== "PROVISIONING" && before.status !== "SUSPENDED") {
-        throw new ForgeError(
-          "CONFLICT",
-          `Cannot activate tenant from status ${before.status}`,
-        );
-      }
+      this.assertTransition(before.status, nextStatus);
       const version = this.assertVersion(tenantId, before.recordVersion, expectedVersion);
+      const now = new Date();
       const [updated] = await tx
         .update(tenants)
         .set({
-          status: "ACTIVE",
-          suspensionReason: null,
-          suspendedAt: null,
+          status: nextStatus,
           recordVersion: version + 1,
-          updatedAt: new Date(),
+          updatedAt: now,
           updatedByUserId: principal.userId,
+          ...(options.extras ?? {}),
         })
         .where(and(eq(tenants.id, tenantId), eq(tenants.recordVersion, version)))
         .returning();
@@ -224,8 +247,13 @@ export class TenantsService {
         tenantId,
         aggregateType: "tenant",
         aggregateId: tenantId,
-        eventType: DOMAIN_EVENT_TYPES.TENANT_ACTIVATED,
-        payload: { tenantId, previousStatus: before.status, status: "ACTIVE" },
+        eventType: options.eventType,
+        payload: {
+          tenantId,
+          previousStatus: before.status,
+          status: nextStatus,
+          ...(options.metadata ?? {}),
+        },
         correlationId: principal.correlationId,
         actorUserId: principal.userId,
       });
@@ -234,18 +262,43 @@ export class TenantsService {
         actorUserId: principal.userId,
         actorPersonId: principal.personId,
         actorType: "USER",
-        action: "tenant.activate",
+        action: options.auditAction,
         resourceType: "tenant",
         resourceId: tenantId,
         result: "SUCCESS",
-        riskLevel: "HIGH",
+        riskLevel: options.riskLevel,
         correlationId: principal.correlationId,
         requestId: principal.requestId,
         before,
         after: updated,
+        ...(options.metadata ? { metadata: options.metadata } : {}),
       });
       return updated;
     }, principal.userId);
+  }
+
+  async activate(tenantId: string, principal: ForgePrincipal, expectedVersion: ExpectedVersion) {
+    return this.transition(tenantId, "ACTIVE", principal, expectedVersion, {
+      auditAction: "tenant.activate",
+      eventType: DOMAIN_EVENT_TYPES.TENANT_ACTIVATED,
+      riskLevel: "HIGH",
+      extras: {
+        suspensionReason: null,
+        suspendedAt: null,
+      },
+    });
+  }
+
+  async startTrial(tenantId: string, principal: ForgePrincipal, expectedVersion: ExpectedVersion) {
+    return this.transition(tenantId, "TRIAL", principal, expectedVersion, {
+      auditAction: "tenant.start_trial",
+      eventType: DOMAIN_EVENT_TYPES.TENANT_STATUS_CHANGED,
+      riskLevel: "MEDIUM",
+      extras: {
+        suspensionReason: null,
+        suspendedAt: null,
+      },
+    });
   }
 
   async suspend(
@@ -255,118 +308,36 @@ export class TenantsService {
     expectedVersion: ExpectedVersion,
   ) {
     const { reason } = suspendSchema.parse(input);
-    return withTenantTransaction(this.db, tenantId, async (tx) => {
-      const before = await tx.query.tenants.findFirst({ where: eq(tenants.id, tenantId) });
-      if (!before) {
-        throw new ForgeError("NOT_FOUND", "Tenant not found");
-      }
-      const version = this.assertVersion(tenantId, before.recordVersion, expectedVersion);
-      const now = new Date();
-      const [updated] = await tx
-        .update(tenants)
-        .set({
-          status: "SUSPENDED",
-          suspensionReason: reason,
-          suspendedAt: now,
-          recordVersion: version + 1,
-          updatedAt: now,
-          updatedByUserId: principal.userId,
-        })
-        .where(and(eq(tenants.id, tenantId), eq(tenants.recordVersion, version)))
-        .returning();
-      if (!updated) {
-        throw concurrencyConflict({
-          tenantId,
-          resourceType: "tenant",
-          resourceId: tenantId,
-          expectedVersion,
-          actualVersion: null,
-        });
-      }
-
-      await this.outbox.write(tx, {
-        tenantId,
-        aggregateType: "tenant",
-        aggregateId: tenantId,
-        eventType: DOMAIN_EVENT_TYPES.TENANT_SUSPENDED,
-        payload: { tenantId, reason, status: "SUSPENDED" },
-        correlationId: principal.correlationId,
-        actorUserId: principal.userId,
-      });
-      await this.audit.writeInTransaction(tx, {
-        tenantId,
-        actorUserId: principal.userId,
-        actorPersonId: principal.personId,
-        actorType: "USER",
-        action: "tenant.suspend",
-        resourceType: "tenant",
-        resourceId: tenantId,
-        result: "SUCCESS",
-        riskLevel: "CRITICAL",
-        correlationId: principal.correlationId,
-        requestId: principal.requestId,
-        before,
-        after: updated,
-        metadata: { reason },
-      });
-      return updated;
-    }, principal.userId);
+    const now = new Date();
+    return this.transition(tenantId, "SUSPENDED", principal, expectedVersion, {
+      auditAction: "tenant.suspend",
+      eventType: DOMAIN_EVENT_TYPES.TENANT_SUSPENDED,
+      riskLevel: "CRITICAL",
+      extras: {
+        suspensionReason: reason,
+        suspendedAt: now,
+      },
+      metadata: { reason },
+    });
   }
 
   async archive(tenantId: string, principal: ForgePrincipal, expectedVersion: ExpectedVersion) {
-    return withTenantTransaction(this.db, tenantId, async (tx) => {
-      const before = await tx.query.tenants.findFirst({ where: eq(tenants.id, tenantId) });
-      if (!before) {
-        throw new ForgeError("NOT_FOUND", "Tenant not found");
-      }
-      const version = this.assertVersion(tenantId, before.recordVersion, expectedVersion);
-      const now = new Date();
-      const [updated] = await tx
-        .update(tenants)
-        .set({
-          status: "ARCHIVED",
-          archivedAt: now,
-          recordVersion: version + 1,
-          updatedAt: now,
-          updatedByUserId: principal.userId,
-        })
-        .where(and(eq(tenants.id, tenantId), eq(tenants.recordVersion, version)))
-        .returning();
-      if (!updated) {
-        throw concurrencyConflict({
-          tenantId,
-          resourceType: "tenant",
-          resourceId: tenantId,
-          expectedVersion,
-          actualVersion: null,
-        });
-      }
+    const now = new Date();
+    return this.transition(tenantId, "ARCHIVED", principal, expectedVersion, {
+      auditAction: "tenant.archive",
+      eventType: DOMAIN_EVENT_TYPES.TENANT_ARCHIVED,
+      riskLevel: "HIGH",
+      extras: {
+        archivedAt: now,
+      },
+    });
+  }
 
-      await this.outbox.write(tx, {
-        tenantId,
-        aggregateType: "tenant",
-        aggregateId: tenantId,
-        eventType: DOMAIN_EVENT_TYPES.TENANT_ARCHIVED,
-        payload: { tenantId, status: "ARCHIVED" },
-        correlationId: principal.correlationId,
-        actorUserId: principal.userId,
-      });
-      await this.audit.writeInTransaction(tx, {
-        tenantId,
-        actorUserId: principal.userId,
-        actorPersonId: principal.personId,
-        actorType: "USER",
-        action: "tenant.archive",
-        resourceType: "tenant",
-        resourceId: tenantId,
-        result: "SUCCESS",
-        riskLevel: "HIGH",
-        correlationId: principal.correlationId,
-        requestId: principal.requestId,
-        before,
-        after: updated,
-      });
-      return updated;
-    }, principal.userId);
+  async cancel(tenantId: string, principal: ForgePrincipal, expectedVersion: ExpectedVersion) {
+    return this.transition(tenantId, "CANCELED", principal, expectedVersion, {
+      auditAction: "tenant.cancel",
+      eventType: DOMAIN_EVENT_TYPES.TENANT_STATUS_CHANGED,
+      riskLevel: "HIGH",
+    });
   }
 }

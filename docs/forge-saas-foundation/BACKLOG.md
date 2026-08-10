@@ -211,13 +211,16 @@ Description:
 “Facilities” appear as Configuration Studio namespaces / documents in tenant-admin/creator, while RMS sites map to `rms_stations`. No single canonical SQL `facilities` table for all products.
 
 Reason Deferred:
-Canonical tenant domain modeling for facilities/sites is MK-S1 scope.
+Partial resolution in MK-S1: canonical `facilities` table + API added. Sync adapters from Config Studio / RMS stations remain deferred.
 
 Suggested Sprint:
-MK-S1
+MK-S8 / product tracks
 
 Priority:
-HIGH
+MEDIUM
 
 Blocking Current Sprint:
 NO
+
+Resolution Note (MK-S1):
+Canonical `facilities` table + `FacilitiesService` ownership checks landed. Adapter cutover not done.

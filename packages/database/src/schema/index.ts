@@ -1,6 +1,7 @@
 export * from "./common.js";
 export * from "./platform.js";
 export * from "./tenants.js";
+export * from "./facilities.js";
 export * from "./organizations.js";
 export * from "./persons.js";
 export * from "./users.js";

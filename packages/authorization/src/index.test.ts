@@ -121,6 +121,26 @@ describe("evaluateTenantOperationalState", () => {
     expect(state.canAuthenticate).toBe(true);
     expect(state.canUseProducts).toBe(false);
   });
+
+  it("treats TRIAL like an operational tenant when subscription is writable", () => {
+    const state = evaluateTenantOperationalState({
+      tenantStatus: "TRIAL",
+      subscriptionStatus: "ACTIVE",
+    });
+    expect(state.canAuthenticate).toBe(true);
+    expect(state.canUseProducts).toBe(true);
+    expect(state.reasonCode).toBeNull();
+  });
+
+  it("treats CANCELED as inactive", () => {
+    const state = evaluateTenantOperationalState({
+      tenantStatus: "CANCELED",
+      subscriptionStatus: "ACTIVE",
+    });
+    expect(state.canAuthenticate).toBe(false);
+    expect(state.canUseProducts).toBe(false);
+    expect(state.reasonCode).toBe("TENANT_INACTIVE");
+  });
 });
 
 describe("resolveFeatureValue", () => {

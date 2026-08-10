@@ -28,6 +28,7 @@ import { CadModule } from "./modules/cad/cad.module.js";
 import { AiNarrativeModule } from "./modules/ai-narrative/ai-narrative.module.js";
 import { OnboardingModule } from "./modules/onboarding/onboarding.module.js";
 import { OrganizationsModule } from "./modules/organizations/organizations.module.js";
+import { FacilitiesModule } from "./modules/facilities/facilities.module.js";
 import { OutboxModule } from "./modules/outbox/outbox.module.js";
 import { PersonsModule } from "./modules/persons/persons.module.js";
 import { RmsMasterDataModule } from "./modules/rms/rms-master-data.module.js";
@@ -51,6 +52,7 @@ export class AppModule {
         AuthContextModule,
         TenantsModule,
         OrganizationsModule,
+        FacilitiesModule,
         PersonsModule,
         UsersModule,
         MembershipsModule,

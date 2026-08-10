@@ -41,6 +41,7 @@ export const TENANT_RLS_TABLES = [
   "tenant_domains",
   "tenant_settings",
   "tenant_branding",
+  "facilities",
   "organizations",
   "organization_identifiers",
   "persons",

@@ -46,6 +46,8 @@ const ADMIN_PERMISSIONS = [
   "platform.tenant.update",
   "platform.organization.read",
   "platform.organization.create",
+  "tenant.facilities.read",
+  "tenant.facilities.manage",
   "platform.person.read",
   "platform.person.create",
   "platform.person.update",
@@ -66,6 +68,7 @@ const ADMIN_PERMISSIONS = [
 const MANAGER_PERMISSIONS = [
   "platform.tenant.read",
   "platform.organization.read",
+  "tenant.facilities.read",
   "platform.person.read",
   "platform.person.create",
   "platform.person.update",
