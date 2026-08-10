@@ -88,6 +88,7 @@ export const billingContracts = pgTable("billing_contracts", {
   renewalOn: date("renewal_on"),
   setupFeeCents: integer("setup_fee_cents"),
   notes: text("notes"),
+  pricingJson: jsonb("pricing_json").notNull().default({}),
   recordVersion: recordVersionColumn,
   createdAt: createdAtColumn,
   updatedAt: updatedAtColumn,

@@ -49,6 +49,8 @@ function HomeInner() {
       <div className={styles.panel}>
         <h2>Quick links</h2>
         <p className={styles.linkRow}>
+          <Link href="/billing">Billing overview</Link>
+          {" · "}
           <Link href={tenantId ? `/studio${tenantQuery(tenantId)}` : "/studio"}>
             Configuration Studio
           </Link>

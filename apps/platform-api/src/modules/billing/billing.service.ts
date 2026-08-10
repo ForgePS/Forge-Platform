@@ -5,6 +5,8 @@ import {
   createBillingCustomerInputSchema,
   createBillingFeeInputSchema,
   billingWebhookEnvelopeSchema,
+  patchBillingContractInputSchema,
+  patchBillingCustomerInputSchema,
   toOperationalSubscriptionStatus,
   BILLING_WEBHOOK_ENTITLEMENT_INVARIANT,
   type BillingProviderCode,
@@ -18,14 +20,17 @@ import {
   billingOrderItems,
   billingProviderEvents,
   createId,
+  subscriptionPlans,
+  subscriptions,
   type Database,
   withTenantTransaction,
 } from "@forge/database";
 import { ForgeError } from "@forge/errors";
 import { DOMAIN_EVENT_TYPES } from "@forge/events";
 import type { ForgePrincipal } from "@forge/tenant-context";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
+import { concurrencyConflict } from "../../common/concurrency.js";
 import { DATABASE } from "../../tokens.js";
 import { AuditService } from "../audit/audit.service.js";
 import { EntitlementsService } from "../entitlements/entitlements.service.js";
@@ -159,6 +164,7 @@ export class BillingService {
           renewalOn: data.renewalOn ?? null,
           setupFeeCents: data.setupFeeCents ?? null,
           notes: data.notes ?? null,
+          pricingJson: data.pricingJson ?? {},
           createdAt: now,
           updatedAt: now,
         })
@@ -305,6 +311,20 @@ export class BillingService {
       if (!row) {
         throw new ForgeError("INTERNAL_ERROR", "Failed to record invoice metadata");
       }
+      await this.audit.writeInTransaction(tx, {
+        tenantId,
+        actorUserId: principal.userId,
+        actorPersonId: principal.personId,
+        actorType: "USER",
+        action: "billing.invoice.record",
+        resourceType: "billing_invoice",
+        resourceId: id,
+        result: "SUCCESS",
+        riskLevel: "MEDIUM",
+        correlationId: principal.correlationId,
+        requestId: principal.requestId,
+        after: row,
+      });
       return row;
     }, principal.userId);
   }
@@ -315,6 +335,238 @@ export class BillingService {
         where: eq(billingContracts.tenantId, tenantId),
       }),
     );
+  }
+
+  async getCustomer(tenantId: string) {
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const row = await tx.query.billingCustomers.findFirst({
+        where: eq(billingCustomers.tenantId, tenantId),
+      });
+      if (!row) {
+        throw new ForgeError("NOT_FOUND", "Billing customer not found");
+      }
+      return row;
+    });
+  }
+
+  async patchCustomer(
+    tenantId: string,
+    input: unknown,
+    principal: ForgePrincipal,
+    expectedVersion: number | "*",
+  ) {
+    const data = patchBillingCustomerInputSchema.parse(input);
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const before = await tx.query.billingCustomers.findFirst({
+        where: eq(billingCustomers.tenantId, tenantId),
+      });
+      if (!before) {
+        throw new ForgeError("NOT_FOUND", "Billing customer not found");
+      }
+      const version = before.recordVersion;
+      if (expectedVersion !== "*" && version !== expectedVersion) {
+        throw concurrencyConflict({
+          tenantId,
+          resourceType: "billing_customer",
+          resourceId: before.id,
+          expectedVersion,
+          actualVersion: version,
+        });
+      }
+      const [row] = await tx
+        .update(billingCustomers)
+        .set({
+          ...(data.displayName !== undefined ? { displayName: data.displayName } : {}),
+          ...(data.billingEmail !== undefined ? { billingEmail: data.billingEmail } : {}),
+          ...(data.externalCustomerId !== undefined
+            ? { externalCustomerId: data.externalCustomerId }
+            : {}),
+          recordVersion: version + 1,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(eq(billingCustomers.id, before.id), eq(billingCustomers.recordVersion, version)),
+        )
+        .returning();
+      if (!row) {
+        throw concurrencyConflict({
+          tenantId,
+          resourceType: "billing_customer",
+          resourceId: before.id,
+          expectedVersion,
+          actualVersion: null,
+        });
+      }
+      await this.audit.writeInTransaction(tx, {
+        tenantId,
+        actorUserId: principal.userId,
+        actorPersonId: principal.personId,
+        actorType: "USER",
+        action: "billing.customer.update",
+        resourceType: "billing_customer",
+        resourceId: row.id,
+        result: "SUCCESS",
+        riskLevel: "MEDIUM",
+        correlationId: principal.correlationId,
+        requestId: principal.requestId,
+        before,
+        after: row,
+      });
+      return row;
+    }, principal.userId);
+  }
+
+  async listInvoices(tenantId: string) {
+    return withTenantTransaction(this.db, tenantId, async (tx) =>
+      tx.query.billingInvoices.findMany({
+        where: eq(billingInvoices.tenantId, tenantId),
+        orderBy: (t, { desc: d }) => [d(t.createdAt)],
+      }),
+    );
+  }
+
+  async listFees(tenantId: string) {
+    return withTenantTransaction(this.db, tenantId, async (tx) =>
+      tx.query.billingFeeLines.findMany({
+        where: eq(billingFeeLines.tenantId, tenantId),
+      }),
+    );
+  }
+
+  async patchContract(
+    tenantId: string,
+    contractId: string,
+    input: unknown,
+    principal: ForgePrincipal,
+    expectedVersion: number | "*",
+  ) {
+    const data = patchBillingContractInputSchema.parse(input);
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const before = await tx.query.billingContracts.findFirst({
+        where: and(eq(billingContracts.id, contractId), eq(billingContracts.tenantId, tenantId)),
+      });
+      if (!before) {
+        throw new ForgeError("NOT_FOUND", "Billing contract not found");
+      }
+      const version = before.recordVersion;
+      if (expectedVersion !== "*" && version !== expectedVersion) {
+        throw concurrencyConflict({
+          tenantId,
+          resourceType: "billing_contract",
+          resourceId: contractId,
+          expectedVersion,
+          actualVersion: version,
+        });
+      }
+      const [row] = await tx
+        .update(billingContracts)
+        .set({
+          ...(data.name !== undefined ? { name: data.name } : {}),
+          ...(data.status !== undefined ? { status: data.status } : {}),
+          ...(data.billingType !== undefined ? { billingType: data.billingType } : {}),
+          ...(data.startsOn !== undefined ? { startsOn: data.startsOn } : {}),
+          ...(data.endsOn !== undefined ? { endsOn: data.endsOn } : {}),
+          ...(data.renewalOn !== undefined ? { renewalOn: data.renewalOn } : {}),
+          ...(data.setupFeeCents !== undefined ? { setupFeeCents: data.setupFeeCents } : {}),
+          ...(data.notes !== undefined ? { notes: data.notes } : {}),
+          ...(data.pricingJson !== undefined ? { pricingJson: data.pricingJson ?? {} } : {}),
+          recordVersion: version + 1,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(eq(billingContracts.id, contractId), eq(billingContracts.recordVersion, version)),
+        )
+        .returning();
+      if (!row) {
+        throw concurrencyConflict({
+          tenantId,
+          resourceType: "billing_contract",
+          resourceId: contractId,
+          expectedVersion,
+          actualVersion: null,
+        });
+      }
+      await this.outbox.write(tx, {
+        tenantId,
+        aggregateType: "billing_contract",
+        aggregateId: contractId,
+        eventType: DOMAIN_EVENT_TYPES.BILLING_CONTRACT_CHANGED,
+        payload: { contractId, status: row.status },
+        correlationId: principal.correlationId,
+        actorUserId: principal.userId,
+      });
+      await this.audit.writeInTransaction(tx, {
+        tenantId,
+        actorUserId: principal.userId,
+        actorPersonId: principal.personId,
+        actorType: "USER",
+        action: "billing.contract.update",
+        resourceType: "billing_contract",
+        resourceId: contractId,
+        result: "SUCCESS",
+        riskLevel: "HIGH",
+        correlationId: principal.correlationId,
+        requestId: principal.requestId,
+        before,
+        after: row,
+      });
+      return row;
+    }, principal.userId);
+  }
+
+  async getOverview(tenantId: string, principal: ForgePrincipal) {
+    const [customer, contracts, invoices, fees, entitlements] = await Promise.all([
+      withTenantTransaction(this.db, tenantId, async (tx) =>
+        tx.query.billingCustomers.findFirst({
+          where: eq(billingCustomers.tenantId, tenantId),
+        }),
+      ),
+      this.listContracts(tenantId),
+      this.listInvoices(tenantId),
+      this.listFees(tenantId),
+      this.entitlements.list(tenantId),
+    ]);
+
+    const subscription = await withTenantTransaction(this.db, tenantId, async (tx) => {
+      const row = await tx.query.subscriptions.findFirst({
+        where: and(
+          eq(subscriptions.tenantId, tenantId),
+          inArray(subscriptions.status, ["ACTIVE", "TRIAL", "GRACE", "SUSPENDED"]),
+        ),
+        orderBy: (t, { desc: d }) => [d(t.createdAt)],
+      });
+      if (!row) return null;
+      const plan = await tx.query.subscriptionPlans.findFirst({
+        where: eq(subscriptionPlans.id, row.planId),
+      });
+      return {
+        ...row,
+        planCode: plan?.code ?? null,
+        planName: plan?.name ?? null,
+        billingInterval: plan?.billingInterval ?? null,
+      };
+    });
+
+    const portalUrl =
+      invoices.find((inv) => typeof inv.hostedInvoiceUrl === "string" && inv.hostedInvoiceUrl)
+        ?.hostedInvoiceUrl ?? null;
+
+    return {
+      customer: customer ?? null,
+      subscription,
+      contracts,
+      invoices,
+      fees,
+      entitlements,
+      paymentPortal: {
+        available: Boolean(portalUrl),
+        url: portalUrl,
+        message: portalUrl
+          ? "Open hosted invoice / portal link"
+          : "Payment portal not connected (live Stripe deferred)",
+      },
+      actorTenantId: principal.tenantId,
+    };
   }
 
   /**

@@ -2,6 +2,11 @@ import type { ForgeNavigationGroup } from "@forge/design-system";
 
 export const TENANT_ADMIN_NAV_GROUPS: ForgeNavigationGroup[] = [
   {
+    id: "billing",
+    label: "Billing",
+    items: [{ id: "billing-overview", label: "Billing overview", route: "/billing" }],
+  },
+  {
     id: "imports",
     label: "Import Center",
     items: [{ id: "import-center", label: "Import Center", route: "/imports" }],

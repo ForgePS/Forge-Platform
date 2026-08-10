@@ -101,6 +101,7 @@ const ROLE_TEMPLATES = [
       "platform.audit.read",
       "platform.feature.manage",
       "platform.entitlement.manage",
+      "tenant.billing.read",
       "platform.configuration.update",
       "platform.configuration.publish",
       "platform.invitation.read",

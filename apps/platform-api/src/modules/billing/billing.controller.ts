@@ -1,16 +1,41 @@
-import { Body, Controller, Get, Headers, Param, Post, Req } from "@nestjs/common";
+import { Body, Controller, Get, Headers, Param, Patch, Post, Req, Res } from "@nestjs/common";
 import type { BillingProviderCode } from "@forge/contracts";
 import { ForgeError } from "@forge/errors";
 import type { ForgePrincipal } from "@forge/tenant-context";
+import type { Response } from "express";
 import { ok } from "../../common/api-response.js";
+import { requireIfMatch, setETag } from "../../common/concurrency.js";
 import { getRequestIds, type RequestWithIds } from "../../common/request-ids.js";
 import { Principal } from "../auth-context/principal.decorator.js";
-import { RequirePermission } from "../auth-context/require-permission.decorator.js";
+import {
+  RequireAnyPermission,
+  RequirePermission,
+} from "../auth-context/require-permission.decorator.js";
 import { BillingService } from "./billing.service.js";
+
+const BILLING_READ = ["platform.entitlement.manage", "tenant.billing.read"] as const;
 
 @Controller()
 export class BillingController {
   constructor(private readonly billing: BillingService) {}
+
+  @Get("api/v1/tenants/:tenantId/billing/overview")
+  @RequireAnyPermission([...BILLING_READ], { allowWhenSuspended: true })
+  async overview(
+    @Param("tenantId") tenantId: string,
+    @Principal() principal: ForgePrincipal,
+    @Req() req: RequestWithIds,
+  ) {
+    const data = await this.billing.getOverview(tenantId, principal);
+    return ok(data, getRequestIds(req));
+  }
+
+  @Get("api/v1/tenants/:tenantId/billing/customers")
+  @RequireAnyPermission([...BILLING_READ], { allowWhenSuspended: true })
+  async getCustomer(@Param("tenantId") tenantId: string, @Req() req: RequestWithIds) {
+    const data = await this.billing.getCustomer(tenantId);
+    return ok(data, getRequestIds(req));
+  }
 
   @Post("api/v1/tenants/:tenantId/billing/customers")
   @RequirePermission("platform.entitlement.manage", { allowWhenSuspended: true })
@@ -21,6 +46,21 @@ export class BillingController {
     @Req() req: RequestWithIds,
   ) {
     const data = await this.billing.ensureCustomer(tenantId, body, principal);
+    return ok(data, getRequestIds(req));
+  }
+
+  @Patch("api/v1/tenants/:tenantId/billing/customers")
+  @RequirePermission("platform.entitlement.manage", { allowWhenSuspended: true })
+  async patchCustomer(
+    @Param("tenantId") tenantId: string,
+    @Body() body: unknown,
+    @Principal() principal: ForgePrincipal,
+    @Req() req: RequestWithIds,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const expected = requireIfMatch(req, "billing_customer");
+    const data = await this.billing.patchCustomer(tenantId, body, principal, expected);
+    setETag(res, data.recordVersion);
     return ok(data, getRequestIds(req));
   }
 
@@ -37,7 +77,7 @@ export class BillingController {
   }
 
   @Get("api/v1/tenants/:tenantId/billing/contracts")
-  @RequirePermission("platform.entitlement.manage", { allowWhenSuspended: true })
+  @RequireAnyPermission([...BILLING_READ], { allowWhenSuspended: true })
   async listContracts(@Param("tenantId") tenantId: string, @Req() req: RequestWithIds) {
     const data = await this.billing.listContracts(tenantId);
     return ok(data, getRequestIds(req), {
@@ -45,6 +85,28 @@ export class BillingController {
       pageSize: data.length,
       total: data.length,
     });
+  }
+
+  @Patch("api/v1/tenants/:tenantId/billing/contracts/:contractId")
+  @RequirePermission("platform.entitlement.manage", { allowWhenSuspended: true })
+  async patchContract(
+    @Param("tenantId") tenantId: string,
+    @Param("contractId") contractId: string,
+    @Body() body: unknown,
+    @Principal() principal: ForgePrincipal,
+    @Req() req: RequestWithIds,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const expected = requireIfMatch(req, "billing_contract");
+    const data = await this.billing.patchContract(
+      tenantId,
+      contractId,
+      body,
+      principal,
+      expected,
+    );
+    setETag(res, data.recordVersion);
+    return ok(data, getRequestIds(req));
   }
 
   @Post("api/v1/tenants/:tenantId/billing/fees")
@@ -71,6 +133,17 @@ export class BillingController {
     return ok(data, getRequestIds(req));
   }
 
+  @Get("api/v1/tenants/:tenantId/billing/invoices")
+  @RequireAnyPermission([...BILLING_READ], { allowWhenSuspended: true })
+  async listInvoices(@Param("tenantId") tenantId: string, @Req() req: RequestWithIds) {
+    const data = await this.billing.listInvoices(tenantId);
+    return ok(data, getRequestIds(req), {
+      page: 1,
+      pageSize: data.length,
+      total: data.length,
+    });
+  }
+
   @Post("api/v1/tenants/:tenantId/billing/invoices")
   @RequirePermission("platform.entitlement.manage", { allowWhenSuspended: true })
   async recordInvoice(
@@ -83,11 +156,6 @@ export class BillingController {
     return ok(data, getRequestIds(req));
   }
 
-  /**
-   * Stub-capable provider webhook. Uses HMAC-SHA256 over raw JSON body.
-   * Header: x-forge-billing-signature: sha256=<hex>
-   * Secret: BILLING_WEBHOOK_SECRET (default stub for STUB/NONE).
-   */
   @Post("api/v1/platform/billing/webhooks/:provider")
   @RequirePermission("platform.entitlement.manage", { allowWhenSuspended: true })
   async webhook(

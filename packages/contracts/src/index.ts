@@ -429,6 +429,8 @@ export {
   createBillingCustomerInputSchema,
   createBillingContractInputSchema,
   createBillingFeeInputSchema,
+  patchBillingContractInputSchema,
+  patchBillingCustomerInputSchema,
 } from "./billing-domain.js";
 export type {
   SaasSubscriptionStatus,

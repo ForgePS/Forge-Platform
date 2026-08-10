@@ -218,6 +218,13 @@
       "when": 1754850000000,
       "tag": "0030_mk_s9_billing_domain",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1754860000000,
+      "tag": "0031_mk_s10_billing_ux",
+      "breakpoints": true
     }
   ]
 }

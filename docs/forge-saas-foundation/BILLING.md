@@ -32,16 +32,26 @@ Operational DB statuses (`TRIAL`, `ACTIVE`, `GRACE`, `SUSPENDED`, `CANCELED`) ma
 
 ## APIs
 
-| Method | Path |
-| --- | --- |
-| POST | `/api/v1/tenants/:tenantId/billing/customers` |
-| POST/GET | `/api/v1/tenants/:tenantId/billing/contracts` |
-| POST | `/api/v1/tenants/:tenantId/billing/fees` |
-| POST | `/api/v1/tenants/:tenantId/billing/orders` |
-| POST | `/api/v1/tenants/:tenantId/billing/invoices` |
-| POST | `/api/v1/platform/billing/webhooks/:provider` |
+| Method | Path | Permission |
+| --- | --- | --- |
+| GET | `/api/v1/tenants/:tenantId/billing/overview` | `platform.entitlement.manage` **or** `tenant.billing.read` |
+| GET | `/api/v1/tenants/:tenantId/billing/customers` | read |
+| POST/PATCH | `/api/v1/tenants/:tenantId/billing/customers` | manage (PATCH audited) |
+| GET/POST | `/api/v1/tenants/:tenantId/billing/contracts` | read / manage |
+| PATCH | `/api/v1/tenants/:tenantId/billing/contracts/:id` | manage (dates, fees, notes, `pricingJson`) |
+| POST | `/api/v1/tenants/:tenantId/billing/fees` | manage |
+| POST | `/api/v1/tenants/:tenantId/billing/orders` | manage |
+| GET/POST | `/api/v1/tenants/:tenantId/billing/invoices` | read / manage |
+| POST | `/api/v1/platform/billing/webhooks/:provider` | manage |
 
-Permission: `platform.entitlement.manage` (same commercial gate as subscriptions).
+## UX (MK-S10)
+
+| App | Route | Role |
+| --- | --- | --- |
+| Creator Console | `/billing` | Overview + manual contract editor + contact |
+| Tenant Admin | `/billing` | Read-only overview; portal stub unless `hostedInvoiceUrl` |
+
+Contract `pricing_json` holds pricing override + per-module amounts. Live Stripe Customer Portal remains deferred (BACKLOG-003).
 
 ## Webhooks
 

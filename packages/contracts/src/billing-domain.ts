@@ -196,6 +196,30 @@ export const createBillingContractInputSchema = z.object({
   renewalOn: z.string().date().optional().nullable(),
   notes: z.string().max(4000).optional().nullable(),
   setupFeeCents: z.number().int().nonnegative().optional().nullable(),
+  pricingJson: z
+    .object({
+      overrideAmountCents: z.number().int().nonnegative().optional(),
+      currency: z.string().length(3).optional(),
+      modules: z
+        .array(
+          z.object({
+            moduleCode: z.string().min(1).max(64),
+            amountCents: z.number().int().nonnegative(),
+          }),
+        )
+        .max(50)
+        .optional(),
+    })
+    .optional()
+    .nullable(),
+});
+
+export const patchBillingContractInputSchema = createBillingContractInputSchema.partial();
+
+export const patchBillingCustomerInputSchema = z.object({
+  displayName: z.string().min(1).max(300).optional(),
+  billingEmail: z.string().email().max(320).optional().nullable(),
+  externalCustomerId: z.string().max(255).optional().nullable(),
 });
 
 export const createBillingFeeInputSchema = z.object({

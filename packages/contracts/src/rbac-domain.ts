@@ -46,6 +46,7 @@ export const TENANT_OWNER_PERMISSIONS = [
   "platform.audit.read",
   "platform.feature.manage",
   "platform.entitlement.manage",
+  "tenant.billing.read",
   "platform.configuration.update",
   "platform.configuration.publish",
   "tenant.configuration.update",
