@@ -1,12 +1,12 @@
 {
   "program": "FORGE-SAAS-CORE",
-  "currentAuthorizedSprint": "MK-S1",
-  "lastCompletedSprint": "MK-S1",
+  "currentAuthorizedSprint": "MK-S2",
+  "lastCompletedSprint": "MK-S2",
   "status": "ACTIVE",
   "productionAuthorized": false,
   "automaticSprintAdvance": false,
   "baselineEstablished": true,
-  "lastCommit": "17d138ac8c91ec3daef35e793bdaf9095b89b028",
+  "lastCommit": null,
   "knownBlockers": [],
   "deferredItems": [
     "BACKLOG-001",
@@ -20,28 +20,12 @@
     "BACKLOG-009",
     "BACKLOG-010"
   ],
-  "baselineVerification": {
+  "mkS2Verification": {
     "date": "2026-08-10",
-    "typecheck": "FAIL_HISTORICAL_rms-web-e2e",
-    "lint": "FAIL_HISTORICAL_imports_unused_var",
-    "testUnit": "FAIL_HISTORICAL_creator-console_web-kit_resolve",
-    "coreSaasBuild": "PASS",
-    "infraValidate": "PASS",
-    "fullBuild": "NOT_RUN",
-    "productionCheck": "NOT_APPLICABLE",
-    "productionOperations": "NONE"
-  },
-  "mkS1Verification": {
-    "date": "2026-08-10",
-    "unitContracts": "5 passed",
-    "unitAuthorization": "9 passed",
-    "unitPlatformApi": "53 passed",
+    "unitAuth": "4 passed",
+    "unitPlatformApi": "61 passed",
     "typecheckAffected": "PASS",
     "productionOperations": "NONE",
-    "repairPasses": 2,
-    "commits": [
-      "7cef4b16c8109f83afc74dc526f0f1e24cd2e3c9",
-      "17d138ac8c91ec3daef35e793bdaf9095b89b028"
-    ]
+    "repairPasses": 0
   }
 }

@@ -165,6 +165,9 @@ export class AuthContextService {
     if (!tenant && !isSuper) {
       throw new ForgeError("NOT_FOUND", "Tenant not found");
     }
+    if (tenant) {
+      this.assertTenantSessionEligible(tenant.status, isSuper);
+    }
 
     let effectivePermissions = permissionBundle;
     if (access && homeTenantId !== tenantId && !isSuper) {
@@ -222,16 +225,22 @@ export class AuthContextService {
         },
       );
     }
-    return rows.map((row) => ({
-      tenantId: row.tenantId,
-      slug: row.tenantSlug,
-      displayName: row.tenantDisplayName,
-      tenantStatus: row.tenantStatus,
-      membershipId: row.membershipId,
-      membershipStatus: row.membershipStatus,
-      isDefaultTenant: row.isDefaultTenant,
-      selectable: row.membershipStatus === "ACTIVE" && row.tenantStatus === "ACTIVE",
-    }));
+    return rows.map((row) => {
+      const tenantSession = evaluateTenantOperationalState({
+        tenantStatus: row.tenantStatus,
+        subscriptionStatus: "ACTIVE",
+      });
+      return {
+        tenantId: row.tenantId,
+        slug: row.tenantSlug,
+        displayName: row.tenantDisplayName,
+        tenantStatus: row.tenantStatus,
+        membershipId: row.membershipId,
+        membershipStatus: row.membershipStatus,
+        isDefaultTenant: row.isDefaultTenant,
+        selectable: row.membershipStatus === "ACTIVE" && tenantSession.canAuthenticate,
+      };
+    });
   }
 
   async selectTenant(
@@ -251,9 +260,7 @@ export class AuthContextService {
     if (!tenant) {
       throw new ForgeError("NOT_FOUND", "Tenant not found");
     }
-    if (tenant.status !== "ACTIVE" && !principal.isPlatformAdmin) {
-      throw new ForgeError("TENANT_INACTIVE", "Selected tenant is not active");
-    }
+    this.assertTenantSessionEligible(tenant.status, principal.isPlatformAdmin);
 
     const permissions = await this.loadPermissions(tenantId, principal.userId);
     const entitlements = await this.loadEntitlements(tenantId, access?.membershipId ?? null);
@@ -526,6 +533,20 @@ export class AuthContextService {
 
       return { products, modules };
     });
+  }
+
+  /**
+   * Tenant status gate for session context (independent of subscription billing).
+   * Aligns with `@forge/authorization` canAuthenticate rules (allows TRIAL).
+   */
+  private assertTenantSessionEligible(tenantStatus: string, isPlatformAdmin: boolean): void {
+    const state = evaluateTenantOperationalState({
+      tenantStatus,
+      subscriptionStatus: "ACTIVE",
+    });
+    if (!state.canAuthenticate && !isPlatformAdmin) {
+      throw new ForgeError("TENANT_INACTIVE", "Selected tenant is not active");
+    }
   }
 
   toClientSummary(principal: ForgePrincipal) {

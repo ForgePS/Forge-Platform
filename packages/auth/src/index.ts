@@ -26,6 +26,34 @@ function getJwks(region: string, userPoolId: string) {
   return { issuer, jwks };
 }
 
+/**
+ * Pure claim checks used after cryptographic JWT verification.
+ * Kept separate so session security rules can be unit-tested without JWKS.
+ */
+export function assertCognitoAccessTokenClaims(
+  claims: CognitoTokenClaims,
+  options: Pick<CognitoVerifierOptions, "clientId">,
+): CognitoTokenClaims {
+  if (!claims.sub) {
+    throw new Error("Token missing subject");
+  }
+  if (claims.token_use && claims.token_use !== "access" && claims.token_use !== "id") {
+    throw new Error("Unexpected token_use");
+  }
+
+  const audience = claims.client_id ?? claims.aud;
+  const audiences = Array.isArray(audience) ? audience : audience ? [audience] : [];
+  const allowedClients = options.clientId
+    .split(",")
+    .map((c) => c.trim())
+    .filter(Boolean);
+  if (!allowedClients.some((id) => audiences.includes(id))) {
+    throw new Error("Token audience/client mismatch");
+  }
+
+  return claims;
+}
+
 export async function verifyCognitoAccessToken(
   token: string,
   options: CognitoVerifierOptions,
@@ -36,22 +64,7 @@ export async function verifyCognitoAccessToken(
     clockTolerance: 5,
   });
 
-  const claims = payload as CognitoTokenClaims;
-  if (!claims.sub) {
-    throw new Error("Token missing subject");
-  }
-  if (claims.token_use && claims.token_use !== "access" && claims.token_use !== "id") {
-    throw new Error("Unexpected token_use");
-  }
-
-  const audience = claims.client_id ?? claims.aud;
-  const audiences = Array.isArray(audience) ? audience : audience ? [audience] : [];
-  const allowedClients = options.clientId.split(",").map((c) => c.trim()).filter(Boolean);
-  if (!allowedClients.some((id) => audiences.includes(id))) {
-    throw new Error("Token audience/client mismatch");
-  }
-
-  return claims;
+  return assertCognitoAccessTokenClaims(payload as CognitoTokenClaims, options);
 }
 
 export function clearJwksCache(): void {
