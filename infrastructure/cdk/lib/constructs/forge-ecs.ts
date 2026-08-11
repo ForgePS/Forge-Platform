@@ -293,7 +293,7 @@ export class ForgeEcs extends Construct {
       }),
       portMappings: [{ containerPort: 4000 }],
       environment: {
-        APP_ENV: "development",
+        APP_ENV: config.environmentName,
         APP_NAME: "platform-api",
         APP_VERSION: "0.1.0",
         AWS_PARTITION: config.partition,
@@ -373,7 +373,7 @@ export class ForgeEcs extends Construct {
         logGroup: props.workerLogGroup,
       }),
       environment: {
-        APP_ENV: "development",
+        APP_ENV: config.environmentName,
         APP_NAME: "worker-service",
         APP_VERSION: "0.1.0",
         AWS_PARTITION: config.partition,

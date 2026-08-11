@@ -43,7 +43,9 @@ describe("Environment Cost Profiles", () => {
     expect(developmentConfig.database.serverlessMinCapacity).toBe(
       profile.knobs.database.serverlessMinCapacity,
     );
-    expect(developmentConfig.compute.workerDesiredCount).toBe(0);
+    expect(developmentConfig.compute.workerDesiredCount).toBe(
+      profile.knobs.compute.workerDesiredCount,
+    );
     expect(developmentConfig.networking.flowLogDestination).toBe("s3");
     expect(developmentConfig.features.monthlyBudgetUsd).toBe(100);
   });

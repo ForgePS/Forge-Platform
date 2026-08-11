@@ -20,6 +20,6 @@ describe("IdentityStack", () => {
   });
 
   it("creates separate app clients", () => {
-    template.resourceCountIs("AWS::Cognito::UserPoolClient", 5);
+    template.resourceCountIs("AWS::Cognito::UserPoolClient", 6);
   });
 });

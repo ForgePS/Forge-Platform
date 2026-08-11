@@ -22,3 +22,10 @@ cdk.context.local.json
 *.tsbuildinfo
 .vscode/
 .idea/
+# PROD-S0 / PROD-S0R local gate evidence (regenerable)
+.tmp-prod-s0*
+.tmp-prod-s0-*/
+.tmp-analytics-*
+
+# Next.js static export output
+apps/*/out/

@@ -69,6 +69,10 @@ export const forgeEnvironmentConfigSchema = z
         rms: z.string().optional(),
         creator: z.string().optional(),
         api: z.string().optional(),
+        industrial: z.string().optional(),
+        tenantAdmin: z.string().optional(),
+        /** Verified SES sending domain (no secrets). */
+        ses: z.string().optional(),
       })
       .optional(),
     /**
@@ -138,6 +142,34 @@ export const forgeEnvironmentConfigSchema = z
           code: z.ZodIssueCode.custom,
           message: "Production environments must enable database deletion protection",
         });
+      }
+      if (value.account === "000000000000") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["account"],
+          message: "Production account must not use the 000000000000 placeholder",
+        });
+      }
+      const requiredDomainKeys = ["api", "creator", "rms", "industrial", "tenantAdmin"] as const;
+      for (const key of requiredDomainKeys) {
+        const host = value.domains?.[key];
+        if (!host || host.includes("example.com")) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["domains", key],
+            message: `Production domains.${key} must be an explicit non-example hostname`,
+          });
+        }
+      }
+      for (const url of [...value.cognito.callbackUrls, ...value.cognito.logoutUrls]) {
+        if (url.includes("example.com") || url.startsWith("http://localhost")) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["cognito"],
+            message: "Production Cognito URLs must be HTTPS production hosts (no example.com / localhost)",
+          });
+          break;
+        }
       }
     }
     if (value.database.serverlessMaxCapacity < value.database.serverlessMinCapacity) {

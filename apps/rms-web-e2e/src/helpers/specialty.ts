@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { createHash } from "node:crypto";
 import {
   apiRequest,
   approveIncidentRaw,
@@ -192,8 +193,7 @@ export async function findFieldId(
 }
 
 export async function sha256Hex(bytes: Uint8Array): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  return createHash("sha256").update(Buffer.from(bytes)).digest("hex");
 }
 
 /** Minimal valid JPEG (1x1). */
@@ -277,7 +277,7 @@ export async function uploadBytesToPresign(
       "Content-Length": String(bytes.byteLength),
       "x-amz-server-side-encryption": "aws:kms",
     },
-    body: bytes,
+    body: Buffer.from(bytes),
   });
   return res.status;
 }

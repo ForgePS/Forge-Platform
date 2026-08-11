@@ -43,8 +43,17 @@ export class ForgeMonitoring extends Construct {
 
     this.alarmTopic = new sns.Topic(this, "AlarmTopic", {
       topicName: resourceName(config, "sns", "alarms"),
-      displayName: "Forge development alarms (placeholder subscribers)",
+      displayName: `Forge ${config.environmentName} operational alarms`,
     });
+
+    const alertEmail = process.env.FORGE_ALERT_EMAIL?.trim();
+    if (alertEmail && alertEmail.includes("@")) {
+      new sns.Subscription(this, "AlarmEmailSubscription", {
+        topic: this.alarmTopic,
+        protocol: sns.SubscriptionProtocol.EMAIL,
+        endpoint: alertEmail,
+      });
+    }
 
     const envLabel = config.environmentName
       .split("-")

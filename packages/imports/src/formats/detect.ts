@@ -25,7 +25,7 @@ function guessFormat(fileName: string, contentType?: string): ImportFormat | nul
   return null;
 }
 
-function detectCsv(bytes: Uint8Array, fileName: string): FormatDetectionResult {
+function detectCsv(bytes: Uint8Array, _fileName: string): FormatDetectionResult {
   const sample = Buffer.from(bytes.subarray(0, Math.min(bytes.length, 256 * 1024))).toString(
     "utf8",
   );

@@ -58,14 +58,21 @@ export function ForgeCommandPalette({
     setActiveIndex(0);
   }, [query, items]);
 
+  useEffect(() => {
+    if (!open) return;
+    function onDocKey(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", onDocKey);
+    return () => window.removeEventListener("keydown", onDocKey);
+  }, [open, onClose]);
+
   if (!open) return null;
 
-  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      onClose();
-      return;
-    }
+  function onInputKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setActiveIndex((i) => Math.min(flat.length - 1, i + 1));
@@ -87,10 +94,7 @@ export function ForgeCommandPalette({
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={titleId}
-      onKeyDown={onKeyDown}
+      role="presentation"
       style={{
         position: "fixed",
         inset: 0,
@@ -101,13 +105,28 @@ export function ForgeCommandPalette({
         justifyContent: "center",
         paddingTop: "12vh",
       }}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
     >
+      <button
+        type="button"
+        aria-label="Close command palette"
+        onClick={onClose}
+        style={{
+          position: "absolute",
+          inset: 0,
+          border: "none",
+          padding: 0,
+          margin: 0,
+          background: "transparent",
+          cursor: "default",
+        }}
+      />
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="forge-card"
         style={{
+          position: "relative",
           width: "min(36rem, calc(100vw - 2rem))",
           maxHeight: "70vh",
           overflow: "auto",
@@ -130,6 +149,7 @@ export function ForgeCommandPalette({
             className="forge-input"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
+            onKeyDown={onInputKeyDown}
             placeholder={placeholder}
             autoComplete="off"
             style={{ width: "100%" }}

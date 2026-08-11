@@ -133,9 +133,10 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
   );
 
   useEffect(() => {
+    const abortController = abortRef.current;
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
-      abortRef.current?.abort();
+      abortController?.abort();
     };
   }, []);
 

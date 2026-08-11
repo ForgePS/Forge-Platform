@@ -42,6 +42,12 @@ export class IdentityStack extends cdk.Stack {
       this.cognito.creatorClient.userPoolClientId,
       "Creator Console Cognito client ID",
     );
+    exportValue(
+      this,
+      `${id}-IndustrialClientId`,
+      this.cognito.industrialClient.userPoolClientId,
+      "Industrial Web Cognito client ID",
+    );
     const cognitoDomain = `forge-${props.config.environmentName}-${props.config.account.slice(-6)}.auth.${props.config.region}.amazoncognito.com`;
     exportValue(this, `${id}-CognitoDomain`, cognitoDomain, "Cognito hosted UI domain host");
   }
