@@ -202,9 +202,99 @@ export class E2eHarness {
       });
     }
 
-    this.createdTenantIds.add(tenantId);
+    this.trackTenant(tenantId);
     await this.ensureTenantRoles(tenantId);
     return { tenantId, tenantKey, subscriptionId, planId: plan.id };
+  }
+
+  /** Register a tenant created via API for harness cleanup. */
+  trackTenant(tenantId: string): void {
+    this.createdTenantIds.add(tenantId);
+  }
+
+  /**
+   * After API-provisioned tenant create/activate: attach E2E subscription + seed
+   * TENANT_OWNER / TENANT_ADMIN / STANDARD_USER roles (mirrors onboarding bootstrap).
+   */
+  async bootstrapProvisionedTenant(tenantId: string): Promise<{ subscriptionId: string; planId: string }> {
+    const plan = await this.adminDb.query.subscriptionPlans.findFirst({
+      where: eq(subscriptionPlans.code, "E2E_STANDARD"),
+    });
+    if (!plan) {
+      throw new Error("Missing E2E subscription plan");
+    }
+
+    const existing = await this.adminDb.query.subscriptions.findFirst({
+      where: eq(subscriptions.tenantId, tenantId),
+    });
+    let subscriptionId = existing?.id;
+    if (!subscriptionId) {
+      subscriptionId = createId();
+      const now = new Date();
+      await this.adminDb.insert(subscriptions).values({
+        id: subscriptionId,
+        tenantId,
+        planId: plan.id,
+        status: "ACTIVE",
+        billingProvider: "NONE",
+        startsAt: now,
+        currentPeriodStart: now,
+        currentPeriodEnd: new Date(now.getTime() + 30 * 86400_000),
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    this.trackTenant(tenantId);
+    await this.ensureTenantRoles(tenantId);
+    return { subscriptionId, planId: plan.id };
+  }
+
+  /**
+   * Entitle modules for a product by resolving product-scoped module IDs
+   * (module codes are not globally unique across products).
+   */
+  async entitleModulesForProduct(
+    tenantId: string,
+    productCode: string,
+    moduleCodes: readonly string[],
+  ): Promise<void> {
+    const now = new Date();
+    const moduleRows = await this.adminDb
+      .select({ module: platformModules })
+      .from(platformModules)
+      .innerJoin(platformProducts, eq(platformProducts.id, platformModules.productId))
+      .where(
+        and(
+          eq(platformProducts.code, productCode),
+          inArray(platformModules.code, [...moduleCodes]),
+        ),
+      );
+
+    for (const row of moduleRows) {
+      const existing = await this.adminDb.query.tenantModuleEntitlements.findFirst({
+        where: and(
+          eq(tenantModuleEntitlements.tenantId, tenantId),
+          eq(tenantModuleEntitlements.moduleId, row.module.id),
+        ),
+      });
+      if (existing) {
+        await this.adminDb
+          .update(tenantModuleEntitlements)
+          .set({ status: "ACTIVE", updatedAt: now })
+          .where(eq(tenantModuleEntitlements.id, existing.id));
+        continue;
+      }
+      await this.adminDb.insert(tenantModuleEntitlements).values({
+        id: createId(),
+        tenantId,
+        moduleId: row.module.id,
+        status: "ACTIVE",
+        startsAt: now,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
   }
 
   async ensureTenantRoles(tenantId: string): Promise<void> {
@@ -228,7 +318,33 @@ export class E2eHarness {
       "platform.invitation.manage",
       "platform.membership.read",
       "platform.membership.manage",
-      "platform.entitlement.manage",
+      "tenant.facilities.read",
+      "tenant.facilities.manage",
+      "tenant.notification.read",
+      "tenant.notification.manage",
+      "tenant.billing.read",
+    ]);
+    await this.createRole(tenantId, "TENANT_OWNER", [
+      "platform.tenant.read",
+      "platform.tenant.update",
+      "platform.organization.read",
+      "platform.organization.create",
+      "platform.person.read",
+      "platform.person.create",
+      "platform.person.update",
+      "platform.user.invite",
+      "platform.role.assign",
+      "platform.permission.read",
+      "platform.audit.read",
+      "platform.invitation.read",
+      "platform.invitation.manage",
+      "platform.membership.read",
+      "platform.membership.manage",
+      "tenant.facilities.read",
+      "tenant.facilities.manage",
+      "tenant.notification.read",
+      "tenant.notification.manage",
+      "tenant.billing.read",
     ]);
   }
 
