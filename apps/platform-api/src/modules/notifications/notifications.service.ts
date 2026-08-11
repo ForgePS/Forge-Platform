@@ -13,12 +13,18 @@ import {
 } from "@forge/database";
 import type { ForgePrincipal } from "@forge/tenant-context";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { createLogger, logOperationalFailure } from "@forge/observability";
 import { DATABASE } from "../../tokens.js";
 import {
   createEmailProviderFromEnv,
   renderTemplate,
   type EmailProvider,
 } from "./email-provider.js";
+
+const emailLogger = createLogger({
+  service: "platform-api-email",
+  environment: process.env.APP_ENV ?? "local",
+});
 
 const DEFAULT_EMAIL_BODIES: Record<
   (typeof EMAIL_TEMPLATE_KEYS)[number],
@@ -205,7 +211,21 @@ export class NotificationsService {
       templateKey: input.templateKey,
       ...(input.tenantId ? { tenantId: input.tenantId } : {}),
     };
-    return this.email.send(message);
+    const result = await this.email.send(message);
+    if (!result.accepted) {
+      logOperationalFailure(emailLogger, {
+        category: "EMAIL",
+        message: "Email send not accepted",
+        ...(input.tenantId ? { tenantId: input.tenantId } : {}),
+        code: "EMAIL_NOT_ACCEPTED",
+        fields: {
+          provider: result.provider,
+          templateKey: input.templateKey,
+          ...(result.detail ? { detail: result.detail } : {}),
+        },
+      });
+    }
+    return result;
   }
 
   getEmailProviderName(): string {

@@ -1,8 +1,13 @@
-import { Controller, Get, Param, Post, Query, Req } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, Req } from "@nestjs/common";
+import type { ForgePrincipal } from "@forge/tenant-context";
 import { ForgeError } from "@forge/errors";
 import { ok } from "../../common/api-response.js";
 import { getRequestIds, type RequestWithIds } from "../../common/request-ids.js";
-import { RequireAnyPermission, RequirePermission } from "../auth-context/require-permission.decorator.js";
+import { Principal } from "../auth-context/principal.decorator.js";
+import {
+  RequireAnyPermission,
+  RequirePermission,
+} from "../auth-context/require-permission.decorator.js";
 import { AuditService } from "./audit.service.js";
 
 @Controller("api/v1/tenants/:tenantId/audit-events")
@@ -27,6 +32,18 @@ export class AuditController {
     });
   }
 
+  @Post("export")
+  @RequirePermission("platform.audit.export")
+  async export(
+    @Param("tenantId") tenantId: string,
+    @Principal() principal: ForgePrincipal,
+    @Req() req: RequestWithIds,
+  ) {
+    const ids = getRequestIds(req);
+    const payload = await this.audit.exportWithSelfAudit(tenantId, principal, ids);
+    return ok(payload, ids);
+  }
+
   @Get(":auditEventId")
   @RequireAnyPermission(["platform.audit.read", "rms.neris.audit.view"])
   async get(
@@ -39,20 +56,5 @@ export class AuditController {
       throw new ForgeError("NOT_FOUND", "Audit event not found");
     }
     return ok(row, getRequestIds(req));
-  }
-
-  @Post("export")
-  @RequirePermission("platform.audit.read")
-  async export(@Param("tenantId") tenantId: string, @Req() req: RequestWithIds) {
-    const rows = await this.audit.list(tenantId, 1, 200);
-    return ok(
-      {
-        format: "json",
-        exportedAt: new Date().toISOString(),
-        count: rows.length,
-        events: rows,
-      },
-      getRequestIds(req),
-    );
   }
 }

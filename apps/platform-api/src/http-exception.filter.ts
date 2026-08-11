@@ -9,12 +9,18 @@ import {
 import type { Response } from "express";
 import type { ForgeEnvironment } from "@forge/environment";
 import { ForgeError, isForgeError } from "@forge/errors";
+import { createLogger, logOperationalFailure } from "@forge/observability";
 import { createCorrelationId } from "@forge/security";
 import { ZodError } from "zod";
 import { fail } from "./common/api-response.js";
 import type { RequestWithIds } from "./common/request-ids.js";
 import { getRequestIds } from "./common/request-ids.js";
 import { APP_ENV } from "./tokens.js";
+
+const logger = createLogger({
+  service: "platform-api",
+  environment: process.env.APP_ENV ?? "local",
+});
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -45,6 +51,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     if (isForgeError(exception)) {
+      if (exception.code === "FORBIDDEN" || exception.code === "UNAUTHORIZED") {
+        logOperationalFailure(logger, {
+          category: "AUTHORIZATION",
+          message: exception.message,
+          correlationId: ids.correlationId,
+          requestId: ids.requestId,
+          code: exception.code,
+        });
+      }
       const payload = fail(
         exception.code,
         exception.exposeMessage ? exception.message : "An unexpected error occurred.",
@@ -93,17 +108,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       (payload.error as Record<string, unknown>).debugName = exception.name;
       (payload.error as Record<string, unknown>).debugMessage = exception.message;
     }
-    console.error(
-      JSON.stringify({
-        level: "error",
-        message: "unhandled exception",
-        correlationId: ids.correlationId,
-        requestId: ids.requestId,
-        name: exception instanceof Error ? exception.name : typeof exception,
-        detail: exception instanceof Error ? exception.message : String(exception),
-        stack: exception instanceof Error ? exception.stack : undefined,
-      }),
-    );
+    logOperationalFailure(logger, {
+      category: "INTERNAL",
+      message: "unhandled exception",
+      correlationId: ids.correlationId,
+      requestId: ids.requestId,
+      code: "INTERNAL_ERROR",
+      error: exception,
+    });
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(payload);
   }
 }

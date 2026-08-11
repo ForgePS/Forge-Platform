@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { TenantPageGate } from "@/components/tenant-page-gate";
 import { TenantRequired } from "@/components/tenant-required";
 import { useTenantId } from "@/hooks/use-tenant-id";
-import { apiGet } from "@/lib/api";
+import { apiGet, apiSend } from "@/lib/api";
 import styles from "../page.module.css";
 
 type AuditEvent = {
@@ -15,6 +15,7 @@ type AuditEvent = {
   result: string;
   riskLevel: string;
   actorUserId: string | null;
+  correlationId?: string;
   occurredAt: string;
 };
 
@@ -23,6 +24,8 @@ function AuditInner() {
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(Boolean(tenantId));
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [exportNote, setExportNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!tenantId) return;
@@ -43,6 +46,28 @@ function AuditInner() {
     void load();
   }, [load]);
 
+  async function exportEvents() {
+    if (!tenantId) return;
+    setBusy(true);
+    setError(null);
+    setExportNote(null);
+    try {
+      const result = await apiSend<{
+        exportId: string;
+        count: number;
+        exportedAt: string;
+      }>(`/api/v1/tenants/${tenantId}/audit-events/export`, "POST");
+      setExportNote(
+        `Export ${result.exportId} · ${result.count} events · ${result.exportedAt}`,
+      );
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!tenantId) {
     return (
       <section className={styles.page}>
@@ -59,7 +84,14 @@ function AuditInner() {
         Recent audited actions · <span className={styles.mono}>{tenantId}</span>
       </p>
       {error ? <p className={styles.error}>{error}</p> : null}
+      {exportNote ? <p className={styles.muted}>{exportNote}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
+
+      <div className={styles.actions} style={{ marginBottom: "1rem" }}>
+        <button type="button" onClick={() => void exportEvents()} disabled={busy}>
+          Export (JSON)
+        </button>
+      </div>
 
       <div className={styles.panel}>
         {events.length === 0 ? (
@@ -73,6 +105,7 @@ function AuditInner() {
                 <th>Resource</th>
                 <th>Result</th>
                 <th>Risk</th>
+                <th>Correlation</th>
               </tr>
             </thead>
             <tbody>
@@ -91,6 +124,7 @@ function AuditInner() {
                   </td>
                   <td>{event.result}</td>
                   <td>{event.riskLevel}</td>
+                  <td className={styles.mono}>{event.correlationId ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

@@ -42,6 +42,7 @@ export const PLATFORM_PERMISSIONS = [
   "platform.role.assign",
   "platform.permission.read",
   "platform.audit.read",
+  "platform.audit.export",
   "platform.feature.manage",
   "platform.entitlement.manage",
   "platform.configuration.update",

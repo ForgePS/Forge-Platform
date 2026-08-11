@@ -3,6 +3,7 @@ import { Reflector } from "@nestjs/core";
 import { evaluateAuthorization } from "@forge/authorization";
 import { ForgeError } from "@forge/errors";
 import { AuthContextService } from "./auth-context.service.js";
+import { AuthorizationDecisionService } from "./authorization-decision.service.js";
 import type { AuthenticatedRequest } from "./principal.decorator.js";
 import { IS_PUBLIC_KEY } from "./public.decorator.js";
 import {
@@ -15,6 +16,7 @@ export class PermissionGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly authContext: AuthContextService,
+    private readonly decisions: AuthorizationDecisionService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -74,6 +76,20 @@ export class PermissionGuard implements CanActivate {
         return true;
       }
       lastDenied = { reasonCode: decision.reasonCode, permission: permissionCode };
+    }
+
+    if (lastDenied) {
+      await this.decisions.recordDenial({
+        tenantId: resourceTenantId,
+        userId: principal.userId,
+        permissionCode: lastDenied.permission,
+        resourceType: meta.resourceType ?? "platform",
+        reasonCode: lastDenied.reasonCode,
+        correlationId: principal.correlationId,
+        context: {
+          anyOf: permissionCodes,
+        },
+      });
     }
 
     throw new ForgeError("FORBIDDEN", "You do not have permission to perform this action.", {

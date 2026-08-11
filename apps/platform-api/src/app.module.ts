@@ -10,6 +10,7 @@ import { GlobalExceptionFilter } from "./http-exception.filter.js";
 import { AuditModule } from "./modules/audit/audit.module.js";
 import { AuthContextModule } from "./modules/auth-context/auth-context.module.js";
 import { AuthContextService } from "./modules/auth-context/auth-context.service.js";
+import { AuthorizationDecisionService } from "./modules/auth-context/authorization-decision.service.js";
 import { AuthGuard } from "./modules/auth-context/auth.guard.js";
 import { PermissionGuard } from "./modules/auth-context/permission.guard.js";
 import { TenantGuard } from "./modules/auth-context/tenant.guard.js";
@@ -38,6 +39,7 @@ import { PersonsModule } from "./modules/persons/persons.module.js";
 import { RmsMasterDataModule } from "./modules/rms/rms-master-data.module.js";
 import { ProductsModule } from "./modules/products/products.module.js";
 import { SubscriptionsModule } from "./modules/subscriptions/subscriptions.module.js";
+import { SupportModule } from "./modules/support/support.module.js";
 import { TenantsModule } from "./modules/tenants/tenants.module.js";
 import { UsersModule } from "./modules/users/users.module.js";
 import { APP_ENV } from "./tokens.js";
@@ -73,6 +75,7 @@ export class AppModule {
         BrandingModule,
         ApiKeysModule,
         WebhooksModule,
+        SupportModule,
         OnboardingModule,
         NerisModule,
         NerisIncidentsModule,
@@ -98,9 +101,12 @@ export class AppModule {
         },
         {
           provide: APP_GUARD,
-          useFactory: (reflector: Reflector, auth: AuthContextService) =>
-            new PermissionGuard(reflector, auth),
-          inject: [Reflector, AuthContextService],
+          useFactory: (
+            reflector: Reflector,
+            auth: AuthContextService,
+            decisions: AuthorizationDecisionService,
+          ) => new PermissionGuard(reflector, auth, decisions),
+          inject: [Reflector, AuthContextService, AuthorizationDecisionService],
         },
         {
           provide: APP_INTERCEPTOR,

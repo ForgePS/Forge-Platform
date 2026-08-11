@@ -4,6 +4,33 @@ export type AuditActorType = "USER" | "SYSTEM" | "SERVICE";
 export type AuditResult = "SUCCESS" | "DENIED" | "FAILURE";
 export type AuditRiskLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
+/**
+ * Canonical SaaS Makerkit-class audit actions (MK-S16).
+ * Existing services may use additional domain-specific actions; these are the required set.
+ */
+export const SAAS_AUDIT_ACTIONS = {
+  TENANT_CREATED: "tenant.create",
+  TENANT_STATUS_CHANGED: "tenant.status_changed",
+  MEMBER_INVITED: "invitation.create",
+  MEMBER_REMOVED: "membership.revoke",
+  ROLE_CHANGED: "membership.roles.set",
+  PERMISSION_CHANGED: "role.permissions.set",
+  MODULE_CHANGED: "entitlement.module.put",
+  BILLING_CHANGED: "billing.changed",
+  CONTRACT_CHANGED: "billing.contract.update",
+  FEATURE_FLAG_CHANGED: "feature.put",
+  API_KEY_CREATED: "api_key.create",
+  API_KEY_REVOKED: "api_key.revoke",
+  WEBHOOK_CHANGED: "webhook.endpoint.changed",
+  BRANDING_CHANGED: "branding.put",
+  SUPPORT_ACTION: "support.action",
+  EXPORT_GENERATED: "audit.export.generated",
+} as const;
+
+export type SaasAuditAction = (typeof SAAS_AUDIT_ACTIONS)[keyof typeof SAAS_AUDIT_ACTIONS];
+
+export const SAAS_AUDIT_ACTION_VALUES = Object.values(SAAS_AUDIT_ACTIONS);
+
 export interface AuditEventInput {
   id: string;
   tenantId: string | null;
@@ -63,4 +90,8 @@ export function maskSensitiveValue(type: string, value: string): string {
     return `${"*".repeat(Math.max(0, value.length - 4))}${value.slice(-4)}`;
   }
   return "****";
+}
+
+export function isSaasAuditAction(action: string): action is SaasAuditAction {
+  return (SAAS_AUDIT_ACTION_VALUES as readonly string[]).includes(action);
 }

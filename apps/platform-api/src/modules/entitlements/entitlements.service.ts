@@ -218,6 +218,20 @@ export class EntitlementsService {
         correlationId: principal.correlationId,
         actorUserId: principal.userId,
       });
+      await this.audit.writeInTransaction(tx, {
+        tenantId,
+        actorUserId: principal.userId,
+        actorPersonId: principal.personId,
+        actorType: "USER",
+        action: "entitlement.module.put",
+        resourceType: "tenant_module_entitlement",
+        resourceId: row.id,
+        result: "SUCCESS",
+        riskLevel: "MEDIUM",
+        correlationId: principal.correlationId,
+        requestId: principal.requestId,
+        after: { moduleCode, status: data.status, sourceType: data.sourceType },
+      });
       return row;
     }, principal.userId);
   }
@@ -282,6 +296,21 @@ export class EntitlementsService {
         payload: { tenantId, moduleCode, status },
         correlationId: principal.correlationId,
         actorUserId: principal.userId,
+      });
+      await this.audit.writeInTransaction(tx, {
+        tenantId,
+        actorUserId: principal.userId,
+        actorPersonId: principal.personId,
+        actorType: "USER",
+        action: "entitlement.module.put",
+        resourceType: "tenant_module_entitlement",
+        resourceId: updated.id,
+        result: "SUCCESS",
+        riskLevel: "MEDIUM",
+        correlationId: principal.correlationId,
+        requestId: principal.requestId,
+        before: { status: before.status },
+        after: { moduleCode, status },
       });
       return updated;
     }, principal.userId);

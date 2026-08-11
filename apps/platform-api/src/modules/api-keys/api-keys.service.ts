@@ -15,6 +15,7 @@ import { generateApiKey, redactSensitive } from "@forge/security";
 import type { ForgePrincipal } from "@forge/tenant-context";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { DATABASE } from "../../tokens.js";
+import { AuditService } from "../audit/audit.service.js";
 
 function toPublicKey(row: typeof tenantApiKeys.$inferSelect) {
   return {
@@ -35,7 +36,10 @@ function toPublicKey(row: typeof tenantApiKeys.$inferSelect) {
 
 @Injectable()
 export class ApiKeysService {
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly audit: AuditService,
+  ) {}
 
   async list(tenantId: string) {
     return withTenantTransaction(this.db, tenantId, async (tx) => {
@@ -78,8 +82,25 @@ export class ApiKeysService {
           updatedAt: now,
         })
         .returning();
+
+      if (inserted) {
+        await this.audit.writeInTransaction(tx, {
+          tenantId,
+          actorUserId: principal.userId,
+          actorPersonId: principal.personId,
+          actorType: "USER",
+          action: "api_key.create",
+          resourceType: "tenant_api_key",
+          resourceId: inserted.id,
+          result: "SUCCESS",
+          riskLevel: "HIGH",
+          correlationId: principal.correlationId,
+          requestId: principal.requestId,
+          after: toPublicKey(inserted),
+        });
+      }
       return inserted;
-    });
+    }, principal.userId);
 
     if (!row) {
       throw new ForgeError("INTERNAL_ERROR", "Failed to create API key");
@@ -119,7 +140,22 @@ export class ApiKeysService {
           ),
         )
         .returning();
-      return toPublicKey(updated ?? existing);
-    });
+      const row = updated ?? existing;
+      await this.audit.writeInTransaction(tx, {
+        tenantId,
+        actorUserId: principal.userId,
+        actorPersonId: principal.personId,
+        actorType: "USER",
+        action: "api_key.revoke",
+        resourceType: "tenant_api_key",
+        resourceId: row.id,
+        result: "SUCCESS",
+        riskLevel: "HIGH",
+        correlationId: principal.correlationId,
+        requestId: principal.requestId,
+        after: toPublicKey(row),
+      });
+      return toPublicKey(row);
+    }, principal.userId);
   }
 }

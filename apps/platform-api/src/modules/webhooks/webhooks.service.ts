@@ -19,7 +19,11 @@ import {
 } from "@forge/security";
 import type { ForgePrincipal } from "@forge/tenant-context";
 import { and, desc, eq } from "drizzle-orm";
+import { createLogger, logOperationalFailure } from "@forge/observability";
 import { DATABASE } from "../../tokens.js";
+import { AuditService } from "../audit/audit.service.js";
+
+const opsLogger = createLogger({ service: "platform-api-webhooks", environment: process.env.APP_ENV ?? "local" });
 
 export type WebhookHttpResult = {
   ok: boolean;
@@ -108,7 +112,10 @@ function toPublicDelivery(row: typeof tenantWebhookDeliveries.$inferSelect) {
 export class WebhooksService {
   private httpPoster: WebhookHttpPoster = defaultHttpPoster;
 
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly audit: AuditService,
+  ) {}
 
   /** Test-only override to avoid live HTTP. */
   setHttpPosterForTests(poster: WebhookHttpPoster) {
@@ -154,8 +161,25 @@ export class WebhooksService {
           updatedAt: now,
         })
         .returning();
+      if (inserted) {
+        await this.audit.writeInTransaction(tx, {
+          tenantId,
+          actorUserId: principal.userId,
+          actorPersonId: principal.personId,
+          actorType: "USER",
+          action: "webhook.endpoint.changed",
+          resourceType: "tenant_webhook_endpoint",
+          resourceId: inserted.id,
+          result: "SUCCESS",
+          riskLevel: "HIGH",
+          correlationId: principal.correlationId,
+          requestId: principal.requestId,
+          metadata: { change: "create" },
+          after: toPublicEndpoint(inserted),
+        });
+      }
       return inserted;
-    });
+    }, principal.userId);
 
     if (!row) throw new ForgeError("INTERNAL_ERROR", "Failed to create webhook endpoint");
     return toPublicEndpoint(row, { includeSecret: true, signingSecret });
@@ -220,11 +244,32 @@ export class WebhooksService {
         )
         .returning();
 
-      return toPublicEndpoint(updated ?? existing, {
+      const row = updated ?? existing;
+      await this.audit.writeInTransaction(tx, {
+        tenantId,
+        actorUserId: principal.userId,
+        actorPersonId: principal.personId,
+        actorType: "USER",
+        action: "webhook.endpoint.changed",
+        resourceType: "tenant_webhook_endpoint",
+        resourceId: row.id,
+        result: "SUCCESS",
+        riskLevel: "HIGH",
+        correlationId: principal.correlationId,
+        requestId: principal.requestId,
+        metadata: {
+          change: "patch",
+          rotateSecret: Boolean(data.rotateSecret),
+          enabled,
+        },
+        after: toPublicEndpoint(row),
+      });
+
+      return toPublicEndpoint(row, {
         includeSecret,
         signingSecret: nextSecret,
       });
-    });
+    }, principal.userId);
   }
 
   async listDeliveries(tenantId: string, endpointId: string) {
@@ -363,6 +408,23 @@ export class WebhooksService {
     const durationMs = Date.now() - started;
     const status = result.ok ? "SUCCEEDED" : "FAILED";
     const now = new Date();
+
+    if (!result.ok) {
+      logOperationalFailure(opsLogger, {
+        category: "WEBHOOK",
+        message: "Outbound webhook delivery failed",
+        tenantId,
+        code: "WEBHOOK_DELIVERY_FAILED",
+        fields: {
+          endpointId: endpoint.id,
+          deliveryId,
+          eventType,
+          httpStatus: result.status,
+          durationMs,
+          // Do not log signing secret or full payload
+        },
+      });
+    }
 
     const updated = await withTenantTransaction(this.db, tenantId, async (tx) => {
       const current = await tx.query.tenantWebhookDeliveries.findFirst({

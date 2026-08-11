@@ -29,7 +29,9 @@ describe("WebhooksService (MK-S15)", () => {
     vi.clearAllMocks();
     endpoint = null;
     delivery = null;
-    service = new WebhooksService({} as never);
+    service = new WebhooksService({} as never, {
+      writeInTransaction: vi.fn(async () => "audit-1"),
+    } as never);
     service.setHttpPosterForTests(async ({ body, signatureHeader }) => {
       const ok = verifyWebhookSignature(body, signatureHeader, String(endpoint?.signingSecret));
       return { ok, status: ok ? 200 : 401, bodyPreview: ok ? "ok" : "bad sig" };
