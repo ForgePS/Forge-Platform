@@ -1,4 +1,5 @@
 import * as cdk from "aws-cdk-lib";
+import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
@@ -16,8 +17,9 @@ export interface ForgeApiCloudFrontProps {
 /**
  * HTTPS edge for the Platform API (ADR-036).
  *
- * Viewers terminate TLS on CloudFront. Origin protocol to the ALB remains HTTP
- * until Route 53 + ACM ALB TLS is enabled. Browsers never talk HTTP to the API.
+ * Viewers terminate TLS on CloudFront. Origin protocol to the ALB may remain
+ * HTTP_ONLY for private CF→ALB hops; ALB HTTPS is configured separately via
+ * ForgeEdgeTls for direct listener coverage.
  */
 export class ForgeApiCloudFront extends Construct {
   readonly distribution: cloudfront.Distribution;
@@ -95,9 +97,18 @@ export class ForgeApiCloudFront extends Construct {
     });
     void corsOrigins;
 
+    const apiDomain = config.domains?.api;
+    const certificateArn = config.edge.certificateArn;
+
     this.distribution = new cloudfront.Distribution(this, "Distribution", {
       comment: `Forge Platform API HTTPS edge (${config.environmentName})`,
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+      ...(apiDomain && certificateArn
+        ? {
+            domainNames: [apiDomain],
+            certificate: acm.Certificate.fromCertificateArn(this, "ViewerCertificate", certificateArn),
+          }
+        : {}),
       defaultBehavior: {
         origin,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,

@@ -13,6 +13,8 @@ export class ForgeRmsHosting extends ForgeStaticHosting {
       config: props.config,
       appKey: "rms",
       displayName: "RMS Web",
+      domainName: props.config.domains?.rms,
+      certificateArn: props.config.edge.certificateArn,
     });
   }
 }

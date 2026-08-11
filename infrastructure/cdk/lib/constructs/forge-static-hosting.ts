@@ -1,4 +1,5 @@
 import * as cdk from "aws-cdk-lib";
+import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as s3 from "aws-cdk-lib/aws-s3";
@@ -12,6 +13,13 @@ export interface ForgeStaticHostingProps {
   appKey: string;
   /** Human-readable label for comments and stack outputs. */
   displayName: string;
+  /**
+   * Optional custom hostname (e.g. creator.forgepublicsafety.com).
+   * Requires a us-east-1 ACM certificate ARN. Does not create Route53 records.
+   */
+  domainName?: string;
+  /** ACM certificate ARN in us-east-1 covering domainName (wildcard/apex). */
+  certificateArn?: string;
 }
 
 /**
@@ -118,6 +126,16 @@ function handler(event) {
       comment: `Forge ${displayName} (${config.environmentName})`,
       defaultRootObject: "index.html",
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+      ...(props.domainName && props.certificateArn
+        ? {
+            domainNames: [props.domainName],
+            certificate: acm.Certificate.fromCertificateArn(
+              this,
+              "ViewerCertificate",
+              props.certificateArn,
+            ),
+          }
+        : {}),
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(this.bucket),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,

@@ -13,6 +13,8 @@ export class ForgeTenantAdminHosting extends ForgeStaticHosting {
       config: props.config,
       appKey: "tenantadmin",
       displayName: "Tenant Admin",
+      domainName: props.config.domains?.tenantAdmin,
+      certificateArn: props.config.edge.certificateArn,
     });
   }
 }

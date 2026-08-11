@@ -16,8 +16,9 @@ export interface ForgeEdgeTlsProps {
  *
  * When `edge.enableHttps` is false this construct is a no-op so development
  * can remain on HTTP until DNS is delegated. When enabled it resolves or
- * creates an ACM certificate, attaches a TLS listener, and redirects HTTP
- * to HTTPS.
+ * creates an ACM certificate, attaches a TLS listener on 443, and keeps HTTP:80
+ * forwarding to the target group so CloudFront→ALB (HTTP_ONLY) still works before
+ * external DNS cutover. SPA CloudFront edges still use ViewerProtocolPolicy.REDIRECT_TO_HTTPS.
  */
 export class ForgeEdgeTls extends Construct {
   readonly certificate?: acm.ICertificate;
@@ -67,14 +68,13 @@ export class ForgeEdgeTls extends Construct {
       sslPolicy: elbv2.SslPolicy.TLS13_RES,
     });
 
-    this.httpListener = props.alb.addListener("HttpRedirect", {
+    // Keep HTTP forward for CloudFront OriginProtocolPolicy.HTTP_ONLY until
+    // external DNS cutover allows an HTTPS origin (or Host-based redirect rules).
+    // A blanket HTTP→HTTPS redirect would 301 the CF→ALB hop and break the API.
+    this.httpListener = props.alb.addListener("HttpForward", {
       port: 80,
       open: true,
-      defaultAction: elbv2.ListenerAction.redirect({
-        protocol: "HTTPS",
-        port: "443",
-        permanent: true,
-      }),
+      defaultTargetGroups: [props.apiTargetGroup],
     });
   }
 }

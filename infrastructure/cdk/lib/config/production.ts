@@ -80,10 +80,11 @@ export function createProductionConfig(
       tenantAdmin: `admin.${PRODUCTION_ROOT_DOMAIN}`,
       ses: `mail.${PRODUCTION_ROOT_DOMAIN}`,
     },
-    // TLS for ALB remains off until Production edge is wired and cutover authorized.
-    // Existing us-east-1 ISSUED cert covers apex + wildcard; do not flip enableHttps here.
+    // TLS enabled for production ALB HTTPS listener using the ISSUED ACM cert.
+    // Custom hostnames are configured on CloudFront/ALB infrastructure without
+    // changing external customer DNS (cutover remains unauthorized).
     edge: {
-      enableHttps: false,
+      enableHttps: true,
       apiHostname: `api.${PRODUCTION_ROOT_DOMAIN}`,
       consoleHostname: `creator.${PRODUCTION_ROOT_DOMAIN}`,
       certificateArn:

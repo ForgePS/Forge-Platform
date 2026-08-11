@@ -13,9 +13,10 @@ export class ForgeIndustrialHosting extends ForgeStaticHosting {
       config: props.config,
       appKey: "industrial",
       displayName: "Industrial Web",
+      domainName: props.config.domains?.industrial,
+      certificateArn: props.config.edge.certificateArn,
       // Module pages are fully statically exported via generateStaticParams().
-      // Do not rewrite /modules/{code}/ to placeholder — that hydrates every
-      // deep link as ModuleUnavailable while keeping the wrong workspace URL.
+      // Directory index rewrite still maps /modules/{code}/ → index.html.
     });
   }
 }

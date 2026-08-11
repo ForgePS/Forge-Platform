@@ -13,6 +13,8 @@ export class ForgeConsoleHosting extends ForgeStaticHosting {
       config: props.config,
       appKey: "console",
       displayName: "Creator Console",
+      domainName: props.config.domains?.creator,
+      certificateArn: props.config.edge.certificateArn,
     });
   }
 }

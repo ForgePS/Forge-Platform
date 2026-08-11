@@ -162,7 +162,7 @@ new MonitoringStack(app, "ForgeMonitoring", {
   cadPollingDlq: messaging.cadPollingDlq,
   cadRetentionDlq: messaging.cadRetentionDlq,
   apiCloudFrontDistributionId: compute.ecs.apiHttps.distribution.distributionId,
-  rmsCloudFrontDistributionId: "E2LZJLH664YX70",
+  rmsCloudFrontDistributionId: isProduction ? undefined : "E2LZJLH664YX70",
   alarmTopic: alerting.opsTopic,
 });
 
@@ -187,7 +187,11 @@ const audit = config.features.enableCloudTrail
     })
   : undefined;
 
-new FrontendStack(app, "ForgeFrontend", { config, env });
+new FrontendStack(app, "ForgeFrontend", {
+  config,
+  env,
+  apiCloudFrontDistributionId: compute.ecs.apiHttps.distribution.distributionId,
+});
 
 data.addStackDependency(network);
 data.addStackDependency(security);
