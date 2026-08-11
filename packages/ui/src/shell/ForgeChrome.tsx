@@ -376,7 +376,7 @@ export function ForgeFacilitySelector({
 export function ForgeSearchTrigger({
   onTrigger,
   disabled = true,
-  disabledReason = "Search not connected (MK-S18)",
+  disabledReason = "Search not connected",
   label = "Search",
 }: {
   onTrigger?: () => void;

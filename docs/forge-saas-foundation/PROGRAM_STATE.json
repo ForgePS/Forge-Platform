@@ -1,7 +1,7 @@
 {
   "program": "FORGE-SAAS-CORE",
   "currentAuthorizedSprint": null,
-  "lastCompletedSprint": "MK-S17",
+  "lastCompletedSprint": "MK-S18",
   "status": "ACTIVE",
   "productionAuthorized": false,
   "automaticSprintAdvance": false,
@@ -24,12 +24,14 @@
     "BACKLOG-017",
     "BACKLOG-018"
   ],
-  "mkS17Verification": {
-    "date": "2026-08-10",
+  "mkS18Verification": {
+    "date": "2026-08-11",
     "typecheckPlatformApi": "PASS",
     "typecheckTenantAdmin": "PASS",
     "typecheckCreator": "PASS",
-    "unitWebKitTenantScoped": "4 passed",
+    "unitContractsSearch": "2 passed",
+    "unitUi": "8 passed",
+    "unitSearchService": "3 passed",
     "productionOperations": "NONE",
     "repairPasses": 0
   }

@@ -40,6 +40,7 @@ import { RmsMasterDataModule } from "./modules/rms/rms-master-data.module.js";
 import { ProductsModule } from "./modules/products/products.module.js";
 import { SubscriptionsModule } from "./modules/subscriptions/subscriptions.module.js";
 import { SupportModule } from "./modules/support/support.module.js";
+import { SearchModule } from "./modules/search/search.module.js";
 import { TenantsModule } from "./modules/tenants/tenants.module.js";
 import { UsersModule } from "./modules/users/users.module.js";
 import { APP_ENV } from "./tokens.js";
@@ -76,6 +77,7 @@ export class AppModule {
         ApiKeysModule,
         WebhooksModule,
         SupportModule,
+        SearchModule,
         OnboardingModule,
         NerisModule,
         NerisIncidentsModule,

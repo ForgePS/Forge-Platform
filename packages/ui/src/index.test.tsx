@@ -1,14 +1,17 @@
 /** @vitest-environment jsdom */
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
 import {
   Can,
+  ForgeCommandPalette,
   ForgeFacilitySelector,
   ForgePageHeader,
   ForgeSearchTrigger,
   ForgeShellState,
   Input,
 } from "./index.js";
+
+afterEach(() => cleanup());
 
 describe("ui accessibility", () => {
   it("renders input with accessible label", () => {
@@ -42,6 +45,28 @@ describe("MK-S8 shell chrome", () => {
     render(<ForgeSearchTrigger />);
     const btn = screen.getByRole("button", { name: "Search" }) as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
+  });
+
+  it("enables search trigger when connected", () => {
+    render(<ForgeSearchTrigger disabled={false} onTrigger={() => undefined} />);
+    const btn = screen.getByRole("button", { name: "Search" }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+  });
+
+  it("renders command palette items when open", () => {
+    const onSelect = vi.fn();
+    render(
+      <ForgeCommandPalette
+        open
+        onClose={() => undefined}
+        query=""
+        onQueryChange={() => undefined}
+        items={[{ id: "1", group: "Navigate", label: "Members", subtitle: "/members" }]}
+        onSelect={onSelect}
+      />,
+    );
+    expect(screen.getByRole("dialog", { name: "Search" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: /Members/ })).toBeTruthy();
   });
 
   it("renders shell loading / unauthorized / disabled entitlement states", () => {

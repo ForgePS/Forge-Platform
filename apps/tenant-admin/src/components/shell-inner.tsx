@@ -11,12 +11,12 @@ import {
   ForgeFacilitySelector,
   ForgeHelpMenu,
   ForgeProductSwitcher,
-  ForgeSearchTrigger,
   ForgeShellState,
   ForgeTenantSwitcher,
   ForgeUserMenu,
 } from "@forge/ui";
 import { useAuth } from "@/hooks/use-auth";
+import { ConnectedCommandPalette } from "@/components/connected-command-palette";
 import { ConnectedNotificationMenu } from "@/components/connected-notification-menu";
 import { TENANT_ADMIN_NAV_GROUPS } from "@/lib/navigation";
 import styles from "../app/shell.module.css";
@@ -107,7 +107,7 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
       topbarCenter={<span>Tenant Admin · {activeTenantLabel}</span>}
       topbarRight={
         <>
-          <ForgeSearchTrigger />
+          <ConnectedCommandPalette />
           {me ? (
             <ForgeProductSwitcher
               products={products}

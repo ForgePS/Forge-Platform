@@ -10,12 +10,12 @@ import {
   ForgeFacilitySelector,
   ForgeHelpMenu,
   ForgeProductSwitcher,
-  ForgeSearchTrigger,
   ForgeShellState,
   ForgeTenantSwitcher,
   ForgeUserMenu,
 } from "@forge/ui";
 import { filterNavigationForSession, useAuth } from "@forge/web-kit";
+import { ConnectedCommandPalette } from "@/components/connected-command-palette";
 import { ConnectedNotificationMenu } from "@/components/connected-notification-menu";
 import { CREATOR_NAV_GROUPS } from "@/lib/navigation";
 import styles from "../app/shell.module.css";
@@ -90,7 +90,7 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
       topbarCenter={<span>Creator Console · {activeTenantLabel}</span>}
       topbarRight={
         <>
-          <ForgeSearchTrigger />
+          <ConnectedCommandPalette />
           {me ? (
             <ForgeProductSwitcher
               products={products}

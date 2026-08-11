@@ -32,6 +32,8 @@ export {
   ForgeUserMenu,
 } from "./shell/ForgeChrome.js";
 export type { ForgeUserMenuItem } from "./shell/ForgeChrome.js";
+export { ForgeCommandPalette } from "./shell/ForgeCommandPalette.js";
+export type { ForgeCommandItem } from "./shell/ForgeCommandPalette.js";
 export { ForgeShellState } from "./shell/ForgeShellState.js";
 export type { ForgeShellAreaState } from "./shell/ForgeShellState.js";
 export type { ForgeBreadcrumbItem } from "./shell/ForgeBreadcrumbs.js";

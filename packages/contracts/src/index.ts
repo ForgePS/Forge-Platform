@@ -180,6 +180,20 @@ export {
 } from "./api-keys-webhooks-domain.js";
 
 export {
+  SEARCH_ENTITY_TYPES,
+  SEARCH_GROUP_LABELS,
+  searchGroupSchema,
+  searchHitSchema,
+  searchQuerySchema,
+  searchResponseSchema,
+  type SearchEntityType,
+  type SearchGroup,
+  type SearchHit,
+  type SearchQueryInput,
+  type SearchResponse,
+} from "./search-domain.js";
+
+export {
   EMAIL_TEMPLATE_KEYS,
   NOTIFICATION_DESTINATIONS,
   NOTIFICATION_PRIORITIES,
