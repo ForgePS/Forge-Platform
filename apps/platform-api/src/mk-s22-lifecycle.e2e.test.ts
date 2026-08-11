@@ -319,14 +319,19 @@ describe("MK-S22 SaaS lifecycle UAT", () => {
         })
         .expect((res) => expectMutationSuccess(res.status));
 
-      await creatorApi()
+      const customerVersion = customer.body.data.recordVersion as number;
+      expect(customerVersion).toBeGreaterThan(0);
+      const customerEtag =
+        (customer.headers.etag as string | undefined) ?? `W/"${customerVersion}"`;
+
+      const patched = await creatorApi()
         .patch(`/api/v1/tenants/${tenantId}/billing/customers`)
-        .set(
-          "If-Match",
-          customer.headers.etag ?? `W/"${customer.body.data.recordVersion}"`,
-        )
-        .send({ displayName: "MK-S22 Billing Updated" })
-        .expect((res) => expectMutationSuccess(res.status));
+        .set("If-Match", customerEtag)
+        .send({ displayName: "MK-S22 Billing Updated" });
+      expect(
+        [200, 201],
+        `billing patch ${patched.status}: ${JSON.stringify(patched.body)}`,
+      ).toContain(patched.status);
 
       await harness
         .api(ownerUserId, tenantId)
@@ -376,17 +381,15 @@ describe("MK-S22 SaaS lifecycle UAT", () => {
           destination: "IN_APP",
         })
         .expect((res) => expectMutationSuccess(res.status));
-      expect(notification.body.data.id).toBeTruthy();
+      const notificationId = notification.body.data.notification?.id as string | undefined;
+      expect(notificationId).toBeTruthy();
 
       const listed = await harness
         .api(ownerUserId, tenantId)
         .get(`/api/v1/tenants/${tenantId}/notifications`)
         .expect(200);
-      expect(
-        (listed.body.data as Array<{ id: string }>).some(
-          (n) => n.id === notification.body.data.id,
-        ),
-      ).toBe(true);
+      const listedRows = listed.body.data as Array<{ id: string }>;
+      expect(listedRows.some((n) => n.id === notificationId)).toBe(true);
 
       // --- 23 Audit verified ---
       const audit = await harness

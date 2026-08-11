@@ -44,8 +44,10 @@ export class BillingController {
     @Body() body: unknown,
     @Principal() principal: ForgePrincipal,
     @Req() req: RequestWithIds,
+    @Res({ passthrough: true }) res: Response,
   ) {
     const data = await this.billing.ensureCustomer(tenantId, body, principal);
+    setETag(res, data.recordVersion);
     return ok(data, getRequestIds(req));
   }
 

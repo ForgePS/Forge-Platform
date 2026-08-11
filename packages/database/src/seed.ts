@@ -654,13 +654,9 @@ export async function seedPlatformData(db: SeedDatabase): Promise<void> {
 
   for (const code of ALL_PERMISSIONS) {
     const meta = permissionMeta(code);
-    const existing = await db
-      .select({ id: permissions.id })
-      .from(permissions)
-      .where(eq(permissions.code, code))
-      .limit(1);
-    if (existing.length === 0) {
-      await db.insert(permissions).values({
+    await db
+      .insert(permissions)
+      .values({
         id: createId(),
         code,
         name: meta.name,
@@ -670,8 +666,8 @@ export async function seedPlatformData(db: SeedDatabase): Promise<void> {
         isSensitive: meta.isSensitive,
         createdAt: now,
         updatedAt: now,
-      });
-    }
+      })
+      .onConflictDoNothing({ target: permissions.code });
   }
 
   const permissionRows = await db.select().from(permissions);

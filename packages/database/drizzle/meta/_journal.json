@@ -225,6 +225,55 @@
       "when": 1754860000000,
       "tag": "0031_mk_s10_billing_ux",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1754870000000,
+      "tag": "0032_mk_s13_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1754880000000,
+      "tag": "0033_mk_s14_branding_storage",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1754890000000,
+      "tag": "0034_mk_s15_api_keys_webhooks",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1754900000000,
+      "tag": "0035_mk_s16_audit_export_permission",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1754910000000,
+      "tag": "0036_mk_s19_platform_jobs_exports",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1754920000000,
+      "tag": "0037_mk_s20_platform_analytics",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1754930000000,
+      "tag": "0038_mk_s21_security_hardening",
+      "breakpoints": true
     }
   ]
 }
