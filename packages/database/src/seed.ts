@@ -109,6 +109,7 @@ const ROLE_TEMPLATES = [
       "platform.membership.read",
       "platform.membership.manage",
       "platform.onboarding.manage",
+      "platform.analytics.read",
       "import.view",
       "import.upload",
       "import.map",

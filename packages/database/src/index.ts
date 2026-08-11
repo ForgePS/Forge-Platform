@@ -77,3 +77,22 @@ export async function withTenantTransaction<T>(
     return callback(tx);
   });
 }
+
+/**
+ * Platform-admin analytics / system jobs: sets transaction-local `app.bypass_rls=on`.
+ * Only tables whose RLS policies honor bypass will return cross-tenant rows.
+ * Callers must enforce creator-only authorization before invoking.
+ */
+export async function withBypassRlsTransaction<T>(
+  db: Database,
+  callback: (tx: DatabaseTransaction) => Promise<T>,
+  userId?: string,
+): Promise<T> {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.bypass_rls', 'on', true)`);
+    if (userId) {
+      await tx.execute(sql`select set_config('app.current_user_id', ${userId}, true)`);
+    }
+    return callback(tx);
+  });
+}

@@ -64,6 +64,7 @@ export const PLATFORM_PERMISSIONS = [
   "platform.jobs.read",
   "tenant.export.read",
   "tenant.export.create",
+  "platform.analytics.read",
   "platform.neris.schema.read",
   "platform.neris.schema.import",
   "platform.neris.overlay.read",
@@ -106,6 +107,7 @@ export const CREATOR_ONLY_PERMISSIONS = [
   "platform.tenant.create",
   "platform.tenant.suspend",
   "platform.onboarding.manage",
+  "platform.analytics.read",
   "platform.neris.schema.import",
   "platform.cad.adapter.manage",
   "platform.cad.mapping_template.manage",
@@ -218,6 +220,12 @@ export {
   type ExportDownload,
   type ExportKind,
 } from "./exports-domain.js";
+
+export {
+  platformAnalyticsOverviewSchema,
+  platformAnalyticsActivityItemSchema,
+  type PlatformAnalyticsOverview,
+} from "./platform-analytics-domain.js";
 
 export {
   EMAIL_TEMPLATE_KEYS,

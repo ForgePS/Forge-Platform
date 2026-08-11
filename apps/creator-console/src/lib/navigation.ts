@@ -9,7 +9,13 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
     id: "control-plane",
     label: "Control plane",
     items: [
-      { id: "overview", label: "Overview", route: "/", permission: "platform.tenant.read" },
+      { id: "overview", label: "Overview", route: "/", anyOfPermissions: ["platform.tenant.read", "platform.analytics.read"] },
+      {
+        id: "analytics",
+        label: "Analytics",
+        route: "/analytics",
+        permission: "platform.analytics.read",
+      },
       { id: "tenants", label: "Tenants", route: "/tenants", permission: "platform.tenant.read" },
       { id: "users", label: "Users", route: "/users", permission: "platform.user.invite" },
       {

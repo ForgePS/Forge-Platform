@@ -43,6 +43,7 @@ import { SupportModule } from "./modules/support/support.module.js";
 import { SearchModule } from "./modules/search/search.module.js";
 import { JobsModule } from "./modules/jobs/jobs.module.js";
 import { ExportsModule } from "./modules/exports/exports.module.js";
+import { PlatformAnalyticsModule } from "./modules/platform-analytics/platform-analytics.module.js";
 import { TenantsModule } from "./modules/tenants/tenants.module.js";
 import { UsersModule } from "./modules/users/users.module.js";
 import { APP_ENV } from "./tokens.js";
@@ -82,6 +83,7 @@ export class AppModule {
         SearchModule,
         JobsModule,
         ExportsModule,
+        PlatformAnalyticsModule,
         OnboardingModule,
         NerisModule,
         NerisIncidentsModule,
