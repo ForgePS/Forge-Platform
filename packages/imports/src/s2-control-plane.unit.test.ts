@@ -29,6 +29,11 @@ describe("import S2 state machine", () => {
     expect(nextStatusForAction("approve", "AWAITING_APPROVAL")).toBe("APPROVED");
     expect(nextStatusForAction("reject", "AWAITING_APPROVAL")).toBe("MAPPED");
   });
+
+  it("foundation validation/preview transitions (MK-S19)", () => {
+    expect(nextStatusForAction("request_validation", "MAPPED")).toBe("READY_FOR_PREVIEW");
+    expect(nextStatusForAction("request_preview", "READY_FOR_PREVIEW")).toBe("PREVIEW_READY");
+  });
 });
 
 describe("import S2 dto validation", () => {

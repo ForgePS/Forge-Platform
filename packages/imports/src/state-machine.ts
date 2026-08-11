@@ -29,7 +29,7 @@ export const S2_CONTROL_PLANE_TRANSITIONS: Record<
   ],
   create: ["READY_FOR_MAPPING"],
   request_validation: ["MAPPED", "VALIDATION_FAILED"],
-  request_preview: ["MAPPED", "PREVIEW_READY", "READY_FOR_PREVIEW"],
+  request_preview: ["MAPPED", "READY_FOR_PREVIEW", "PREVIEW_READY"],
 };
 
 /** S3 upload transitions. Malware owns UPLOADED→SCANNING; format detect runs after CLEAN. */
@@ -93,8 +93,9 @@ export function nextStatusForAction(
     case "cancel":
       return "CANCELLED";
     case "request_validation":
+      return "READY_FOR_PREVIEW";
     case "request_preview":
-      return current;
+      return "PREVIEW_READY";
     default:
       return current;
   }

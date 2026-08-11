@@ -41,6 +41,8 @@ import { ProductsModule } from "./modules/products/products.module.js";
 import { SubscriptionsModule } from "./modules/subscriptions/subscriptions.module.js";
 import { SupportModule } from "./modules/support/support.module.js";
 import { SearchModule } from "./modules/search/search.module.js";
+import { JobsModule } from "./modules/jobs/jobs.module.js";
+import { ExportsModule } from "./modules/exports/exports.module.js";
 import { TenantsModule } from "./modules/tenants/tenants.module.js";
 import { UsersModule } from "./modules/users/users.module.js";
 import { APP_ENV } from "./tokens.js";
@@ -78,6 +80,8 @@ export class AppModule {
         WebhooksModule,
         SupportModule,
         SearchModule,
+        JobsModule,
+        ExportsModule,
         OnboardingModule,
         NerisModule,
         NerisIncidentsModule,

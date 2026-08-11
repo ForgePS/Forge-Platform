@@ -110,7 +110,16 @@ export const TENANT_ADMIN_NAV_GROUPS: ForgeNavigationGroup[] = [
   {
     id: "imports",
     label: "Import Center",
-    items: [{ id: "import-center", label: "Import Center", route: "/imports", permission: "import.view" }],
+    items: [
+      { id: "import-center", label: "Import Center", route: "/imports", permission: "import.view" },
+      { id: "jobs", label: "Jobs", route: "/jobs", permission: "platform.jobs.read" },
+      {
+        id: "exports",
+        label: "Data Export",
+        route: "/exports",
+        permission: "tenant.export.create",
+      },
+    ],
   },
   {
     id: "studio",

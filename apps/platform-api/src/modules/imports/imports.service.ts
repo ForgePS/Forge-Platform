@@ -11,7 +11,6 @@ import {
   createImportProfileSchema,
   getImportTemplate,
   IMPORT_NOT_AVAILABLE_UNTIL_S3,
-  IMPORT_NOT_AVAILABLE_UNTIL_S5,
   listImportTemplates,
   listJobsQuerySchema,
   listProfilesQuerySchema,
@@ -493,7 +492,10 @@ export class ImportsService {
           if (!job) {
             throw new ForgeError("IMPORT_JOB_NOT_FOUND", "The import job was not found.");
           }
-          nextStatusForAction("request_validation", job.status as ImportJobStatus);
+          const nextStatus = nextStatusForAction(
+            "request_validation",
+            job.status as ImportJobStatus,
+          );
           const mappingCount = await this.repo.countMappings(tx, tenantId, jobId);
           if (mappingCount < 1) {
             throw new ForgeError(
@@ -501,6 +503,19 @@ export class ImportsService {
               "Mappings are required before requesting validation.",
             );
           }
+          // MK-S19 foundation: transition through validation gate when mappings exist.
+          // Product row-rule workers remain domain adapters (LIM-IMP-006).
+          const updated = await this.repo.updateJobStatus(
+            tx,
+            job,
+            nextStatus,
+            principal.userId,
+            {
+              progressPercent: 100,
+              currentStage: "VALIDATION_FOUNDATION",
+              lastProgressAt: new Date(),
+            },
+          );
           await this.outbox.write(tx, {
             tenantId,
             aggregateType: "import_job",
@@ -510,8 +525,9 @@ export class ImportsService {
             actorUserId: principal.userId,
             payload: {
               jobId,
-              status: job.status,
-              availability: IMPORT_NOT_AVAILABLE_UNTIL_S5,
+              status: updated.status,
+              mappingCount,
+              mode: "FOUNDATION",
             },
           });
           await this.audit.writeInTransaction(tx, {
@@ -526,14 +542,14 @@ export class ImportsService {
             riskLevel: "LOW",
             correlationId,
             requestId: principal.requestId,
-            after: { availability: IMPORT_NOT_AVAILABLE_UNTIL_S5 },
+            after: { status: updated.status, mappingCount, mode: "FOUNDATION" },
           });
           return {
             jobId,
-            status: job.status,
-            requestStatus: IMPORT_NOT_AVAILABLE_UNTIL_S5,
+            status: updated.status,
+            requestStatus: "ACCEPTED",
             message:
-              "Validation orchestration accepted for audit only. Row-level validation workers are not available until Sprint S5.",
+              "Foundation validation passed (mappings present). Advanced row-rule workers remain product-adapter scoped.",
           };
         },
         principal.userId,
@@ -554,7 +570,10 @@ export class ImportsService {
           if (!job) {
             throw new ForgeError("IMPORT_JOB_NOT_FOUND", "The import job was not found.");
           }
-          nextStatusForAction("request_preview", job.status as ImportJobStatus);
+          const nextStatus = nextStatusForAction(
+            "request_preview",
+            job.status as ImportJobStatus,
+          );
           const mappingCount = await this.repo.countMappings(tx, tenantId, jobId);
           if (mappingCount < 1) {
             throw new ForgeError(
@@ -562,6 +581,17 @@ export class ImportsService {
               "Mappings are required before requesting preview.",
             );
           }
+          const updated = await this.repo.updateJobStatus(
+            tx,
+            job,
+            nextStatus,
+            principal.userId,
+            {
+              progressPercent: 100,
+              currentStage: "PREVIEW_FOUNDATION",
+              lastProgressAt: new Date(),
+            },
+          );
           await this.outbox.write(tx, {
             tenantId,
             aggregateType: "import_job",
@@ -571,8 +601,9 @@ export class ImportsService {
             actorUserId: principal.userId,
             payload: {
               jobId,
-              status: job.status,
-              availability: IMPORT_NOT_AVAILABLE_UNTIL_S5,
+              status: updated.status,
+              mappingCount,
+              mode: "FOUNDATION",
             },
           });
           await this.audit.writeInTransaction(tx, {
@@ -587,14 +618,14 @@ export class ImportsService {
             riskLevel: "LOW",
             correlationId,
             requestId: principal.requestId,
-            after: { availability: IMPORT_NOT_AVAILABLE_UNTIL_S5 },
+            after: { status: updated.status, mappingCount, mode: "FOUNDATION" },
           });
           return {
             jobId,
-            status: job.status,
-            requestStatus: IMPORT_NOT_AVAILABLE_UNTIL_S5,
+            status: updated.status,
+            requestStatus: "ACCEPTED",
             message:
-              "Preview orchestration accepted for audit only. Preview generation is not available until Sprint S5.",
+              "Foundation preview marked ready. Sample row materialization remains product-adapter scoped.",
           };
         },
         principal.userId,

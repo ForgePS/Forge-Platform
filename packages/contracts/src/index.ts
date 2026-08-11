@@ -61,6 +61,9 @@ export const PLATFORM_PERMISSIONS = [
   "tenant.api_key.manage",
   "tenant.webhook.read",
   "tenant.webhook.manage",
+  "platform.jobs.read",
+  "tenant.export.read",
+  "tenant.export.create",
   "platform.neris.schema.read",
   "platform.neris.schema.import",
   "platform.neris.overlay.read",
@@ -192,6 +195,29 @@ export {
   type SearchQueryInput,
   type SearchResponse,
 } from "./search-domain.js";
+
+export {
+  PLATFORM_JOB_STATUSES,
+  PLATFORM_JOB_TYPES,
+  listPlatformJobsQuerySchema,
+  platformJobSchema,
+  type ListPlatformJobsQuery,
+  type PlatformJob,
+  type PlatformJobStatus,
+  type PlatformJobType,
+} from "./jobs-domain.js";
+
+export {
+  EXPORT_DOWNLOAD_TTL_SECONDS,
+  EXPORT_KINDS,
+  EXPORT_KIND_TO_JOB_TYPE,
+  EXPORT_SYNC_ROW_LIMIT,
+  createExportInputSchema,
+  exportDownloadSchema,
+  type CreateExportInput,
+  type ExportDownload,
+  type ExportKind,
+} from "./exports-domain.js";
 
 export {
   EMAIL_TEMPLATE_KEYS,

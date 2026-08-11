@@ -34,6 +34,7 @@ describe("audit", () => {
     expect(SAAS_AUDIT_ACTIONS.API_KEY_CREATED).toBe("api_key.create");
     expect(SAAS_AUDIT_ACTIONS.WEBHOOK_CHANGED).toBe("webhook.endpoint.changed");
     expect(SAAS_AUDIT_ACTIONS.EXPORT_GENERATED).toBe("audit.export.generated");
+    expect(SAAS_AUDIT_ACTIONS.DATA_EXPORT_CREATED).toBe("export.job.created");
     expect(SAAS_AUDIT_ACTIONS.SUPPORT_ACTION).toBe("support.action");
     expect(SAAS_AUDIT_ACTION_VALUES.length).toBeGreaterThanOrEqual(15);
     expect(isSaasAuditAction("api_key.revoke")).toBe(true);

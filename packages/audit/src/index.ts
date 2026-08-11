@@ -25,6 +25,8 @@ export const SAAS_AUDIT_ACTIONS = {
   BRANDING_CHANGED: "branding.put",
   SUPPORT_ACTION: "support.action",
   EXPORT_GENERATED: "audit.export.generated",
+  DATA_EXPORT_CREATED: "export.job.created",
+  DATA_EXPORT_DOWNLOADED: "export.download.requested",
 } as const;
 
 export type SaasAuditAction = (typeof SAAS_AUDIT_ACTIONS)[keyof typeof SAAS_AUDIT_ACTIONS];
