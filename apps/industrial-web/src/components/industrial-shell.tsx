@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AuthProvider, apiGet, useAuth } from "@forge/web-kit";
@@ -9,18 +9,86 @@ import { INDUSTRIAL_MODULE_REGISTRY, INDUSTRIAL_PRODUCT_CODE } from "@forge/cont
 import { buildIndustrialNavigation, featureFlagForModule } from "@/lib/navigation";
 import { clearAllOfflineData } from "@/lib/offline/cache";
 import { NetworkStatusBanner } from "@/lib/offline/network-status";
+import { ThemeModeToggle, useIndustrialThemeMode } from "@/components/theme-mode-toggle";
+import { ForgeIndustrialMark } from "@/components/forge-industrial-mark";
+import { useLoginBranding } from "@/hooks/use-login-branding";
+import { useTenantBranding } from "@/hooks/use-tenant-branding";
 
 const appEnv = process.env.NEXT_PUBLIC_APP_ENV ?? process.env.APP_ENV ?? "local";
+const NAV_GROUPS_STORAGE_KEY = "forge-ind-nav-open-groups-v2";
+const FACILITY_STORAGE_KEY = "forge-ind-active-facility-id";
 
-function brandMark() {
-  return (
-    <svg width="25" viewBox="0 0 25 42" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path
-        fill="#696cff"
-        d="M13.79.36L3.4 7.44C.57 9.69-.38 12.48.56 15.8c.13.43.54 2 .2.56 2.56 3.12 4.28 5.32 5.6 7.65 6.06l-.05.04-4.96 3.3C.45 26.3.09 28.51 1.56 31.17c1.27 1.64 3.65 2.09 5.53 1.37 1.26-.48 4.36-2.54 9.33-6.16 1.61-1.88 2.28-3.92 1.99-6.14-.44-2.7-2.23-4.66-5.36-5.86l-2.13-.9L18.62 7.98 13.79.36z"
+function normalizeAppPath(path: string | null | undefined): string {
+  if (!path) return "/";
+  if (path.length > 1 && path.endsWith("/")) return path.slice(0, -1);
+  return path;
+}
+
+function routeIsActive(pathname: string | null | undefined, route: string): boolean {
+  return normalizeAppPath(pathname) === normalizeAppPath(route);
+}
+
+function readStoredOpenGroups(): Record<string, boolean> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(NAV_GROUPS_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.entries(parsed).map(([key, value]) => [key, value === true]),
+    );
+  } catch {
+    return {};
+  }
+}
+
+/** When logoUrl is set, show full logo only (no short-name text). Falls back to Forge mark + label. */
+function BrandLockup({
+  logoUrl,
+  label,
+  primaryColor = "#696cff",
+  href,
+  onClick,
+  textClassName = "app-brand-text menu-text fw-bolder ms-2",
+}: {
+  logoUrl?: string;
+  label: string;
+  primaryColor?: string;
+  href?: string;
+  onClick?: () => void;
+  textClassName?: string;
+}) {
+  const [logoFailed, setLogoFailed] = useState(false);
+  const showFullLogo = Boolean(logoUrl?.trim()) && !logoFailed;
+
+  const inner = showFullLogo ? (
+    <span className="app-brand-logo app-brand-full-logo">
+      <img
+        src={logoUrl}
+        alt={label}
+        className="app-brand-full-logo-img"
+        onError={() => setLogoFailed(true)}
       />
-    </svg>
+    </span>
+  ) : (
+    <>
+      <span className="app-brand-logo">
+        <ForgeIndustrialMark primaryColor={primaryColor} title={label} />
+      </span>
+      <span className={textClassName}>{label}</span>
+    </>
   );
+
+  const linkClassName = showFullLogo ? "app-brand-link app-brand-link--full-logo" : "app-brand-link";
+
+  if (href) {
+    return (
+      <Link href={href} className={linkClassName} {...(onClick ? { onClick } : {})}>
+        {inner}
+      </Link>
+    );
+  }
+  return <div className={linkClassName}>{inner}</div>;
 }
 
 function iconForModule(code: string, group: string): string {
@@ -37,6 +105,7 @@ function iconForModule(code: string, group: string): string {
   if (c.includes("message")) return "bx-message";
   if (c.includes("task")) return "bx-task";
   if (c.includes("form")) return "bx-edit";
+  if (c.includes("setting")) return "bx-cog";
   if (c.includes("jsa")) return "bx-list-check";
   if (c.includes("observ")) return "bx-show";
   if (group.toLowerCase().includes("high")) return "bx-error-circle";
@@ -48,21 +117,34 @@ function GateCard({
   body,
   muted,
   children,
+  brandLabel = "Industrial",
+  logoUrl,
+  primaryColor,
 }: {
   title: string;
   body: string;
   muted?: string;
   children?: ReactNode;
+  brandLabel?: string;
+  logoUrl?: string;
+  primaryColor?: string;
 }) {
+  const primaryStyle = primaryColor
+    ? ({ ["--bs-primary"]: primaryColor } as CSSProperties)
+    : undefined;
   return (
-    <div className="container-xxl">
+    <div className="container-xxl" style={primaryStyle}>
       <div className="authentication-wrapper authentication-basic container-p-y">
         <div className="authentication-inner">
           <div className="card">
             <div className="card-body">
               <div className="app-brand justify-content-center mb-4">
-                <span className="app-brand-logo demo">{brandMark()}</span>
-                <span className="app-brand-text demo text-body fw-bolder ms-2">Industrial</span>
+                <BrandLockup
+                  label={brandLabel}
+                  textClassName="app-brand-text text-body fw-bolder ms-2"
+                  {...(logoUrl ? { logoUrl } : {})}
+                  {...(primaryColor ? { primaryColor } : {})}
+                />
               </div>
               <h4 className="mb-2">{title}</h4>
               <p className="mb-4">{body}</p>
@@ -79,9 +161,42 @@ function GateCard({
 function ShellBody({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { me, loading, error, logout, loginWithCognito, chooseTenant, hasPermission } = useAuth();
+  const {
+    productDisplayName,
+    appShortName,
+    logoUrl,
+    primaryColor,
+    secondaryColor,
+    accentColor,
+  } = useTenantBranding();
+  const {
+    login,
+    primaryColor: loginPrimaryColor,
+    hostTenantId,
+    loadingHost,
+  } = useLoginBranding();
+  const themeMode = useIndustrialThemeMode();
   const [flags, setFlags] = useState<Record<string, boolean>>({});
   const [menuOpen, setMenuOpen] = useState(false);
   const [tenantSwitching, setTenantSwitching] = useState(false);
+  const [hostTenantSettled, setHostTenantSettled] = useState(false);
+  const [welcomeFirstName, setWelcomeFirstName] = useState<string | null>(null);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [facilities, setFacilities] = useState<Array<{ id: string; name: string }>>([]);
+  const [activeFacilityId, setActiveFacilityId] = useState<string>("");
+  const navGroupsHydrated = useRef(false);
+  const lastAutoOpenPath = useRef<string | null>(null);
+
+  // Dark forest brand primaries clash on dark surfaces — keep Sneat purple in dark mode.
+  const brandStyle = (
+    themeMode === "dark"
+      ? {}
+      : {
+          ...(primaryColor ? { ["--bs-primary"]: primaryColor } : {}),
+          ...(secondaryColor ? { ["--ind-brand-secondary"]: secondaryColor } : {}),
+          ...(accentColor && !primaryColor ? { ["--bs-primary"]: accentColor } : {}),
+        }
+  ) as CSSProperties;
 
   const signOut = async () => {
     clearAllOfflineData();
@@ -103,6 +218,106 @@ function ShellBody({ children }: { children: ReactNode }) {
     permissions.add("industrial.access");
   }
   const hasAccess = Boolean(me && tenantId && entitled && hasIndustrialAccess);
+
+  // Vanity hosts (e.g. producers-rice-mill) map to a tenant via login-branding.
+  // Prefer that tenant once after sign-in so a leftover Creator localStorage
+  // selection does not land users on "Product not entitled".
+  useEffect(() => {
+    if (!me) {
+      setHostTenantSettled(false);
+      return;
+    }
+    if (loading || loadingHost || hostTenantSettled) return;
+
+    if (!hostTenantId) {
+      setHostTenantSettled(true);
+      return;
+    }
+    if (me.tenantId === hostTenantId) {
+      setHostTenantSettled(true);
+      return;
+    }
+    const selectable = me.tenants.some((t) => t.tenantId === hostTenantId && t.selectable);
+    if (!selectable) {
+      setHostTenantSettled(true);
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        await chooseTenant(hostTenantId);
+      } finally {
+        if (!cancelled) setHostTenantSettled(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, loadingHost, me, hostTenantId, hostTenantSettled, chooseTenant]);
+
+  useEffect(() => {
+    if (!me?.tenantId || !me.personId) {
+      setWelcomeFirstName(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const person = await apiGet<{ firstName?: string | null; preferredName?: string | null }>(
+          `/api/v1/tenants/${me.tenantId}/persons/${me.personId}`,
+        );
+        if (cancelled) return;
+        const first = person.firstName?.trim() || person.preferredName?.trim() || "";
+        setWelcomeFirstName(first || null);
+      } catch {
+        if (!cancelled) setWelcomeFirstName(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [me?.tenantId, me?.personId]);
+
+  useEffect(() => {
+    if (!hasAccess || !tenantId) {
+      setFacilities([]);
+      setActiveFacilityId("");
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const rows = await apiGet<
+          Array<{ id: string; name?: string | null; facilityKey?: string | null }>
+        >(`/api/v1/tenants/${tenantId}/facilities`);
+        if (cancelled) return;
+        const list = (rows ?? [])
+          .map((row) => ({
+            id: row.id,
+            name: (row.name?.trim() || row.facilityKey?.trim() || row.id).trim(),
+          }))
+          .filter((row) => Boolean(row.id));
+        setFacilities(list);
+        const stored =
+          typeof window !== "undefined" ? window.localStorage.getItem(FACILITY_STORAGE_KEY) : null;
+        const next =
+          (stored && list.some((f) => f.id === stored) ? stored : null) ?? list[0]?.id ?? "";
+        setActiveFacilityId(next);
+        if (next && typeof window !== "undefined") {
+          window.localStorage.setItem(FACILITY_STORAGE_KEY, next);
+        }
+      } catch {
+        if (!cancelled) {
+          setFacilities([]);
+          setActiveFacilityId("");
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [hasAccess, tenantId]);
 
   useEffect(() => {
     if (!hasAccess || !tenantId) {
@@ -167,25 +382,108 @@ function ShellBody({ children }: { children: ReactNode }) {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
+  const nav = hasAccess
+    ? [
+        ...buildIndustrialNavigation({
+          entitled: true,
+          permissions,
+          flags,
+        }),
+        {
+          code: "SETTINGS",
+          name: "Settings",
+          group: "System Tools",
+          route: "/settings/",
+          migrationStatus: "LIVE",
+          awsEnabled: true,
+          available: true,
+          requiredPermissions: ["industrial.access"],
+        },
+      ]
+    : [];
+  const groups = [...new Set(nav.map((n) => n.group))];
+  const navGroupKey = groups.join("|");
+
+  useEffect(() => {
+    if (!navGroupKey) return;
+    const groupList = navGroupKey.split("|");
+    const path = normalizeAppPath(pathname);
+    const activeGroup =
+      nav.find((item) => routeIsActive(pathname, item.route))?.group ?? null;
+
+    setOpenGroups((prev) => {
+      let next = prev;
+      if (!navGroupsHydrated.current) {
+        navGroupsHydrated.current = true;
+        const stored = readStoredOpenGroups();
+        next = { ...stored };
+        for (const group of groupList) {
+          if (typeof next[group] !== "boolean") next[group] = false;
+        }
+      }
+      // Only auto-expand when the route changes — never fight a user collapse click.
+      if (activeGroup && lastAutoOpenPath.current !== path) {
+        lastAutoOpenPath.current = path;
+        if (!next[activeGroup]) next = { ...next, [activeGroup]: true };
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- navGroupKey stands in for groups/nav
+  }, [navGroupKey, pathname]);
+
+  useEffect(() => {
+    if (!navGroupsHydrated.current) return;
+    try {
+      window.localStorage.setItem(NAV_GROUPS_STORAGE_KEY, JSON.stringify(openGroups));
+    } catch {
+      // ignore quota / private mode
+    }
+  }, [openGroups]);
+
+  const toggleNavGroup = (group: string) => {
+    setOpenGroups((prev) => {
+      const currentlyOpen = prev[group] === true;
+      return { ...prev, [group]: !currentlyOpen };
+    });
+  };
+
   if (isPublicAuthRoute) {
     return <>{children}</>;
   }
 
-  if (loading) {
-    return (
-      <GateCard title="Forge Industrial Safety" body="Loading your session…" />
-    );
+  const gatePrimary = loginPrimaryColor || primaryColor || undefined;
+  const gateBrand = {
+    brandLabel: login.brandLabel,
+    ...(login.logoUrl ? { logoUrl: login.logoUrl } : logoUrl ? { logoUrl } : {}),
+    ...(gatePrimary ? { primaryColor: gatePrimary } : {}),
+  };
+
+  if (loading || (Boolean(me) && !hostTenantSettled)) {
+    return <GateCard title={productDisplayName} body="Loading your session…" {...gateBrand} />;
   }
 
   if (error || !me) {
     return (
       <GateCard
-        title="Welcome to Forge Industrial Safety"
-        body="Sign in is required to continue."
-        muted={error ? error : "Unauthenticated"}
+        title={login.headline}
+        body={login.body}
+        muted={error ? error : login.statusText}
+        {...gateBrand}
       >
-        <button type="button" className="btn btn-primary d-grid w-100" onClick={() => void loginWithCognito()}>
-          Sign in
+        <button
+          type="button"
+          className="btn btn-primary d-grid w-100"
+          style={
+            gatePrimary
+              ? {
+                  backgroundColor: gatePrimary,
+                  borderColor: gatePrimary,
+                }
+              : undefined
+          }
+          onClick={() => void loginWithCognito()}
+        >
+          {login.buttonLabel}
         </button>
       </GateCard>
     );
@@ -194,7 +492,12 @@ function ShellBody({ children }: { children: ReactNode }) {
   if (!me.tenantId) {
     const selectable = me.tenants.filter((t) => t.selectable);
     return (
-      <GateCard title="Select a tenant" body="Choose a tenant to continue." muted="No tenant selected">
+      <GateCard
+        title="Select a tenant"
+        body="Choose a tenant to continue."
+        muted="No tenant selected"
+        {...gateBrand}
+      >
         <div className="d-grid gap-2">
           {selectable.map((t) => (
             <button
@@ -218,8 +521,9 @@ function ShellBody({ children }: { children: ReactNode }) {
     return (
       <GateCard
         title="Product not entitled"
-        body="This tenant is not entitled to Forge Industrial Safety."
+        body={`This tenant is not entitled to ${productDisplayName}.`}
         muted="Unauthorized product access"
+        {...gateBrand}
       >
         {alternates.length > 0 ? (
           <div className="d-grid gap-2 mb-3">
@@ -247,18 +551,13 @@ function ShellBody({ children }: { children: ReactNode }) {
     return (
       <GateCard
         title="Access denied"
-        body="You do not have permission to access Forge Industrial Safety."
+        body={`You do not have permission to access ${productDisplayName}.`}
         muted="Missing industrial.access"
+        {...gateBrand}
       />
     );
   }
 
-  const nav = buildIndustrialNavigation({
-    entitled: true,
-    permissions,
-    flags,
-  });
-  const groups = [...new Set(nav.map((n) => n.group))];
   const selectableTenants = me.tenants.filter((t) => t.selectable);
   const tenantLabel =
     selectableTenants.find((t) => t.tenantId === me.tenantId)?.displayName ??
@@ -275,15 +574,20 @@ function ShellBody({ children }: { children: ReactNode }) {
     }
   };
 
+  const welcomeLabel = welcomeFirstName ? `Welcome ${welcomeFirstName}` : "My profile";
+
   return (
-    <div className="layout-wrapper layout-content-navbar">
+    <div className="layout-wrapper layout-content-navbar" style={brandStyle}>
       <div className="layout-container">
         <aside id="layout-menu" className="layout-menu menu-vertical menu bg-menu-theme">
-          <div className="app-brand demo">
-            <Link href="/" className="app-brand-link" onClick={() => setMenuOpen(false)}>
-              <span className="app-brand-logo demo">{brandMark()}</span>
-              <span className="app-brand-text demo menu-text fw-bolder ms-2">Industrial</span>
-            </Link>
+          <div className="app-brand">
+            <BrandLockup
+              href="/"
+              label={appShortName}
+              primaryColor={primaryColor || "#696cff"}
+              onClick={() => setMenuOpen(false)}
+              {...(logoUrl ? { logoUrl } : {})}
+            />
             <button
               type="button"
               className="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none btn btn-link p-0 border-0"
@@ -299,7 +603,7 @@ function ShellBody({ children }: { children: ReactNode }) {
           <div className="menu-inner-shadow" />
 
           <ul className="menu-inner py-1">
-            <li className={pathname === "/" ? "menu-item active" : "menu-item"}>
+            <li className={routeIsActive(pathname, "/") ? "menu-item active" : "menu-item"}>
               <Link href="/" className="menu-link" onClick={() => setMenuOpen(false)}>
                 <i className="menu-icon tf-icons bx bx-home-circle" />
                 <div>Dashboard</div>
@@ -311,42 +615,59 @@ function ShellBody({ children }: { children: ReactNode }) {
                 <div>My profile</div>
               </Link>
             </li>
-            <li className={pathname === "/settings" || pathname === "/settings/" ? "menu-item active" : "menu-item"}>
-              <Link href="/settings/" className="menu-link" onClick={() => setMenuOpen(false)}>
-                <i className="menu-icon tf-icons bx bx-cog" />
-                <div>Settings</div>
-              </Link>
-            </li>
 
-            {groups.flatMap((group) => [
-              <li key={`hdr-${group}`} className="menu-header small text-uppercase">
-                <span className="menu-header-text">{group}</span>
-              </li>,
-              ...nav
-                .filter((item) => item.group === group)
-                .map((item) => {
-                  const active = pathname === item.route;
-                  const label =
-                    item.migrationStatus === "LEGACY_FIREBASE"
-                      ? `${item.name} (migration pending)`
-                      : item.migrationStatus === "MIGRATION_IN_PROGRESS" && !item.available
-                        ? `${item.name} (flag off)`
-                        : item.name;
-                  return (
-                    <li key={item.code} className={active ? "menu-item active" : "menu-item"}>
-                      <Link
-                        href={item.route}
-                        className="menu-link"
-                        aria-current={active ? "page" : undefined}
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        <i className={`menu-icon tf-icons bx ${iconForModule(item.code, item.group)}`} />
-                        <div>{label}</div>
-                      </Link>
-                    </li>
-                  );
-                }),
-            ])}
+            {groups
+              .filter((group) => group !== "Dashboard")
+              .map((group) => {
+              const items = nav.filter((item) => item.group === group);
+              const groupOpen = openGroups[group] === true;
+              const groupHasActive = items.some((item) => routeIsActive(pathname, item.route));
+              return (
+                <li
+                  key={`grp-${group}`}
+                  className={`menu-item${groupOpen ? " open" : ""}${groupHasActive ? " active" : ""}`}
+                >
+                  <a
+                    href={`#nav-${group.replace(/\s+/g, "-").toLowerCase()}`}
+                    className="menu-link menu-toggle"
+                    aria-expanded={groupOpen}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      toggleNavGroup(group);
+                    }}
+                  >
+                    <i className={`menu-icon tf-icons bx ${iconForModule("", group)}`} />
+                    <div>{group}</div>
+                  </a>
+                  {groupOpen ? (
+                    <ul className="menu-sub">
+                      {items.map((item) => {
+                        const active = routeIsActive(pathname, item.route);
+                        const label =
+                          item.migrationStatus === "LEGACY_FIREBASE"
+                            ? `${item.name} (migration pending)`
+                            : item.migrationStatus === "MIGRATION_IN_PROGRESS" && !item.available
+                              ? `${item.name} (flag off)`
+                              : item.name;
+                        return (
+                          <li key={item.code} className={active ? "menu-item active" : "menu-item"}>
+                            <Link
+                              href={item.route}
+                              className="menu-link"
+                              aria-current={active ? "page" : undefined}
+                              onClick={() => setMenuOpen(false)}
+                            >
+                              <i className={`menu-icon tf-icons bx ${iconForModule(item.code, item.group)}`} />
+                              <div>{label}</div>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         </aside>
 
@@ -398,25 +719,33 @@ function ShellBody({ children }: { children: ReactNode }) {
                     </span>
                   ) : null}
                 </label>
-                <label className="nav-item ind-tenant-switcher mb-0">
-                  <i className="bx bx-map flex-shrink-0" aria-hidden="true" />
-                  <span className="ind-tenant-switcher__label">Facility</span>
-                  <span className="text-muted small" title="Facility selector empty until catalog loads">
-                    No facilities
-                  </span>
-                </label>
+                {facilities.length > 0 ? (
+                  <label className="nav-item ind-tenant-switcher mb-0">
+                    <i className="bx bx-map flex-shrink-0" aria-hidden="true" />
+                    <span className="ind-tenant-switcher__label">Facility</span>
+                    <select
+                      className="form-select form-select-sm"
+                      aria-label="Active facility"
+                      value={activeFacilityId}
+                      onChange={(event) => {
+                        const next = event.target.value;
+                        setActiveFacilityId(next);
+                        if (typeof window !== "undefined") {
+                          window.localStorage.setItem(FACILITY_STORAGE_KEY, next);
+                        }
+                      }}
+                    >
+                      {facilities.map((facility) => (
+                        <option key={facility.id} value={facility.id}>
+                          {facility.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
               </div>
               <ul className="navbar-nav flex-row align-items-center ms-auto flex-shrink-0">
                 <li className="nav-item d-flex align-items-center gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline-secondary"
-                    title="Search not connected (MK-S18)"
-                    disabled
-                    aria-label="Search"
-                  >
-                    Search
-                  </button>
                   <Link
                     href="/settings/"
                     className="btn btn-sm btn-outline-secondary text-decoration-none"
@@ -424,24 +753,14 @@ function ShellBody({ children }: { children: ReactNode }) {
                   >
                     Settings
                   </Link>
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline-secondary"
-                    title="Help center not connected"
-                    disabled
-                    aria-label="Help"
-                  >
-                    Help
-                  </button>
+                  <ThemeModeToggle />
                   <Link
                     href="/profile/"
-                    className="avatar avatar-sm text-decoration-none"
-                    aria-label="Open my profile"
+                    className="nav-link px-0 text-body fw-semibold text-decoration-none"
+                    aria-label={welcomeLabel === "My profile" ? "Open my profile" : welcomeLabel}
                     title="My profile"
                   >
-                    <span className="avatar-initial rounded-circle bg-label-primary">
-                      {(me.isPlatformAdmin ? "PA" : me.userId.slice(0, 2)).toUpperCase()}
-                    </span>
+                    {welcomeLabel}
                   </Link>
                   <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => void signOut()}>
                     Sign out
@@ -459,7 +778,7 @@ function ShellBody({ children }: { children: ReactNode }) {
             <footer className="content-footer footer bg-footer-theme">
               <div className="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
                 <div className="mb-2 mb-md-0 small text-muted">
-                  © {new Date().getFullYear()} Forge Industrial Safety · {INDUSTRIAL_MODULE_REGISTRY.length}{" "}
+                  © {new Date().getFullYear()} {productDisplayName} · {INDUSTRIAL_MODULE_REGISTRY.length}{" "}
                   modules
                   <span className="d-none d-md-inline">
                     {" "}

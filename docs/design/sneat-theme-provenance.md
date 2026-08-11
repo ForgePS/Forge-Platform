@@ -16,7 +16,24 @@ Forge Platform adopts the **Sneat Free Bootstrap 5 Admin Template** (ThemeSelect
 | Radius, elevation, menu/navbar dimensions | Icon packs wholesale |
 | Conceptual sidebar + content shell patterns as CSS primitives | Vendor PHP/Blade/asset trees |
 
-Apps consume CSS variables and React components only. The download under `Downloads/sneat-1.0.0` is a **reference**; it is not copied into the monorepo runtime.
+Apps consume CSS variables and React components only. The download under `Downloads/sneat-1.0.0` is a **reference**; Industrial also vendors Free CSS under `apps/industrial-web/public/sneat`.
+
+## Industrial visual SoT (2026-08-11)
+
+**Sneat is the visual source of truth** for AWS Forge Industrial Safety. Firebase green / Inter / Tailwind shell rematching is **rejected**. See [industrial-visual-source-of-truth.md](./industrial-visual-source-of-truth.md).
+
+Default palette (do not replace with Firebase `#8bc53f`):
+
+| Token | Value |
+| --- | --- |
+| Primary | `#696cff` |
+| Primary hover | `#5f61e6` |
+| Secondary | `#8592a3` |
+| Success / Info / Warning / Danger | `#71dd37` / `#03c3ec` / `#ffab00` / `#ff3e1d` |
+| Body bg / text | `#f5f5f9` / `#697a8d` |
+| Font | Public Sans |
+
+Tenant branding may override approved tokens (e.g. logo URL, optional primary) without abandoning Sneat component semantics.
 
 ## License
 

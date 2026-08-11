@@ -53,10 +53,16 @@ Manual device capture screenshots are deferred (local CSS/responsive contracts v
 
 ## Known limitations
 
-- Industrial remains on full Sneat shell (not `ForgeAppShell`)
-- Settings cannot save
-- Forge brand mark not yet replaced (Sneat logo retained)
+- Industrial remains on full Sneat shell (not `ForgeAppShell`) — **by design** (visual SoT = Sneat)
+- Firebase green/Inter visual alignment is **REJECTED** — see `docs/design/industrial-visual-source-of-truth.md`
 - Browser screenshot evidence pack not attached; phone matrix checked against CSS contracts + local layout
+
+## Remediation notes (2026-08-11 design override)
+
+- LG-01: Sneat demo glyph replaced with Forge Industrial mark; default short name `Forge Industrial`
+- NV-01: Search/Help stubs removed; facility selector shown only when facilities API returns data
+- ST-01: Settings is a hub of live links (no fake save / “Not connected” tiles)
+- DK-01: Dark toggle retained (Free CSS dark incomplete — acceptable until Pro dark or removal)
 
 ## Next recommended checkpoint
 

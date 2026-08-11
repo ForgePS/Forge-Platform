@@ -19,6 +19,110 @@
   --ind-shadow: 0 0.25rem 1rem rgba(161, 172, 184, 0.45);
 }
 
+/* Full logo replaces mark + short name when branding.logoUrl is set */
+.app-brand-text {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+  padding-inline: 0.75rem;
+  justify-content: center;
+}
+
+.layout-menu .app-brand-link--full-logo {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline: 0;
+  padding-block: 0.35rem;
+}
+
+.app-brand-full-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: none;
+}
+
+.app-brand-full-logo-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 3.25rem;
+  object-fit: contain;
+  object-position: center;
+}
+
+.authentication-wrapper .app-brand-full-logo-img {
+  max-height: 5.5rem;
+  max-width: 18rem;
+}
+
+.layout-menu-collapsed:not(.layout-menu-hover) .layout-menu .app-brand-full-logo,
+.menu-collapsed:not(:hover) .app-brand .app-brand-full-logo {
+  max-width: 2.25rem;
+}
+
+.layout-menu-collapsed:not(.layout-menu-hover) .layout-menu .app-brand-full-logo-img,
+.menu-collapsed:not(:hover) .app-brand .app-brand-full-logo-img {
+  width: auto;
+  height: 2rem;
+  max-width: 2rem;
+  max-height: 2rem;
+}
+
+/* Compact theme toggle when .btn-icon is thin in Free core */
+.btn.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+}
+
+/* Sneat Free omits PerfectScrollbar; keep the long Industrial menu scrollable.
+   Apply both with and without html.layout-menu-fixed so a missing class can't kill scroll. */
+.layout-menu.menu-vertical,
+html.layout-menu-fixed .layout-menu {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.layout-menu.menu-vertical .menu-inner,
+html.layout-menu-fixed .layout-menu .menu-inner {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Collapsible group toggles — match Sneat menu-link sizing */
+.layout-menu .menu-inner > .menu-item > a.menu-link.menu-toggle {
+  width: calc(100% - 2rem);
+  cursor: pointer;
+}
+
+.layout-menu .menu-inner > .menu-item:not(.open) > .menu-sub {
+  display: none !important;
+}
+
+.layout-menu .menu-inner > .menu-item.open > .menu-sub {
+  display: flex !important;
+}
+
 .ind-content h1 {
   font-size: 1.375rem;
   font-weight: 600;
@@ -694,3 +798,36 @@
     display: none;
   }
 }
+
+/* Analytics interim PDF path: browser print → Save as PDF (GAP-RPT-01 still deferred). */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .ind-dashboard-analytics,
+  .ind-dashboard-analytics * {
+    visibility: visible !important;
+  }
+
+  .ind-dashboard-analytics {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0.5rem;
+  }
+
+  .ind-dashboard-analytics .btn,
+  .ind-dashboard-analytics form,
+  .ind-dashboard-analytics .btn-group {
+    display: none !important;
+  }
+
+  .ind-dashboard-analytics .card {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}
+
