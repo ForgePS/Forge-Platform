@@ -1,9 +1,9 @@
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 export type DataClassification = "PUBLIC" | "INTERNAL" | "CONFIDENTIAL" | "RESTRICTED";
 
 const SENSITIVE_KEY_PATTERN =
-  /(password|secret|token|authorization|cookie|ssn|social_security|fema_sid|driver_license|bank_account|routing_number|medical)/i;
+  /(password|secret|token|authorization|cookie|ssn|social_security|fema_sid|driver_license|bank_account|routing_number|medical|apikey|api_key|apiKey|signingSecret|rawKey)/i;
 
 export function isSensitiveKey(key: string): boolean {
   return SENSITIVE_KEY_PATTERN.test(key);
@@ -99,4 +99,54 @@ export function isAllowedMimeType(
   allowList: ReadonlySet<string> = DEFAULT_ALLOWED_MIME,
 ): boolean {
   return allowList.has(mimeType.toLowerCase());
+}
+
+/** Opaque secret hash (API keys, invitation tokens). Never log the input. */
+export function hashOpaqueSecret(value: string): string {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
+export type GeneratedApiKey = {
+  /** Full secret — return to caller once; never persist or log. */
+  rawKey: string;
+  prefix: string;
+  /** Short UI hint (non-secret), e.g. forge_live_ab12… */
+  displayHint: string;
+  keyHash: string;
+};
+
+/**
+ * Server-generated API key. Persist only `keyHash` (+ prefix/hint metadata).
+ */
+export function generateApiKey(options: { prefix?: string } = {}): GeneratedApiKey {
+  const prefix = options.prefix ?? "forge_live_";
+  const body = randomBytes(24).toString("base64url");
+  const rawKey = `${prefix}${body}`;
+  const displayHint = `${prefix}${body.slice(0, 8)}…`;
+  return {
+    rawKey,
+    prefix,
+    displayHint,
+    keyHash: hashOpaqueSecret(rawKey),
+  };
+}
+
+export function generateWebhookSigningSecret(prefix = "whsec_"): string {
+  return `${prefix}${randomBytes(32).toString("base64url")}`;
+}
+
+/** Outbound webhook signature header value: `sha256=<hex>`. */
+export function signWebhookPayload(payload: string | Buffer, secret: string): string {
+  const digest = createHmac("sha256", secret).update(payload).digest("hex");
+  return `sha256=${digest}`;
+}
+
+export function verifyWebhookSignature(
+  payload: string | Buffer,
+  signatureHeader: string | undefined,
+  secret: string,
+): boolean {
+  if (!signatureHeader) return false;
+  const expected = signWebhookPayload(payload, secret);
+  return constantTimeEqual(expected, signatureHeader.trim());
 }

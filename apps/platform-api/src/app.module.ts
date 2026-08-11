@@ -15,6 +15,7 @@ import { PermissionGuard } from "./modules/auth-context/permission.guard.js";
 import { TenantGuard } from "./modules/auth-context/tenant.guard.js";
 import { AuthorizationModule } from "./modules/authorization/authorization.module.js";
 import { BrandingModule } from "./modules/branding/branding.module.js";
+import { ApiKeysModule } from "./modules/api-keys/api-keys.module.js";
 import { CognitoModule } from "./modules/cognito/cognito.module.js";
 import { ConfigurationModule } from "./modules/configuration/configuration.module.js";
 import { EntitlementsModule } from "./modules/entitlements/entitlements.module.js";
@@ -28,6 +29,7 @@ import { CadModule } from "./modules/cad/cad.module.js";
 import { AiNarrativeModule } from "./modules/ai-narrative/ai-narrative.module.js";
 import { BillingModule } from "./modules/billing/billing.module.js";
 import { NotificationsModule } from "./modules/notifications/notifications.module.js";
+import { WebhooksModule } from "./modules/webhooks/webhooks.module.js";
 import { OnboardingModule } from "./modules/onboarding/onboarding.module.js";
 import { OrganizationsModule } from "./modules/organizations/organizations.module.js";
 import { FacilitiesModule } from "./modules/facilities/facilities.module.js";
@@ -69,6 +71,8 @@ export class AppModule {
         ConfigurationModule,
         ImportsModule,
         BrandingModule,
+        ApiKeysModule,
+        WebhooksModule,
         OnboardingModule,
         NerisModule,
         NerisIncidentsModule,

@@ -54,6 +54,12 @@ export const PLATFORM_PERMISSIONS = [
   "platform.membership.read",
   "platform.membership.manage",
   "platform.onboarding.manage",
+  "tenant.notification.read",
+  "tenant.notification.manage",
+  "tenant.api_key.read",
+  "tenant.api_key.manage",
+  "tenant.webhook.read",
+  "tenant.webhook.manage",
   "platform.neris.schema.read",
   "platform.neris.schema.import",
   "platform.neris.overlay.read",
@@ -159,6 +165,18 @@ export {
   type BrandingAssetUploadInput,
   type PutTenantBrandingInput,
 } from "./branding-domain.js";
+
+export {
+  API_KEY_PREFIX,
+  createApiKeyInputSchema,
+  createWebhookDeliveryInputSchema,
+  createWebhookEndpointInputSchema,
+  patchWebhookEndpointInputSchema,
+  type CreateApiKeyInput,
+  type CreateWebhookDeliveryInput,
+  type CreateWebhookEndpointInput,
+  type PatchWebhookEndpointInput,
+} from "./api-keys-webhooks-domain.js";
 
 export {
   EMAIL_TEMPLATE_KEYS,

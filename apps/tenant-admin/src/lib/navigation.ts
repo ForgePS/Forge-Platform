@@ -91,13 +91,13 @@ export const TENANT_ADMIN_NAV_GROUPS: ForgeNavigationGroup[] = [
         id: "integrations",
         label: "Integrations",
         route: "/integrations",
-        permission: "platform.tenant.read",
+        permission: "tenant.webhook.read",
       },
       {
         id: "api-access",
         label: "API",
         route: "/api-access",
-        permission: "platform.tenant.read",
+        permission: "tenant.api_key.read",
       },
       {
         id: "audit",

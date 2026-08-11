@@ -118,6 +118,9 @@ MEDIUM
 Blocking Current Sprint:
 NO
 
+Status:
+RESOLVED_MK_S15 — tenant API keys (`forge_live_`, hash-at-rest, show-once, revoke) shipped; API-key bearer auth middleware remains deferred.
+
 ---
 
 ## BACKLOG-006
@@ -140,7 +143,8 @@ MEDIUM
 Blocking Current Sprint:
 NO
 
----
+Status:
+RESOLVED_MK_S15 — outbound endpoints, HMAC, deliveries, replay, disable + TA UI shipped; async worker/KMS encryption remain deferred.
 
 ## BACKLOG-007
 
