@@ -1,4 +1,5 @@
 import * as cdk from "aws-cdk-lib";
+import type * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import { Construct } from "constructs";
 import type { ForgeEnvironmentConfig } from "../config/environment-schema.js";
 import { ForgeBudgets } from "../constructs/forge-budgets.js";
@@ -32,11 +33,11 @@ export class FrontendStack extends cdk.Stack {
       stackName: stackName(props.config, "Frontend"),
     });
 
-    const distributionIds: string[] = [];
+    const distributions: cloudfront.Distribution[] = [];
 
     if (props.config.features.enableConsoleHosting) {
       this.console = new ForgeConsoleHosting(this, "Console", { config: props.config });
-      distributionIds.push(this.console.distribution.distributionId);
+      distributions.push(this.console.distribution);
       exportValue(
         this,
         `${id}-ConsoleDomain`,
@@ -59,7 +60,7 @@ export class FrontendStack extends cdk.Stack {
 
     if (props.config.features.enableRmsHosting) {
       this.rms = new ForgeRmsHosting(this, "Rms", { config: props.config });
-      distributionIds.push(this.rms.distribution.distributionId);
+      distributions.push(this.rms.distribution);
       exportValue(
         this,
         `${id}-RmsDomain`,
@@ -84,7 +85,7 @@ export class FrontendStack extends cdk.Stack {
       this.tenantAdmin = new ForgeTenantAdminHosting(this, "TenantAdmin", {
         config: props.config,
       });
-      distributionIds.push(this.tenantAdmin.distribution.distributionId);
+      distributions.push(this.tenantAdmin.distribution);
       exportValue(
         this,
         `${id}-TenantAdminDomain`,
@@ -109,7 +110,7 @@ export class FrontendStack extends cdk.Stack {
       this.industrial = new ForgeIndustrialHosting(this, "Industrial", {
         config: props.config,
       });
-      distributionIds.push(this.industrial.distribution.distributionId);
+      distributions.push(this.industrial.distribution);
       exportValue(
         this,
         `${id}-IndustrialDomain`,
@@ -130,14 +131,17 @@ export class FrontendStack extends cdk.Stack {
       );
     }
 
-    if (props.apiCloudFrontDistributionId) {
-      distributionIds.push(props.apiCloudFrontDistributionId);
-    }
+    const needsWaf =
+      props.config.features.enableWaf &&
+      (distributions.length > 0 || Boolean(props.apiCloudFrontDistributionId));
 
-    if (props.config.features.enableWaf && distributionIds.length > 0) {
+    if (needsWaf) {
       new ForgeCloudFrontWaf(this, "CloudFrontWaf", {
         config: props.config,
-        distributionIds,
+        distributions,
+        externalDistributionIds: props.apiCloudFrontDistributionId
+          ? [props.apiCloudFrontDistributionId]
+          : undefined,
       });
     }
 
