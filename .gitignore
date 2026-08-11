@@ -25,6 +25,8 @@ cdk.context.local.json
 # PROD-S0 / PROD-S0R local gate evidence (regenerable)
 .tmp-prod-s0*
 .tmp-prod-s0-*/
+.tmp-prod-s1*
+.tmp-prod-s1-*/
 .tmp-analytics-*
 
 # Next.js static export output
