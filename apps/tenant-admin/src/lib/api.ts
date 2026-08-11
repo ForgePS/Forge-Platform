@@ -164,3 +164,158 @@ export function selectTenant(tenantId: string): Promise<AuthMe> {
 export function logoutAll(): Promise<{ sessionVersion: number }> {
   return apiSend<{ sessionVersion: number }>("/api/v1/auth/logout-all", "POST");
 }
+
+export function toIfMatch(recordVersion: number): string {
+  return `W/"${recordVersion}"`;
+}
+
+export type Membership = {
+  id: string;
+  tenantId: string;
+  userId: string;
+  status: string;
+  isDefaultTenant: boolean;
+  activatedAt: string | null;
+  suspendedAt: string | null;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  recordVersion: number;
+  createdAt: string;
+  updatedAt: string;
+  email: string;
+  userStatus: string;
+};
+
+export function listMemberships(
+  tenantId: string,
+  query?: { status?: string; userId?: string },
+): Promise<Membership[]> {
+  const options: ApiRequestOptions = {};
+  if (query) {
+    options.query = query;
+  }
+  return apiGet<Membership[]>(`/api/v1/tenants/${tenantId}/memberships`, options);
+}
+
+export function getMembership(
+  tenantId: string,
+  membershipId: string,
+): Promise<ApiResult<Membership>> {
+  return apiGetResult<Membership>(`/api/v1/tenants/${tenantId}/memberships/${membershipId}`);
+}
+
+export function suspendMembership(
+  tenantId: string,
+  membershipId: string,
+  reason: string,
+  ifMatch: string,
+): Promise<Membership> {
+  return apiSend<Membership>(
+    `/api/v1/tenants/${tenantId}/memberships/${membershipId}/suspend`,
+    "POST",
+    { reason },
+    { ifMatch },
+  );
+}
+
+export function activateMembership(
+  tenantId: string,
+  membershipId: string,
+  ifMatch: string,
+): Promise<Membership> {
+  return apiSend<Membership>(
+    `/api/v1/tenants/${tenantId}/memberships/${membershipId}/activate`,
+    "POST",
+    undefined,
+    { ifMatch },
+  );
+}
+
+export function revokeMembership(
+  tenantId: string,
+  membershipId: string,
+  reason: string,
+  ifMatch: string,
+): Promise<Membership> {
+  return apiSend<Membership>(
+    `/api/v1/tenants/${tenantId}/memberships/${membershipId}/revoke`,
+    "POST",
+    { reason },
+    { ifMatch },
+  );
+}
+
+export type Invitation = {
+  id: string;
+  tenantId: string;
+  email: string;
+  status: string;
+  firstName: string | null;
+  lastName: string | null;
+  expiresAt: string | null;
+  sentAt: string | null;
+  acceptedAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export function listInvitations(query?: {
+  tenantId?: string;
+  status?: string;
+  email?: string;
+}): Promise<Invitation[]> {
+  const options: ApiRequestOptions = {};
+  if (query) {
+    options.query = query;
+  }
+  return apiGet<Invitation[]>("/api/v1/auth/invitations", options);
+}
+
+export function createInvitation(
+  payload: {
+    tenantId: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    roleCodes?: string[];
+    send?: boolean;
+  },
+  options?: ApiRequestOptions,
+): Promise<Invitation> {
+  return apiSend<Invitation>("/api/v1/auth/invitations", "POST", payload, options);
+}
+
+export function resendInvitation(
+  invitationId: string,
+  query?: { tenantId?: string },
+): Promise<Invitation> {
+  const options: ApiRequestOptions = {};
+  if (query) {
+    options.query = query;
+  }
+  return apiSend<Invitation>(
+    `/api/v1/auth/invitations/${invitationId}/resend`,
+    "POST",
+    undefined,
+    options,
+  );
+}
+
+export function revokeInvitation(
+  invitationId: string,
+  reason: string,
+  query?: { tenantId?: string },
+): Promise<Invitation> {
+  const options: ApiRequestOptions = {};
+  if (query) {
+    options.query = query;
+  }
+  return apiSend<Invitation>(
+    `/api/v1/auth/invitations/${invitationId}/revoke`,
+    "POST",
+    { reason },
+    options,
+  );
+}
+

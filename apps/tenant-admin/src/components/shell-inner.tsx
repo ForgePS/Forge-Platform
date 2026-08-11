@@ -129,6 +129,7 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
               renderLink={renderLink}
               items={[
                 { label: "Profile", href: "/profile/" },
+                { label: "Security", href: "/security/" },
                 { label: "Settings", href: "/studio/tenant-profile/" },
               ]}
             />

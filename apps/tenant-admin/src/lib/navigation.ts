@@ -1,38 +1,163 @@
 import type { ForgeNavigationGroup } from "@forge/design-system";
 
+/**
+ * Tenant Admin navigation (MK-S12).
+ * Item `permission` / `anyOfPermissions` filter UX only — API auth is authoritative.
+ */
 export const TENANT_ADMIN_NAV_GROUPS: ForgeNavigationGroup[] = [
   {
-    id: "billing",
-    label: "Billing",
-    items: [{ id: "billing-overview", label: "Billing overview", route: "/billing" }],
+    id: "admin",
+    label: "Administration",
+    items: [
+      {
+        id: "overview",
+        label: "Overview",
+        route: "/",
+        anyOfPermissions: ["platform.tenant.read", "tenant.configuration.update"],
+      },
+      {
+        id: "organization",
+        label: "Organization",
+        route: "/organization",
+        anyOfPermissions: ["tenant.configuration.update", "platform.organization.read"],
+      },
+      {
+        id: "facilities",
+        label: "Facilities",
+        route: "/facilities",
+        anyOfPermissions: ["tenant.facilities.read", "tenant.configuration.update"],
+      },
+      {
+        id: "members",
+        label: "Members",
+        route: "/members",
+        permission: "platform.membership.read",
+      },
+      {
+        id: "invitations",
+        label: "Invitations",
+        route: "/invitations",
+        permission: "platform.invitation.read",
+      },
+      {
+        id: "roles",
+        label: "Roles",
+        route: "/roles",
+        permission: "platform.role.assign",
+      },
+      {
+        id: "permissions",
+        label: "Permissions",
+        route: "/permissions",
+        permission: "platform.permission.read",
+      },
+      {
+        id: "products",
+        label: "Products",
+        route: "/products",
+        anyOfPermissions: ["tenant.billing.read", "platform.entitlement.manage"],
+      },
+      {
+        id: "modules",
+        label: "Modules",
+        route: "/modules",
+        anyOfPermissions: ["tenant.billing.read", "platform.entitlement.manage"],
+      },
+      {
+        id: "billing",
+        label: "Billing",
+        route: "/billing",
+        anyOfPermissions: ["tenant.billing.read", "platform.entitlement.manage"],
+      },
+      {
+        id: "branding",
+        label: "Branding",
+        route: "/branding",
+        anyOfPermissions: ["tenant.configuration.update", "platform.configuration.update"],
+      },
+      {
+        id: "security",
+        label: "Security",
+        route: "/security",
+        permission: "platform.tenant.read",
+      },
+      {
+        id: "notifications",
+        label: "Notifications",
+        route: "/notifications",
+        anyOfPermissions: ["tenant.configuration.update", "platform.configuration.update"],
+      },
+      {
+        id: "integrations",
+        label: "Integrations",
+        route: "/integrations",
+        permission: "platform.tenant.read",
+      },
+      {
+        id: "api-access",
+        label: "API",
+        route: "/api-access",
+        permission: "platform.tenant.read",
+      },
+      {
+        id: "audit",
+        label: "Audit",
+        route: "/audit",
+        permission: "platform.audit.read",
+      },
+    ],
   },
   {
     id: "imports",
     label: "Import Center",
-    items: [{ id: "import-center", label: "Import Center", route: "/imports" }],
+    items: [{ id: "import-center", label: "Import Center", route: "/imports", permission: "import.view" }],
   },
   {
     id: "studio",
     label: "Configuration Studio",
     items: [
-      { id: "studio-home", label: "Studio home", route: "/studio" },
-      { id: "studio-tenant", label: "Tenant Profile", route: "/studio/tenant-profile" },
-      { id: "studio-org", label: "Org Profile", route: "/studio/organization-profile" },
-      { id: "studio-branding", label: "Branding", route: "/studio/branding" },
-      { id: "studio-navigation", label: "Navigation", route: "/studio/navigation" },
-      { id: "studio-terminology", label: "Terminology", route: "/studio/terminology" },
-      { id: "studio-dropdowns", label: "Dropdowns", route: "/studio/dropdowns" },
       {
-        id: "studio-notification-templates",
-        label: "Notification templates",
-        route: "/studio/notification-templates",
+        id: "studio-home",
+        label: "Studio home",
+        route: "/studio",
+        permission: "tenant.configuration.update",
       },
-      { id: "studio-email-templates", label: "Email templates", route: "/studio/email-templates" },
-      { id: "studio-business-hours", label: "Business hours", route: "/studio/business-hours" },
-      { id: "studio-holiday-calendar", label: "Holiday calendar", route: "/studio/holiday-calendar" },
-      { id: "studio-facilities", label: "Facilities", route: "/studio/facilities" },
-      { id: "studio-locations", label: "Locations", route: "/studio/locations" },
-      { id: "studio-roles", label: "Roles", route: "/studio/roles" },
+      {
+        id: "studio-tenant",
+        label: "Tenant Profile",
+        route: "/studio/tenant-profile",
+        permission: "tenant.configuration.update",
+      },
+      {
+        id: "studio-org",
+        label: "Org Profile",
+        route: "/studio/organization-profile",
+        permission: "tenant.configuration.update",
+      },
+      {
+        id: "studio-branding",
+        label: "Branding (Studio)",
+        route: "/studio/branding",
+        permission: "tenant.configuration.update",
+      },
+      {
+        id: "studio-navigation",
+        label: "Navigation",
+        route: "/studio/navigation",
+        permission: "tenant.configuration.update",
+      },
+      {
+        id: "studio-facilities",
+        label: "Facilities (Studio)",
+        route: "/studio/facilities",
+        permission: "tenant.configuration.update",
+      },
+      {
+        id: "studio-roles",
+        label: "Role Builder",
+        route: "/studio/roles",
+        permission: "tenant.configuration.update",
+      },
     ],
   },
 ];

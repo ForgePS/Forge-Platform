@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { TenantPageGate } from "@/components/tenant-page-gate";
 import { useAuth } from "@/hooks/use-auth";
+import { useTenantId } from "@/hooks/use-tenant-id";
 import { apiGet } from "@/lib/api";
 import styles from "../page.module.css";
 
@@ -28,9 +30,9 @@ type Overview = {
   paymentPortal: { available: boolean; url: string | null; message: string };
 };
 
-export default function TenantBillingPage() {
-  const { me, hasPermission } = useAuth();
-  const tenantId = me?.tenantId ?? null;
+function BillingInner() {
+  const tenantId = useTenantId();
+  const { hasPermission } = useAuth();
   const canRead =
     hasPermission("tenant.billing.read") || hasPermission("platform.entitlement.manage");
 
@@ -62,9 +64,6 @@ export default function TenantBillingPage() {
       <p className={styles.lead}>Tenant billing overview (read-only).</p>
 
       {!tenantId ? <p className={styles.error}>Select a tenant to continue.</p> : null}
-      {!canRead ? (
-        <p className={styles.error}>Missing permission: tenant.billing.read</p>
-      ) : null}
       {error ? <p className={styles.error}>{error}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
 
@@ -151,5 +150,18 @@ export default function TenantBillingPage() {
         </>
       ) : null}
     </section>
+  );
+}
+
+export default function TenantBillingPage() {
+  return (
+    <TenantPageGate
+      title="Billing"
+      anyOf={["tenant.billing.read", "platform.entitlement.manage"]}
+    >
+      <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+        <BillingInner />
+      </Suspense>
+    </TenantPageGate>
   );
 }

@@ -1,3 +1,7 @@
+.page {
+  max-width: 72rem;
+}
+
 .page h1 {
   margin: 0 0 0.35rem;
   font-family: var(--forge-font-sans);
@@ -140,4 +144,36 @@
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.85rem;
+}
+
+.buttonDanger {
+  appearance: none;
+  border: 1px solid transparent;
+  background: var(--forge-color-danger);
+  color: #fff;
+  border-radius: var(--forge-radius-md);
+  padding: 0.45rem 0.85rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.buttonDanger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dl {
+  display: grid;
+  grid-template-columns: 10rem 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+}
+
+.dl dt {
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.dl dd {
+  margin: 0;
 }
