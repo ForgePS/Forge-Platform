@@ -50,9 +50,8 @@ export async function alterRolePassword(input: AlterRolePasswordInput): Promise<
 
   try {
     // Identifier interpolated only after regex allowlist; password is a bound parameter.
-    await client.unsafe(`ALTER ROLE ${input.roleName} WITH LOGIN PASSWORD $1`, [
-      input.newPassword,
-    ]);
+    // Do not include NOSUPERUSER/attribute clauses here — Aurora master is not a full superuser.
+    await client.unsafe(`ALTER ROLE ${input.roleName} PASSWORD $1`, [input.newPassword]);
   } catch (error) {
     throw redactCredentialError(error);
   } finally {
