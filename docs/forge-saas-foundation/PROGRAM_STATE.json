@@ -1,13 +1,19 @@
 {
   "program": "FORGE-SAAS-CORE",
   "currentAuthorizedSprint": null,
-  "lastCompletedSprint": "MK-S22",
+  "lastCompletedSprint": "MK-S23",
   "status": "ACTIVE",
   "productionAuthorized": false,
   "automaticSprintAdvance": false,
   "baselineEstablished": true,
-  "lastCommit": "afb1f94",
-  "knownBlockers": [],
+  "lastCommit": "pending",
+  "productionReadiness": "NOT_READY",
+  "knownBlockers": [
+    "PROD-SES-EMAIL",
+    "PROD-CDK-ACCOUNT-DOMAINS",
+    "PROD-ECS-APP-ENV",
+    "PROD-DEPLOY-GUARD-CI"
+  ],
   "deferredItems": [
     "BACKLOG-001",
     "BACKLOG-002",
@@ -24,12 +30,11 @@
     "BACKLOG-017",
     "BACKLOG-018"
   ],
-  "mkS22Verification": {
+  "mkS23Verification": {
     "date": "2026-08-11",
-    "lifecycleScenarioUnit": "PASS",
-    "lifecycleE2e": "AUTHED_DB_GATED",
-    "typecheckPlatformApi": "PASS",
+    "readinessDoc": "docs/forge-saas-foundation/MK-S23-production-readiness.md",
+    "overallVerdict": "NOT_READY",
     "productionOperations": "NONE",
-    "step15Ui": "N_A_STATIC_EXPORT"
+    "deployment": "NONE"
   }
 }
