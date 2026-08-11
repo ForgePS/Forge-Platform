@@ -2,6 +2,21 @@
 
 Provider-neutral commercial billing on Forge. **Entitlements remain the source of truth for access (ADR-017).** Provider webhooks must never write `tenant_products` / `tenant_module_entitlements` directly.
 
+## Billing lifecycle (conceptual)
+
+```mermaid
+flowchart LR
+  C[Billing customer] --> S[Subscription / contract]
+  S --> I[Invoice metadata]
+  S --> O[Orders / fees]
+  P[Provider webhook] --> E[billing_provider_events]
+  E --> S
+  S -. never direct .-> ENT[tenant_products / modules]
+  OPS[Ops / Creator] --> ENT
+```
+
+Closeout note (MK-S24): live Stripe Customer Portal and live SES-adjacent dunning remain **DEFERRED** (BACKLOG-003 / MK-S23 SES gap). Default `billingProvider` is often `NONE` / stub.
+
 ## Logical models
 
 | Model | Storage |

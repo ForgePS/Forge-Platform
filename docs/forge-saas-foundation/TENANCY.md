@@ -29,6 +29,30 @@ PROVISIONING → TRIAL → ACTIVE ⇄ SUSPENDED → ARCHIVED
 
 Legacy `DECOMMISSIONED` (if present) is treated as inactive by `@forge/authorization` (alias of archived/canceled behavior).
 
+```mermaid
+stateDiagram-v2
+  [*] --> PROVISIONING
+  PROVISIONING --> TRIAL
+  PROVISIONING --> ACTIVE
+  PROVISIONING --> ARCHIVED
+  PROVISIONING --> CANCELED
+  TRIAL --> ACTIVE
+  TRIAL --> SUSPENDED
+  TRIAL --> ARCHIVED
+  TRIAL --> CANCELED
+  ACTIVE --> SUSPENDED
+  ACTIVE --> ARCHIVED
+  ACTIVE --> CANCELED
+  SUSPENDED --> ACTIVE
+  SUSPENDED --> TRIAL
+  SUSPENDED --> ARCHIVED
+  SUSPENDED --> CANCELED
+  ARCHIVED --> [*]
+  CANCELED --> [*]
+```
+
+Transitions enforced via `assertTenantStatusTransition` / TenantsService. See [AUTHORIZATION.md](./AUTHORIZATION.md) for suspended operational gates.
+
 ## Facilities / sites
 
 **Canonical entity:** `facilities` (MK-S1)
