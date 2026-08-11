@@ -9,7 +9,6 @@ import {
   ForgeAppShell,
   ForgeFacilitySelector,
   ForgeHelpMenu,
-  ForgeNotificationMenu,
   ForgeProductSwitcher,
   ForgeSearchTrigger,
   ForgeShellState,
@@ -17,6 +16,7 @@ import {
   ForgeUserMenu,
 } from "@forge/ui";
 import { useAuth } from "@/hooks/use-auth";
+import { ConnectedNotificationMenu } from "@/components/connected-notification-menu";
 import { TENANT_ADMIN_NAV_GROUPS } from "@/lib/navigation";
 import styles from "../app/shell.module.css";
 
@@ -121,7 +121,7 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
             />
           ) : null}
           <ForgeHelpMenu href="/profile/" renderLink={renderLink} label="Help" />
-          <ForgeNotificationMenu />
+          <ConnectedNotificationMenu viewAllHref="/notifications/" renderLink={renderLink} />
           {me ? (
             <ForgeUserMenu
               label="Signed in"

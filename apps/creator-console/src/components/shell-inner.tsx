@@ -8,7 +8,6 @@ import {
   ForgeAppShell,
   ForgeFacilitySelector,
   ForgeHelpMenu,
-  ForgeNotificationMenu,
   ForgeProductSwitcher,
   ForgeSearchTrigger,
   ForgeShellState,
@@ -16,6 +15,7 @@ import {
   ForgeUserMenu,
 } from "@forge/ui";
 import { filterNavigationForSession, useAuth } from "@forge/web-kit";
+import { ConnectedNotificationMenu } from "@/components/connected-notification-menu";
 import { CREATOR_NAV_GROUPS } from "@/lib/navigation";
 import styles from "../app/shell.module.css";
 
@@ -108,7 +108,7 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
             />
           ) : null}
           <ForgeHelpMenu href="/profile/" renderLink={renderLink} label="Help" />
-          <ForgeNotificationMenu />
+          <ConnectedNotificationMenu viewAllHref="/notifications/" renderLink={renderLink} />
           {me ? (
             <ForgeUserMenu
               label={me.isPlatformAdmin ? "Platform admin" : "Signed in"}

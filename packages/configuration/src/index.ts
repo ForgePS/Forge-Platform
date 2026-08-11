@@ -538,8 +538,80 @@ export const DEFAULT_PAYLOADS: Record<ConfigNamespace, unknown> = {
   },
   roles: { roles: [] },
   permissions: { grants: [] },
-  notification_templates: { templates: [] },
-  email_templates: { templates: [] },
+  notification_templates: {
+    templates: [
+      {
+        key: "system_notification",
+        channel: "in_app",
+        subject: "System notification",
+        body: "{{detail}}",
+      },
+      {
+        key: "membership_changed",
+        channel: "in_app",
+        subject: "Membership update",
+        body: "Your membership status is now {{status}}.",
+      },
+      {
+        key: "billing",
+        channel: "in_app",
+        subject: "Billing update",
+        body: "A billing update is available for {{tenantName}}.",
+      },
+      {
+        key: "security",
+        channel: "in_app",
+        subject: "Security notice",
+        body: "{{detail}}",
+      },
+    ],
+  },
+  email_templates: {
+    templates: [
+      {
+        key: "welcome",
+        subject: "Welcome to Forge",
+        htmlBody: "<p>Welcome {{displayName}}. Your tenant is ready.</p>",
+        textBody: "Welcome {{displayName}}. Your tenant is ready.",
+      },
+      {
+        key: "verification",
+        subject: "Verify your email",
+        htmlBody: "<p>Verify your email for {{tenantName}}.</p>",
+        textBody: "Verify your email for {{tenantName}}.",
+      },
+      {
+        key: "invitation",
+        subject: "You are invited to {{tenantName}}",
+        htmlBody: "<p>You have been invited to join {{tenantName}}.</p>",
+        textBody: "You have been invited to join {{tenantName}}.",
+      },
+      {
+        key: "membership_changed",
+        subject: "Membership update",
+        htmlBody: "<p>Your membership status is now {{status}}.</p>",
+        textBody: "Your membership status is now {{status}}.",
+      },
+      {
+        key: "billing",
+        subject: "Billing update",
+        htmlBody: "<p>A billing update is available for {{tenantName}}.</p>",
+        textBody: "A billing update is available for {{tenantName}}.",
+      },
+      {
+        key: "security",
+        subject: "Security notice",
+        htmlBody: "<p>Security notice: {{detail}}</p>",
+        textBody: "Security notice: {{detail}}.",
+      },
+      {
+        key: "system_notification",
+        subject: "System notification",
+        htmlBody: "<p>{{detail}}</p>",
+        textBody: "{{detail}}",
+      },
+    ],
+  },
   document_templates: { templates: [] },
   certificate_templates: { templates: [] },
   dashboards: { dashboards: [] },

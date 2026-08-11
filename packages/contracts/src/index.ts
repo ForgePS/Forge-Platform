@@ -147,6 +147,19 @@ export type {
   PatchFacilityInput,
 } from "./tenant-domain.js";
 
+export {
+  EMAIL_TEMPLATE_KEYS,
+  NOTIFICATION_DESTINATIONS,
+  NOTIFICATION_PRIORITIES,
+  createNotificationInputSchema,
+  type CreateNotificationInput,
+  type EmailMessage,
+  type EmailSendResult,
+  type EmailTemplateKey,
+  type NotificationDestination,
+  type NotificationPriority,
+} from "./notification-domain.js";
+
 export const createOrganizationInputSchema = z.object({
   organizationTypeCode: z.string().min(1).max(64),
   slug: z

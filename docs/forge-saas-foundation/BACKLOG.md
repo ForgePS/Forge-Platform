@@ -93,6 +93,9 @@ HIGH
 Blocking Current Sprint:
 NO
 
+Status:
+PARTIALLY_RESOLVED_MK_S13 — inbox API/UI + Noop/SES stub + seeded templates shipped; production SES identity, injected SES client, and notification SQS worker consumer remain deferred.
+
 ---
 
 ## BACKLOG-005

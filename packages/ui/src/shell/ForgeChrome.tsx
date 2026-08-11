@@ -122,23 +122,158 @@ export function ForgeNotificationMenu({
   label = "Notifications",
   disabledReason = "Notification center not connected",
   disabled = true,
+  items = [],
+  open,
+  onToggle,
+  onMarkRead,
+  onMarkAllRead,
+  emptyText = "No notifications",
+  viewAllHref,
+  renderLink,
 }: {
   count?: number;
   label?: string;
   disabledReason?: string;
   disabled?: boolean;
+  items?: Array<{
+    id: string;
+    title: string;
+    body?: string;
+    createdAt?: string;
+    readAt?: string | null;
+  }>;
+  open?: boolean;
+  onToggle?: () => void;
+  onMarkRead?: (id: string) => void;
+  onMarkAllRead?: () => void;
+  emptyText?: string;
+  viewAllHref?: string;
+  renderLink?: ForgeLinkRender;
 }) {
+  if (disabled) {
+    return (
+      <Button
+        type="button"
+        variant="secondary"
+        aria-label={label}
+        title={disabledReason}
+        disabled
+      >
+        {label}
+        {count > 0 ? ` (${count})` : ""}
+      </Button>
+    );
+  }
+
   return (
-    <Button
-      type="button"
-      variant="secondary"
-      aria-label={label}
-      title={disabledReason}
-      disabled={disabled}
-    >
-      {label}
-      {count > 0 ? ` (${count})` : ""}
-    </Button>
+    <div style={{ position: "relative", display: "inline-flex" }}>
+      <Button
+        type="button"
+        variant="secondary"
+        aria-label={label}
+        aria-expanded={open ? true : false}
+        onClick={onToggle}
+      >
+        {label}
+        {count > 0 ? ` (${count})` : ""}
+      </Button>
+      {open ? (
+        <div
+          role="menu"
+          style={{
+            position: "absolute",
+            right: 0,
+            top: "calc(100% + 0.35rem)",
+            zIndex: 40,
+            width: "22rem",
+            maxHeight: "24rem",
+            overflow: "auto",
+            padding: "0.65rem",
+            borderRadius: "0.65rem",
+            border: "1px solid var(--forge-color-border, #d0d5dd)",
+            background: "var(--forge-color-surface, #fff)",
+            boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "0.5rem",
+              gap: "0.5rem",
+            }}
+          >
+            <strong style={{ fontSize: "0.9rem" }}>{label}</strong>
+            {onMarkAllRead ? (
+              <Button type="button" variant="outline" onClick={onMarkAllRead}>
+                Mark all read
+              </Button>
+            ) : null}
+          </div>
+          {items.length === 0 ? (
+            <p style={{ margin: 0, opacity: 0.7, fontSize: "0.9rem" }}>{emptyText}</p>
+          ) : (
+            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {items.map((item) => (
+                <li
+                  key={item.id}
+                  style={{
+                    padding: "0.55rem 0.35rem",
+                    borderTop: "1px solid var(--forge-color-border-light, #eaecf0)",
+                    opacity: item.readAt ? 0.7 : 1,
+                  }}
+                >
+                  <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>{item.title}</div>
+                  {item.body ? (
+                    <div style={{ fontSize: "0.82rem", opacity: 0.85, marginTop: "0.15rem" }}>
+                      {item.body}
+                    </div>
+                  ) : null}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: "0.5rem",
+                      marginTop: "0.35rem",
+                      fontSize: "0.75rem",
+                      opacity: 0.7,
+                    }}
+                  >
+                    <span>{item.createdAt ?? ""}</span>
+                    {!item.readAt && onMarkRead ? (
+                      <button
+                        type="button"
+                        style={{
+                          border: 0,
+                          background: "transparent",
+                          color: "var(--forge-color-primary, #0d6efd)",
+                          cursor: "pointer",
+                          padding: 0,
+                          font: "inherit",
+                        }}
+                        onClick={() => onMarkRead(item.id)}
+                      >
+                        Mark read
+                      </button>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          {viewAllHref ? (
+            <div style={{ marginTop: "0.65rem", fontSize: "0.85rem" }}>
+              {renderLink
+                ? renderLink({ href: viewAllHref, children: "View all" })
+                : (
+                    <a href={viewAllHref}>View all</a>
+                  )}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

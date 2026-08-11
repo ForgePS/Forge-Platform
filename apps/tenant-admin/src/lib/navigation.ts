@@ -85,7 +85,7 @@ export const TENANT_ADMIN_NAV_GROUPS: ForgeNavigationGroup[] = [
         id: "notifications",
         label: "Notifications",
         route: "/notifications",
-        anyOfPermissions: ["tenant.configuration.update", "platform.configuration.update"],
+        permission: "tenant.notification.read",
       },
       {
         id: "integrations",

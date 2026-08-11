@@ -58,6 +58,8 @@ export const TENANT_OWNER_PERMISSIONS = [
   "platform.invitation.manage",
   "platform.membership.read",
   "platform.membership.manage",
+  "tenant.notification.read",
+  "tenant.notification.manage",
   "import.view",
   "import.upload",
   "import.map",
@@ -77,6 +79,7 @@ export const STANDARD_USER_PERMISSIONS = [
   "platform.organization.read",
   "platform.person.read",
   "platform.permission.read",
+  "tenant.notification.read",
 ] as const;
 
 export const READ_ONLY_USER_PERMISSIONS = [
@@ -84,6 +87,7 @@ export const READ_ONLY_USER_PERMISSIONS = [
   "platform.person.read",
   "platform.permission.read",
   "platform.audit.read",
+  "tenant.notification.read",
 ] as const;
 
 export const SAAS_ROLE_PERSONAS = ["owner", "admin", "member", "viewer"] as const;
