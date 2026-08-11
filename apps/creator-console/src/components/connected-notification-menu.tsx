@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ForgeNotificationMenu, type ForgeLinkRender } from "@forge/ui";
 import { useAuth } from "@/hooks/use-auth";
 import { apiGet, apiSend } from "@/lib/api";
@@ -26,29 +26,49 @@ export function ConnectedNotificationMenu({
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(0);
   const [items, setItems] = useState<NotificationRow[]>([]);
-
-  const load = useCallback(async () => {
-    if (!tenantId || !canRead) {
-      setCount(0);
-      setItems([]);
-      return;
-    }
-    try {
-      const [countRes, list] = await Promise.all([
-        apiGet<{ count: number }>(`/api/v1/tenants/${tenantId}/notifications/unread-count`),
-        apiGet<NotificationRow[]>(`/api/v1/tenants/${tenantId}/notifications?limit=8`),
-      ]);
-      setCount(countRes.count);
-      setItems(list);
-    } catch {
-      setCount(0);
-      setItems([]);
-    }
-  }, [tenantId, canRead]);
+  const generation = useRef(0);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    setOpen(false);
+    setCount(0);
+    setItems([]);
+    if (!tenantId || !canRead) return;
+
+    const gen = ++generation.current;
+    const controller = new AbortController();
+
+    void (async () => {
+      try {
+        const countRes = await apiGet<{ count: number }>(
+          `/api/v1/tenants/${tenantId}/notifications/unread-count`,
+          { signal: controller.signal },
+        );
+        if (gen !== generation.current || controller.signal.aborted) return;
+        setCount(countRes.count);
+      } catch {
+        if (controller.signal.aborted) return;
+        if (gen === generation.current) setCount(0);
+      }
+    })();
+
+    return () => {
+      controller.abort();
+    };
+  }, [tenantId, canRead]);
+
+  async function loadList() {
+    if (!tenantId || !canRead) return;
+    const gen = generation.current;
+    try {
+      const list = await apiGet<NotificationRow[]>(
+        `/api/v1/tenants/${tenantId}/notifications?limit=8`,
+      );
+      if (gen !== generation.current) return;
+      setItems(list);
+    } catch {
+      if (gen === generation.current) setItems([]);
+    }
+  }
 
   if (!canRead || !tenantId) {
     return (
@@ -69,8 +89,11 @@ export function ConnectedNotificationMenu({
       count={count}
       open={open}
       onToggle={() => {
-        setOpen((value) => !value);
-        if (!open) void load();
+        setOpen((value) => {
+          const next = !value;
+          if (next) void loadList();
+          return next;
+        });
       }}
       items={items.map((row) => ({
         id: row.id,
@@ -81,12 +104,12 @@ export function ConnectedNotificationMenu({
       }))}
       onMarkRead={(id) => {
         void apiSend(`/api/v1/tenants/${tenantId}/notifications/${id}/read`, "POST").then(() =>
-          load(),
+          loadList(),
         );
       }}
       onMarkAllRead={() => {
         void apiSend(`/api/v1/tenants/${tenantId}/notifications/read-all`, "POST").then(() =>
-          load(),
+          loadList(),
         );
       }}
       viewAllHref={viewAllHref}

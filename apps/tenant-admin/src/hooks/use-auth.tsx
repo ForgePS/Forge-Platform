@@ -11,6 +11,7 @@ import {
 } from "react";
 import { authMe, logoutAll, selectTenant, type AuthMe } from "@/lib/api";
 import { clearAuthStorage } from "@/lib/auth-storage";
+import { syncTenantIdInUrl } from "@/hooks/use-tenant-id";
 
 type AuthContextValue = {
   me: AuthMe | null;
@@ -49,7 +50,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const chooseTenant = useCallback(async (tenantId: string) => {
     setError(null);
     const updated = await selectTenant(tenantId);
+    // Replace full AuthMe so prior tenant capabilities cannot linger.
     setMe(updated);
+    syncTenantIdInUrl(tenantId);
   }, []);
 
   const signOutAll = useCallback(async () => {

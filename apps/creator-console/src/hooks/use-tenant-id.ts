@@ -1,13 +1,18 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { resolveActiveTenantId } from "@forge/web-kit";
 import { useAuth } from "@/hooks/use-auth";
 
-/** Tenant from query string, falling back to the authenticated session tenant. */
+/** Active tenant for data fetching (session wins over stale URL for non-admins). */
 export function useTenantId(): string | null {
   const searchParams = useSearchParams();
   const { me } = useAuth();
-  return searchParams.get("tenantId") ?? me?.tenantId ?? null;
+  return resolveActiveTenantId({
+    sessionTenantId: me?.tenantId,
+    queryTenantId: searchParams.get("tenantId"),
+    ...(me?.isPlatformAdmin ? { isPlatformAdmin: true } : {}),
+  });
 }
 
 export function tenantQuery(tenantId: string): string {

@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { PlatformPageGate } from "@/components/platform-page-gate";
 import { tenantDetailHref } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
-import { apiGet } from "@/lib/api";
+import { apiGetResult } from "@/lib/api";
 import styles from "../page.module.css";
 
 type AuditEvent = {
@@ -21,31 +21,51 @@ type AuditEvent = {
   occurredAt: string;
 };
 
+const PAGE_SIZE = 25;
+
 function AuditInner() {
   const searchParams = useSearchParams();
   const tenantId = searchParams.get("tenantId");
 
   const [events, setEvents] = useState<AuditEvent[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(Boolean(tenantId));
   const [error, setError] = useState<string | null>(null);
+  const generation = useRef(0);
 
-  const load = useCallback(async () => {
-    if (!tenantId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      setEvents(
-        await apiGet<AuditEvent[]>(`/api/v1/tenants/${tenantId}/audit-events?page=1&pageSize=50`),
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load audit events");
-    } finally {
-      setLoading(false);
-    }
-  }, [tenantId]);
+  const load = useCallback(
+    async (nextPage: number) => {
+      if (!tenantId) return;
+      const gen = ++generation.current;
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await apiGetResult<AuditEvent[]>(
+          `/api/v1/tenants/${tenantId}/audit-events`,
+          { query: { page: String(nextPage), pageSize: String(PAGE_SIZE) } },
+        );
+        if (gen !== generation.current) return;
+        setEvents(result.data);
+        setTotal(result.meta?.total ?? result.data.length);
+        setPage(nextPage);
+      } catch (err) {
+        if (gen !== generation.current) return;
+        setError(err instanceof Error ? err.message : "Failed to load audit events");
+      } finally {
+        if (gen === generation.current) setLoading(false);
+      }
+    },
+    [tenantId],
+  );
 
   useEffect(() => {
-    void load();
+    setEvents([]);
+    setTotal(0);
+    void load(1);
+    return () => {
+      generation.current += 1;
+    };
   }, [load]);
 
   if (!tenantId) {
@@ -57,6 +77,8 @@ function AuditInner() {
     );
   }
 
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
   return (
     <section className={styles.page}>
       <h1>Audit</h1>
@@ -66,6 +88,28 @@ function AuditInner() {
       </p>
 
       {error ? <p className={styles.error}>{error}</p> : null}
+
+      <div className={styles.actions} style={{ marginBottom: "0.75rem" }}>
+        <button
+          type="button"
+          className={styles.buttonSecondary}
+          disabled={page <= 1 || loading}
+          onClick={() => void load(page - 1)}
+        >
+          Previous
+        </button>
+        <span className={styles.muted}>
+          Page {page} / {pageCount} · {total} total
+        </span>
+        <button
+          type="button"
+          className={styles.buttonSecondary}
+          disabled={page >= pageCount || loading}
+          onClick={() => void load(page + 1)}
+        >
+          Next
+        </button>
+      </div>
 
       <div className={styles.panel}>
         <h2>Recent events</h2>
@@ -83,6 +127,7 @@ function AuditInner() {
                 <th>Result</th>
                 <th>Risk</th>
                 <th>Actor</th>
+                <th>Correlation</th>
               </tr>
             </thead>
             <tbody>
@@ -106,6 +151,7 @@ function AuditInner() {
                   <td>{event.result}</td>
                   <td>{event.riskLevel}</td>
                   <td className={styles.mono}>{event.actorUserId ?? "—"}</td>
+                  <td className={styles.mono}>{event.correlationId ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

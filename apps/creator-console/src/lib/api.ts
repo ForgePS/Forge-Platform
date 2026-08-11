@@ -18,6 +18,9 @@ export type ApiSuccess<T> = {
   meta: {
     requestId: string;
     correlationId: string;
+    page?: number;
+    pageSize?: number;
+    total?: number;
     pagination?: { page: number; pageSize: number; total: number };
   };
 };
@@ -26,6 +29,7 @@ export type ApiRequestOptions = {
   ifMatch?: string;
   idempotencyKey?: string;
   query?: Record<string, string | undefined>;
+  signal?: AbortSignal;
 };
 
 export type ApiResult<T> = {
@@ -149,6 +153,7 @@ export async function apiGetResult<T>(
   const res = await fetch(`${apiUrl()}${path}${buildQuery(options?.query)}`, {
     headers: requestHeaders(options),
     cache: "no-store",
+    ...(options?.signal ? { signal: options.signal } : {}),
   });
   return parseResponse<T>(res);
 }

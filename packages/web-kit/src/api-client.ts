@@ -13,6 +13,7 @@ export type ApiRequestOptions = {
   ifMatch?: string;
   idempotencyKey?: string;
   query?: Record<string, string | undefined>;
+  signal?: AbortSignal;
 };
 
 export type ApiResult<T> = {
@@ -171,6 +172,7 @@ export async function apiGetResult<T>(
   const res = await fetch(`${getApiBaseUrl()}${path}${buildQuery(options?.query)}`, {
     headers,
     cache: "no-store",
+    ...(options?.signal ? { signal: options.signal } : {}),
   });
   return parseResponse<T>(res, Boolean(headers.Authorization));
 }
@@ -196,6 +198,7 @@ export async function apiSendResult<T>(
     method,
     headers,
     cache: "no-store",
+    ...(options?.signal ? { signal: options.signal } : {}),
   };
   if (payload !== undefined) {
     init.body = JSON.stringify(payload);

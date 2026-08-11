@@ -7,7 +7,7 @@ import {
   type DatabaseTransaction,
   withTenantTransaction,
 } from "@forge/database";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { DATABASE } from "../../tokens.js";
 
 @Injectable()
@@ -46,13 +46,18 @@ export class AuditService {
 
   async list(tenantId: string, page = 1, pageSize = 25) {
     return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const [countRow] = await tx
+        .select({ count: sql<number>`count(*)::int` })
+        .from(auditEvents)
+        .where(eq(auditEvents.tenantId, tenantId));
+      const total = countRow?.count ?? 0;
       const rows = await tx.query.auditEvents.findMany({
         where: eq(auditEvents.tenantId, tenantId),
         orderBy: (t, { desc }) => [desc(t.occurredAt)],
         limit: pageSize,
         offset: (page - 1) * pageSize,
       });
-      return rows;
+      return { rows, total };
     });
   }
 

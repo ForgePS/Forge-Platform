@@ -53,6 +53,12 @@ export {
 export { switchActiveTenant } from "./tenant-switch.js";
 
 export {
+  useTenantScopedEffect,
+  resolveActiveTenantId,
+  syncTenantIdInUrl,
+} from "./tenant-scoped.js";
+
+export {
   buildAuthorizeUrl,
   buildLogoutUrl,
   CognitoOAuthError,

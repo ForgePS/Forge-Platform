@@ -1,10 +1,10 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { TenantPageGate } from "@/components/tenant-page-gate";
 import { TenantRequired } from "@/components/tenant-required";
 import { useTenantId } from "@/hooks/use-tenant-id";
-import { apiGet, apiSend } from "@/lib/api";
+import { apiGetResult, apiSend } from "@/lib/api";
 import styles from "../page.module.css";
 
 type AuditEvent = {
@@ -19,31 +19,51 @@ type AuditEvent = {
   occurredAt: string;
 };
 
+const PAGE_SIZE = 25;
+
 function AuditInner() {
   const tenantId = useTenantId();
   const [events, setEvents] = useState<AuditEvent[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(Boolean(tenantId));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [exportNote, setExportNote] = useState<string | null>(null);
+  const generation = useRef(0);
 
-  const load = useCallback(async () => {
-    if (!tenantId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      setEvents(
-        await apiGet<AuditEvent[]>(`/api/v1/tenants/${tenantId}/audit-events?page=1&pageSize=50`),
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load audit events");
-    } finally {
-      setLoading(false);
-    }
-  }, [tenantId]);
+  const load = useCallback(
+    async (nextPage: number) => {
+      if (!tenantId) return;
+      const gen = ++generation.current;
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await apiGetResult<AuditEvent[]>(
+          `/api/v1/tenants/${tenantId}/audit-events`,
+          { query: { page: String(nextPage), pageSize: String(PAGE_SIZE) } },
+        );
+        if (gen !== generation.current) return;
+        setEvents(result.data);
+        setTotal(result.meta?.total ?? result.data.length);
+        setPage(nextPage);
+      } catch (err) {
+        if (gen !== generation.current) return;
+        setError(err instanceof Error ? err.message : "Failed to load audit events");
+      } finally {
+        if (gen === generation.current) setLoading(false);
+      }
+    },
+    [tenantId],
+  );
 
   useEffect(() => {
-    void load();
+    setEvents([]);
+    setTotal(0);
+    void load(1);
+    return () => {
+      generation.current += 1;
+    };
   }, [load]);
 
   async function exportEvents() {
@@ -60,7 +80,7 @@ function AuditInner() {
       setExportNote(
         `Export ${result.exportId} · ${result.count} events · ${result.exportedAt}`,
       );
-      await load();
+      await load(page);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Export failed");
     } finally {
@@ -77,6 +97,8 @@ function AuditInner() {
     );
   }
 
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
   return (
     <section className={styles.page}>
       <h1>Audit</h1>
@@ -90,6 +112,25 @@ function AuditInner() {
       <div className={styles.actions} style={{ marginBottom: "1rem" }}>
         <button type="button" onClick={() => void exportEvents()} disabled={busy}>
           Export (JSON)
+        </button>
+        <button
+          type="button"
+          className={styles.buttonSecondary}
+          disabled={page <= 1 || loading}
+          onClick={() => void load(page - 1)}
+        >
+          Previous
+        </button>
+        <span className={styles.muted}>
+          Page {page} / {pageCount} · {total} total
+        </span>
+        <button
+          type="button"
+          className={styles.buttonSecondary}
+          disabled={page >= pageCount || loading}
+          onClick={() => void load(page + 1)}
+        >
+          Next
         </button>
       </div>
 

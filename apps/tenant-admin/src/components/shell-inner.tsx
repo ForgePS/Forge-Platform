@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo } from "react";
 import { filterNavigationGroups } from "@forge/design-system";
 import type { ForgeLinkRender } from "@forge/ui";
 import {
@@ -26,12 +27,16 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
   const { me, loading, error, signOutAll, chooseTenant } = useAuth();
 
-  const groups = filterNavigationGroups(TENANT_ADMIN_NAV_GROUPS, {
-    permissions: me?.permissions ?? [],
-    products: me?.activeProducts ?? [],
-    modules: me?.activeModules ?? [],
-    ...(me?.isPlatformAdmin ? { isPlatformAdmin: true } : {}),
-  });
+  const groups = useMemo(
+    () =>
+      filterNavigationGroups(TENANT_ADMIN_NAV_GROUPS, {
+        permissions: me?.permissions ?? [],
+        products: me?.activeProducts ?? [],
+        modules: me?.activeModules ?? [],
+        ...(me?.isPlatformAdmin ? { isPlatformAdmin: true } : {}),
+      }),
+    [me],
+  );
 
   const tenants =
     me?.tenants.map((t) => ({

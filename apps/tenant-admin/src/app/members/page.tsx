@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TenantPageGate } from "@/components/tenant-page-gate";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,32 +17,51 @@ import {
 } from "@/lib/api";
 import styles from "../page.module.css";
 
+const PAGE_SIZE = 25;
+
 function MembersInner() {
   const tenantId = useTenantId();
   const { hasPermission } = useAuth();
   const canManage = hasPermission("platform.membership.manage");
   const [items, setItems] = useState<Membership[]>([]);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(Boolean(tenantId));
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
+  const generation = useRef(0);
 
   const load = useCallback(async () => {
     if (!tenantId) return;
+    const gen = ++generation.current;
+    setItems([]);
+    setPage(1);
     setLoading(true);
     setError(null);
     try {
-      setItems(await listMemberships(tenantId));
+      const rows = await listMemberships(tenantId);
+      if (gen !== generation.current) return;
+      setItems(rows);
     } catch (err) {
+      if (gen !== generation.current) return;
       setError(err instanceof Error ? err.message : "Failed to load members");
     } finally {
-      setLoading(false);
+      if (gen === generation.current) setLoading(false);
     }
   }, [tenantId]);
 
   useEffect(() => {
     void load();
+    return () => {
+      generation.current += 1;
+    };
   }, [load]);
+
+  const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  const pageItems = useMemo(
+    () => items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [items, page],
+  );
 
   async function runAction(membership: Membership, action: "activate" | "suspend" | "revoke") {
     if (!tenantId || !canManage) return;
@@ -107,57 +126,80 @@ function MembersInner() {
         {items.length === 0 ? (
           <p className={styles.muted}>No memberships.</p>
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Status</th>
-                <th>User status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((row) => (
-                <tr key={row.id}>
-                  <td>{row.email}</td>
-                  <td>{row.status}</td>
-                  <td>{row.userStatus}</td>
-                  <td>
-                    {canManage ? (
-                      <div className={styles.actions}>
-                        <button
-                          className={styles.buttonSecondary}
-                          type="button"
-                          disabled={busyId === row.id}
-                          onClick={() => void runAction(row, "activate")}
-                        >
-                          Activate
-                        </button>
-                        <button
-                          className={styles.buttonSecondary}
-                          type="button"
-                          disabled={busyId === row.id}
-                          onClick={() => void runAction(row, "suspend")}
-                        >
-                          Suspend
-                        </button>
-                        <button
-                          className={styles.buttonDanger}
-                          type="button"
-                          disabled={busyId === row.id}
-                          onClick={() => void runAction(row, "revoke")}
-                        >
-                          Revoke
-                        </button>
-                      </div>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
+          <>
+            <div className={styles.actions} style={{ marginBottom: "0.75rem" }}>
+              <button
+                type="button"
+                className={styles.buttonSecondary}
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Previous
+              </button>
+              <span className={styles.muted}>
+                Page {page} / {pageCount} · {items.length} total
+              </span>
+              <button
+                type="button"
+                className={styles.buttonSecondary}
+                disabled={page >= pageCount}
+                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+              >
+                Next
+              </button>
+            </div>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>User status</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {pageItems.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.email}</td>
+                    <td>{row.status}</td>
+                    <td>{row.userStatus}</td>
+                    <td>
+                      {canManage ? (
+                        <div className={styles.actions}>
+                          <button
+                            className={styles.buttonSecondary}
+                            type="button"
+                            disabled={busyId === row.id}
+                            onClick={() => void runAction(row, "activate")}
+                          >
+                            Activate
+                          </button>
+                          <button
+                            className={styles.buttonSecondary}
+                            type="button"
+                            disabled={busyId === row.id}
+                            onClick={() => void runAction(row, "suspend")}
+                          >
+                            Suspend
+                          </button>
+                          <button
+                            className={styles.buttonDanger}
+                            type="button"
+                            disabled={busyId === row.id}
+                            onClick={() => void runAction(row, "revoke")}
+                          >
+                            Revoke
+                          </button>
+                        </div>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
       </div>
     </section>

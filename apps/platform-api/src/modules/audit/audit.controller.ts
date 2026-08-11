@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req } from "@nestjs/common";
+import { Controller, Get, Param, Post, Query, Req } from "@nestjs/common";
 import type { ForgePrincipal } from "@forge/tenant-context";
 import { ForgeError } from "@forge/errors";
 import { ok } from "../../common/api-response.js";
@@ -24,11 +24,11 @@ export class AuditController {
   ) {
     const page = Math.max(1, Number(pageRaw ?? 1) || 1);
     const pageSize = Math.min(200, Math.max(1, Number(pageSizeRaw ?? 25) || 25));
-    const rows = await this.audit.list(tenantId, page, pageSize);
+    const { rows, total } = await this.audit.list(tenantId, page, pageSize);
     return ok(rows, getRequestIds(req), {
       page,
       pageSize,
-      total: rows.length,
+      total,
     });
   }
 

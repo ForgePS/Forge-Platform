@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo } from "react";
 import type { ForgeLinkRender } from "@forge/ui";
 import {
   EnvironmentBanner,
@@ -25,7 +26,7 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
   const { me, loading, error, logout, chooseTenant } = useAuth();
 
-  const groups = filterNavigationForSession(CREATOR_NAV_GROUPS, me);
+  const groups = useMemo(() => filterNavigationForSession(CREATOR_NAV_GROUPS, me), [me]);
 
   const tenants =
     me?.tenants.map((t) => ({
