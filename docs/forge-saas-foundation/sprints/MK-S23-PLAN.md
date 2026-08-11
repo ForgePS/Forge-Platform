@@ -1,19 +1,13 @@
-# MK-S23 Plan — Production Readiness
+# MK-S23 Plan — Production Readiness (expanded)
 
 ## Objective
 
-Review SaaS production readiness across env, secrets, IAM, Cognito, DB/migrations/backups, CDN/S3/WAF/DNS/ACM, SES, logging/alarms/health, rollback, deploy ordering, and post-deploy checks. Document verdict. **NO DEPLOYMENT.** No production ops.
+Production-readiness and deployment-planning review per full FORGE-SAAS MK-S23 directive. Carry MK-S22 E2E condition forward. **NO production deploy / migrate / AWS mutation.**
 
-## Approach
+## Deliverable
 
-1. REUSE existing ops/architecture/infra docs and CDK/config in-repo
-2. Score each review area: READY | READY WITH CONDITIONS | NOT READY | N/A
-3. Write `docs/forge-saas-foundation/MK-S23-production-readiness.md` with overall verdict
-4. Sprint COMPLETE; STOP
+`docs/forge-saas-foundation/MK-S23-production-readiness.md` covering env, secrets, IAM, DB migrate plan, CloudFront/S3/Cognito/network/DNS/ACM/WAF, observability, alarms, backup/DR, deploy order, rollback, smoke, post-deploy UAT, Firebase dependency, blockers, verdict.
 
-## Out of scope
+## Verdict constraint
 
-- Deploy / migrate production
-- Changing production resources
-- Industrial product readiness (except where shared platform controls apply)
-- MK-S24 documentation closeout
+Must not return unconditional READY while MK-S22 HTTP E2E remains OUTSTANDING.
