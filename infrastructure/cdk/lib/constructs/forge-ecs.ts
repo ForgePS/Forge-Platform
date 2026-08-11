@@ -452,6 +452,11 @@ export class ForgeEcs extends Construct {
         EVENT_BUS_NAME: props.eventBus.eventBusName,
         S3_DOCUMENT_BUCKET: props.documentsBucket.bucketName,
         S3_IMPORT_BUCKET: props.importsBucket.bucketName,
+        // Required by @forge/environment HTTPS URL checks in production-like APP_ENV.
+        PUBLIC_RMS_URL: props.publicRmsUrl,
+        PUBLIC_CREATOR_URL: props.publicCreatorUrl,
+        PUBLIC_ACADEMY_URL: props.publicRmsUrl,
+        PUBLIC_API_URL: publicApiUrl,
       },
     });
 
