@@ -46,6 +46,8 @@ export interface ForgeCloudTrailProps {
    * Do not pass every application bucket — document cost/volume first.
    */
   dataEventBuckets?: s3.IBucket[];
+  /** Prefer Alerting stack security topic when provided. */
+  alarmTopic?: sns.ITopic;
 }
 
 /**
@@ -59,7 +61,7 @@ export class ForgeCloudTrail extends Construct {
   readonly trail: cloudtrail.Trail;
   readonly bucket: s3.Bucket;
   readonly logGroup: logs.LogGroup;
-  readonly alarmTopic: sns.Topic;
+  readonly alarmTopic: sns.ITopic;
   readonly trailName: string;
 
   constructor(scope: Construct, id: string, props: ForgeCloudTrailProps) {
@@ -71,10 +73,12 @@ export class ForgeCloudTrail extends Construct {
 
     this.trailName = resourceName(config, "cloudtrail", "management");
 
-    this.alarmTopic = new sns.Topic(this, "SecurityAlarmTopic", {
-      topicName: resourceName(config, "sns", "security-alarms"),
-      displayName: "Forge CloudTrail security alarms (dev may use placeholder subscribers)",
-    });
+    this.alarmTopic =
+      props.alarmTopic ??
+      new sns.Topic(this, "SecurityAlarmTopic", {
+        topicName: resourceName(config, "sns", "security-alarms"),
+        displayName: "Forge CloudTrail security alarms (dev may use placeholder subscribers)",
+      });
 
     this.bucket = new s3.Bucket(this, "TrailBucket", {
       bucketName: uniqueBucketName(config, "cloudtrail"),

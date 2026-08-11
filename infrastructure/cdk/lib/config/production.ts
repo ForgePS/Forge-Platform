@@ -80,12 +80,14 @@ export function createProductionConfig(
       tenantAdmin: `admin.${PRODUCTION_ROOT_DOMAIN}`,
       ses: `mail.${PRODUCTION_ROOT_DOMAIN}`,
     },
-    // TLS for ALB remains off until hosted zone / cert is wired (edge cert required).
-    // SPA/CloudFront ACM and DNS cutover are PROD-S1 / cutover program concerns.
+    // TLS for ALB remains off until Production edge is wired and cutover authorized.
+    // Existing us-east-1 ISSUED cert covers apex + wildcard; do not flip enableHttps here.
     edge: {
       enableHttps: false,
       apiHostname: `api.${PRODUCTION_ROOT_DOMAIN}`,
       consoleHostname: `creator.${PRODUCTION_ROOT_DOMAIN}`,
+      certificateArn:
+        "arn:aws:acm:us-east-1:511343547817:certificate/ca267baa-304e-4ffd-be51-7350abab0c3f",
     },
     cognito: {
       callbackUrls: [

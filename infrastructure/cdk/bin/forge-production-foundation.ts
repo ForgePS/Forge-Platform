@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * PROD-S0R foundation-only CDK app.
- * Deploys Network, Security, Observability, Data, Backup — no customer-facing app stacks.
+ * PROD-S0R production foundation CDK app.
+ * Deploys Network, Security, Observability, Data, Backup, Alerting (SNS), Identity
+ * — no customer-facing Compute/Frontend/DNS cutover.
  */
 import * as cdk from "aws-cdk-lib";
 import { Aspects } from "aws-cdk-lib";
@@ -13,6 +14,8 @@ import { SecurityStack } from "../lib/stacks/security-stack.js";
 import { DataStack } from "../lib/stacks/data-stack.js";
 import { ObservabilityStack } from "../lib/stacks/observability-stack.js";
 import { BackupStack } from "../lib/stacks/backup-stack.js";
+import { AlertingStack } from "../lib/stacks/alerting-stack.js";
+import { IdentityStack } from "../lib/stacks/identity-stack.js";
 
 const app = new cdk.App();
 const config = resolveConfig();
@@ -54,8 +57,19 @@ new BackupStack(app, "ForgeBackup", {
   auditArchiveBucket: data.auditArchiveBucket,
 });
 
+/** SNS topics (ops/security/SES) — no Compute dependency; email optional via FORGE_ALERT_EMAIL. */
+const alerting = new AlertingStack(app, "ForgeAlerting", {
+  config,
+  env,
+  masterKey: security.generalKey,
+});
+
+/** Empty production Cognito foundation — no Firebase migration / customer traffic. */
+new IdentityStack(app, "ForgeIdentity", { config, env });
+
 data.addStackDependency(network);
 data.addStackDependency(security);
 observability.addStackDependency(security);
+alerting.addStackDependency(security);
 
 app.synth();

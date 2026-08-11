@@ -1,6 +1,7 @@
 import * as cdk from "aws-cdk-lib";
 import * as kms from "aws-cdk-lib/aws-kms";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import * as sns from "aws-cdk-lib/aws-sns";
 import { Construct } from "constructs";
 import type { ForgeEnvironmentConfig } from "../config/environment-schema.js";
 import { ForgeCloudTrail } from "../constructs/forge-cloudtrail.js";
@@ -13,6 +14,8 @@ export interface AuditStackProps extends cdk.StackProps {
   logsKey: kms.IKey;
   /** Buckets that receive targeted CloudTrail S3 WriteOnly data events. */
   dataEventBuckets?: s3.IBucket[];
+  /** Optional shared security alarm topic from AlertingStack. */
+  alarmTopic?: sns.ITopic;
 }
 
 /**
@@ -33,6 +36,7 @@ export class AuditStack extends cdk.Stack {
       storageKey: props.storageKey,
       logsKey: props.logsKey,
       dataEventBuckets: props.dataEventBuckets,
+      alarmTopic: props.alarmTopic,
     });
 
     exportValue(this, `${id}-TrailName`, this.cloudTrail.trailName, "CloudTrail trail name");

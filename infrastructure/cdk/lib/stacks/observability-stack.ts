@@ -4,6 +4,7 @@ import * as logs from "aws-cdk-lib/aws-logs";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as rds from "aws-cdk-lib/aws-rds";
+import * as sns from "aws-cdk-lib/aws-sns";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import { Construct } from "constructs";
 import type { ForgeEnvironmentConfig } from "../config/environment-schema.js";
@@ -69,6 +70,8 @@ export interface MonitoringStackProps extends cdk.StackProps {
   cadRetentionDlq?: sqs.IQueue;
   apiCloudFrontDistributionId?: string;
   rmsCloudFrontDistributionId?: string;
+  /** Shared ops topic from AlertingStack when available. */
+  alarmTopic?: sns.ITopic;
 }
 
 /** Dashboards and alarms — depends on Compute/Data/Messaging (no cycle with logging). */
@@ -101,6 +104,7 @@ export class MonitoringStack extends cdk.Stack {
       cadRetentionDlq: props.cadRetentionDlq,
       apiCloudFrontDistributionId: props.apiCloudFrontDistributionId,
       rmsCloudFrontDistributionId: props.rmsCloudFrontDistributionId,
+      alarmTopic: props.alarmTopic,
     });
 
     exportValue(

@@ -165,6 +165,22 @@ export class ForgeEcs extends Construct {
         },
         rules: [
           {
+            name: "AWSManagedRulesAmazonIpReputationList",
+            priority: 0,
+            overrideAction: { none: {} },
+            statement: {
+              managedRuleGroupStatement: {
+                vendorName: "AWS",
+                name: "AWSManagedRulesAmazonIpReputationList",
+              },
+            },
+            visibilityConfig: {
+              cloudWatchMetricsEnabled: true,
+              metricName: "IpReputation",
+              sampledRequestsEnabled: true,
+            },
+          },
+          {
             name: "AWSManagedRulesCommonRuleSet",
             priority: 1,
             overrideAction: { none: {} },
@@ -177,6 +193,39 @@ export class ForgeEcs extends Construct {
             visibilityConfig: {
               cloudWatchMetricsEnabled: true,
               metricName: "CommonRuleSet",
+              sampledRequestsEnabled: true,
+            },
+          },
+          {
+            name: "AWSManagedRulesKnownBadInputsRuleSet",
+            priority: 2,
+            overrideAction: { none: {} },
+            statement: {
+              managedRuleGroupStatement: {
+                vendorName: "AWS",
+                name: "AWSManagedRulesKnownBadInputsRuleSet",
+              },
+            },
+            visibilityConfig: {
+              cloudWatchMetricsEnabled: true,
+              metricName: "KnownBadInputs",
+              sampledRequestsEnabled: true,
+            },
+          },
+          {
+            // Conservative edge rate limit — associates only when Compute deploys ALB WAF.
+            name: "RateLimitPerIp",
+            priority: 3,
+            action: { block: {} },
+            statement: {
+              rateBasedStatement: {
+                limit: 2000,
+                aggregateKeyType: "IP",
+              },
+            },
+            visibilityConfig: {
+              cloudWatchMetricsEnabled: true,
+              metricName: "RateLimitPerIp",
               sampledRequestsEnabled: true,
             },
           },

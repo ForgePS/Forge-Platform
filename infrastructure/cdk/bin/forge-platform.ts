@@ -14,6 +14,7 @@ import { ComputeStack } from "../lib/stacks/compute-stack.js";
 import { FrontendStack } from "../lib/stacks/frontend-stack.js";
 import { BackupStack } from "../lib/stacks/backup-stack.js";
 import { AuditStack } from "../lib/stacks/audit-stack.js";
+import { AlertingStack } from "../lib/stacks/alerting-stack.js";
 
 const app = new cdk.App();
 const config = resolveConfig();
@@ -33,6 +34,11 @@ Aspects.of(app).add(
 const network = new NetworkStack(app, "ForgeNetwork", { config, env });
 const security = new SecurityStack(app, "ForgeSecurity", { config, env });
 const identity = new IdentityStack(app, "ForgeIdentity", { config, env });
+const alerting = new AlertingStack(app, "ForgeAlerting", {
+  config,
+  env,
+  masterKey: security.generalKey,
+});
 
 const messaging = new MessagingStack(app, "ForgeMessaging", {
   config,
@@ -149,7 +155,6 @@ new MonitoringStack(app, "ForgeMonitoring", {
   importsDlq: messaging.importsDlq,
   notificationsDlq: messaging.notificationsDlq,
   documentsDlq: messaging.documentsDlq,
-  exportsDlq: messaging.exportJobsDlq,
   integrationDlq: messaging.integrationEventsDlq,
   cadIntakeDlq: messaging.cadIntakeDlq,
   cadNormalizationDlq: messaging.cadNormalizationDlq,
@@ -159,6 +164,7 @@ new MonitoringStack(app, "ForgeMonitoring", {
   cadRetentionDlq: messaging.cadRetentionDlq,
   apiCloudFrontDistributionId: compute.ecs.apiHttps.distribution.distributionId,
   rmsCloudFrontDistributionId: "E2LZJLH664YX70",
+  alarmTopic: alerting.opsTopic,
 });
 
 new BackupStack(app, "ForgeBackup", {
@@ -178,6 +184,7 @@ const audit = config.features.enableCloudTrail
       logsKey: security.logsKey,
       // Targeted WriteOnly data events for high-value buckets only (cost/volume reviewed).
       dataEventBuckets: [data.documentsBucket, data.exportsBucket, data.auditArchiveBucket],
+      alarmTopic: alerting.securityTopic,
     })
   : undefined;
 
@@ -187,6 +194,7 @@ data.addStackDependency(network);
 data.addStackDependency(security);
 messaging.addStackDependency(security);
 observability.addStackDependency(security);
+alerting.addStackDependency(security);
 compute.addStackDependency(network);
 compute.addStackDependency(data);
 compute.addStackDependency(messaging);
@@ -195,6 +203,7 @@ compute.addStackDependency(identity);
 if (audit) {
   audit.addStackDependency(security);
   audit.addStackDependency(data);
+  audit.addStackDependency(alerting);
 }
 
 app.synth();

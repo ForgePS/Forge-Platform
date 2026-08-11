@@ -31,28 +31,38 @@ export interface ForgeMonitoringProps {
   /** Optional CloudFront distribution IDs for edge error alarms. */
   apiCloudFrontDistributionId?: string;
   rmsCloudFrontDistributionId?: string;
+  /**
+   * Prefer the Alerting stack ops topic when provided so Monitoring does not
+   * recreate forge-*-sns-alarms (name collision / dual-subscription risk).
+   */
+  alarmTopic?: sns.ITopic;
 }
 
 export class ForgeMonitoring extends Construct {
-  readonly alarmTopic: sns.Topic;
+  readonly alarmTopic: sns.ITopic;
   readonly dashboard: cloudwatch.Dashboard;
 
   constructor(scope: Construct, id: string, props: ForgeMonitoringProps) {
     super(scope, id);
     const { config } = props;
 
-    this.alarmTopic = new sns.Topic(this, "AlarmTopic", {
-      topicName: resourceName(config, "sns", "alarms"),
-      displayName: `Forge ${config.environmentName} operational alarms`,
-    });
-
-    const alertEmail = process.env.FORGE_ALERT_EMAIL?.trim();
-    if (alertEmail && alertEmail.includes("@")) {
-      new sns.Subscription(this, "AlarmEmailSubscription", {
-        topic: this.alarmTopic,
-        protocol: sns.SubscriptionProtocol.EMAIL,
-        endpoint: alertEmail,
+    this.alarmTopic =
+      props.alarmTopic ??
+      new sns.Topic(this, "AlarmTopic", {
+        topicName: resourceName(config, "sns", "alarms"),
+        displayName: `Forge ${config.environmentName} operational alarms`,
       });
+
+    // Email subscription lives on AlertingStack when shared topics are used.
+    if (!props.alarmTopic) {
+      const alertEmail = process.env.FORGE_ALERT_EMAIL?.trim();
+      if (alertEmail && alertEmail.includes("@") && this.alarmTopic instanceof sns.Topic) {
+        new sns.Subscription(this, "AlarmEmailSubscription", {
+          topic: this.alarmTopic,
+          protocol: sns.SubscriptionProtocol.EMAIL,
+          endpoint: alertEmail,
+        });
+      }
     }
 
     const envLabel = config.environmentName
