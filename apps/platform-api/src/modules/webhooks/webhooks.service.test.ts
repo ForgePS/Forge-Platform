@@ -39,7 +39,7 @@ describe("WebhooksService (MK-S15)", () => {
 
     withTenantTransaction.mockImplementation(async (_db, _tid, fn) =>
       fn({
-        insert: (table: { name?: string } | unknown) => ({
+        insert: (_table: { name?: string } | unknown) => ({
           values: (v: Record<string, unknown>) => ({
             returning: async () => {
               if ("signingSecret" in v || "endpointUrl" in v) {

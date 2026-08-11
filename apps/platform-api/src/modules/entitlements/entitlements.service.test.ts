@@ -32,7 +32,7 @@ function createMocks() {
 
   const tx = {
     execute: vi.fn(async () => undefined),
-    insert: vi.fn((table: { [key: symbol]: unknown } | object) => ({
+    insert: vi.fn((_table: { [key: symbol]: unknown } | object) => ({
       values: vi.fn((values: Record<string, unknown>) => ({
         returning: vi.fn(async () => {
           if (!productRow && values.productId) {

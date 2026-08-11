@@ -36,6 +36,8 @@ export function EmergencyResponseWorkspace({ moduleName }: { moduleName: string 
 
   useEffect(() => {
     void load();
+    // load closes over category; re-fetch when category changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
 
   async function createRecord(e: React.FormEvent) {

@@ -132,7 +132,7 @@ export class ForgeImportExecutionStateMachine extends Construct {
     );
 
     const logGroup = new logs.LogGroup(this, "ImportExecutionLogs", {
-      logGroupName: `/forge/${props.config.environment}/import-execution-sfn`,
+      logGroupName: `/forge/${props.config.environmentName}/import-execution-sfn`,
       retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });

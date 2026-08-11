@@ -109,7 +109,6 @@ const compute = new ComputeStack(app, "ForgeCompute", {
   importQueue: messaging.imports,
   notificationQueue: messaging.notifications,
   documentQueue: messaging.documents,
-  exportQueue: messaging.exportJobs,
   integrationQueue: messaging.integrationEvents,
   cadIntakeQueue: messaging.cadIntake,
   cadNormalizationQueue: messaging.cadNormalization,

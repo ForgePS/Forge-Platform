@@ -41,6 +41,8 @@ function IncidentsInner() {
     } finally {
       setLoading(false);
     }
+    // granular controls fields only — full `controls` identity changes every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me?.tenantId, controls.page, controls.pageSize, controls.search, controls.setTotal]);
 
   useEffect(() => {

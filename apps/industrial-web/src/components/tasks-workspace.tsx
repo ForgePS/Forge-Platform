@@ -32,6 +32,8 @@ export function TasksWorkspace({ moduleName }: { moduleName: string }) {
 
   useEffect(() => {
     void load();
+    // initial mount load only; filter applied via explicit refresh/actions
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function createTask(e: React.FormEvent) {

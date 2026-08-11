@@ -3,7 +3,6 @@ import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import type { ForgeEnvironment } from "@forge/environment";
 import {
   createImportUploadDetectMessage,
-  createImportMalwareScanMessage,
   type ImportExecuteMessage,
   type ImportMalwareScanMessage,
   type ImportUploadDetectMessage,

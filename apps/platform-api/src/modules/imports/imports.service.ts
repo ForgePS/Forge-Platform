@@ -10,7 +10,6 @@ import {
   createImportJobSchema,
   createImportProfileSchema,
   getImportTemplate,
-  IMPORT_NOT_AVAILABLE_UNTIL_S3,
   listImportTemplates,
   listJobsQuerySchema,
   listProfilesQuerySchema,

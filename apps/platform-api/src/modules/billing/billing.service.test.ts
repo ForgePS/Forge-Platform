@@ -1,6 +1,5 @@
 import { createHmac } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ForgeError } from "@forge/errors";
 import type { ForgePrincipal } from "@forge/tenant-context";
 import { BillingService, verifyBillingWebhookSignature } from "./billing.service.js";
 

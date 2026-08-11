@@ -186,7 +186,6 @@ function main(): void {
     console.warn(
       JSON.stringify(
         {
-          ok: true,
           message: "Production deploy guard passed",
           ...result,
         },

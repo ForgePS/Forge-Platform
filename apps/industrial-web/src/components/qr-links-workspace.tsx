@@ -55,6 +55,8 @@ export function QrLinksWorkspace({ moduleName }: { moduleName: string }) {
 
   useEffect(() => {
     if (permissions.has("qr.view")) void load();
+    // permissions derived from me; reload when session principal changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me]);
 
   async function create(event: FormEvent) {
