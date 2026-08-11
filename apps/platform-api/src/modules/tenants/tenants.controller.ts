@@ -66,7 +66,7 @@ export class TenantsController {
   }
 
   @Post(":tenantId/activate")
-  @RequirePermission("platform.tenant.update", { allowWhenSuspended: true })
+  @RequirePermission("platform.tenant.suspend", { allowWhenSuspended: true })
   async activate(
     @Param("tenantId") tenantId: string,
     @Principal() principal: ForgePrincipal,

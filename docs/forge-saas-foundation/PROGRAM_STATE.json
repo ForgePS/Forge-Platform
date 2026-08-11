@@ -1,7 +1,7 @@
 {
   "program": "FORGE-SAAS-CORE",
   "currentAuthorizedSprint": null,
-  "lastCompletedSprint": "MK-S20",
+  "lastCompletedSprint": "MK-S21",
   "status": "ACTIVE",
   "productionAuthorized": false,
   "automaticSprintAdvance": false,
@@ -24,13 +24,13 @@
     "BACKLOG-017",
     "BACKLOG-018"
   ],
-  "mkS20Verification": {
+  "mkS21Verification": {
     "date": "2026-08-11",
     "typecheckPlatformApi": "PASS",
-    "typecheckCreator": "PASS",
-    "unitContractsAnalytics": "1 passed",
-    "unitAnalyticsService": "1 passed",
-    "productionOperations": "NONE",
-    "repairPasses": 0
+    "unitEscalation": "2 passed",
+    "unitSystemRole": "2 passed",
+    "repairPasses": 1,
+    "criticalHighResolved": true,
+    "productionOperations": "NONE"
   }
 }

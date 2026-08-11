@@ -108,6 +108,7 @@ export const CREATOR_ONLY_PERMISSIONS = [
   "platform.tenant.suspend",
   "platform.onboarding.manage",
   "platform.analytics.read",
+  "platform.entitlement.manage",
   "platform.neris.schema.import",
   "platform.cad.adapter.manage",
   "platform.cad.mapping_template.manage",

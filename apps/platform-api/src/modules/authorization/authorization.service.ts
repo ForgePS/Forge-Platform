@@ -3,6 +3,7 @@ import {
   evaluateAuthorization,
   type AuthorizationDecision,
 } from "@forge/authorization";
+import { isCreatorOnlyPermission } from "@forge/contracts";
 import {
   createId,
   permissions,
@@ -10,6 +11,7 @@ import {
   roles,
   userRoleAssignments,
   type Database,
+  type DatabaseTransaction,
   withTenantTransaction,
 } from "@forge/database";
 import { ForgeError } from "@forge/errors";
@@ -225,6 +227,7 @@ export class AuthorizationService {
           "System-managed role permissions cannot be modified",
         );
       }
+      this.assertPermissionCodesAssignable(principal, data.permissionCodes);
       const version = role.recordVersion;
       if (expectedVersion !== "*" && version !== expectedVersion) {
         throw concurrencyConflict({
@@ -302,6 +305,7 @@ export class AuthorizationService {
       if (!role) {
         throw new ForgeError("NOT_FOUND", "Role not found");
       }
+      await this.assertRoleAssignable(tx, principal, data.roleId);
       const id = createId();
       const [row] = await tx
         .insert(userRoleAssignments)
@@ -395,5 +399,45 @@ export class AuthorizationService {
       roleEffects: [{ effect: "ALLOW", organizationId: null }],
       allowWhenSuspended: data.permissionCode.startsWith("platform.tenant"),
     });
+  }
+
+  /**
+   * MK-S21: prevent privilege escalation by swapping permissions onto an already-held role.
+   * Mirrors memberships.assertGrantable.
+   */
+  private assertPermissionCodesAssignable(
+    principal: ForgePrincipal,
+    permissionCodes: readonly string[],
+  ): void {
+    for (const code of permissionCodes) {
+      if (isCreatorOnlyPermission(code) && !principal.isPlatformAdmin) {
+        throw new ForgeError(
+          "FORBIDDEN",
+          "Tenant administrators cannot assign creator permissions to roles",
+        );
+      }
+      if (!principal.isPlatformAdmin && !principal.permissions.has(code)) {
+        throw new ForgeError(
+          "FORBIDDEN",
+          "Cannot assign a permission the caller does not hold",
+        );
+      }
+    }
+  }
+
+  private async assertRoleAssignable(
+    tx: DatabaseTransaction,
+    principal: ForgePrincipal,
+    roleId: string,
+  ): Promise<void> {
+    const granted = await tx
+      .select({ code: permissions.code, effect: rolePermissions.effect })
+      .from(rolePermissions)
+      .innerJoin(permissions, eq(permissions.id, rolePermissions.permissionId))
+      .where(eq(rolePermissions.roleId, roleId));
+    this.assertPermissionCodesAssignable(
+      principal,
+      granted.filter((row) => row.effect !== "DENY").map((row) => row.code),
+    );
   }
 }
