@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
+import { PlatformPageGate } from "@/components/platform-page-gate";
 import { tenantDetailHref } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
 import { apiGet, apiSend } from "@/lib/api";
@@ -170,8 +171,10 @@ function FeaturesInner() {
 
 export default function FeaturesPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
-      <FeaturesInner />
-    </Suspense>
+    <PlatformPageGate title="Feature Flags" permission="platform.feature.manage">
+      <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+        <FeaturesInner />
+      </Suspense>
+    </PlatformPageGate>
   );
 }

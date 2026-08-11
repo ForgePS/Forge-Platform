@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
+import { PlatformPageGate } from "@/components/platform-page-gate";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
 import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
@@ -366,8 +367,13 @@ function BillingInner() {
 
 export default function BillingPage() {
   return (
-    <Suspense fallback={<section className={styles.page}><p>Loading…</p></section>}>
-      <BillingInner />
-    </Suspense>
+    <PlatformPageGate
+      title="Billing"
+      anyOf={["platform.entitlement.manage", "tenant.billing.read"]}
+    >
+      <Suspense fallback={<section className={styles.page}><p>Loading…</p></section>}>
+        <BillingInner />
+      </Suspense>
+    </PlatformPageGate>
   );
 }

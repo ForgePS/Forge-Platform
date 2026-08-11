@@ -19,4 +19,10 @@ export class ProductsController {
   async listModules(@Req() req: RequestWithIds) {
     return ok(await this.products.listModules(), getRequestIds(req));
   }
+
+  @Get("plans")
+  @RequirePermission("platform.entitlement.manage", { allowWhenSuspended: true })
+  async listPlans(@Req() req: RequestWithIds) {
+    return ok(await this.products.listPlans(), getRequestIds(req));
+  }
 }

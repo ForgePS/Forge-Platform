@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { PlatformPageGate } from "@/components/platform-page-gate";
 import { tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGet, apiSend } from "@/lib/api";
 import styles from "../page.module.css";
@@ -41,6 +42,14 @@ function normalizeSlug(value: string): string {
 }
 
 export default function TenantsPage() {
+  return (
+    <PlatformPageGate title="Tenants" permission="platform.tenant.read">
+      <TenantsInner />
+    </PlatformPageGate>
+  );
+}
+
+function TenantsInner() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

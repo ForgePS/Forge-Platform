@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
+import { PlatformPageGate } from "@/components/platform-page-gate";
 import { tenantDetailHref } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
 import { apiGet } from "@/lib/api";
@@ -117,8 +118,10 @@ function AuditInner() {
 
 export default function AuditPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
-      <AuditInner />
-    </Suspense>
+    <PlatformPageGate title="Audit" permission="platform.audit.read">
+      <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+        <AuditInner />
+      </Suspense>
+    </PlatformPageGate>
   );
 }

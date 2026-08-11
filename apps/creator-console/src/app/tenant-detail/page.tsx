@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { apiGetResult, apiSend, toIfMatch } from "@/lib/api";
+import { PlatformPageGate } from "@/components/platform-page-gate";
+import { listMemberships, type Membership, apiGet, apiGetResult, apiSend, toIfMatch } from "@/lib/api";
 import styles from "../page.module.css";
 
 type Tenant = {
@@ -20,6 +21,72 @@ type Tenant = {
   recordVersion: number;
 };
 
+type Facility = {
+  id: string;
+  facilityKey: string;
+  name: string;
+  status: string;
+  facilityType: string | null;
+};
+
+type Branding = {
+  primaryColor: string | null;
+  secondaryColor: string | null;
+  supportEmail: string | null;
+  emailSenderName: string | null;
+};
+
+type Entitlements = {
+  products: Array<{ productCode: string; productName: string; status: string }>;
+  modules: Array<{ moduleCode: string; moduleName: string; status: string }>;
+};
+
+type Feature = { key: string; name: string; value: unknown; valueType: string };
+
+type AuditEvent = {
+  id: string;
+  action: string;
+  resourceType: string;
+  result: string;
+  occurredAt: string;
+};
+
+type BillingOverview = {
+  customer: { billingEmail: string | null } | null;
+  subscription: {
+    status: string;
+    planCode: string | null;
+    planName: string | null;
+    billingInterval: string | null;
+  } | null;
+  contracts: Array<{
+    id: string;
+    name: string;
+    status: string;
+    billingType: string;
+    startsOn: string | null;
+    endsOn: string | null;
+  }>;
+  invoices: Array<{ id: string; status: string; amountDueCents: number; createdAt: string }>;
+};
+
+const SECTIONS = [
+  { id: "summary", label: "Summary" },
+  { id: "status", label: "Status" },
+  { id: "contacts", label: "Contacts" },
+  { id: "facilities", label: "Facilities" },
+  { id: "members", label: "Members" },
+  { id: "products", label: "Products" },
+  { id: "modules", label: "Modules" },
+  { id: "subscription", label: "Subscription" },
+  { id: "contract", label: "Contract" },
+  { id: "branding", label: "Branding" },
+  { id: "feature-flags", label: "Feature Flags" },
+  { id: "usage", label: "Usage" },
+  { id: "activity", label: "Activity" },
+  { id: "audit", label: "Audit" },
+] as const;
+
 function TenantDetailInner() {
   const searchParams = useSearchParams();
   const tenantId = searchParams.get("tenantId");
@@ -31,7 +98,16 @@ function TenantDetailInner() {
   const [busy, setBusy] = useState(false);
   const [suspendReason, setSuspendReason] = useState("");
 
-  const load = useCallback(async () => {
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [members, setMembers] = useState<Membership[]>([]);
+  const [branding, setBranding] = useState<Branding | null>(null);
+  const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
+  const [features, setFeatures] = useState<Feature[]>([]);
+  const [audit, setAudit] = useState<AuditEvent[]>([]);
+  const [billing, setBilling] = useState<BillingOverview | null>(null);
+  const [sectionErrors, setSectionErrors] = useState<Record<string, string>>({});
+
+  const loadCore = useCallback(async () => {
     if (!tenantId) return;
     setLoading(true);
     setError(null);
@@ -46,14 +122,65 @@ function TenantDetailInner() {
     }
   }, [tenantId]);
 
+  const loadSections = useCallback(async () => {
+    if (!tenantId) return;
+    const nextErrors: Record<string, string> = {};
+
+    const settle = async <T,>(
+      key: string,
+      promise: Promise<T>,
+      apply: (value: T) => void,
+    ) => {
+      try {
+        apply(await promise);
+      } catch (err) {
+        nextErrors[key] = err instanceof Error ? err.message : `Failed to load ${key}`;
+      }
+    };
+
+    await Promise.all([
+      settle("facilities", apiGet<Facility[]>(`/api/v1/tenants/${tenantId}/facilities`), setFacilities),
+      settle("members", listMemberships(tenantId), setMembers),
+      settle(
+        "branding",
+        apiGet<Branding | null>(`/api/v1/tenants/${tenantId}/branding`),
+        (row) => setBranding(row),
+      ),
+      settle(
+        "entitlements",
+        apiGet<Entitlements>(`/api/v1/tenants/${tenantId}/entitlements`),
+        setEntitlements,
+      ),
+      settle(
+        "features",
+        apiGet<Feature[]>(`/api/v1/tenants/${tenantId}/features/effective`),
+        setFeatures,
+      ),
+      settle(
+        "audit",
+        apiGet<AuditEvent[]>(`/api/v1/tenants/${tenantId}/audit-events?page=1&pageSize=20`),
+        setAudit,
+      ),
+      settle(
+        "billing",
+        apiGet<BillingOverview>(`/api/v1/tenants/${tenantId}/billing/overview`),
+        setBilling,
+      ),
+    ]);
+
+    setSectionErrors(nextErrors);
+  }, [tenantId]);
+
   useEffect(() => {
-    void load();
-  }, [load]);
+    void loadCore();
+  }, [loadCore]);
+
+  useEffect(() => {
+    if (tenant) void loadSections();
+  }, [tenant, loadSections]);
 
   async function resolveIfMatch(): Promise<string> {
-    if (!tenantId) {
-      throw new Error("Missing tenantId");
-    }
+    if (!tenantId) throw new Error("Missing tenantId");
     const fresh = await apiGetResult<Tenant>(`/api/v1/platform/tenants/${tenantId}`);
     setTenant(fresh.data);
     const next = fresh.etag ?? toIfMatch(fresh.data.recordVersion);
@@ -125,6 +252,12 @@ function TenantDetailInner() {
       <h1>Tenant detail</h1>
       <p className={styles.lead}>
         <Link href="/tenants">← Tenants</Link>
+        {tenant ? (
+          <>
+            {" "}
+            · {tenant.displayName} · <span className={styles.mono}>{tenant.id}</span>
+          </>
+        ) : null}
       </p>
 
       {error ? <p className={styles.error}>{error}</p> : null}
@@ -132,8 +265,16 @@ function TenantDetailInner() {
 
       {tenant ? (
         <>
-          <div className={styles.panel}>
-            <h2>{tenant.displayName}</h2>
+          <nav className={styles.linkRow} aria-label="Tenant sections">
+            {SECTIONS.map((section) => (
+              <a key={section.id} href={`#${section.id}`}>
+                {section.label}
+              </a>
+            ))}
+          </nav>
+
+          <div className={styles.panel} id="summary">
+            <h2>Summary</h2>
             <dl className={styles.dl}>
               <dt>ID</dt>
               <dd className={styles.mono}>{tenant.id}</dd>
@@ -143,8 +284,6 @@ function TenantDetailInner() {
               <dd className={styles.mono}>{tenant.slug}</dd>
               <dt>Legal name</dt>
               <dd>{tenant.legalName}</dd>
-              <dt>Status</dt>
-              <dd>{tenant.status}</dd>
               <dt>Type</dt>
               <dd>{tenant.tenantType}</dd>
               <dt>Timezone</dt>
@@ -160,13 +299,18 @@ function TenantDetailInner() {
                 </>
               ) : null}
             </dl>
+          </div>
 
+          <div className={styles.panel} id="status">
+            <h2>Status</h2>
+            <p>
+              Current status: <strong>{tenant.status}</strong>
+            </p>
             <div className={styles.actions} style={{ marginTop: "1rem" }}>
               <button className={styles.button} type="button" disabled={busy} onClick={() => void activate()}>
                 Activate
               </button>
             </div>
-
             <div className={styles.form} style={{ marginTop: "1rem" }}>
               <div className={styles.formRow}>
                 <label htmlFor="suspendReason">Suspend reason</label>
@@ -190,21 +334,288 @@ function TenantDetailInner() {
             </div>
           </div>
 
-          <nav className={styles.linkRow}>
-            <Link href={`/organizations${q}`}>Organizations</Link>
-            <Link href={`/persons${q}`}>Persons</Link>
-            <Link href={`/users${q}`}>Users</Link>
-            <Link href={`/roles${q}`}>Roles</Link>
-            <Link href={`/memberships${q}`}>Memberships</Link>
-            <Link href={`/invitations${q}`}>Invitations</Link>
-            <Link href={`/subscriptions${q}`}>Subscriptions</Link>
-            <Link href={`/branding${q}`}>Branding</Link>
-            <Link href={`/permissions${q}`}>Permissions</Link>
-            <Link href={`/entitlements${q}`}>Entitlements</Link>
-            <Link href={`/features${q}`}>Features</Link>
-            <Link href={`/configuration${q}`}>Configuration</Link>
-            <Link href={`/audit${q}`}>Audit</Link>
-          </nav>
+          <div className={styles.panel} id="contacts">
+            <h2>Contacts</h2>
+            {sectionErrors.billing ? <p className={styles.error}>{sectionErrors.billing}</p> : null}
+            <dl className={styles.dl}>
+              <dt>Billing email</dt>
+              <dd>{billing?.customer?.billingEmail ?? "—"}</dd>
+              <dt>Support email</dt>
+              <dd>{branding?.supportEmail ?? "—"}</dd>
+              <dt>Email sender</dt>
+              <dd>{branding?.emailSenderName ?? "—"}</dd>
+            </dl>
+            <nav className={styles.linkRow}>
+              <Link href={`/persons${q}`}>Persons</Link>
+              <Link href={`/billing${q}`}>Billing contact</Link>
+            </nav>
+          </div>
+
+          <div className={styles.panel} id="facilities">
+            <h2>Facilities</h2>
+            {sectionErrors.facilities ? (
+              <p className={styles.error}>{sectionErrors.facilities}</p>
+            ) : null}
+            {facilities.length === 0 ? (
+              <p className={styles.muted}>No facilities (or unavailable).</p>
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {facilities.slice(0, 10).map((row) => (
+                    <tr key={row.id}>
+                      <td className={styles.mono}>{row.facilityKey}</td>
+                      <td>{row.name}</td>
+                      <td>{row.facilityType ?? "—"}</td>
+                      <td>{row.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <nav className={styles.linkRow}>
+              <Link href={`/studio/facilities${q}`}>Studio · Facilities</Link>
+            </nav>
+          </div>
+
+          <div className={styles.panel} id="members">
+            <h2>Members</h2>
+            {sectionErrors.members ? <p className={styles.error}>{sectionErrors.members}</p> : null}
+            {members.length === 0 ? (
+              <p className={styles.muted}>No memberships (or unavailable).</p>
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>User status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {members.slice(0, 10).map((row) => (
+                    <tr key={row.id}>
+                      <td>{row.email}</td>
+                      <td>{row.status}</td>
+                      <td>{row.userStatus}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <nav className={styles.linkRow}>
+              <Link href={`/memberships${q}`}>Memberships</Link>
+              <Link href={`/users${q}`}>Users</Link>
+            </nav>
+          </div>
+
+          <div className={styles.panel} id="products">
+            <h2>Products</h2>
+            {sectionErrors.entitlements ? (
+              <p className={styles.error}>{sectionErrors.entitlements}</p>
+            ) : null}
+            {(entitlements?.products?.length ?? 0) === 0 ? (
+              <p className={styles.muted}>No product entitlements.</p>
+            ) : (
+              <ul>
+                {entitlements!.products.map((row) => (
+                  <li key={row.productCode}>
+                    <span className={styles.mono}>{row.productCode}</span> · {row.productName} ·{" "}
+                    {row.status}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <nav className={styles.linkRow}>
+              <Link href={`/entitlements${q}`}>Entitlements</Link>
+              <Link href="/products">Catalog</Link>
+            </nav>
+          </div>
+
+          <div className={styles.panel} id="modules">
+            <h2>Modules</h2>
+            {(entitlements?.modules?.length ?? 0) === 0 ? (
+              <p className={styles.muted}>No module entitlements.</p>
+            ) : (
+              <ul>
+                {entitlements!.modules.map((row) => (
+                  <li key={row.moduleCode}>
+                    <span className={styles.mono}>{row.moduleCode}</span> · {row.moduleName} ·{" "}
+                    {row.status}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <nav className={styles.linkRow}>
+              <Link href="/modules">Module catalog</Link>
+            </nav>
+          </div>
+
+          <div className={styles.panel} id="subscription">
+            <h2>Subscription</h2>
+            {sectionErrors.billing ? <p className={styles.error}>{sectionErrors.billing}</p> : null}
+            <dl className={styles.dl}>
+              <dt>Status</dt>
+              <dd>{billing?.subscription?.status ?? "None"}</dd>
+              <dt>Plan</dt>
+              <dd>
+                {billing?.subscription?.planName ?? billing?.subscription?.planCode ?? "—"}
+                {billing?.subscription?.billingInterval
+                  ? ` · ${billing.subscription.billingInterval}`
+                  : ""}
+              </dd>
+            </dl>
+            <nav className={styles.linkRow}>
+              <Link href={`/subscriptions${q}`}>Subscriptions</Link>
+              <Link href="/plans">Plans</Link>
+            </nav>
+          </div>
+
+          <div className={styles.panel} id="contract">
+            <h2>Contract</h2>
+            {(billing?.contracts?.length ?? 0) === 0 ? (
+              <p className={styles.muted}>No contracts.</p>
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Type</th>
+                    <th>Starts</th>
+                    <th>Ends</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {billing!.contracts.map((row) => (
+                    <tr key={row.id}>
+                      <td>{row.name}</td>
+                      <td>{row.status}</td>
+                      <td className={styles.mono}>{row.billingType}</td>
+                      <td>{row.startsOn ?? "—"}</td>
+                      <td>{row.endsOn ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <nav className={styles.linkRow}>
+              <Link href={`/contracts${q}`}>Contracts</Link>
+              <Link href={`/billing${q}`}>Billing</Link>
+            </nav>
+          </div>
+
+          <div className={styles.panel} id="branding">
+            <h2>Branding</h2>
+            {sectionErrors.branding ? <p className={styles.error}>{sectionErrors.branding}</p> : null}
+            <dl className={styles.dl}>
+              <dt>Primary</dt>
+              <dd className={styles.mono}>{branding?.primaryColor ?? "—"}</dd>
+              <dt>Secondary</dt>
+              <dd className={styles.mono}>{branding?.secondaryColor ?? "—"}</dd>
+            </dl>
+            <nav className={styles.linkRow}>
+              <Link href={`/branding${q}`}>Branding editor</Link>
+              <Link href={`/studio/branding${q}`}>Studio · Branding</Link>
+            </nav>
+          </div>
+
+          <div className={styles.panel} id="feature-flags">
+            <h2>Feature Flags</h2>
+            {sectionErrors.features ? <p className={styles.error}>{sectionErrors.features}</p> : null}
+            {features.length === 0 ? (
+              <p className={styles.muted}>No effective features.</p>
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Name</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {features.slice(0, 15).map((row) => (
+                    <tr key={row.key}>
+                      <td className={styles.mono}>{row.key}</td>
+                      <td>{row.name}</td>
+                      <td className={styles.mono}>{JSON.stringify(row.value)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <nav className={styles.linkRow}>
+              <Link href={`/features${q}`}>Feature Flags</Link>
+            </nav>
+          </div>
+
+          <div className={styles.panel} id="usage">
+            <h2>Usage</h2>
+            <p className={styles.muted}>
+              Invoice count: {billing?.invoices?.length ?? 0}. Open billing for amounts and
+              payment portal status.
+            </p>
+            <nav className={styles.linkRow}>
+              <Link href={`/billing${q}`}>Billing overview</Link>
+              <Link href={`/ai/usage${q}`}>AI usage</Link>
+            </nav>
+          </div>
+
+          <div className={styles.panel} id="activity">
+            <h2>Activity</h2>
+            {audit.length === 0 ? (
+              <p className={styles.muted}>No recent activity.</p>
+            ) : (
+              <ul>
+                {audit.slice(0, 5).map((row) => (
+                  <li key={row.id}>
+                    <span className={styles.mono}>{row.occurredAt}</span> · {row.action} ·{" "}
+                    {row.resourceType} · {row.result}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className={styles.panel} id="audit">
+            <h2>Audit</h2>
+            {sectionErrors.audit ? <p className={styles.error}>{sectionErrors.audit}</p> : null}
+            {audit.length === 0 ? (
+              <p className={styles.muted}>No audit events.</p>
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Occurred</th>
+                    <th>Action</th>
+                    <th>Resource</th>
+                    <th>Result</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {audit.map((row) => (
+                    <tr key={row.id}>
+                      <td className={styles.mono}>{row.occurredAt}</td>
+                      <td>{row.action}</td>
+                      <td>{row.resourceType}</td>
+                      <td>{row.result}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <nav className={styles.linkRow}>
+              <Link href={`/audit${q}`}>Full audit</Link>
+            </nav>
+          </div>
         </>
       ) : null}
     </section>
@@ -213,8 +624,10 @@ function TenantDetailInner() {
 
 export default function TenantDetailPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
-      <TenantDetailInner />
-    </Suspense>
+    <PlatformPageGate title="Tenant detail" permission="platform.tenant.read">
+      <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+        <TenantDetailInner />
+      </Suspense>
+    </PlatformPageGate>
   );
 }

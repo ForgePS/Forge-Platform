@@ -1,5 +1,10 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { platformModules, platformProducts, type Database } from "@forge/database";
+import {
+  platformModules,
+  platformProducts,
+  subscriptionPlans,
+  type Database,
+} from "@forge/database";
 import { eq } from "drizzle-orm";
 import { DATABASE } from "../../tokens.js";
 
@@ -17,6 +22,13 @@ export class ProductsService {
   async listModules() {
     return this.db.query.platformModules.findMany({
       where: eq(platformModules.status, "ACTIVE"),
+      orderBy: (t, { asc }) => [asc(t.code)],
+    });
+  }
+
+  async listPlans() {
+    return this.db.query.subscriptionPlans.findMany({
+      where: eq(subscriptionPlans.status, "ACTIVE"),
       orderBy: (t, { asc }) => [asc(t.code)],
     });
   }

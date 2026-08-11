@@ -11,6 +11,7 @@ import {
   type HealthPayload,
   type ReadyPayload,
 } from "@/lib/api";
+import { PlatformPageGate } from "@/components/platform-page-gate";
 import { useAuth } from "@/hooks/use-auth";
 import { tenantQuery } from "@/hooks/use-tenant-id";
 import styles from "./page.module.css";
@@ -302,8 +303,10 @@ function DashboardInner() {
 
 export default function HomePage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
-      <DashboardInner />
-    </Suspense>
+    <PlatformPageGate title="Overview" permission="platform.tenant.read">
+      <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+        <DashboardInner />
+      </Suspense>
+    </PlatformPageGate>
   );
 }

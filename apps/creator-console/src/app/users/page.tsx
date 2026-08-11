@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
+import { PlatformPageGate } from "@/components/platform-page-gate";
 import { tenantDetailHref } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
 import { apiGet, apiSend } from "@/lib/api";
@@ -158,8 +159,10 @@ function UsersInner() {
 
 export default function UsersPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
-      <UsersInner />
-    </Suspense>
+    <PlatformPageGate title="Users" permission="platform.user.invite">
+      <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+        <UsersInner />
+      </Suspense>
+    </PlatformPageGate>
   );
 }
