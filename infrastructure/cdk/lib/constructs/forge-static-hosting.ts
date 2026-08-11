@@ -26,6 +26,9 @@ export class ForgeStaticHosting extends Construct {
     super(scope, id);
     const { config, appKey, displayName } = props;
     const appKeyLower = appKey.toLowerCase();
+    const retain =
+      config.environmentName.includes("production") ||
+      config.environmentName.startsWith("govcloud");
 
     this.bucket = new s3.Bucket(this, "Origin", {
       bucketName: uniqueBucketName(config, appKeyLower),
@@ -33,8 +36,8 @@ export class ForgeStaticHosting extends Construct {
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
       versioned: true,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
+      removalPolicy: retain ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: !retain,
     });
 
     const responseHeaders = new cloudfront.ResponseHeadersPolicy(this, "SecureHeaders", {

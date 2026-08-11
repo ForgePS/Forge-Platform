@@ -56,8 +56,15 @@ export class ForgeVpc extends Construct {
           encryption: s3.BucketEncryption.S3_MANAGED,
           blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
           enforceSSL: true,
-          removalPolicy: cdk.RemovalPolicy.DESTROY,
-          autoDeleteObjects: true,
+          removalPolicy:
+            config.environmentName.includes("production") ||
+            config.environmentName.startsWith("govcloud")
+              ? cdk.RemovalPolicy.RETAIN
+              : cdk.RemovalPolicy.DESTROY,
+          autoDeleteObjects: !(
+            config.environmentName.includes("production") ||
+            config.environmentName.startsWith("govcloud")
+          ),
           lifecycleRules: [
             { expiration: cdk.Duration.days(config.retention.securityLogsDays) },
           ],

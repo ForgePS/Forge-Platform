@@ -94,14 +94,18 @@ export class ForgeEcs extends Construct {
       containerInsightsV2: ecs.ContainerInsights.ENABLED,
     });
 
+    const retain =
+      config.environmentName.includes("production") ||
+      config.environmentName.startsWith("govcloud");
+
     const albLogsBucket = new s3.Bucket(this, "AlbAccessLogs", {
       bucketName: `forge-${config.environmentName}-alb-logs-${config.account}-${config.region}`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
       lifecycleRules: [{ expiration: cdk.Duration.days(90) }],
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
+      removalPolicy: retain ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: !retain,
       objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_PREFERRED,
     });
 
