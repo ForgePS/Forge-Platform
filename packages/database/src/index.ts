@@ -9,6 +9,11 @@ import * as schema from "./schema.js";
 export * from "./schema.js";
 export { createId } from "./ids.js";
 export * from "./identity-lookup.js";
+export {
+  alterRolePassword,
+  ensureAppLoginRole,
+  redactCredentialError,
+} from "./safe-admin.js";
 
 export type Database = ReturnType<typeof createDatabase>;
 
