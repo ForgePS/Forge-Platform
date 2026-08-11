@@ -13,7 +13,12 @@ import { exportValue } from "../utils/outputs.js";
 
 export interface FrontendStackProps extends cdk.StackProps {
   config: ForgeEnvironmentConfig;
-  /** Optional API CloudFront distribution ID for shared WAF association. */
+  /**
+   * Optional API CloudFront distribution ID (Compute-owned).
+   * Not associated in-stack (CloudFront rejects WAFv2 WebACLAssociation).
+   * After deploy, associate via CloudFront AssociateDistributionWebACL using
+   * the exported Frontend WebACL ARN.
+   */
   apiCloudFrontDistributionId?: string;
 }
 
@@ -131,18 +136,25 @@ export class FrontendStack extends cdk.Stack {
       );
     }
 
-    const needsWaf =
-      props.config.features.enableWaf &&
-      (distributions.length > 0 || Boolean(props.apiCloudFrontDistributionId));
-
-    if (needsWaf) {
-      new ForgeCloudFrontWaf(this, "CloudFrontWaf", {
+    if (props.config.features.enableWaf && distributions.length > 0) {
+      const waf = new ForgeCloudFrontWaf(this, "CloudFrontWaf", {
         config: props.config,
         distributions,
-        externalDistributionIds: props.apiCloudFrontDistributionId
-          ? [props.apiCloudFrontDistributionId]
-          : undefined,
       });
+      exportValue(
+        this,
+        `${id}-CloudFrontWebAclArn`,
+        waf.webAclArn,
+        "CloudFront WAF WebACL ARN for SPA edges (and optional API AssociateDistributionWebACL)",
+      );
+      if (props.apiCloudFrontDistributionId) {
+        exportValue(
+          this,
+          `${id}-ApiCloudFrontDistributionId`,
+          props.apiCloudFrontDistributionId,
+          "API CloudFront distribution ID pending AssociateDistributionWebACL",
+        );
+      }
     }
 
     new ForgeBudgets(this, "Budgets", { config: props.config });
