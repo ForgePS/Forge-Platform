@@ -266,6 +266,7 @@ export async function seedConfigAuthPersonas(options?: {
 
 async function main(): Promise<void> {
   const result = await seedConfigAuthPersonas();
+  // eslint-disable-next-line no-console -- CLI output
   console.info(JSON.stringify({ ok: true, ...result }, null, 2));
 }
 

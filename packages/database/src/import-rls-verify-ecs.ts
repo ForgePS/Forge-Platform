@@ -110,6 +110,7 @@ async function main(): Promise<void> {
   out.tenantA = tenantA || null;
   out.tenantB = tenantB || null;
   if (!tenantA || !tenantB) {
+    // eslint-disable-next-line no-console -- CLI output for ECS verify task
     console.info(JSON.stringify({ ...out, error: "missing acceptance tenants", cases }));
     process.exit(2);
   }
@@ -161,6 +162,7 @@ async function main(): Promise<void> {
   );
   const jobAId = aJob[0]?.id;
   if (!jobAId) {
+    // eslint-disable-next-line no-console -- CLI output for ECS verify task
     console.info(JSON.stringify({ ...out, error: "missing acceptance job fixture", cases }));
     process.exit(2);
   }
@@ -323,6 +325,7 @@ async function main(): Promise<void> {
     Number(out.metadataLeakage) === 0 &&
     Number(out.rlsBypass) === 0;
 
+  // eslint-disable-next-line no-console -- CLI output for ECS verify task
   console.info(JSON.stringify(out));
   process.exit(out.ok ? 0 : 1);
 }

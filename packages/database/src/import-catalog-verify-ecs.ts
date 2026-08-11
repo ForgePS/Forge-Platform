@@ -92,6 +92,7 @@ async function main(): Promise<void> {
         );
       }) && perms.length === 12;
 
+    // eslint-disable-next-line no-console -- CLI output for ECS verify task
     console.info(
       JSON.stringify({
         ok,

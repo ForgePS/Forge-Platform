@@ -343,6 +343,7 @@ export async function seedImportS8Personas(): Promise<{
 
 async function main(): Promise<void> {
   const result = await seedImportS8Personas();
+  // eslint-disable-next-line no-console -- CLI output
   console.info(JSON.stringify(result));
 }
 

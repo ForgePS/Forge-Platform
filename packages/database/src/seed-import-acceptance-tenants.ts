@@ -213,8 +213,10 @@ export async function seedImportAcceptanceTenants(): Promise<{
 
 async function main(): Promise<void> {
   const result = await seedImportAcceptanceTenants();
+  // eslint-disable-next-line no-console -- CLI output
   console.info(JSON.stringify({ ok: true, tenantKeys: Object.keys(result.tenants), fixtureKeys: Object.keys(result.fixtures) }, null, 2));
   // Full IDs only to stdout JSON for controlled evidence capture (not CloudWatch-friendly logs beyond this).
+  // eslint-disable-next-line no-console -- CLI output
   console.info(JSON.stringify({ ok: true, ...result }));
 }
 

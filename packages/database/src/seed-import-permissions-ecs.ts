@@ -19,6 +19,7 @@ async function main(): Promise<void> {
     const perms = [
       ...(await db.execute(sql`select code from permissions where code like 'import.%' order by 1`)),
     ] as Array<{ code: string }>;
+    // eslint-disable-next-line no-console -- CLI output for ECS seed task
     console.info(
       JSON.stringify({
         ok: true,

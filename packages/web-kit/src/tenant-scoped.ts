@@ -36,7 +36,6 @@ export function useTenantScopedEffect(
     return () => {
       controller.abort();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- caller supplies tenantId + deps
   }, [tenantId, ...deps]);
 }
 
