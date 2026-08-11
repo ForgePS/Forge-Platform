@@ -76,14 +76,6 @@ export class ForgeImportExecutionStateMachine extends Construct {
             Comment: "Process a controlled row batch through adapter commit pipeline",
             ResultPath: "$.process",
             Next: "UpdateProgress",
-            Retry: [
-              {
-                ErrorEquals: ["States.ALL"],
-                IntervalSeconds: 2,
-                MaxAttempts: 3,
-                BackoffRate: 2,
-              },
-            ],
           },
           UpdateProgress: {
             Type: "Pass",
@@ -119,12 +111,6 @@ export class ForgeImportExecutionStateMachine extends Construct {
             Comment: "Clear execution lock owner",
             ResultPath: "$.release",
             End: true,
-          },
-          HandleFailure: {
-            Type: "Pass",
-            Comment: "Classify failure, mark FAILED or redrive path",
-            ResultPath: "$.failure",
-            Next: "ReleaseLock",
           },
         },
         TimeoutSeconds: 86400,
