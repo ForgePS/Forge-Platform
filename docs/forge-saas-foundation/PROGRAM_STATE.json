@@ -6,7 +6,7 @@
   "productionAuthorized": false,
   "automaticSprintAdvance": false,
   "baselineEstablished": true,
-  "lastCommit": "pending",
+  "lastCommit": "5cb3c22",
   "productionReadiness": "NOT_READY",
   "mkS22E2eCondition": "OUTSTANDING",
   "sprintMkS23Status": "PASS_WITH_CONDITIONS",
