@@ -1,12 +1,12 @@
 {
   "program": "FORGE-SAAS-CORE",
   "currentAuthorizedSprint": null,
-  "lastCompletedSprint": "MK-S13",
+  "lastCompletedSprint": "MK-S14",
   "status": "ACTIVE",
   "productionAuthorized": false,
   "automaticSprintAdvance": false,
   "baselineEstablished": true,
-  "lastCommit": "d8fa133",
+  "lastCommit": "pending-mks14",
   "knownBlockers": [],
   "deferredItems": [
     "BACKLOG-001",
@@ -26,12 +26,13 @@
     "BACKLOG-017",
     "BACKLOG-018"
   ],
-  "mkS13Verification": {
+  "mkS14Verification": {
     "date": "2026-08-10",
     "typecheckPlatformApi": "PASS",
     "typecheckCreator": "PASS",
     "typecheckTenantAdmin": "PASS",
-    "unitEmailProvider": "4 passed",
+    "unitContracts": "34 passed",
+    "unitBrandingStorage": "7 passed",
     "productionOperations": "NONE",
     "repairPasses": 0
   }

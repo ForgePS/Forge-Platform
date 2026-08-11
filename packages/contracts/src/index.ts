@@ -148,6 +148,19 @@ export type {
 } from "./tenant-domain.js";
 
 export {
+  BRANDING_ASSET_KINDS,
+  brandingAssetUploadInputSchema,
+  brandingObjectKeyPrefix,
+  documentBelongsToTenant,
+  isSignedAccessExpired,
+  objectKeyBelongsToTenant,
+  putTenantBrandingInputSchema,
+  type BrandingAssetKind,
+  type BrandingAssetUploadInput,
+  type PutTenantBrandingInput,
+} from "./branding-domain.js";
+
+export {
   EMAIL_TEMPLATE_KEYS,
   NOTIFICATION_DESTINATIONS,
   NOTIFICATION_PRIORITIES,
