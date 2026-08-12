@@ -127,6 +127,26 @@ function resolveExport(exportName) {
   return value;
 }
 
+/**
+ * Production stacks prefix export names (Forge-Production-Frontend:ForgeFrontend-…).
+ * Never fall back to unprefixed Development exports when targeting production.
+ */
+function productionExportName(environment, bareName) {
+  if (environment !== "production" && environment !== "govcloud-production") {
+    return bareName;
+  }
+  const prefix =
+    environment === "govcloud-production" ? "Forge-Govcloud-Production" : "Forge-Production";
+  if (bareName.startsWith("ForgeFrontend-")) return `${prefix}-Frontend:${bareName}`;
+  if (bareName.startsWith("ForgeCompute-")) return `${prefix}-Compute:${bareName}`;
+  if (bareName.startsWith("ForgeIdentity-")) return `${prefix}-Identity:${bareName}`;
+  return bareName;
+}
+
+function resolveEnvExport(environment, bareName) {
+  return resolveExport(productionExportName(environment, bareName));
+}
+
 function envKeyForApp(app, suffix) {
   return `FORGE_${app.toUpperCase()}_${suffix}`;
 }
@@ -146,7 +166,8 @@ function resolveRmsBuildEnv(environment) {
 
   if (!buildEnv.NEXT_PUBLIC_API_URL) {
     const apiDomain =
-      resolveExport("ForgeCompute-ApiHttpsDomain") ?? process.env.FORGE_API_HTTPS_DOMAIN;
+      resolveEnvExport(environment, "ForgeCompute-ApiHttpsDomain") ??
+      process.env.FORGE_API_HTTPS_DOMAIN;
     const apiUrl = toHttpsOrigin(apiDomain);
     if (apiUrl) {
       buildEnv.NEXT_PUBLIC_API_URL = apiUrl;
@@ -160,7 +181,7 @@ function resolveRmsBuildEnv(environment) {
 
   if (!buildEnv.NEXT_PUBLIC_APP_URL) {
     const appDomain =
-      resolveExport("ForgeFrontend-RmsDomain") ?? process.env.FORGE_RMS_APP_DOMAIN;
+      resolveEnvExport(environment, "ForgeFrontend-RmsDomain") ?? process.env.FORGE_RMS_APP_DOMAIN;
     const appUrl = toHttpsOrigin(appDomain);
     if (appUrl) {
       buildEnv.NEXT_PUBLIC_APP_URL = appUrl;
@@ -174,7 +195,8 @@ function resolveRmsBuildEnv(environment) {
 
   if (!buildEnv.NEXT_PUBLIC_COGNITO_USER_POOL_ID) {
     const poolId =
-      resolveExport("ForgeIdentity-UserPoolId") ?? process.env.FORGE_COGNITO_USER_POOL_ID;
+      resolveEnvExport(environment, "ForgeIdentity-UserPoolId") ??
+      process.env.FORGE_COGNITO_USER_POOL_ID;
     if (poolId) {
       buildEnv.NEXT_PUBLIC_COGNITO_USER_POOL_ID = poolId;
       console.log(`Resolved NEXT_PUBLIC_COGNITO_USER_POOL_ID=${poolId}`);
@@ -183,7 +205,8 @@ function resolveRmsBuildEnv(environment) {
 
   if (!buildEnv.NEXT_PUBLIC_COGNITO_CLIENT_ID) {
     const clientId =
-      resolveExport("ForgeIdentity-RmsClientId") ?? process.env.FORGE_RMS_COGNITO_CLIENT_ID;
+      resolveEnvExport(environment, "ForgeIdentity-RmsClientId") ??
+      process.env.FORGE_RMS_COGNITO_CLIENT_ID;
     if (clientId) {
       buildEnv.NEXT_PUBLIC_COGNITO_CLIENT_ID = clientId;
       console.log(`Resolved NEXT_PUBLIC_COGNITO_CLIENT_ID=${clientId}`);
@@ -196,7 +219,8 @@ function resolveRmsBuildEnv(environment) {
 
   if (!buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN) {
     const domain =
-      resolveExport("ForgeIdentity-CognitoDomain") ?? process.env.FORGE_COGNITO_DOMAIN;
+      resolveEnvExport(environment, "ForgeIdentity-CognitoDomain") ??
+      process.env.FORGE_COGNITO_DOMAIN;
     if (domain) {
       buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN = domain;
       console.log(`Resolved NEXT_PUBLIC_COGNITO_DOMAIN=${domain}`);
@@ -217,7 +241,8 @@ function resolveTenantAdminBuildEnv(environment) {
   const buildEnv = { ...process.env };
   if (!buildEnv.NEXT_PUBLIC_API_URL) {
     const apiDomain =
-      resolveExport("ForgeCompute-ApiHttpsDomain") ?? process.env.FORGE_API_HTTPS_DOMAIN;
+      resolveEnvExport(environment, "ForgeCompute-ApiHttpsDomain") ??
+      process.env.FORGE_API_HTTPS_DOMAIN;
     const apiUrl = toHttpsOrigin(apiDomain);
     if (apiUrl) {
       buildEnv.NEXT_PUBLIC_API_URL = apiUrl;
@@ -226,7 +251,8 @@ function resolveTenantAdminBuildEnv(environment) {
   }
   if (!buildEnv.NEXT_PUBLIC_APP_URL) {
     const appDomain =
-      resolveExport("ForgeFrontend-TenantAdminDomain") ?? process.env.FORGE_TENANTADMIN_APP_DOMAIN;
+      resolveEnvExport(environment, "ForgeFrontend-TenantAdminDomain") ??
+      process.env.FORGE_TENANTADMIN_APP_DOMAIN;
     const appUrl = toHttpsOrigin(appDomain);
     if (appUrl) {
       buildEnv.NEXT_PUBLIC_APP_URL = appUrl;
@@ -247,7 +273,8 @@ function resolveIndustrialBuildEnv(environment) {
       console.log(`Resolved NEXT_PUBLIC_API_URL=${buildEnv.NEXT_PUBLIC_API_URL} (canonical)`);
     } else {
       const apiDomain =
-        resolveExport("ForgeCompute-ApiHttpsDomain") ?? process.env.FORGE_API_HTTPS_DOMAIN;
+        resolveEnvExport(environment, "ForgeCompute-ApiHttpsDomain") ??
+        process.env.FORGE_API_HTTPS_DOMAIN;
       const apiUrl = toHttpsOrigin(apiDomain);
       if (apiUrl) {
         buildEnv.NEXT_PUBLIC_API_URL = apiUrl;
@@ -266,7 +293,8 @@ function resolveIndustrialBuildEnv(environment) {
       console.log(`Resolved NEXT_PUBLIC_APP_URL=${buildEnv.NEXT_PUBLIC_APP_URL} (canonical)`);
     } else {
       const appDomain =
-        resolveExport("ForgeFrontend-IndustrialDomain") ?? process.env.FORGE_INDUSTRIAL_APP_DOMAIN;
+        resolveEnvExport(environment, "ForgeFrontend-IndustrialDomain") ??
+        process.env.FORGE_INDUSTRIAL_APP_DOMAIN;
       const appUrl = toHttpsOrigin(appDomain);
       if (appUrl) {
         buildEnv.NEXT_PUBLIC_APP_URL = appUrl;
@@ -285,7 +313,8 @@ function resolveIndustrialBuildEnv(environment) {
 
   if (!buildEnv.NEXT_PUBLIC_COGNITO_USER_POOL_ID) {
     const poolId =
-      resolveExport("ForgeIdentity-UserPoolId") ?? process.env.FORGE_COGNITO_USER_POOL_ID;
+      resolveEnvExport(environment, "ForgeIdentity-UserPoolId") ??
+      process.env.FORGE_COGNITO_USER_POOL_ID;
     if (poolId) {
       buildEnv.NEXT_PUBLIC_COGNITO_USER_POOL_ID = poolId;
       console.log(`Resolved NEXT_PUBLIC_COGNITO_USER_POOL_ID=${poolId}`);
@@ -294,7 +323,7 @@ function resolveIndustrialBuildEnv(environment) {
 
   if (!buildEnv.NEXT_PUBLIC_COGNITO_CLIENT_ID) {
     const clientId =
-      resolveExport("ForgeIdentity-IndustrialClientId") ??
+      resolveEnvExport(environment, "ForgeIdentity-IndustrialClientId") ??
       process.env.FORGE_INDUSTRIAL_COGNITO_CLIENT_ID;
     if (clientId) {
       buildEnv.NEXT_PUBLIC_COGNITO_CLIENT_ID = clientId;
@@ -308,7 +337,8 @@ function resolveIndustrialBuildEnv(environment) {
 
   if (!buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN) {
     const domain =
-      resolveExport("ForgeIdentity-CognitoDomain") ?? process.env.FORGE_COGNITO_DOMAIN;
+      resolveEnvExport(environment, "ForgeIdentity-CognitoDomain") ??
+      process.env.FORGE_COGNITO_DOMAIN;
     if (domain) {
       buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN = domain;
       console.log(`Resolved NEXT_PUBLIC_COGNITO_DOMAIN=${domain}`);
@@ -332,7 +362,8 @@ function resolveConsoleBuildEnv(environment) {
   const buildEnv = { ...process.env };
   if (!buildEnv.NEXT_PUBLIC_API_URL) {
     const apiDomain =
-      resolveExport("ForgeCompute-ApiHttpsDomain") ?? process.env.FORGE_API_HTTPS_DOMAIN;
+      resolveEnvExport(environment, "ForgeCompute-ApiHttpsDomain") ??
+      process.env.FORGE_API_HTTPS_DOMAIN;
     const apiUrl = toHttpsOrigin(apiDomain);
     if (apiUrl) {
       buildEnv.NEXT_PUBLIC_API_URL = apiUrl;
@@ -345,7 +376,8 @@ function resolveConsoleBuildEnv(environment) {
   }
   if (!buildEnv.NEXT_PUBLIC_APP_URL) {
     const appDomain =
-      resolveExport("ForgeFrontend-ConsoleDomain") ?? process.env.FORGE_CONSOLE_APP_DOMAIN;
+      resolveEnvExport(environment, "ForgeFrontend-ConsoleDomain") ??
+      process.env.FORGE_CONSOLE_APP_DOMAIN;
     const appUrl = toHttpsOrigin(appDomain);
     if (appUrl) {
       buildEnv.NEXT_PUBLIC_APP_URL = appUrl;
@@ -386,10 +418,10 @@ if (!existsSync(outPath)) {
 
 const bucket =
   process.env[envKeyForApp(app, "BUCKET")] ??
-  resolveExport(`${appConfig.stackExportPrefix}Bucket`);
+  resolveEnvExport(environment, `${appConfig.stackExportPrefix}Bucket`);
 const distributionId =
   process.env[envKeyForApp(app, "DISTRIBUTION_ID")] ??
-  resolveExport(`${appConfig.stackExportPrefix}DistributionId`);
+  resolveEnvExport(environment, `${appConfig.stackExportPrefix}DistributionId`);
 
 if (!bucket) {
   console.error(
