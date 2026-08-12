@@ -151,6 +151,77 @@ function envKeyForApp(app, suffix) {
   return `FORGE_${app.toUpperCase()}_${suffix}`;
 }
 
+function assertProductionFrontendConfig(app, buildEnv, environment) {
+  if (environment !== "production" && environment !== "govcloud-production") {
+    return;
+  }
+
+  const required = [
+    "NEXT_PUBLIC_COGNITO_DOMAIN",
+    "NEXT_PUBLIC_COGNITO_CLIENT_ID",
+    "NEXT_PUBLIC_COGNITO_USER_POOL_ID",
+    "NEXT_PUBLIC_APP_URL",
+  ];
+  const missing = required.filter((key) => !buildEnv[key] || String(buildEnv[key]).trim() === "");
+  if (missing.length) {
+    throw new Error(
+      `[${app}] production frontend config missing required keys: ${missing.join(", ")}`,
+    );
+  }
+
+  const placeholderNeedles = [
+    "localhost",
+    "example.com",
+    "000000000000",
+    "undefined",
+    "null",
+    "REPLACE_ME",
+    "{{",
+    "${",
+  ];
+  for (const key of required) {
+    const value = String(buildEnv[key]);
+    for (const needle of placeholderNeedles) {
+      if (value.includes(needle)) {
+        throw new Error(
+          `[${app}] production frontend config ${key} contains placeholder/invalid value: ${needle}`,
+        );
+      }
+    }
+  }
+
+  const cognitoDomain = String(buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN).trim();
+  if (/^https?:\/\//i.test(cognitoDomain)) {
+    throw new Error(
+      `[${app}] NEXT_PUBLIC_COGNITO_DOMAIN must be hostname-only (no https://): ${cognitoDomain}`,
+    );
+  }
+  if (!cognitoDomain.includes(".auth.") || !cognitoDomain.endsWith(".amazoncognito.com")) {
+    throw new Error(
+      `[${app}] NEXT_PUBLIC_COGNITO_DOMAIN must contain .auth. and end with .amazoncognito.com: ${cognitoDomain}`,
+    );
+  }
+  if (environment === "production" && cognitoDomain.includes("forge-development-")) {
+    throw new Error(
+      `[${app}] production NEXT_PUBLIC_COGNITO_DOMAIN must not use forge-development- domain: ${cognitoDomain}`,
+    );
+  }
+
+  const poolId = String(buildEnv.NEXT_PUBLIC_COGNITO_USER_POOL_ID).trim();
+  if (!poolId.startsWith("us-east-1_") && !poolId.startsWith("us-west-2_")) {
+    throw new Error(
+      `[${app}] NEXT_PUBLIC_COGNITO_USER_POOL_ID must start with us-east-1_ or us-west-2_: ${poolId}`,
+    );
+  }
+
+  const appUrl = String(buildEnv.NEXT_PUBLIC_APP_URL).trim();
+  if (!appUrl.startsWith("https://")) {
+    throw new Error(`[${app}] NEXT_PUBLIC_APP_URL must use https://: ${appUrl}`);
+  }
+
+  console.log("CREATOR_PROD_CONFIG_VALIDATION: PASS");
+}
+
 function toHttpsOrigin(domain) {
   if (!domain) return null;
   const cleaned = domain.replace(/\r/g, "").split("\n")[0]?.trim() ?? "";
@@ -233,7 +304,7 @@ function resolveRmsBuildEnv(environment) {
 
   delete buildEnv.NEXT_PUBLIC_ALLOW_DEV_PRINCIPAL;
 
-  void environment;
+  assertProductionFrontendConfig('rms', buildEnv, environment);
   return buildEnv;
 }
 
@@ -354,12 +425,15 @@ function resolveIndustrialBuildEnv(environment) {
   }
 
   delete buildEnv.NEXT_PUBLIC_ALLOW_DEV_PRINCIPAL;
+
+  assertProductionFrontendConfig('industrial', buildEnv, environment);
   return buildEnv;
 }
 
 /** Creator Console must bake the live API edge URL; localhost default breaks browser Import Center. */
 function resolveConsoleBuildEnv(environment) {
   const buildEnv = { ...process.env };
+
   if (!buildEnv.NEXT_PUBLIC_API_URL) {
     const apiDomain =
       resolveEnvExport(environment, "ForgeCompute-ApiHttpsDomain") ??
@@ -374,6 +448,7 @@ function resolveConsoleBuildEnv(environment) {
       );
     }
   }
+
   if (!buildEnv.NEXT_PUBLIC_APP_URL) {
     const appDomain =
       resolveEnvExport(environment, "ForgeFrontend-ConsoleDomain") ??
@@ -382,12 +457,67 @@ function resolveConsoleBuildEnv(environment) {
     if (appUrl) {
       buildEnv.NEXT_PUBLIC_APP_URL = appUrl;
       console.log(`Resolved NEXT_PUBLIC_APP_URL=${appUrl}`);
+    } else {
+      console.warn(
+        "Missing NEXT_PUBLIC_APP_URL — set it or export ForgeFrontend-ConsoleDomain from the Frontend stack.",
+      );
     }
   }
+
+  if (!buildEnv.NEXT_PUBLIC_APP_ENV) {
+    buildEnv.NEXT_PUBLIC_APP_ENV = environment;
+  }
+
+  if (!buildEnv.NEXT_PUBLIC_COGNITO_USER_POOL_ID) {
+    const poolId =
+      resolveEnvExport(environment, "ForgeIdentity-UserPoolId") ??
+      process.env.FORGE_COGNITO_USER_POOL_ID;
+    if (poolId) {
+      buildEnv.NEXT_PUBLIC_COGNITO_USER_POOL_ID = poolId;
+      console.log(`Resolved NEXT_PUBLIC_COGNITO_USER_POOL_ID=${poolId}`);
+    }
+  }
+
+  if (!buildEnv.NEXT_PUBLIC_COGNITO_CLIENT_ID) {
+    const clientId =
+      resolveEnvExport(environment, "ForgeIdentity-CreatorClientId") ??
+      process.env.FORGE_CONSOLE_COGNITO_CLIENT_ID ??
+      process.env.FORGE_CREATOR_COGNITO_CLIENT_ID;
+    if (clientId) {
+      buildEnv.NEXT_PUBLIC_COGNITO_CLIENT_ID = clientId;
+      console.log(`Resolved NEXT_PUBLIC_COGNITO_CLIENT_ID=${clientId}`);
+    } else {
+      console.warn(
+        "Missing NEXT_PUBLIC_COGNITO_CLIENT_ID — ForgeIdentity-CreatorClientId export is not deployed yet; set FORGE_CONSOLE_COGNITO_CLIENT_ID or FORGE_CREATOR_COGNITO_CLIENT_ID.",
+      );
+    }
+  }
+
+  if (!buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN) {
+    const domain =
+      resolveEnvExport(environment, "ForgeIdentity-CognitoDomain") ??
+      process.env.FORGE_COGNITO_DOMAIN;
+    if (domain) {
+      buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN = String(domain)
+        .replace(/^https?:\/\//i, "").replace(/\/$/, "");
+      console.log(`Resolved NEXT_PUBLIC_COGNITO_DOMAIN=${buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN}`);
+    } else {
+      console.warn(
+        "Missing NEXT_PUBLIC_COGNITO_DOMAIN — set FORGE_COGNITO_DOMAIN (forge-{env}-{accountLast6}.auth.{region}.amazoncognito.com).",
+      );
+    }
+  } else {
+    buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN = String(buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN)
+      .replace(/^https?:\/\//i, "").replace(/\/$/, "");
+  }
+
   // Development browser E2E uses forge-dev-principal from localStorage (no ALLOW flag required).
   delete buildEnv.NEXT_PUBLIC_ALLOW_DEV_PRINCIPAL;
+
+  assertProductionFrontendConfig("console", buildEnv, environment);
   return buildEnv;
 }
+
 
 const { app, skipBuild, environment } = parseArgs(process.argv.slice(2));
 const appConfig = APPS[app];

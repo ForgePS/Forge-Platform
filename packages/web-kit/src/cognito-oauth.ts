@@ -230,7 +230,7 @@ export async function refreshAccessToken(): Promise<CognitoTokenResponse | null>
 
 export function buildLogoutUrl(): string {
   const config = getCognitoOAuthConfig();
-  const logoutUri = `${config.appUrl.replace(/\/$/, "")}/login/`;
+  const logoutUri = `${config.appUrl.replace(/\/$/, "")}/`;
   const params = new URLSearchParams({
     client_id: config.clientId,
     logout_uri: logoutUri,
