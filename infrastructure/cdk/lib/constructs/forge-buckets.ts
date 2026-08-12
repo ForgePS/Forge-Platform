@@ -4,11 +4,50 @@ import * as kms from "aws-cdk-lib/aws-kms";
 import * as iam from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import type { ForgeEnvironmentConfig } from "../config/environment-schema.js";
+import { PRODUCTION_PRE_CUTOVER_SPA_ORIGINS } from "../config/production-spa-origins.js";
 import { uniqueBucketName } from "../utils/naming.js";
 
 export interface ForgeBucketsProps {
   config: ForgeEnvironmentConfig;
   storageKey: kms.IKey;
+}
+
+/** Browser origins allowed to PUT/GET presigned objects (branding, imports, exports). */
+function browserUploadCorsOrigins(config: ForgeEnvironmentConfig): string[] {
+  const fromDomains = [
+    config.domains?.rms,
+    config.domains?.creator,
+    config.domains?.tenantAdmin,
+    config.domains?.industrial,
+  ]
+    .filter((host): host is string => Boolean(host))
+    .map((host) => (host.startsWith("http") ? host : `https://${host}`));
+
+  const local = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
+    "http://localhost:3003",
+    "http://localhost:3004",
+    "http://localhost:3005",
+  ];
+
+  if (config.environmentName.includes("production")) {
+    return [...new Set([...fromDomains, ...PRODUCTION_PRE_CUTOVER_SPA_ORIGINS])];
+  }
+  return [...new Set([...fromDomains, ...local])];
+}
+
+function browserUploadCors(config: ForgeEnvironmentConfig): s3.CorsRule[] {
+  return [
+    {
+      allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT, s3.HttpMethods.HEAD],
+      allowedOrigins: browserUploadCorsOrigins(config),
+      allowedHeaders: ["*"],
+      exposedHeaders: ["ETag", "x-amz-request-id", "x-amz-version-id"],
+      maxAge: 3000,
+    },
+  ];
 }
 
 function enforceTls(bucket: s3.Bucket): void {
@@ -49,15 +88,19 @@ export class ForgeBuckets extends Construct {
       autoDeleteObjects: !isProd,
     };
 
+    const uploadCors = browserUploadCors(config);
+
     this.documents = new s3.Bucket(this, "Documents", {
       ...common,
       bucketName: uniqueBucketName(config, "documents"),
+      cors: uploadCors,
       lifecycleRules: [{ abortIncompleteMultipartUploadAfter: cdk.Duration.days(7) }],
     });
 
     this.imports = new s3.Bucket(this, "Imports", {
       ...common,
       bucketName: uniqueBucketName(config, "imports"),
+      cors: uploadCors,
       lifecycleRules: [
         {
           expiration: cdk.Duration.days(config.retention.importFilesDays),
@@ -69,6 +112,7 @@ export class ForgeBuckets extends Construct {
     this.exports = new s3.Bucket(this, "Exports", {
       ...common,
       bucketName: uniqueBucketName(config, "exports"),
+      cors: uploadCors,
       lifecycleRules: [
         {
           expiration: cdk.Duration.days(config.retention.exportFilesDays),
