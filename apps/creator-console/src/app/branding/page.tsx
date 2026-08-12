@@ -55,7 +55,6 @@ function BrandingInner() {
     hasPermission("tenant.configuration.update");
   const canManage = canRead;
 
-  const [branding, setBranding] = useState<Branding | null>(null);
   const [loading, setLoading] = useState(Boolean(tenantId));
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -79,7 +78,6 @@ function BrandingInner() {
   const [iconPreviewUrl, setIconPreviewUrl] = useState<string | null>(null);
 
   const applyBranding = useCallback((row: Branding | null) => {
-    setBranding(row);
     setDisplayName(row?.displayName ?? "");
     setShortName(row?.shortName ?? "");
     setPrimaryColor(row?.primaryColor ?? "");
@@ -304,7 +302,6 @@ function BrandingInner() {
             <div className={styles.formRow}>
               <label htmlFor="logoFile">Logo</label>
               {logoPreviewUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={logoPreviewUrl}
                   alt="Tenant logo preview"
@@ -340,7 +337,6 @@ function BrandingInner() {
             <div className={styles.formRow}>
               <label htmlFor="iconFile">Icon</label>
               {iconPreviewUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={iconPreviewUrl}
                   alt="Tenant icon preview"
