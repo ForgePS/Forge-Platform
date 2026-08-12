@@ -49,6 +49,13 @@ function asRows<T>(result: unknown): T[] {
   return [];
 }
 
+function asDate(value: unknown): Date | null {
+  if (value == null) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  const parsed = new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 export async function lookupIdentity(
   db: IdentityLookupExecutor,
   provider: string,
@@ -71,7 +78,7 @@ export async function lookupIdentity(
         tenantId: row.tenant_id,
         userStatus: row.user_status,
         sessionVersion: Number(row.session_version),
-        sessionsRevokedAt: row.sessions_revoked_at,
+        sessionsRevokedAt: asDate(row.sessions_revoked_at),
       }
     : null;
 }
