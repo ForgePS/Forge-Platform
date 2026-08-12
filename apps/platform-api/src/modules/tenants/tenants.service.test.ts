@@ -64,6 +64,7 @@ function createMocks(
     query: {
       tenants: {
         findFirst: vi.fn(async () => ({ ...current })),
+        findMany: vi.fn(async () => [{ ...current }]),
       },
       customerOnboardingSessions: {
         findFirst: vi.fn(async () =>
@@ -129,6 +130,12 @@ describe("TenantsService lifecycle", () => {
     expect(mocks.outboxTypes).toContain(DOMAIN_EVENT_TYPES.TENANT_CREATED);
     expect(mocks.auditActions).toContain("tenant.create");
     expect(row.status).toBe("PROVISIONING");
+  });
+
+  it("lists tenants via bypass RLS transaction", async () => {
+    const rows = await mocks.service.list();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.tenantKey).toBe("acme-fire");
   });
 
   it("reads tenant by id", async () => {

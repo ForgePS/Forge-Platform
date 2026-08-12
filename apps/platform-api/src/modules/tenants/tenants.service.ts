@@ -10,6 +10,7 @@ import {
   customerOnboardingSessions,
   tenants,
   type Database,
+  withBypassRlsTransaction,
   withTenantTransaction,
 } from "@forge/database";
 import { ForgeError } from "@forge/errors";
@@ -81,69 +82,81 @@ export class TenantsService {
     const id = createId();
     const now = new Date();
 
-    // Tenant row is platform-global; outbox/audit use the new tenant id.
-    await this.db.transaction(async (tx) => {
-      await tx.insert(tenants).values({
-        id,
-        tenantKey: data.tenantKey,
-        slug: data.slug,
-        legalName: data.legalName,
-        displayName: data.displayName,
-        tenantType: data.tenantType ?? "CUSTOMER",
-        status: "PROVISIONING",
-        timezone: data.timezone ?? "America/Chicago",
-        defaultLocale: data.defaultLocale ?? "en-US",
-        dataRegion: data.dataRegion ?? "us-east-1",
-        createdByUserId: principal.userId,
-        updatedByUserId: principal.userId,
-        createdAt: now,
-        updatedAt: now,
-      });
-
-      await this.outbox.write(tx, {
-        tenantId: id,
-        aggregateType: "tenant",
-        aggregateId: id,
-        eventType: DOMAIN_EVENT_TYPES.TENANT_CREATED,
-        payload: {
-          tenantId: id,
+    // New tenant id is not yet the session tenant. Set RLS context to the new
+    // id before insert so FORCE RLS WITH CHECK on tenants / outbox / audit
+    // succeeds under forge_app (see tenants_tenant_isolation).
+    await withTenantTransaction(
+      this.db,
+      id,
+      async (tx) => {
+        await tx.insert(tenants).values({
+          id,
           tenantKey: data.tenantKey,
           slug: data.slug,
+          legalName: data.legalName,
+          displayName: data.displayName,
+          tenantType: data.tenantType ?? "CUSTOMER",
           status: "PROVISIONING",
-        },
-        correlationId: principal.correlationId,
-        actorUserId: principal.userId,
-      });
+          timezone: data.timezone ?? "America/Chicago",
+          defaultLocale: data.defaultLocale ?? "en-US",
+          dataRegion: data.dataRegion ?? "us-east-1",
+          createdByUserId: principal.userId,
+          updatedByUserId: principal.userId,
+          createdAt: now,
+          updatedAt: now,
+        });
 
-      await this.audit.writeInTransaction(tx, {
-        tenantId: id,
-        actorUserId: principal.userId,
-        actorPersonId: principal.personId,
-        actorType: "USER",
-        action: "tenant.create",
-        resourceType: "tenant",
-        resourceId: id,
-        result: "SUCCESS",
-        riskLevel: "MEDIUM",
-        correlationId: principal.correlationId,
-        requestId: principal.requestId,
-        after: { id, status: "PROVISIONING", tenantKey: data.tenantKey },
-      });
-    });
+        await this.outbox.write(tx, {
+          tenantId: id,
+          aggregateType: "tenant",
+          aggregateId: id,
+          eventType: DOMAIN_EVENT_TYPES.TENANT_CREATED,
+          payload: {
+            tenantId: id,
+            tenantKey: data.tenantKey,
+            slug: data.slug,
+            status: "PROVISIONING",
+          },
+          correlationId: principal.correlationId,
+          actorUserId: principal.userId,
+        });
+
+        await this.audit.writeInTransaction(tx, {
+          tenantId: id,
+          actorUserId: principal.userId,
+          actorPersonId: principal.personId,
+          actorType: "USER",
+          action: "tenant.create",
+          resourceType: "tenant",
+          resourceId: id,
+          result: "SUCCESS",
+          riskLevel: "MEDIUM",
+          correlationId: principal.correlationId,
+          requestId: principal.requestId,
+          after: { id, status: "PROVISIONING", tenantKey: data.tenantKey },
+        });
+      },
+      principal.userId,
+    );
 
     return this.getById(id);
   }
 
   async list() {
-    return this.db.query.tenants.findMany({
-      orderBy: (t, { asc }) => [asc(t.displayName)],
-    });
+    // Platform catalog requires cross-tenant SELECT; policies honor bypass_rls.
+    return withBypassRlsTransaction(this.db, async (tx) =>
+      tx.query.tenants.findMany({
+        orderBy: (t, { asc }) => [asc(t.displayName)],
+      }),
+    );
   }
 
   async getById(tenantId: string) {
-    const row = await this.db.query.tenants.findFirst({
-      where: eq(tenants.id, tenantId),
-    });
+    const row = await withTenantTransaction(this.db, tenantId, async (tx) =>
+      tx.query.tenants.findFirst({
+        where: eq(tenants.id, tenantId),
+      }),
+    );
     if (!row) {
       throw new ForgeError("NOT_FOUND", "Tenant not found");
     }

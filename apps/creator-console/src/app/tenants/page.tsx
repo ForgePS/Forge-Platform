@@ -90,16 +90,21 @@ function TenantsInner() {
       if (normalizedSlug.length < 2) {
         throw new Error("Slug must be at least 2 characters (lowercase letters, numbers, or - only)");
       }
-      await apiSend<Tenant>("/api/v1/platform/tenants", "POST", {
-        tenantKey: key,
-        slug: normalizedSlug,
-        legalName: legalName.trim(),
-        displayName: displayName.trim(),
-        tenantType: "CUSTOMER",
-        timezone: "America/Chicago",
-        defaultLocale: "en-US",
-        dataRegion: "us-east-1",
-      });
+      await apiSend<Tenant>(
+        "/api/v1/platform/tenants",
+        "POST",
+        {
+          tenantKey: key,
+          slug: normalizedSlug,
+          legalName: legalName.trim(),
+          displayName: displayName.trim(),
+          tenantType: "CUSTOMER",
+          timezone: "America/Chicago",
+          defaultLocale: "en-US",
+          dataRegion: "us-east-1",
+        },
+        { idempotencyKey: crypto.randomUUID() },
+      );
       setTenantKey("");
       setSlug("");
       setLegalName("");
