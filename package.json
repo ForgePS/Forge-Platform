@@ -33,6 +33,7 @@
     "infra:deploy": "pnpm --filter @forge/infrastructure-cdk run deploy",
     "infra:destroy": "pnpm --filter @forge/infrastructure-cdk run destroy",
     "smoke:development": "node scripts/smoke-development.mjs",
+    "migration:firebase:inventory": "pnpm --filter @forge/firebase-inventory inventory -- --project forge-industrial-safety",
     "deploy:console": "node scripts/sync-static-site.mjs --app console",
     "deploy:rms-web": "node scripts/sync-static-site.mjs --app rms",
     "deploy:tenant-admin": "node scripts/sync-static-site.mjs --app tenantadmin",

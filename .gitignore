@@ -28,6 +28,8 @@ cdk.context.local.json
 .tmp-prod-s1*
 .tmp-prod-s1-*/
 .tmp-analytics-*
+# DM-S0 / data-migration live evidence (may contain customer metadata)
+.tmp-data-migration/
 
 # Next.js static export output
 apps/*/out/
