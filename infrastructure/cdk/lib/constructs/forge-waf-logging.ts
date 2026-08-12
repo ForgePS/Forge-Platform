@@ -56,12 +56,12 @@ export class ForgeWafLogging extends Construct {
     this.loggingConfiguration = new wafv2.CfnLoggingConfiguration(this, "Config", {
       resourceArn: webAcl.attrArn,
       logDestinationConfigs: [this.logGroup.logGroupArn],
-      redactedFields: [
-        { singleHeader: { Name: "authorization" } },
-        { singleHeader: { Name: "cookie" } },
-        { singleHeader: { Name: "set-cookie" } },
-      ] as wafv2.CfnLoggingConfiguration.FieldToMatchProperty[],
     });
+    this.loggingConfiguration.addPropertyOverride("RedactedFields", [
+      { SingleHeader: { Name: "authorization" } },
+      { SingleHeader: { Name: "cookie" } },
+      { SingleHeader: { Name: "set-cookie" } },
+    ]);
     this.loggingConfiguration.node.addDependency(this.logGroup);
   }
 }
