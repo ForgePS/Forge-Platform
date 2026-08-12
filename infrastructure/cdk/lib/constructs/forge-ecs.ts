@@ -17,6 +17,7 @@ import type { ForgeEnvironmentConfig } from "../config/environment-schema.js";
 import { resourceName } from "../utils/naming.js";
 import { ForgeApiCloudFront } from "./forge-api-cloudfront.js";
 import { ForgeEdgeTls } from "./forge-edge-tls.js";
+import { ForgeWafLogging } from "./forge-waf-logging.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../../../");
@@ -235,6 +236,11 @@ export class ForgeEcs extends Construct {
         resourceArn: this.alb.loadBalancerArn,
         webAclArn: this.webAcl.attrArn,
       });
+      new ForgeWafLogging(this, "AlbWafLogging", {
+        config,
+        webAcl: this.webAcl,
+        destinationSuffix: "alb",
+      });
     }
 
     const apiExecutionRole = new iam.Role(this, "ApiExecutionRole", {
@@ -446,9 +452,16 @@ export class ForgeEcs extends Construct {
         SQS_CAD_APPLICATION_QUEUE_URL: props.cadApplicationQueue.queueUrl,
         SQS_CAD_POLLING_QUEUE_URL: props.cadPollingQueue.queueUrl,
         SQS_CAD_RETENTION_QUEUE_URL: props.cadRetentionQueue.queueUrl,
-        // Phase 4 synthetic acceptance: allowlist tenant A only (rms-synthetic-fd).
-        CAD_POLLING_TENANT_IDS: "019f9e06-a0b2-75f4-9e0b-5ae9befd8193",
-        CAD_RETENTION_TENANT_IDS: "019f9e06-a0b2-75f4-9e0b-5ae9befd8193",
+        // Development-only synthetic CAD tenant. Production must stay empty until
+        // a real customer CAD connection is authorized (greenfield = skip ticks).
+        CAD_POLLING_TENANT_IDS:
+          config.environmentName === "development"
+            ? "019f9e06-a0b2-75f4-9e0b-5ae9befd8193"
+            : "",
+        CAD_RETENTION_TENANT_IDS:
+          config.environmentName === "development"
+            ? "019f9e06-a0b2-75f4-9e0b-5ae9befd8193"
+            : "",
         EVENT_BUS_NAME: props.eventBus.eventBusName,
         S3_DOCUMENT_BUCKET: props.documentsBucket.bucketName,
         S3_IMPORT_BUCKET: props.importsBucket.bucketName,

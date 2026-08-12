@@ -17,6 +17,10 @@
     "./neris-import": {
       "types": "./dist/neris/import-schema.d.ts",
       "import": "./dist/neris/import-schema.js"
+    },
+    "./bootstrap-admin-ecs": {
+      "types": "./dist/bootstrap-admin-ecs.d.ts",
+      "import": "./dist/bootstrap-admin-ecs.js"
     }
   },
   "scripts": {

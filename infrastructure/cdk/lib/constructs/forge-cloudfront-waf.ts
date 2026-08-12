@@ -5,6 +5,7 @@ import * as wafv2 from "aws-cdk-lib/aws-wafv2";
 import { Construct } from "constructs";
 import type { ForgeEnvironmentConfig } from "../config/environment-schema.js";
 import { resourceName } from "../utils/naming.js";
+import { ForgeWafLogging } from "./forge-waf-logging.js";
 
 export interface ForgeCloudFrontWafProps {
   config: ForgeEnvironmentConfig;
@@ -119,6 +120,12 @@ export class ForgeCloudFrontWaf extends Construct {
     for (const distribution of distributions) {
       distribution.attachWebAclId(this.webAclArn);
     }
+
+    new ForgeWafLogging(this, "CloudFrontWafLogging", {
+      config,
+      webAcl: this.webAcl,
+      destinationSuffix: "cloudfront",
+    });
 
     new cdk.CfnOutput(this, "CloudFrontWebAclArn", {
       value: this.webAclArn,

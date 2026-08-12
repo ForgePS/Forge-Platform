@@ -15,6 +15,7 @@ import { FrontendStack } from "../lib/stacks/frontend-stack.js";
 import { BackupStack } from "../lib/stacks/backup-stack.js";
 import { AuditStack } from "../lib/stacks/audit-stack.js";
 import { AlertingStack } from "../lib/stacks/alerting-stack.js";
+import { PRODUCTION_PRE_CUTOVER_SPA_ORIGINS } from "../lib/config/production-spa-origins.js";
 
 const app = new cdk.App();
 const config = resolveConfig();
@@ -84,9 +85,9 @@ const publicProducersIndustrialUrl = isProduction
   ? undefined
   : process.env.FORGE_PUBLIC_PRODUCERS_INDUSTRIAL_URL ||
     "https://producers-rice-mill.forgepublicsafety.com";
-/** Legacy CloudFront origins retained during custom-domain cutover (explicit CORS allowlist). */
+/** CloudFront origins retained until customer DNS cutover (explicit CORS allowlist). */
 const legacyCloudFrontOrigins = isProduction
-  ? []
+  ? [...PRODUCTION_PRE_CUTOVER_SPA_ORIGINS]
   : [
       "https://d3ud5uzwd9js2z.cloudfront.net",
       "https://ddztl9s33wu40.cloudfront.net",

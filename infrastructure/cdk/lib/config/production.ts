@@ -1,6 +1,7 @@
 import type { ForgeEnvironmentConfig } from "./environment-schema.js";
 import { validateEnvironmentConfig } from "./environment-schema.js";
 import { productionCostProfile } from "./cost-profile.js";
+import { PRODUCTION_PRE_CUTOVER_SPA_ORIGINS } from "./production-spa-origins.js";
 
 const { knobs } = productionCostProfile;
 
@@ -97,6 +98,7 @@ export function createProductionConfig(
         `${creator}/auth/callback/`,
         `${admin}/auth/callback/`,
         `${industrial}/auth/callback/`,
+        ...PRODUCTION_PRE_CUTOVER_SPA_ORIGINS.map((origin) => `${origin}/auth/callback/`),
       ],
       logoutUrls: [
         `${academy}/`,
@@ -105,6 +107,7 @@ export function createProductionConfig(
         `${admin}/`,
         `${industrial}/`,
         `${api}/`,
+        ...PRODUCTION_PRE_CUTOVER_SPA_ORIGINS.map((origin) => `${origin}/`),
       ],
       selfSignUpEnabled: false,
     },

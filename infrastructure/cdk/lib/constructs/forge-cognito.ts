@@ -44,6 +44,7 @@ export class ForgeCognito extends Construct {
       authFlows: {
         userSrp: true,
         userPassword: false,
+        adminUserPassword: true,
       },
       oAuth: {
         flows: { authorizationCodeGrant: true },

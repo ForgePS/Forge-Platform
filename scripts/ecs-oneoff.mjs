@@ -30,16 +30,21 @@ export function awsText(args) {
 }
 
 export function runPlatformApiOneOff(command, label, options = {}) {
+  const envName = process.env.FORGE_ENV?.trim() || "development";
+  const isProduction = envName === "production";
+  const stackName = isProduction ? "Forge-Production-Compute" : "Forge-Development-Compute";
+  const service = isProduction
+    ? "forge-production-ecs-platform-api"
+    : "forge-development-ecs-platform-api";
+
   const cluster = awsText([
     "cloudformation",
     "describe-stacks",
     "--stack-name",
-    "Forge-Development-Compute",
+    stackName,
     "--query",
     "Stacks[0].Outputs[?OutputKey=='ForgeComputeClusterName'].OutputValue",
   ]);
-
-  const service = "forge-development-ecs-platform-api";
   const desc = awsJson(["ecs", "describe-services", "--cluster", cluster, "--services", service]);
   const serviceObj = desc.services?.[0];
   if (!serviceObj) throw new Error("platform-api service not found");

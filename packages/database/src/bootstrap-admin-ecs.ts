@@ -5,6 +5,8 @@
  * Command: node /app/packages/database/dist/bootstrap-admin-ecs.js
  */
 import { createHash, randomBytes } from "node:crypto";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { LOCAL_PLACEHOLDER_ENV, loadEnvironmentAsync } from "@forge/environment";
 import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -27,12 +29,23 @@ import {
   userTenantMemberships,
 } from "./schema.js";
 
-const COGNITO_SUB = "sprint-1e-dev-admin";
-const EMAIL = "platform.admin@forge.local";
-const FIRST_NAME = "Platform";
-const LAST_NAME = "Admin";
+function bootstrapIdentity(): {
+  cognitoSub: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+} {
+  return {
+    cognitoSub: process.env.BOOTSTRAP_COGNITO_SUB?.trim() || "sprint-1e-dev-admin",
+    email: process.env.BOOTSTRAP_EMAIL?.trim() || "platform.admin@forge.local",
+    firstName: process.env.BOOTSTRAP_FIRST_NAME?.trim() || "Platform",
+    lastName: process.env.BOOTSTRAP_LAST_NAME?.trim() || "Admin",
+  };
+}
 
-async function main(): Promise<void> {
+export async function runBootstrapAdmin(): Promise<void> {
+  const { cognitoSub: COGNITO_SUB, email: EMAIL, firstName: FIRST_NAME, lastName: LAST_NAME } =
+    bootstrapIdentity();
   const env = await loadEnvironmentAsync({ ...LOCAL_PLACEHOLDER_ENV, ...process.env });
   const client = postgres(env.DATABASE_URL, { max: 1 });
   const db = drizzle(client, { schema });
@@ -273,7 +286,15 @@ async function main(): Promise<void> {
   await client.end({ timeout: 5 });
 }
 
-main().catch((error: unknown) => {
-  console.error(error);
-  process.exit(1);
-});
+const thisFile = fileURLToPath(import.meta.url);
+const entryFile = process.argv[1] ? path.resolve(process.argv[1]) : "";
+const isDirectRun =
+  Boolean(entryFile) &&
+  (thisFile === entryFile || thisFile.toLowerCase() === entryFile.toLowerCase());
+
+if (isDirectRun) {
+  runBootstrapAdmin().catch((error: unknown) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
