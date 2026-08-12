@@ -240,6 +240,9 @@ export class ForgeEcs extends Construct {
         config,
         webAcl: this.webAcl,
         destinationSuffix: "alb",
+        // Production ALB WAF logging was enabled during PROD-S1C before this
+        // construct entered the stack; adopt to avoid AlreadyExists on deploy.
+        adoptExisting: config.environmentName === "production",
       });
     }
 
