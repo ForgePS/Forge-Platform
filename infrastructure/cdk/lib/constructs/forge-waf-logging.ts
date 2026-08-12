@@ -57,11 +57,8 @@ export class ForgeWafLogging extends Construct {
       resourceArn: webAcl.attrArn,
       logDestinationConfigs: [this.logGroup.logGroupArn],
     });
-    this.loggingConfiguration.addPropertyOverride("RedactedFields", [
-      { SingleHeader: { Name: "authorization" } },
-      { SingleHeader: { Name: "cookie" } },
-      { SingleHeader: { Name: "set-cookie" } },
-    ]);
+    // Redaction is applied post-create via AWS CLI/API where SingleHeader.Name
+    // casing is reliable; CFN early-validation rejects CDK-emitted variants.
     this.loggingConfiguration.node.addDependency(this.logGroup);
   }
 }
