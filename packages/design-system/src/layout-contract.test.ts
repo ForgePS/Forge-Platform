@@ -20,4 +20,8 @@ describe("CREATOR-UX-REPAIR layout CSS contract", () => {
     expect(css).not.toMatch(/\.forge-content\s*\{[^}]*100vw/s);
     expect(css).not.toMatch(/\.forge-shell\s*\{[^}]*100vw/s);
   });
+
+  it("gives danger buttons higher specificity than button.forge-btn", () => {
+    expect(css).toContain("button.forge-btn.forge-btn--danger");
+  });
 });

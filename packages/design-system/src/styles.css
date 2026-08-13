@@ -326,29 +326,45 @@ button.forge-btn {
   background: var(--forge-color-primary-hover);
 }
 
-.forge-btn--secondary {
+.forge-btn--secondary,
+button.forge-btn.forge-btn--secondary {
   background: transparent;
   color: var(--forge-color-secondary);
   border-color: var(--forge-color-border);
 }
 
-.forge-btn--secondary:hover {
+.forge-btn--secondary:hover,
+button.forge-btn.forge-btn--secondary:hover {
   background: var(--forge-color-surface-2);
   color: var(--forge-color-heading);
 }
 
-.forge-btn--outline {
+.forge-btn--outline,
+button.forge-btn.forge-btn--outline {
   background: transparent;
   color: var(--forge-color-primary);
   border-color: var(--forge-color-primary);
 }
 
-.forge-btn--outline:hover {
+.forge-btn--outline:hover,
+button.forge-btn.forge-btn--outline:hover {
   background: var(--forge-color-primary-soft);
 }
 
-.forge-btn--danger {
+.forge-btn--danger,
+button.forge-btn.forge-btn--danger {
   background: var(--forge-color-danger);
+}
+
+.forge-btn--danger:hover,
+button.forge-btn.forge-btn--danger:hover {
+  background: #e03518;
+}
+
+.forge-btn:disabled,
+button.forge-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .forge-input,
