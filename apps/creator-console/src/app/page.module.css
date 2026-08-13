@@ -326,3 +326,147 @@
   color: var(--forge-color-danger);
   font-size: 0.8rem;
 }
+
+.tabList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--forge-color-border);
+}
+
+.tab {
+  appearance: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 0.55rem 0.75rem;
+  background: transparent;
+  color: var(--bs-secondary-color, var(--forge-color-muted));
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tab[aria-selected="true"] {
+  color: var(--bs-heading-color, var(--forge-color-heading));
+  border-bottom-color: var(--forge-color-primary);
+}
+
+.tabPanel {
+  outline: none;
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.cardBlock {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--forge-color-border);
+  border-radius: var(--forge-radius-lg);
+  background: var(--forge-color-surface);
+}
+
+.cardBlock h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  list-style: none;
+}
+
+.stepperItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--forge-color-border);
+  font-size: 0.85rem;
+  color: var(--bs-secondary-color, var(--forge-color-muted));
+}
+
+.stepperItemCurrent {
+  border-color: var(--forge-color-primary);
+  color: var(--bs-heading-color, var(--forge-color-heading));
+  background: color-mix(in srgb, var(--forge-color-primary) 10%, transparent);
+  font-weight: 600;
+}
+
+.stepperItemDone {
+  border-color: color-mix(in srgb, var(--forge-color-success) 40%, transparent);
+  color: var(--forge-color-success);
+}
+
+.stepIndex {
+  display: inline-grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--forge-color-border) 55%, transparent);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.stepperItemCurrent .stepIndex {
+  background: var(--forge-color-primary);
+  color: #fff;
+}
+
+.stepperItemDone .stepIndex {
+  background: var(--forge-color-success);
+  color: #fff;
+}
+
+.checkboxGrid {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.checklist {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.75rem 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.checklistItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--forge-radius-md);
+  border: 1px solid var(--forge-color-border);
+}
+
+.checklistItemDone {
+  border-color: color-mix(in srgb, var(--forge-color-success) 40%, transparent);
+  background: color-mix(in srgb, var(--forge-color-success) 8%, transparent);
+}
+
+.fieldError {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--forge-color-danger);
+}

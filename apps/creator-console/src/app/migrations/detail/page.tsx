@@ -16,7 +16,7 @@ import {
   ErrorState,
 } from "@forge/ui";
 import { getMigrationStatusService } from "@/lib/migrations/mock-migration.service";
-import type { MigrationDetail } from "@/lib/migrations/migration.types";
+import { migrationStageLabel, type MigrationDetail } from "@/lib/migrations/migration.types";
 
 function MigrationDetailInner() {
   const params = useSearchParams();
@@ -77,11 +77,27 @@ function MigrationDetailInner() {
         }
         title={detail.tenantDisplayName}
         subtitle={`${detail.migrationType} · ${detail.source} → ${detail.destination}`}
-        actions={<ForgeStatusBadge status={detail.status} />}
+        actions={
+          <ForgeStatusBadge status={detail.status} label={migrationStageLabel(detail.status)} />
+        }
       />
       <FixtureBanner>
         Fixture migration detail — adapter boundary only; no migration engine calls.
       </FixtureBanner>
+      <p style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
+        <Link
+          className="forge-btn"
+          href={`/migrations/reconciliation?id=${encodeURIComponent(detail.id)}`}
+        >
+          Reconciliation
+        </Link>
+        <Link
+          className="forge-btn forge-btn--secondary"
+          href={`/migrations/launch?id=${encodeURIComponent(detail.id)}`}
+        >
+          Launch Customer
+        </Link>
+      </p>
       <ForgeMetricGrid>
         <ForgeMetricCard
           label="Progress"
@@ -102,7 +118,9 @@ function MigrationDetailInner() {
           <ul>
             {detail.collections.map((c) => (
               <li key={c.name}>
-                {c.name}: <ForgeStatusBadge status={c.status} /> ({c.recordCount ?? "—"})
+                {c.name}:{" "}
+                <ForgeStatusBadge status={c.status} label={migrationStageLabel(c.status)} /> (
+                {c.recordCount ?? "—"})
               </li>
             ))}
           </ul>
@@ -111,7 +129,8 @@ function MigrationDetailInner() {
           <ul>
             {detail.documents.map((d) => (
               <li key={d.name}>
-                {d.name}: <ForgeStatusBadge status={d.status} />
+                {d.name}:{" "}
+                <ForgeStatusBadge status={d.status} label={migrationStageLabel(d.status)} />
               </li>
             ))}
           </ul>
@@ -156,4 +175,3 @@ export default function MigrationDetailPage() {
     </Suspense>
   );
 }
-

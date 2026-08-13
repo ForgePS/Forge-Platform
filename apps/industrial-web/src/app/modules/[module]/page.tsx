@@ -1,6 +1,7 @@
 import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
 import { ComplianceWorkspace } from "@/components/compliance-workspace";
 import { EquipmentWorkspace } from "@/components/equipment-workspace";
+import { FleetBackendGap } from "@/components/fleet-backend-gap";
 import { HighRiskWorkspace } from "@/components/high-risk-workspace";
 import { LotoWorkspace } from "@/components/loto-workspace";
 import { ModuleUnavailable } from "@/components/module-unavailable";
@@ -20,7 +21,7 @@ import { IndustrialImportWorkspace } from "@/components/industrial-import-worksp
 
 /** Static export params for SPA deep links (directory-index rewrite only). */
 export function generateStaticParams() {
-  const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel"]);
+  const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "fleet", "forklifts"]);
   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
     if (m.route.startsWith("/modules/")) {
       slugs.add(m.route.replace("/modules/", ""));
@@ -38,6 +39,9 @@ export default async function ModulePage({ params }: { params: Promise<{ module:
 
   if (module === "equipment") {
     return <EquipmentWorkspace moduleName={name} />;
+  }
+  if (module === "forklifts" || module === "fleet") {
+    return <FleetBackendGap moduleName={name} />;
   }
   if (module === "loto" || module === "lockout-tagout") {
     return <LotoWorkspace moduleName={name} />;

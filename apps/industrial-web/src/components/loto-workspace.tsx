@@ -351,6 +351,47 @@ export function LotoWorkspace({ moduleName }: { moduleName: string }) {
                     </button>
                   </div>
                 ) : null}
+
+                <div className="mt-4 pt-3 border-top">
+                  <h6 className="mb-3">Record history</h6>
+                  <ol className="list-unstyled small mb-0">
+                    <li className="mb-2 d-flex gap-2">
+                      <span className="text-muted" aria-hidden="true">
+                        •
+                      </span>
+                      <div>
+                        <div className="fw-medium">Created</div>
+                        <div className="text-muted">
+                          {selected.createdAt
+                            ? new Date(String(selected.createdAt)).toLocaleString()
+                            : "Timestamp not available"}
+                        </div>
+                      </div>
+                    </li>
+                    <li className="mb-2 d-flex gap-2">
+                      <span className="text-muted" aria-hidden="true">
+                        •
+                      </span>
+                      <div>
+                        <div className="fw-medium">Last updated</div>
+                        <div className="text-muted">
+                          {selected.updatedAt
+                            ? new Date(String(selected.updatedAt)).toLocaleString()
+                            : "Timestamp not available"}
+                        </div>
+                      </div>
+                    </li>
+                    <li className="d-flex gap-2">
+                      <span className="text-muted" aria-hidden="true">
+                        •
+                      </span>
+                      <div>
+                        <div className="fw-medium">Current status</div>
+                        <div className="text-muted">{String(selected.status ?? statusDraft ?? "—")}</div>
+                      </div>
+                    </li>
+                  </ol>
+                </div>
               </div>
             </div>
           </div>

@@ -10,6 +10,7 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
       { id: "health", label: "Platform health", route: "/health" },
       { id: "deployment", label: "Deployment", route: "/deployment" },
       { id: "migrations", label: "Data migration", route: "/migrations" },
+      { id: "support", label: "Support", route: "/support" },
     ],
   },
   {
@@ -28,7 +29,7 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
     id: "platform",
     label: "Platform",
     items: [
-      { id: "tenants", label: "Tenants", route: "/tenants" },
+      { id: "tenants", label: "Customers", route: "/tenants" },
       { id: "organizations", label: "Organizations", route: "/organizations" },
       { id: "persons", label: "Persons", route: "/persons" },
       { id: "users", label: "Users", route: "/users" },
@@ -43,6 +44,7 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
       { id: "products", label: "Products", route: "/products" },
       { id: "entitlements", label: "Products & Modules", route: "/entitlements" },
       { id: "subscriptions", label: "Subscriptions", route: "/subscriptions" },
+      { id: "billing", label: "Billing", route: "/billing" },
       { id: "features", label: "Feature flags", route: "/features" },
     ],
   },

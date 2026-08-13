@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { ApiError, apiGet, apiSend, useAuth } from "@forge/web-kit";
+import { apiGet, apiSend, useAuth } from "@forge/web-kit";
 import { EmptyState, PageHeader, PageSection } from "@/components/layout/page-chrome";
 import { ModuleUnavailable } from "@/components/module-unavailable";
 import { COMPLIANCE_MODULE_CONFIG, type Ind6ComplianceModule } from "@/lib/compliance-modules";
+import {
+  friendlyActionError,
+  friendlyLoadError,
+  isBackendUnavailableError,
+} from "@/lib/friendly-error";
 
 type ListResponse = {
   items: Array<Record<string, unknown>>;
@@ -53,6 +58,7 @@ export function ComplianceWorkspace({
   const [locationText, setLocationText] = useState("");
   const [workerName, setWorkerName] = useState("");
   const [incidentId, setIncidentId] = useState("");
+  const [workersCompBackendGap, setWorkersCompBackendGap] = useState(false);
 
   const modEntry = bootstrap?.modules.find((m) => m.code === cfg.code);
   const awsReady =
@@ -66,7 +72,7 @@ export function ComplianceWorkspace({
         if (!cancelled) setBootstrap(boot);
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof ApiError ? e.message : "Failed to load module bootstrap");
+          setError(friendlyLoadError(e));
         }
       }
     })();
@@ -78,6 +84,7 @@ export function ComplianceWorkspace({
   async function loadList(search = q, st = status, cat = category) {
     setLoading(true);
     setError(null);
+    setWorkersCompBackendGap(false);
     try {
       const data = await apiGet<ListResponse>(cfg.listPath, {
         query: {
@@ -90,8 +97,13 @@ export function ComplianceWorkspace({
       });
       setItems(data.items ?? []);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to load records");
       setItems([]);
+      if (module === "workers-comp" && isBackendUnavailableError(e)) {
+        setWorkersCompBackendGap(true);
+        setError(null);
+      } else {
+        setError(friendlyLoadError(e));
+      }
     } finally {
       setLoading(false);
     }
@@ -104,7 +116,12 @@ export function ComplianceWorkspace({
       setDetail(row);
       setSelectedId(id);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to load record");
+      if (module === "workers-comp" && isBackendUnavailableError(e)) {
+        setWorkersCompBackendGap(true);
+        setError(null);
+      } else {
+        setError(friendlyLoadError(e));
+      }
       setDetail(null);
     }
   }
@@ -123,7 +140,7 @@ export function ComplianceWorkspace({
       <div className="ind-ops">
         <PageHeader title={moduleName} />
         <div className="alert alert-warning mb-0" role="alert">
-          You do not have permission to view this module.
+          You don&apos;t have access to this module.
         </div>
       </div>
     );
@@ -191,13 +208,12 @@ export function ComplianceWorkspace({
       setIncidentId("");
       await loadList();
     } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Create failed",
-      );
+      if (module === "workers-comp" && isBackendUnavailableError(err)) {
+        setWorkersCompBackendGap(true);
+        setError(null);
+      } else {
+        setError(friendlyActionError(err));
+      }
     } finally {
       setCreating(false);
     }
@@ -211,7 +227,12 @@ export function ComplianceWorkspace({
       await loadList();
       await loadDetail(selectedId);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Archive failed");
+      if (module === "workers-comp" && isBackendUnavailableError(err)) {
+        setWorkersCompBackendGap(true);
+        setError(null);
+      } else {
+        setError(friendlyActionError(err));
+      }
     }
   }
 
@@ -290,11 +311,20 @@ export function ComplianceWorkspace({
         </div>
       ) : null}
 
+      {workersCompBackendGap && module === "workers-comp" ? (
+        <div className="card mb-4">
+          <EmptyState
+            title="Workers' compensation records require a backend that is not enabled for this environment."
+            description="Access to claim and medical details is role-gated. Sensitive fields stay restricted to authorized roles even when the API is available."
+          />
+        </div>
+      ) : null}
+
       {loading ? (
         <p className="text-muted" role="status" aria-live="polite">
           Loading…
         </p>
-      ) : items.length === 0 ? (
+      ) : workersCompBackendGap && module === "workers-comp" ? null : items.length === 0 ? (
         <div className="card mb-4">
           <EmptyState
             title="No records yet"
@@ -377,7 +407,7 @@ export function ComplianceWorkspace({
         </PageSection>
       ) : null}
 
-      {canManage ? (
+      {canManage && !(workersCompBackendGap && module === "workers-comp") ? (
         <PageSection title="Create record">
           <form
             className="row g-3"

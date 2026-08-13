@@ -9,6 +9,13 @@ import { useAuth } from "@forge/web-kit";
 import { CreatorNotifications } from "@/components/creator-notifications";
 import { ThemeModeToggle } from "@/components/theme-mode-toggle";
 import { CREATOR_NAV_GROUPS } from "@/lib/navigation";
+import {
+  clearSupportSession,
+  getSupportSession,
+  listenSupportSession,
+  type SupportSession,
+} from "@/lib/support-session";
+import styles from "../app/shell.module.css";
 
 const appEnv = process.env.NEXT_PUBLIC_APP_ENV ?? process.env.APP_ENV ?? "local";
 /** Optional full logo (replaces mark + "Creator" when set and loads). */
@@ -67,6 +74,7 @@ function iconForRoute(route: string, groupId: string): string {
   if (r === "/" || r.includes("dashboard")) return "bx-home-circle";
   if (r.includes("health") || r.includes("deployment")) return "bx-pulse";
   if (r.includes("migration")) return "bx-transfer";
+  if (r.includes("support")) return "bx-support";
   if (r.includes("login") || r.includes("select-tenant")) return "bx-log-in";
   if (r.includes("invitation")) return "bx-envelope";
   if (r.includes("membership")) return "bx-id-card";
@@ -77,6 +85,7 @@ function iconForRoute(route: string, groupId: string): string {
   if (r.includes("user")) return "bx-group";
   if (r.includes("role")) return "bx-shield";
   if (r.includes("permission")) return "bx-lock-alt";
+  if (r.includes("billing")) return "bx-dollar-circle";
   if (r.includes("product") || r.includes("entitlement") || r.includes("subscription"))
     return "bx-package";
   if (r.includes("feature")) return "bx-flag";
@@ -100,6 +109,7 @@ export function CreatorShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/";
   const { me, loading, error, logout, chooseTenant } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [supportSession, setSupportSessionState] = useState<SupportSession | null>(null);
 
   const groups = filterNavigationGroups(CREATOR_NAV_GROUPS, {
     permissions: me?.permissions ?? [],
@@ -124,6 +134,17 @@ export function CreatorShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    setSupportSessionState(getSupportSession());
+    return listenSupportSession(setSupportSessionState);
+  }, []);
+
+  function endSupportSession() {
+    clearSupportSession();
+    setSupportSessionState(null);
+    window.location.reload();
+  }
 
   return (
     <>
@@ -258,6 +279,21 @@ export function CreatorShell({ children }: { children: ReactNode }) {
 
             <div className="content-wrapper">
               <div className="container-xxl flex-grow-1 container-p-y">
+                {supportSession ? (
+                  <div className={styles.supportBanner} role="status">
+                    <span>
+                      SUPPORT SESSION · Viewing: <strong>{supportSession.customerName}</strong> ·{" "}
+                      {supportSession.product}
+                    </span>
+                    <button
+                      type="button"
+                      className="forge-btn forge-btn--outline"
+                      onClick={endSupportSession}
+                    >
+                      End Session
+                    </button>
+                  </div>
+                ) : null}
                 <div className="creator-content">{children}</div>
               </div>
               <footer className="content-footer footer bg-footer-theme">

@@ -25,7 +25,15 @@ export const OPS_MODULE_CONFIG: Record<
     listPath: string;
     createPath: string;
     titleField: string;
-    createFields: Array<{ name: string; label: string; required?: boolean; type?: string }>;
+    createFields: Array<{
+      name: string;
+      label: string;
+      required?: boolean;
+      type?: string;
+      placeholder?: string;
+      /** 1 = Basics, 2 = Details (wizard modules only). */
+      wizardStep?: 1 | 2;
+    }>;
   }
 > = {
   personnel: {
@@ -57,6 +65,13 @@ export const OPS_MODULE_CONFIG: Record<
       { name: "title", label: "Training title", required: true },
       { name: "courseCode", label: "Course code" },
       { name: "instructorName", label: "Instructor" },
+      { name: "assigneeName", label: "Assignee" },
+      { name: "dueDate", label: "Due date", type: "date" },
+      {
+        name: "completionStatus",
+        label: "Completion status",
+        placeholder: "Upcoming / Overdue / Complete",
+      },
       { name: "notes", label: "Notes" },
     ],
   },
@@ -82,8 +97,19 @@ export const OPS_MODULE_CONFIG: Record<
     createPath: "/api/v1/industrial/inspections",
     titleField: "title",
     createFields: [
-      { name: "title", label: "Inspection title", required: true },
-      { name: "inspectionDate", label: "Inspection date" },
+      { name: "title", label: "Inspection title", required: true, wizardStep: 1 },
+      { name: "inspectionDate", label: "Inspection date", type: "date", wizardStep: 1 },
+      { name: "templateName", label: "Template", wizardStep: 1 },
+      { name: "facilityName", label: "Facility", wizardStep: 1 },
+      { name: "auditorName", label: "Auditor", wizardStep: 1 },
+      {
+        name: "sectionResults",
+        label: "Section results",
+        placeholder: "Summarize section findings…",
+        wizardStep: 2,
+      },
+      { name: "comments", label: "Comments", wizardStep: 2 },
+      { name: "correctiveAction", label: "Corrective action", wizardStep: 2 },
     ],
   },
   incidents: {
@@ -95,11 +121,17 @@ export const OPS_MODULE_CONFIG: Record<
     createPath: "/api/v1/industrial/incidents",
     titleField: "title",
     createFields: [
-      { name: "title", label: "Incident title", required: true },
-      { name: "category", label: "Category" },
-      { name: "severity", label: "Severity" },
-      { name: "location", label: "Location" },
-      { name: "description", label: "Description" },
+      { name: "title", label: "Incident title", required: true, wizardStep: 1 },
+      { name: "category", label: "Category", wizardStep: 1 },
+      { name: "severity", label: "Severity", wizardStep: 1 },
+      { name: "location", label: "Location", wizardStep: 1 },
+      { name: "occurredAt", label: "Occurred at", type: "datetime-local", wizardStep: 1 },
+      { name: "classification", label: "Classification", wizardStep: 1 },
+      { name: "peopleInvolved", label: "People involved", wizardStep: 2 },
+      { name: "description", label: "Description", wizardStep: 2 },
+      { name: "narrative", label: "Narrative", wizardStep: 2 },
+      { name: "immediateActions", label: "Immediate actions", wizardStep: 2 },
+      { name: "correctiveActions", label: "Corrective actions", wizardStep: 2 },
     ],
   },
   jsas: {

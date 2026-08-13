@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Badge, FixtureBanner, ForgeDataTable, ForgePageContainer, ForgePageHeader, LoadingIndicator } from "@forge/ui";
 import { getMigrationStatusService } from "@/lib/migrations/mock-migration.service";
-import type { MigrationSummary } from "@/lib/migrations/migration.types";
+import { migrationStageLabel, type MigrationSummary } from "@/lib/migrations/migration.types";
 
 export default function MigrationsPage() {
   const [rows, setRows] = useState<MigrationSummary[]>([]);
@@ -56,7 +56,7 @@ export default function MigrationsPage() {
           {
             id: "status",
             header: "Status",
-            cell: (row) => <Badge>{row.status}</Badge>,
+            cell: (row) => <Badge>{migrationStageLabel(row.status)}</Badge>,
           },
           {
             id: "progress",
