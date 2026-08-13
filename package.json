@@ -35,6 +35,7 @@
     "smoke:development": "node scripts/smoke-development.mjs",
     "migration:firebase:inventory": "pnpm --filter @forge/firebase-inventory inventory -- --project forge-industrial-safety",
     "migration:firebase:extract": "pnpm --filter @forge/firebase-extractor extract -- --project forge-industrial-safety",
+    "migration:transform": "pnpm --filter @forge/data-migration-transformer transform",
     "deploy:console": "node scripts/sync-static-site.mjs --app console",
     "deploy:rms-web": "node scripts/sync-static-site.mjs --app rms",
     "deploy:tenant-admin": "node scripts/sync-static-site.mjs --app tenantadmin",

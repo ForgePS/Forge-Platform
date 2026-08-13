@@ -112,13 +112,14 @@ describe("AUTH_METADATA_REDACTION", () => {
 
 describe("STORAGE_MANIFEST", () => {
   it("infers ownership dispositions without signed URLs", async () => {
-    const { inferOwnership } = await import("./extract-storage.js");
+    const { inferOwnership } = await import("./storage-ownership.js");
     expect(inferOwnership("tenants/business-1782553339499/docs/a.pdf").disposition).toBe(
       "OWNERSHIP_CONFIRMED",
     );
     expect(inferOwnership("platform-billing-email-templates/x.html").disposition).toBe(
       "PLATFORM_GLOBAL",
     );
+    expect(inferOwnership("dqf-exports/test/TEST-1.pdf").disposition).toBe("ORPHAN");
     expect(inferOwnership("loose-file.pdf").disposition).toBe("AMBIGUOUS");
     expect(JSON.stringify(inferOwnership("x"))).not.toMatch(/signedUrl|token=/i);
   });
