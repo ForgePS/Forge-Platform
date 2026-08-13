@@ -258,7 +258,7 @@ function TenantDetailInner() {
           <>
             <Link
               className="forge-btn"
-              href={`/industrial-modules/?tenantId=${encodeURIComponent(tenantId)}`}
+              href={`/customer-modules/?tenantId=${encodeURIComponent(tenantId)}`}
             >
               Manage Modules
             </Link>
@@ -565,7 +565,7 @@ function TenantDetailInner() {
               </ul>
             )}
             <nav className={styles.linkRow}>
-              <Link className="forge-btn" href={`/industrial-modules/?tenantId=${encodeURIComponent(tenantId)}`}>
+              <Link className="forge-btn" href={`/customer-modules/?tenantId=${encodeURIComponent(tenantId)}`}>
                 Manage Modules
               </Link>
               <Link href="/modules">Module catalog</Link>

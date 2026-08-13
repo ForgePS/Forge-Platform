@@ -5,6 +5,7 @@
  * implement product modules; those arrive with the product sprints.
  */
 
+import { catalogModulesForSeed } from "./module-catalog.js";
 import {
   RMS_DEPARTMENT_ADMIN_PERMISSIONS,
   RMS_FIRE_INVESTIGATOR_PERMISSIONS,
@@ -102,22 +103,11 @@ export const FORGE_INDUSTRIAL_TEMPLATE: StarterTemplate = {
   customerType: "INDUSTRIAL",
   productCode: "FORGE_INDUSTRIAL",
   organizationTypeCode: "SAFETY_COMPANY",
-  modules: [
-    { code: "CORE", name: "Industrial Core", isCore: true },
-    { code: "PERSONNEL", name: "Personnel", isCore: false },
-    { code: "TRAINING", name: "Training", isCore: false },
-    { code: "INCIDENTS", name: "Incidents", isCore: false },
-    { code: "INSPECTIONS", name: "Inspections", isCore: false },
-    { code: "JSAS", name: "JSAs", isCore: false },
-    { code: "FORMS", name: "Forms", isCore: false },
-    { code: "LOCKOUT_TAGOUT", name: "Lockout/Tagout", isCore: false },
-    { code: "REPORTING", name: "Reporting", isCore: false },
-    {
-      code: "AI_NARRATIVE",
-      name: "AI Narrative Assistant",
-      isCore: false,
-    },
-  ],
+  modules: catalogModulesForSeed("FORGE_INDUSTRIAL").map((m) => ({
+    code: m.code,
+    name: m.name,
+    isCore: m.isCore,
+  })),
   roles: [
     { code: "INDUSTRIAL_TENANT_ADMIN", name: "Tenant Admin", permissions: ADMIN_PERMISSIONS },
     { code: "INDUSTRIAL_SAFETY_MANAGER", name: "Safety Manager", permissions: MANAGER_PERMISSIONS },
@@ -132,21 +122,11 @@ export const FORGE_RMS_TEMPLATE: StarterTemplate = {
   customerType: "FIRE_DEPARTMENT",
   productCode: "FORGE_RMS",
   organizationTypeCode: "FIRE_DEPARTMENT",
-  modules: [
-    { code: "CORE", name: "RMS Core", isCore: true },
-    { code: "PERSONNEL", name: "Personnel", isCore: false },
-    { code: "TRAINING", name: "Training", isCore: false },
-    { code: "APPARATUS", name: "Apparatus", isCore: false },
-    { code: "INVENTORY", name: "Inventory", isCore: false },
-    { code: "DOCUMENTS", name: "Documents", isCore: false },
-    { code: "REPORTS", name: "Reports", isCore: false },
-    { code: "NERIS", name: "NERIS Reporting", isCore: false },
-    {
-      code: "AI_NARRATIVE",
-      name: "AI Narrative Assistant",
-      isCore: false,
-    },
-  ],
+  modules: catalogModulesForSeed("FORGE_RMS").map((m) => ({
+    code: m.code,
+    name: m.name,
+    isCore: m.isCore,
+  })),
   roles: [
     {
       code: "RMS_DEPARTMENT_ADMIN",
@@ -205,23 +185,11 @@ export const FORGE_ACADEMY_TEMPLATE: StarterTemplate = {
   customerType: "FIRE_ACADEMY",
   productCode: "FORGE_ACADEMY",
   organizationTypeCode: "FIRE_ACADEMY",
-  modules: [
-    { code: "CORE", name: "Academy Core", isCore: true },
-    { code: "ADMINISTRATION", name: "Academy Administration", isCore: false },
-    { code: "STUDENTS", name: "Students", isCore: false },
-    { code: "INSTRUCTORS", name: "Instructors", isCore: false },
-    { code: "COURSES", name: "Courses", isCore: false },
-    { code: "CLASSES", name: "Classes", isCore: false },
-    { code: "ENROLLMENT", name: "Enrollment", isCore: false },
-    { code: "ATTENDANCE", name: "Attendance", isCore: false },
-    { code: "CERTIFICATIONS", name: "Certifications", isCore: false },
-    { code: "DEPARTMENT_PORTAL", name: "Department Portal", isCore: false },
-    {
-      code: "AI_NARRATIVE",
-      name: "AI Narrative Assistant",
-      isCore: false,
-    },
-  ],
+  modules: catalogModulesForSeed("FORGE_ACADEMY").map((m) => ({
+    code: m.code,
+    name: m.name,
+    isCore: m.isCore,
+  })),
   roles: [
     { code: "ACADEMY_ADMIN", name: "Academy Admin", permissions: ADMIN_PERMISSIONS },
     { code: "ACADEMY_REGISTRAR", name: "Registrar", permissions: MANAGER_PERMISSIONS },

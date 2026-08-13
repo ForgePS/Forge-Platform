@@ -274,6 +274,13 @@
       "when": 1754930000000,
       "tag": "0038_mk_s21_security_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1754940000000,
+      "tag": "0039_module_catalog_s2",
+      "breakpoints": true
     }
   ]
 }

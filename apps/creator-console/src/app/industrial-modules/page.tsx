@@ -74,11 +74,19 @@ function IndustrialModulesInner() {
       const [entitlements, tenants, catalog] = await Promise.all([
         apiGet<EntitlementsPayload>(`/api/v1/tenants/${tenantId}/entitlements`),
         apiGet<TenantRow[]>("/api/v1/platform/tenants").catch(() => [] as TenantRow[]),
-        apiGet<Array<{ code: string }>>("/api/v1/platform/modules").catch(() => []),
+        apiGet<Array<{ code: string; productCode?: string }>>("/api/v1/platform/modules").catch(
+          () => [],
+        ),
       ]);
       setData(entitlements);
       setTenantName(tenants.find((t) => t.id === tenantId)?.displayName ?? "Customer");
-      setCatalogCodes(new Set(catalog.map((m) => m.code)));
+      setCatalogCodes(
+        new Set(
+          catalog
+            .filter((m) => !m.productCode || m.productCode === INDUSTRIAL_PRODUCT_CODE)
+            .map((m) => m.code),
+        ),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "We couldn't load module access.");
     } finally {
@@ -138,6 +146,7 @@ function IndustrialModulesInner() {
     try {
       await apiSend(`/api/v1/tenants/${tenantId}/modules/${moduleCode}/entitlement`, "PUT", {
         status: enable ? "ACTIVE" : "SUSPENDED",
+        productCode: INDUSTRIAL_PRODUCT_CODE,
       });
       toast.push(
         enable

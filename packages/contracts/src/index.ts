@@ -553,6 +553,7 @@ export const completeOnboardingStepInputSchema = z.object({
   payload: z.record(z.unknown()).default({}),
 });
 
+export * from "./module-catalog.js";
 export * from "./starter-templates.js";
 export {
   RMS_PERMISSIONS,

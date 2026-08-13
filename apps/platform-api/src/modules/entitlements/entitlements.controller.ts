@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Req, Res } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put, Query, Req, Res } from "@nestjs/common";
 import type { ForgePrincipal } from "@forge/tenant-context";
 import type { Response } from "express";
 import { ok } from "../../common/api-response.js";
@@ -35,6 +35,25 @@ export class EntitlementsController {
     return ok(data, getRequestIds(req));
   }
 
+  @Put("products/:productCode/modules")
+  @RequirePermission("platform.entitlement.manage", { allowWhenSuspended: true })
+  @Idempotent({ resourceType: "entitlement" })
+  async putProductModules(
+    @Param("tenantId") tenantId: string,
+    @Param("productCode") productCode: string,
+    @Body() body: unknown,
+    @Principal() principal: ForgePrincipal,
+    @Req() req: RequestWithIds,
+  ) {
+    const data = await this.entitlements.putProductModules(
+      tenantId,
+      productCode,
+      body,
+      principal,
+    );
+    return ok(data, getRequestIds(req));
+  }
+
   @Put("modules/:moduleCode/entitlement")
   @RequirePermission("platform.entitlement.manage", { allowWhenSuspended: true })
   @Idempotent({ resourceType: "entitlement" })
@@ -56,6 +75,7 @@ export class EntitlementsController {
   async suspend(
     @Param("tenantId") tenantId: string,
     @Param("moduleCode") moduleCode: string,
+    @Query("productCode") productCode: string | undefined,
     @Principal() principal: ForgePrincipal,
     @Req() req: RequestWithIds,
     @Res({ passthrough: true }) res: Response,
@@ -67,6 +87,7 @@ export class EntitlementsController {
       "SUSPENDED",
       principal,
       expected,
+      productCode,
     );
     setETag(res, data.recordVersion);
     return ok(data, getRequestIds(req));
@@ -77,6 +98,7 @@ export class EntitlementsController {
   async activate(
     @Param("tenantId") tenantId: string,
     @Param("moduleCode") moduleCode: string,
+    @Query("productCode") productCode: string | undefined,
     @Principal() principal: ForgePrincipal,
     @Req() req: RequestWithIds,
     @Res({ passthrough: true }) res: Response,
@@ -88,6 +110,7 @@ export class EntitlementsController {
       "ACTIVE",
       principal,
       expected,
+      productCode,
     );
     setETag(res, data.recordVersion);
     return ok(data, getRequestIds(req));

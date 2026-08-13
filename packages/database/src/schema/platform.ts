@@ -38,6 +38,19 @@ export const platformModules = pgTable(
     description: text("description"),
     status: varchar("status", { length: 32 }).notNull().default("ACTIVE"),
     isCore: boolean("is_core").notNull().default(false),
+    /** MODULE-CATALOG-S2: People & Workforce, Compliance, etc. */
+    category: varchar("category", { length: 128 }).notNull().default("General"),
+    /** CUSTOMER_MODULE | PLATFORM_CORE | INTERNAL_TOOL | SHARED_SERVICE */
+    classification: varchar("classification", { length: 64 })
+      .notNull()
+      .default("CUSTOMER_MODULE"),
+    /** READY | IN_DEVELOPMENT | MIGRATING | COMING_SOON | RETIRED | UNAVAILABLE */
+    implementationStatus: varchar("implementation_status", { length: 64 })
+      .notNull()
+      .default("READY"),
+    /** When false, module is hidden from ordinary customer assignment toggles. */
+    customerAssignable: boolean("customer_assignable").notNull().default(true),
+    displayOrder: integer("display_order").notNull().default(100),
     createdAt: createdAtColumn,
     updatedAt: updatedAtColumn,
   },

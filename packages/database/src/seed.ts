@@ -5,6 +5,7 @@ import {
   STARTER_TEMPLATES,
   TENANT_ADMIN_PERMISSIONS,
   TENANT_OWNER_PERMISSIONS,
+  catalogModulesForSeed,
   isCreatorOnlyPermission,
 } from "@forge/contracts";
 import { and, eq } from "drizzle-orm";
@@ -28,39 +29,50 @@ import {
 export type SeedDatabase = PostgresJsDatabase<typeof schema>;
 
 const PRODUCTS = [
-  { code: "FORGE_ACADEMY", name: "Forge Academy", description: "Training academy platform" },
-  { code: "FORGE_RMS", name: "Forge RMS", description: "Records management system" },
+  {
+    code: "FORGE_ACADEMY",
+    name: "Forge Academy",
+    description: "Training academy product",
+  },
+  {
+    code: "FORGE_RMS",
+    name: "Forge RMS",
+    description: "Records management for fire and emergency services",
+  },
   {
     code: "FORGE_INDUSTRIAL",
-    name: "Forge Industrial",
-    description: "Industrial safety platform",
+    name: "Forge Industrial Safety",
+    description: "Industrial safety and compliance product",
   },
-  { code: "FORGE_CREATOR", name: "Forge Creator", description: "Platform administration console" },
+  {
+    code: "FORGE_CREATOR",
+    name: "Forge Creator",
+    description: "Internal platform control plane",
+  },
 ] as const;
 
-type SeedModule = { code: string; name: string; isCore: boolean };
-
-/**
- * Product modules. Starter templates (Sprint 1E section 11) are the source of
- * truth for the three customer products; the Creator console is listed inline
- * because it has no customer-facing template.
- */
-const MODULES_BY_PRODUCT: Record<string, SeedModule[]> = {
-  FORGE_CREATOR: [
-    { code: "CORE", name: "Creator Core", isCore: true },
-    { code: "TENANT_ADMIN", name: "Tenant Administration", isCore: false },
-  ],
+type SeedModule = {
+  code: string;
+  name: string;
+  isCore: boolean;
+  category: string;
+  classification: string;
+  implementationStatus: string;
+  customerAssignable: boolean;
+  displayOrder: number;
+  description?: string;
 };
 
-for (const template of STARTER_TEMPLATES) {
-  const existing = MODULES_BY_PRODUCT[template.productCode] ?? [];
-  for (const mod of template.modules) {
-    if (!existing.some((m) => m.code === mod.code)) {
-      existing.push({ code: mod.code, name: mod.name, isCore: mod.isCore });
-    }
-  }
-  MODULES_BY_PRODUCT[template.productCode] = existing;
-}
+/**
+ * Product modules from canonical MODULE-CATALOG-S2 contract.
+ * Creator modules are internal and never customer-selectable.
+ */
+const MODULES_BY_PRODUCT: Record<string, SeedModule[]> = {
+  FORGE_CREATOR: catalogModulesForSeed("FORGE_CREATOR"),
+  FORGE_INDUSTRIAL: catalogModulesForSeed("FORGE_INDUSTRIAL"),
+  FORGE_RMS: catalogModulesForSeed("FORGE_RMS"),
+  FORGE_ACADEMY: catalogModulesForSeed("FORGE_ACADEMY"),
+};
 
 const ORG_TYPES = [
   { code: "FIRE_DEPARTMENT", name: "Fire Department" },
@@ -642,12 +654,32 @@ export async function seedPlatformData(db: SeedDatabase): Promise<void> {
           productId,
           code: mod.code,
           name: mod.name,
-          description: `${mod.name} module`,
+          description: mod.description ?? `${mod.name} module`,
           status: "ACTIVE",
           isCore: mod.isCore,
+          category: mod.category,
+          classification: mod.classification,
+          implementationStatus: mod.implementationStatus,
+          customerAssignable: mod.customerAssignable,
+          displayOrder: mod.displayOrder,
           createdAt: now,
           updatedAt: now,
         });
+      } else {
+        await db
+          .update(platformModules)
+          .set({
+            name: mod.name,
+            description: mod.description ?? `${mod.name} module`,
+            isCore: mod.isCore,
+            category: mod.category,
+            classification: mod.classification,
+            implementationStatus: mod.implementationStatus,
+            customerAssignable: mod.customerAssignable,
+            displayOrder: mod.displayOrder,
+            updatedAt: now,
+          })
+          .where(eq(platformModules.id, existing[0]!.id));
       }
     }
   }
