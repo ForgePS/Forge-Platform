@@ -75,6 +75,8 @@ export {
 
 export {
   AuthProvider,
+  AUTH_BOOTSTRAP_TIMEOUT_MS,
+  resolveSession,
   useAuth,
   usePermission,
   useAnyPermission,

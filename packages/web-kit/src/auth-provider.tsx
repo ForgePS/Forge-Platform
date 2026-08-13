@@ -23,6 +23,9 @@ import { buildLogoutUrl, redirectToCognitoLogin, refreshAccessToken } from "./co
 import { switchActiveTenant } from "./tenant-switch.js";
 import { syncTenantIdInUrl } from "./tenant-scoped.js";
 
+/** Max time for initial session bootstrap before surfacing a recoverable error. */
+export const AUTH_BOOTSTRAP_TIMEOUT_MS = 12_000;
+
 export type AuthContextValue = {
   me: AuthMe | null;
   loading: boolean;
@@ -41,35 +44,55 @@ export type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function statusOf(err: unknown): number {
+  return err && typeof err === "object" && "status" in err ? Number(err.status) : 0;
+}
+
+function isAbortError(err: unknown): boolean {
+  return (
+    (err instanceof DOMException && err.name === "AbortError") ||
+    (err instanceof Error && err.name === "AbortError")
+  );
+}
+
 /**
  * Restore Cognito active-tenant context. Cognito identity home tenant is not
  * sticky across requests unless clients send x-tenant-id (via getActiveTenantId).
  */
-async function resolveSession(): Promise<AuthMe> {
+export async function resolveSession(signal?: AbortSignal): Promise<AuthMe> {
   const persisted = getActiveTenantId();
   try {
-    let me = await authMe();
+    let me = await authMe(signal ? { signal } : undefined);
     if (
       persisted &&
       me.tenantId !== persisted &&
       me.tenants.some((t) => t.tenantId === persisted && t.selectable)
     ) {
-      me = await selectTenant(persisted);
+      me = await selectTenant(persisted, signal ? { signal } : undefined);
     } else if (
       persisted &&
       !me.tenants.some((t) => t.tenantId === persisted && t.selectable)
     ) {
       clearActiveTenantId();
-      me = await authMe();
+      me = await authMe(signal ? { signal } : undefined);
     }
     return me;
   } catch (err) {
-    if (persisted) {
+    // Never retry after 401 — expired/missing tokens must settle as unauthenticated.
+    // Never retry after abort — bootstrap timeout owns the error surface.
+    if (persisted && statusOf(err) !== 401 && !isAbortError(err)) {
       clearActiveTenantId();
-      return authMe();
+      return authMe(signal ? { signal } : undefined);
     }
     throw err;
   }
+}
+
+function bootstrapErrorMessage(err: unknown): string {
+  if (isAbortError(err)) {
+    return "Session check timed out. Check your connection and try again.";
+  }
+  return err instanceof Error ? err.message : "Authentication failed";
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -77,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const clearingSession = useRef(false);
+  const bootstrapAbortRef = useRef<AbortController | null>(null);
 
   const clearSession = useCallback(() => {
     if (clearingSession.current) return;
@@ -92,17 +116,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearSession]);
 
   const refresh = useCallback(async () => {
+    bootstrapAbortRef.current?.abort();
+    const controller = new AbortController();
+    bootstrapAbortRef.current = controller;
+    const timer = window.setTimeout(() => controller.abort(), AUTH_BOOTSTRAP_TIMEOUT_MS);
+
     setLoading(true);
     setError(null);
     try {
-      setMe(await resolveSession());
+      setMe(await resolveSession(controller.signal));
     } catch (err) {
       setMe(null);
-      const status = err && typeof err === "object" && "status" in err ? Number(err.status) : 0;
-      if (status !== 401) {
-        setError(err instanceof Error ? err.message : "Authentication failed");
+      const status = statusOf(err);
+      if (status !== 401 || isAbortError(err)) {
+        setError(bootstrapErrorMessage(err));
       }
     } finally {
+      window.clearTimeout(timer);
+      if (bootstrapAbortRef.current === controller) {
+        bootstrapAbortRef.current = null;
+      }
       setLoading(false);
     }
   }, []);
@@ -116,32 +149,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      const controller = new AbortController();
+      bootstrapAbortRef.current = controller;
+      const timer = window.setTimeout(() => controller.abort(), AUTH_BOOTSTRAP_TIMEOUT_MS);
+
       setLoading(true);
       setError(null);
       try {
         if (getRefreshToken()) {
           try {
-            await refreshAccessToken();
-          } catch {
+            await refreshAccessToken({ signal: controller.signal });
+          } catch (err) {
+            if (isAbortError(err)) throw err;
             // Keep the existing access token — a refresh failure must not wipe a
             // just-established session (common right after OAuth code exchange).
           }
         }
-        setMe(await resolveSession());
+        setMe(await resolveSession(controller.signal));
       } catch (err) {
         setMe(null);
         // Unauthenticated visitors (no bearer / no linked session) are expected
         // on public routes — do not surface as a blocking shell error.
-        const status = err && typeof err === "object" && "status" in err ? Number(err.status) : 0;
-        if (status !== 401) {
-          setError(err instanceof Error ? err.message : "Authentication failed");
+        const status = statusOf(err);
+        if (status !== 401 || isAbortError(err)) {
+          setError(bootstrapErrorMessage(err));
         }
       } finally {
+        window.clearTimeout(timer);
+        if (bootstrapAbortRef.current === controller) {
+          bootstrapAbortRef.current = null;
+        }
         setLoading(false);
       }
     }
 
     void bootstrap();
+
+    return () => {
+      bootstrapAbortRef.current?.abort();
+    };
   }, [clearSession]);
 
   const loginWithCognito = useCallback(async () => {

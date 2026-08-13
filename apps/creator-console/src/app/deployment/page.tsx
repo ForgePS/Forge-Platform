@@ -13,7 +13,7 @@ export default function DeploymentPage() {
 
   const appEnv = process.env.NEXT_PUBLIC_APP_ENV ?? process.env.APP_ENV ?? "local";
   const appVersion = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.1.0";
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "(not configured)";
 
   const load = useCallback(async () => {
     setLoading(true);

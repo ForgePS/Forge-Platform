@@ -74,7 +74,7 @@ function breadcrumbsForPath(pathname: string): ForgeBreadcrumbItem[] {
 
 export function ShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
-  const { me, loading, error, logout, chooseTenant } = useAuth();
+  const { me, loading, error, logout, chooseTenant, refresh, loginWithCognito } = useAuth();
   const [healthOk, setHealthOk] = useState<boolean | null>(null);
 
   const groups = useMemo(() => filterNavigationForSession(CREATOR_NAV_GROUPS, me), [me]);
@@ -163,9 +163,24 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
               </div>
             </>
           ) : error ? (
-            <p className={styles.authError}>{error}</p>
+            <div style={{ display: "grid", gap: "0.35rem" }}>
+              <p className={styles.authError}>{error}</p>
+              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                <button type="button" className={styles.signOut} onClick={() => void refresh()}>
+                  Retry
+                </button>
+                <button type="button" className={styles.signOut} onClick={() => void loginWithCognito()}>
+                  Sign in
+                </button>
+              </div>
+            </div>
           ) : (
-            <ForgeShellState state="empty" title="Not signed in" description="Sign in to manage customers." />
+            <div style={{ display: "grid", gap: "0.35rem" }}>
+              <ForgeShellState state="empty" title="Not signed in" description="Sign in to manage customers." />
+              <button type="button" className={styles.signOut} onClick={() => void loginWithCognito()}>
+                Sign in
+              </button>
+            </div>
           )
         }
         topbarCenter={
@@ -191,7 +206,12 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
                 state={products.length === 0 ? "empty" : "ready"}
               />
             ) : null}
-            <ForgeFacilitySelector facilities={[]} state={me ? "empty" : "unauthorized"} />
+            {/* Creator Console is tenant-scoped; facilities are optional and must not block the shell. */}
+            {loading ? (
+              <ForgeFacilitySelector facilities={[]} state="loading" />
+            ) : me ? (
+              <ForgeFacilitySelector facilities={[]} state="empty" />
+            ) : null}
             {me ? (
               <ForgeTenantSwitcher
                 tenants={tenants}

@@ -28,9 +28,7 @@ export type ApiClientConfig = {
   onUnauthorized?: () => void;
 };
 
-let clientConfig: ApiClientConfig = {
-  baseUrl: "http://localhost:4000",
-};
+let clientConfig: ApiClientConfig = {};
 
 export function configureApiClient(config: ApiClientConfig): void {
   clientConfig = { ...clientConfig, ...config };
@@ -41,7 +39,13 @@ export function getApiClientConfig(): ApiClientConfig {
 }
 
 export function getApiBaseUrl(): string {
-  return clientConfig.baseUrl ?? "http://localhost:4000";
+  const base = clientConfig.baseUrl?.trim();
+  if (!base) {
+    throw new Error(
+      "API client baseUrl is not configured. Call configureApiClient({ baseUrl }) before requests.",
+    );
+  }
+  return base;
 }
 
 export class ApiError extends Error {

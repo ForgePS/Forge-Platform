@@ -1,4 +1,4 @@
-import { apiGet, apiSend } from "./api-client.js";
+import { apiGet, apiSend, type ApiRequestOptions } from "./api-client.js";
 
 export type AuthTenant = {
   tenantId: string;
@@ -26,19 +26,25 @@ export type AuthMe = {
   tenants: AuthTenant[];
 };
 
-export function authMe(): Promise<AuthMe> {
-  return apiGet<AuthMe>("/api/v1/auth/me");
+export function authMe(options?: ApiRequestOptions): Promise<AuthMe> {
+  return apiGet<AuthMe>("/api/v1/auth/me", options);
 }
 
 export function selectTenant(
   tenantId: string,
-  options?: { productCode?: string; reason?: string },
+  options?: { productCode?: string; reason?: string } & ApiRequestOptions,
 ): Promise<AuthMe> {
-  return apiSend<AuthMe>("/api/v1/auth/select-tenant", "POST", {
-    tenantId,
-    ...(options?.productCode ? { productCode: options.productCode } : {}),
-    ...(options?.reason ? { reason: options.reason } : {}),
-  });
+  const { productCode, reason, ...request } = options ?? {};
+  return apiSend<AuthMe>(
+    "/api/v1/auth/select-tenant",
+    "POST",
+    {
+      tenantId,
+      ...(productCode ? { productCode } : {}),
+      ...(reason ? { reason } : {}),
+    },
+    request,
+  );
 }
 
 export function logoutAll(): Promise<{ sessionVersion: number }> {

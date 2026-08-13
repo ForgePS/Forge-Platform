@@ -185,7 +185,9 @@ export async function exchangeCodeForTokens(code: string): Promise<CognitoTokenR
   return payload;
 }
 
-export async function refreshAccessToken(): Promise<CognitoTokenResponse | null> {
+export async function refreshAccessToken(
+  options?: { signal?: AbortSignal },
+): Promise<CognitoTokenResponse | null> {
   requireBrowser();
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
@@ -203,6 +205,7 @@ export async function refreshAccessToken(): Promise<CognitoTokenResponse | null>
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
+    ...(options?.signal ? { signal: options.signal } : {}),
   });
 
   let payload: CognitoTokenResponse & { error?: string; error_description?: string };

@@ -2,8 +2,10 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { exchangeCodeForTokens, useAuth, validateOAuthState } from "@forge/web-kit";
+import { authMe, exchangeCodeForTokens, useAuth, validateOAuthState } from "@forge/web-kit";
 import styles from "../../page.module.css";
+
+const CALLBACK_TIMEOUT_MS = 20_000;
 
 function AuthCallbackInner() {
   const router = useRouter();
@@ -37,12 +39,29 @@ function AuthCallbackInner() {
         return;
       }
 
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), CALLBACK_TIMEOUT_MS);
+
       try {
         await exchangeCodeForTokens(code);
+        // Call authMe directly — useAuth().refresh() swallows 401 and would
+        // silently send users back to the Sign in screen.
+        await authMe({ signal: controller.signal });
         await refresh();
         router.replace("/select-tenant/");
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Sign-in failed");
+        const aborted =
+          (err instanceof DOMException && err.name === "AbortError") ||
+          (err instanceof Error && err.name === "AbortError");
+        setError(
+          aborted
+            ? "Sign-in timed out while verifying your session. Return to login and try again."
+            : err instanceof Error
+              ? err.message
+              : "Sign-in failed",
+        );
+      } finally {
+        window.clearTimeout(timer);
       }
     }
 

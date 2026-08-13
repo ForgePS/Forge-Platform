@@ -20,7 +20,7 @@ export function PlatformPageGate({
   anyOf?: readonly string[];
   children: ReactNode;
 }) {
-  const { hasPermission, me, loading } = useAuth();
+  const { hasPermission, me, loading, error, refresh, loginWithCognito } = useAuth();
 
   const allowed =
     Boolean(me?.isPlatformAdmin) ||
@@ -32,6 +32,29 @@ export function PlatformPageGate({
       <section className={styles.page}>
         <h1>{title}</h1>
         <p className={styles.muted}>Checking permissions…</p>
+      </section>
+    );
+  }
+
+  if (!me) {
+    return (
+      <section className={styles.page}>
+        <h1>{title}</h1>
+        {error ? <p className={styles.error}>{error}</p> : null}
+        <PermissionDenied
+          title="Sign in required"
+          description="Sign in with your Forge account to continue."
+        />
+        <div className={styles.actions}>
+          <button className={styles.button} type="button" onClick={() => void loginWithCognito()}>
+            Sign in
+          </button>
+          {error ? (
+            <button className={styles.buttonSecondary} type="button" onClick={() => void refresh()}>
+              Retry
+            </button>
+          ) : null}
+        </div>
       </section>
     );
   }

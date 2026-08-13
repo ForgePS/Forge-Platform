@@ -24,7 +24,7 @@
  * Deployed builds must NOT set NEXT_PUBLIC_ALLOW_DEV_PRINCIPAL.
  */
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -161,6 +161,7 @@ function assertProductionFrontendConfig(app, buildEnv, environment) {
     "NEXT_PUBLIC_COGNITO_CLIENT_ID",
     "NEXT_PUBLIC_COGNITO_USER_POOL_ID",
     "NEXT_PUBLIC_APP_URL",
+    "NEXT_PUBLIC_API_URL",
   ];
   const missing = required.filter((key) => !buildEnv[key] || String(buildEnv[key]).trim() === "");
   if (missing.length) {
@@ -171,6 +172,9 @@ function assertProductionFrontendConfig(app, buildEnv, environment) {
 
   const placeholderNeedles = [
     "localhost",
+    "127.0.0.1",
+    "forge-development",
+    "creator-dev",
     "example.com",
     "000000000000",
     "undefined",
@@ -182,12 +186,17 @@ function assertProductionFrontendConfig(app, buildEnv, environment) {
   for (const key of required) {
     const value = String(buildEnv[key]);
     for (const needle of placeholderNeedles) {
-      if (value.includes(needle)) {
+      if (value.toLowerCase().includes(needle.toLowerCase())) {
         throw new Error(
           `[${app}] production frontend config ${key} contains placeholder/invalid value: ${needle}`,
         );
       }
     }
+  }
+
+  const apiUrl = String(buildEnv.NEXT_PUBLIC_API_URL).trim();
+  if (!apiUrl.startsWith("https://")) {
+    throw new Error(`[${app}] NEXT_PUBLIC_API_URL must use https://: ${apiUrl}`);
   }
 
   const cognitoDomain = String(buildEnv.NEXT_PUBLIC_COGNITO_DOMAIN).trim();
@@ -546,6 +555,80 @@ if (!existsSync(outPath)) {
   process.exit(1);
 }
 
+/**
+ * Fail closed if a production static export still embeds development endpoints.
+ * Require production Cognito/API markers; forbid development Cognito/Firebase hosts.
+ * Loopback string literals inside Next polyfills are ignored separately.
+ */
+function assertProductionArtifactProvenance(appName, artifactRoot, envName, buildEnv) {
+  if (envName !== "production" && envName !== "govcloud-production") {
+    return;
+  }
+  const requiredMarkers = [
+    String(buildEnv?.NEXT_PUBLIC_API_URL ?? "").trim(),
+    String(buildEnv?.NEXT_PUBLIC_COGNITO_DOMAIN ?? "").trim(),
+    String(buildEnv?.NEXT_PUBLIC_COGNITO_USER_POOL_ID ?? "").trim(),
+  ].filter(Boolean);
+  const forbidden =
+    /forge-development|creator-dev\.forgepublicsafety|firebaseapp\.com|\.web\.app/i;
+  const hits = [];
+  let joined = "";
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (/^polyfills-.*\.js$/i.test(entry.name)) continue;
+      if (!/\.(js|html|css|json|txt)$/i.test(entry.name)) continue;
+      let text = "";
+      try {
+        text = readFileSync(full, "utf8");
+      } catch {
+        continue;
+      }
+      joined += `\n${text}`;
+      if (forbidden.test(text)) {
+        const match = text.match(forbidden);
+        hits.push(`${path.relative(artifactRoot, full)}:${match?.[0] ?? "match"}`);
+      }
+    }
+  };
+  walk(artifactRoot);
+  const missingMarkers = requiredMarkers.filter((marker) => !joined.includes(marker));
+  if (missingMarkers.length) {
+    console.error("PRODUCTION_ARTIFACT_PROVENANCE=FAIL");
+    for (const marker of missingMarkers) {
+      console.error(`  missing baked config marker: ${marker}`);
+    }
+    throw new Error(
+      `[${appName}] production artifact missing required production config markers`,
+    );
+  }
+  if (hits.length) {
+    console.error("PRODUCTION_ARTIFACT_PROVENANCE=FAIL");
+    for (const hit of hits.slice(0, 40)) {
+      console.error(`  ${hit}`);
+    }
+    throw new Error(
+      `[${appName}] production artifact contains development references (${hits.length} files)`,
+    );
+  }
+  console.log("PRODUCTION_ARTIFACT_PROVENANCE=PASS");
+}
+
+// Capture build env for provenance when we rebuild; when --skip-build is used,
+// re-resolve console env so markers are still known.
+const provenanceBuildEnv =
+  app === "console"
+    ? resolveConsoleBuildEnv(environment)
+    : null;
+
+if (app === "console") {
+  assertProductionArtifactProvenance(app, outPath, environment, provenanceBuildEnv);
+}
+
 const bucket =
   process.env[envKeyForApp(app, "BUCKET")] ??
   resolveEnvExport(environment, `${appConfig.stackExportPrefix}Bucket`);
@@ -576,10 +659,32 @@ if (distributionId) {
       "--paths",
       "/*",
     ],
-    { encoding: "utf8", env: process.env, shell: false, stdio: "inherit" },
+    { encoding: "utf8", env: process.env, shell: false },
   );
   if (invalidation.status !== 0) {
+    if (invalidation.stderr) console.error(invalidation.stderr);
     process.exit(invalidation.status ?? 1);
+  }
+  let invalidationId = null;
+  try {
+    invalidationId = JSON.parse(invalidation.stdout || "{}")?.Invalidation?.Id ?? null;
+  } catch {
+    invalidationId = null;
+  }
+  if (invalidationId) {
+    console.log(`Waiting for invalidation ${invalidationId}…`);
+    run("aws", [
+      "cloudfront",
+      "wait",
+      "invalidation-completed",
+      "--distribution-id",
+      distributionId,
+      "--id",
+      invalidationId,
+    ]);
+    console.log("CloudFront invalidation completed.");
+  } else {
+    console.warn("Could not parse invalidation id; continuing without wait.");
   }
 } else {
   console.warn(
