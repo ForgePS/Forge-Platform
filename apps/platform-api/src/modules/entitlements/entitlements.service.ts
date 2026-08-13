@@ -84,10 +84,6 @@ export class EntitlementsService {
           productCode: platformProducts.code,
           productName: platformProducts.name,
           isCore: platformModules.isCore,
-          category: platformModules.category,
-          classification: platformModules.classification,
-          implementationStatus: platformModules.implementationStatus,
-          customerAssignable: platformModules.customerAssignable,
           startsAt: tenantModuleEntitlements.startsAt,
           endsAt: tenantModuleEntitlements.endsAt,
           configurationJson: tenantModuleEntitlements.configurationJson,
@@ -98,7 +94,20 @@ export class EntitlementsService {
         .innerJoin(platformProducts, eq(platformProducts.id, platformModules.productId))
         .where(eq(tenantModuleEntitlements.tenantId, tenantId));
 
-      return { products, modules };
+      return {
+        products,
+        modules: modules.map((row) => {
+          const catalog = findCatalogModule(row.productCode, row.moduleCode);
+          return {
+            ...row,
+            category: catalog?.category ?? "General",
+            classification: catalog?.classification ?? (row.isCore ? "PLATFORM_CORE" : "CUSTOMER_MODULE"),
+            implementationStatus: catalog?.implementationStatus ?? "READY",
+            customerAssignable:
+              catalog?.customerAssignable ?? (!row.isCore && row.productCode !== "FORGE_CREATOR"),
+          };
+        }),
+      };
     });
   }
 
@@ -327,7 +336,7 @@ export class EntitlementsService {
         if (!mod) {
           throw new ForgeError("NOT_FOUND", `Module ${item.code} not found on ${productCode}`);
         }
-        if (mod.isCore || mod.classification === "PLATFORM_CORE") {
+        if (mod.isCore) {
           continue;
         }
         this.assertModuleAssignable(productCode, mod, item.status);
@@ -547,20 +556,18 @@ export class EntitlementsService {
       code: string;
       name: string;
       isCore: boolean;
-      customerAssignable: boolean;
-      classification: string;
-      implementationStatus: string;
     },
     status: string,
   ) {
     if (status !== "ACTIVE") return;
-    if (mod.isCore || mod.classification === "PLATFORM_CORE") {
+    if (mod.isCore) {
       return;
     }
     const catalog = findCatalogModule(productCode, mod.code);
     const implementationStatus = (catalog?.implementationStatus ??
-      mod.implementationStatus) as CatalogImplementationStatus;
-    const customerAssignable = catalog?.customerAssignable ?? mod.customerAssignable;
+      "READY") as CatalogImplementationStatus;
+    const customerAssignable =
+      catalog?.customerAssignable ?? (!mod.isCore && productCode !== "FORGE_CREATOR");
     if (!customerAssignable) {
       throw new ForgeError(
         "CONFLICT",

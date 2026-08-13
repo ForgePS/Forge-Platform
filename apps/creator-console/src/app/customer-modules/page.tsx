@@ -221,9 +221,20 @@ function CustomerModulesInner() {
           code: m.code,
           status: (draft[m.code] ? "ACTIVE" : "SUSPENDED") as "ACTIVE" | "SUSPENDED",
         }));
-      await apiSend(`/api/v1/tenants/${tenantId}/products/${productCode}/modules`, "PUT", {
-        modules,
-      });
+      try {
+        await apiSend(`/api/v1/tenants/${tenantId}/products/${productCode}/modules`, "PUT", {
+          modules,
+        });
+      } catch (batchErr) {
+        // Fallback when batch endpoint is not yet deployed.
+        for (const item of modules) {
+          await apiSend(`/api/v1/tenants/${tenantId}/modules/${item.code}/entitlement`, "PUT", {
+            status: item.status,
+            productCode,
+          });
+        }
+        if (modules.length === 0) throw batchErr;
+      }
       toast.push("Module access saved", "success");
       setDirty(false);
       await load();

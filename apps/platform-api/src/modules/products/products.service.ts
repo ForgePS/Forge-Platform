@@ -23,7 +23,7 @@ export class ProductsService {
   async listProducts() {
     const rows = await this.db.query.platformProducts.findMany({
       where: eq(platformProducts.status, "ACTIVE"),
-      orderBy: (t, { asc }) => [asc(t.code)],
+      orderBy: (t, { asc: orderAsc }) => [orderAsc(t.code)],
     });
     return rows.map((row) => {
       const platform = findPlatformByProductCode(row.code);
@@ -73,6 +73,8 @@ export class ProductsService {
   }
 
   async listModules(productCode?: string) {
+    // Select only pre-S2 columns so production works before migration 0039.
+    // Catalog metadata is enriched from @forge/contracts.
     const rows = await this.db
       .select({
         id: platformModules.id,
@@ -81,11 +83,6 @@ export class ProductsService {
         description: platformModules.description,
         status: platformModules.status,
         isCore: platformModules.isCore,
-        category: platformModules.category,
-        classification: platformModules.classification,
-        implementationStatus: platformModules.implementationStatus,
-        customerAssignable: platformModules.customerAssignable,
-        displayOrder: platformModules.displayOrder,
         productId: platformModules.productId,
         productCode: platformProducts.code,
         productName: platformProducts.name,
@@ -96,17 +93,10 @@ export class ProductsService {
       .innerJoin(platformProducts, eq(platformProducts.id, platformModules.productId))
       .where(
         productCode
-          ? and(
-              eq(platformModules.status, "ACTIVE"),
-              eq(platformProducts.code, productCode),
-            )
+          ? and(eq(platformModules.status, "ACTIVE"), eq(platformProducts.code, productCode))
           : eq(platformModules.status, "ACTIVE"),
       )
-      .orderBy(
-        asc(platformProducts.code),
-        asc(platformModules.displayOrder),
-        asc(platformModules.name),
-      );
+      .orderBy(asc(platformProducts.code), asc(platformModules.code));
 
     const assignmentCounts = await this.db
       .select({
@@ -120,41 +110,47 @@ export class ProductsService {
       assignmentCounts.map((r) => [r.moduleId, Number(r.customers)]),
     );
 
-    return rows.map((row) => {
-      const catalog = findCatalogModule(row.productCode, row.code);
-      const platform = findPlatformByProductCode(row.productCode);
-      const implementationStatus =
-        catalog?.implementationStatus ?? row.implementationStatus ?? "READY";
-      return {
-        id: row.id,
-        code: row.code,
-        name: row.name,
-        description: row.description ?? catalog?.description ?? null,
-        status: row.status,
-        isCore: row.isCore,
-        category: catalog?.category ?? row.category ?? "General",
-        classification: catalog?.classification ?? row.classification ?? "CUSTOMER_MODULE",
-        implementationStatus,
-        availabilityLabel: catalogAvailabilityLabel(implementationStatus),
-        customerAssignable:
-          catalog?.customerAssignable ??
-          row.customerAssignable ??
-          (!row.isCore && row.productCode !== "FORGE_CREATOR"),
-        displayOrder: catalog?.displayOrder ?? row.displayOrder ?? 100,
-        productId: row.productId,
-        productCode: row.productCode,
-        productName: row.productName,
-        platformKey: platform?.key ?? null,
-        customerAssignmentCount: countByModule.get(row.id) ?? 0,
-        route: catalog?.route ?? null,
-      };
-    });
+    return rows
+      .map((row) => {
+        const catalog = findCatalogModule(row.productCode, row.code);
+        const platform = findPlatformByProductCode(row.productCode);
+        const implementationStatus = catalog?.implementationStatus ?? "READY";
+        return {
+          id: row.id,
+          code: row.code,
+          name: catalog?.name ?? row.name,
+          description: row.description ?? catalog?.description ?? null,
+          status: row.status,
+          isCore: row.isCore,
+          category: catalog?.category ?? (row.isCore ? "Platform" : "General"),
+          classification:
+            catalog?.classification ?? (row.isCore ? "PLATFORM_CORE" : "CUSTOMER_MODULE"),
+          implementationStatus,
+          availabilityLabel: catalogAvailabilityLabel(implementationStatus),
+          customerAssignable:
+            catalog?.customerAssignable ??
+            (!row.isCore && row.productCode !== "FORGE_CREATOR"),
+          displayOrder: catalog?.displayOrder ?? 100,
+          productId: row.productId,
+          productCode: row.productCode,
+          productName: row.productName,
+          platformKey: platform?.key ?? null,
+          customerAssignmentCount: countByModule.get(row.id) ?? 0,
+          route: catalog?.route ?? null,
+        };
+      })
+      .sort(
+        (a, b) =>
+          a.productCode.localeCompare(b.productCode) ||
+          a.displayOrder - b.displayOrder ||
+          a.name.localeCompare(b.name),
+      );
   }
 
   async listPlans() {
     return this.db.query.subscriptionPlans.findMany({
       where: eq(subscriptionPlans.status, "ACTIVE"),
-      orderBy: (t, { asc }) => [asc(t.code)],
+      orderBy: (t, { asc: orderAsc }) => [orderAsc(t.code)],
     });
   }
 }
