@@ -67,6 +67,12 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
         permission: "platform.entitlement.manage",
       },
       {
+        id: "industrial-modules",
+        label: "Industrial Modules",
+        route: "/industrial-modules",
+        permission: "platform.entitlement.manage",
+      },
+      {
         id: "plans",
         label: "Plans & Pricing",
         route: "/plans",

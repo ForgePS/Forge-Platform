@@ -1,6 +1,10 @@
 /**
  * Forge Industrial Safety product contracts.
- * Module registry drives Industrial shell navigation and bootstrap flags.
+ * Module registry drives Industrial shell navigation and Creator module management.
+ *
+ * implementationStatus = AWS readiness (not customer entitlement).
+ * Customer access is controlled by tenant module entitlements.
+ * Feature flags remain deployment overrides (Advanced).
  */
 
 export const INDUSTRIAL_PRODUCT_CODE = "FORGE_INDUSTRIAL" as const;
@@ -27,6 +31,21 @@ export const INDUSTRIAL_PERMISSIONS = [
 
 export type IndustrialPermission = (typeof INDUSTRIAL_PERMISSIONS)[number];
 
+/**
+ * Technical readiness of the AWS module implementation.
+ * Separate from customer entitlement and from historical data migration.
+ */
+export type IndustrialImplementationStatus =
+  | "AVAILABLE"
+  | "LEGACY_ONLY"
+  | "MIGRATING"
+  | "COMING_SOON"
+  | "DEPRECATED"
+  | "UNAVAILABLE";
+
+/**
+ * @deprecated Prefer implementationStatus. Kept for API/bootstrap compatibility.
+ */
 export type IndustrialMigrationStatus =
   | "FOUNDATION_ONLY"
   | "MIGRATION_IN_PROGRESS"
@@ -39,6 +58,12 @@ export type IndustrialModuleRegistryEntry = {
   name: string;
   group: string;
   route: string;
+  /** AWS technical readiness — gates whether Creator may enable the module. */
+  implementationStatus: IndustrialImplementationStatus;
+  /**
+   * Legacy field mirrored from implementationStatus for older clients.
+   * Do not use as the primary Creator/Industrial UX label.
+   */
   migrationStatus: IndustrialMigrationStatus;
 };
 
@@ -46,264 +71,68 @@ function slugRoute(code: string): string {
   return `/modules/${code.toLowerCase().replace(/_/g, "-")}`;
 }
 
+function entry(
+  code: string,
+  name: string,
+  group: string,
+  implementationStatus: IndustrialImplementationStatus,
+  route = slugRoute(code),
+): IndustrialModuleRegistryEntry {
+  const migrationStatus: IndustrialMigrationStatus =
+    implementationStatus === "AVAILABLE"
+      ? code === "CORE"
+        ? "FOUNDATION_ONLY"
+        : "LIVE"
+      : implementationStatus === "LEGACY_ONLY"
+        ? "LEGACY_FIREBASE"
+        : implementationStatus === "MIGRATING"
+          ? "MIGRATION_IN_PROGRESS"
+          : "DISABLED";
+  return { code, name, group, route, implementationStatus, migrationStatus };
+}
+
 /**
- * Navigation source of truth for industrial-web.
- * Group names mirror the Firebase Bridge / Producers Rice Mill sidebar.
- * CORE is foundation-only; IND-3 ops modules are MIGRATION_IN_PROGRESS until flagged LIVE later.
+ * Navigation + Creator source of truth for industrial-web.
+ * AVAILABLE = FE workspace + industrial API path exist and may be customer-enabled.
+ * LEGACY_ONLY = not ready in AWS (hide from normal users; block enable).
  */
 export const INDUSTRIAL_MODULE_REGISTRY: readonly IndustrialModuleRegistryEntry[] = [
-  {
-    code: "CORE",
-    name: "Industrial Core",
-    group: "Dashboard",
-    route: "/",
-    migrationStatus: "FOUNDATION_ONLY",
-  },
-  {
-    code: "ANALYTICS",
-    name: "Analytics",
-    group: "Dashboard",
-    route: slugRoute("ANALYTICS"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "PERSONNEL",
-    name: "Personnel",
-    group: "People & Training",
-    route: slugRoute("PERSONNEL"),
-    migrationStatus: "MIGRATION_IN_PROGRESS",
-  },
-  {
-    code: "TRAINING",
-    name: "Training",
-    group: "People & Training",
-    route: slugRoute("TRAINING"),
-    migrationStatus: "MIGRATION_IN_PROGRESS",
-  },
-  {
-    code: "JSAS",
-    name: "JSAs",
-    group: "People & Training",
-    route: slugRoute("JSAS"),
-    migrationStatus: "MIGRATION_IN_PROGRESS",
-  },
-  {
-    code: "INCIDENTS",
-    name: "Incidents",
-    group: "Incident & Claims",
-    route: slugRoute("INCIDENTS"),
-    migrationStatus: "MIGRATION_IN_PROGRESS",
-  },
-  {
-    code: "OSHA",
-    name: "OSHA Recordkeeping",
-    group: "Incident & Claims",
-    route: slugRoute("OSHA"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "WORKERS_COMP",
-    name: "Workers' Compensation",
-    group: "Incident & Claims",
-    route: slugRoute("WORKERS_COMP"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "INSPECTIONS",
-    name: "Inspections",
-    group: "Risk & Prevention",
-    route: slugRoute("INSPECTIONS"),
-    migrationStatus: "MIGRATION_IN_PROGRESS",
-  },
-  {
-    code: "FORMS",
-    name: "Forms",
-    group: "Risk & Prevention",
-    route: slugRoute("FORMS"),
-    migrationStatus: "MIGRATION_IN_PROGRESS",
-  },
-  {
-    code: "OBSERVATIONS",
-    name: "Observations",
-    group: "Risk & Prevention",
-    route: slugRoute("OBSERVATIONS"),
-    migrationStatus: "MIGRATION_IN_PROGRESS",
-  },
-  {
-    code: "RISK",
-    name: "Risk Register",
-    group: "Risk & Prevention",
-    route: slugRoute("RISK"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "SCAN",
-    name: "Scan",
-    group: "Risk & Prevention",
-    route: slugRoute("SCAN"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "DOT_COMPLIANCE",
-    name: "DOT Compliance",
-    group: "Compliance Programs",
-    route: slugRoute("DOT_COMPLIANCE"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "CONTRACTOR_SAFETY",
-    name: "Contractor Safety",
-    group: "Compliance Programs",
-    route: slugRoute("CONTRACTOR_SAFETY"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "PROCESS_SAFETY",
-    name: "Process Safety",
-    group: "Compliance Programs",
-    route: slugRoute("PROCESS_SAFETY"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "ENVIRONMENTAL_SAFETY",
-    name: "Environmental Safety",
-    group: "Compliance Programs",
-    route: slugRoute("ENVIRONMENTAL_SAFETY"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "EQUIPMENT",
-    name: "Assets & Equipment",
-    group: "Equipment & Operations",
-    route: slugRoute("EQUIPMENT"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "FORKLIFTS",
-    name: "Forklifts",
-    group: "Equipment & Operations",
-    route: slugRoute("FORKLIFTS"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "CRANES_RIGGING",
-    name: "Cranes & Rigging",
-    group: "Equipment & Operations",
-    route: slugRoute("CRANES_RIGGING"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "MACHINE_SAFETY",
-    name: "Machine Safety",
-    group: "Equipment & Operations",
-    route: slugRoute("MACHINE_SAFETY"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "ELECTRICAL_SAFETY",
-    name: "Electrical Safety",
-    group: "Equipment & Operations",
-    route: slugRoute("ELECTRICAL_SAFETY"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "LOCKOUT_TAGOUT",
-    name: "Lockout/Tagout",
-    group: "High-Risk Work",
-    route: slugRoute("LOCKOUT_TAGOUT"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "CONFINED_SPACE",
-    name: "Confined Space",
-    group: "High-Risk Work",
-    route: slugRoute("CONFINED_SPACE"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "HOT_WORK",
-    name: "Hot Work",
-    group: "High-Risk Work",
-    route: slugRoute("HOT_WORK"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "WORKING_AT_HEIGHTS",
-    name: "Working at Heights",
-    group: "High-Risk Work",
-    route: slugRoute("WORKING_AT_HEIGHTS"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "CHEMICAL_SAFETY",
-    name: "Chemical Safety",
-    group: "Facility & Operations Safety",
-    route: slugRoute("CHEMICAL_SAFETY"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "WAREHOUSE_SAFETY",
-    name: "Warehouse Safety",
-    group: "Facility & Operations Safety",
-    route: slugRoute("WAREHOUSE_SAFETY"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "MANUFACTURING_SAFETY",
-    name: "Manufacturing Safety",
-    group: "Facility & Operations Safety",
-    route: slugRoute("MANUFACTURING_SAFETY"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "EMERGENCY_RESPONSE",
-    name: "Emergency Response",
-    group: "Emergency Management",
-    route: slugRoute("EMERGENCY_RESPONSE"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "TASKS",
-    name: "Tasks",
-    group: "System Tools",
-    route: slugRoute("TASKS"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "MESSAGING",
-    name: "Messaging",
-    group: "System Tools",
-    route: slugRoute("MESSAGING"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "DOCUMENTS",
-    name: "Document Control",
-    group: "System Tools",
-    route: slugRoute("DOCUMENTS"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "QR_LINKS",
-    name: "QR Links",
-    group: "System Tools",
-    route: slugRoute("QR_LINKS"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "REPORTING",
-    name: "Reporting",
-    group: "System Tools",
-    route: slugRoute("REPORTING"),
-    migrationStatus: "LEGACY_FIREBASE",
-  },
-  {
-    code: "IMPORT",
-    name: "Import Center",
-    group: "System Tools",
-    route: slugRoute("IMPORT"),
-    migrationStatus: "MIGRATION_IN_PROGRESS",
-  },
+  entry("CORE", "Industrial Core", "Dashboard", "AVAILABLE", "/"),
+  entry("ANALYTICS", "Analytics", "Dashboard", "LEGACY_ONLY"),
+  entry("PERSONNEL", "Personnel", "People & Training", "AVAILABLE"),
+  entry("TRAINING", "Training", "People & Training", "AVAILABLE"),
+  entry("JSAS", "JSAs", "People & Training", "AVAILABLE"),
+  entry("INCIDENTS", "Incidents", "Incident & Claims", "AVAILABLE"),
+  entry("OSHA", "OSHA Recordkeeping", "Incident & Claims", "AVAILABLE"),
+  entry("WORKERS_COMP", "Workers' Compensation", "Incident & Claims", "AVAILABLE"),
+  entry("INSPECTIONS", "Inspections", "Risk & Prevention", "AVAILABLE"),
+  entry("FORMS", "Forms", "Risk & Prevention", "AVAILABLE"),
+  entry("OBSERVATIONS", "Observations", "Risk & Prevention", "AVAILABLE"),
+  entry("RISK", "Risk Register", "Risk & Prevention", "AVAILABLE"),
+  entry("SCAN", "Scan", "Risk & Prevention", "LEGACY_ONLY"),
+  entry("DOT_COMPLIANCE", "DOT Compliance", "Compliance Programs", "AVAILABLE"),
+  entry("CONTRACTOR_SAFETY", "Contractor Safety", "Compliance Programs", "AVAILABLE"),
+  entry("PROCESS_SAFETY", "Process Safety", "Compliance Programs", "AVAILABLE"),
+  entry("ENVIRONMENTAL_SAFETY", "Environmental Safety", "Compliance Programs", "AVAILABLE"),
+  entry("EQUIPMENT", "Assets & Equipment", "Equipment & Operations", "AVAILABLE"),
+  entry("FORKLIFTS", "Forklifts", "Equipment & Operations", "AVAILABLE"),
+  entry("CRANES_RIGGING", "Cranes & Rigging", "Equipment & Operations", "AVAILABLE"),
+  entry("MACHINE_SAFETY", "Machine Safety", "Equipment & Operations", "AVAILABLE"),
+  entry("ELECTRICAL_SAFETY", "Electrical Safety", "Equipment & Operations", "AVAILABLE"),
+  entry("LOCKOUT_TAGOUT", "Lockout/Tagout", "High-Risk Work", "AVAILABLE"),
+  entry("CONFINED_SPACE", "Confined Space", "High-Risk Work", "AVAILABLE"),
+  entry("HOT_WORK", "Hot Work", "High-Risk Work", "AVAILABLE"),
+  entry("WORKING_AT_HEIGHTS", "Working at Heights", "High-Risk Work", "AVAILABLE"),
+  entry("CHEMICAL_SAFETY", "Chemical Safety", "Facility & Operations Safety", "AVAILABLE"),
+  entry("WAREHOUSE_SAFETY", "Warehouse Safety", "Facility & Operations Safety", "AVAILABLE"),
+  entry("MANUFACTURING_SAFETY", "Manufacturing Safety", "Facility & Operations Safety", "AVAILABLE"),
+  entry("EMERGENCY_RESPONSE", "Emergency Response", "Emergency Management", "AVAILABLE"),
+  entry("TASKS", "Tasks", "System Tools", "AVAILABLE"),
+  entry("MESSAGING", "Messaging", "System Tools", "AVAILABLE"),
+  entry("DOCUMENTS", "Document Control", "System Tools", "AVAILABLE"),
+  entry("QR_LINKS", "QR Links", "System Tools", "AVAILABLE"),
+  entry("REPORTING", "Reporting", "System Tools", "AVAILABLE"),
+  entry("IMPORT", "Import Center", "System Tools", "AVAILABLE"),
 ] as const;
 
 /** Feature-flag keys used by industrial-web navigation + Nest bootstrap. */
@@ -344,3 +173,42 @@ export const INDUSTRIAL_FEATURE_FLAGS = [
   "industrial.module.messaging.enabled",
   "industrial.module.emergency_response.enabled",
 ] as const;
+
+/** User-facing availability label (Creator + Industrial). Never show raw constants. */
+export function industrialAvailabilityLabel(
+  status: IndustrialImplementationStatus | IndustrialMigrationStatus | string,
+): string {
+  switch (status) {
+    case "AVAILABLE":
+    case "LIVE":
+    case "FOUNDATION_ONLY":
+      return "Ready";
+    case "LEGACY_ONLY":
+    case "LEGACY_FIREBASE":
+      return "Existing system only";
+    case "MIGRATING":
+    case "MIGRATION_IN_PROGRESS":
+      return "Migration in progress";
+    case "COMING_SOON":
+      return "Coming soon";
+    case "DEPRECATED":
+      return "Deprecated";
+    case "DISABLED":
+    case "UNAVAILABLE":
+      return "Not available";
+    default:
+      return "Not available";
+  }
+}
+
+export function industrialModuleIsToggleable(
+  entry: Pick<IndustrialModuleRegistryEntry, "implementationStatus" | "code">,
+): boolean {
+  return entry.code !== "CORE" && entry.implementationStatus === "AVAILABLE";
+}
+
+export function industrialModulesByImplementation(
+  status: IndustrialImplementationStatus,
+): IndustrialModuleRegistryEntry[] {
+  return INDUSTRIAL_MODULE_REGISTRY.filter((m) => m.implementationStatus === status);
+}

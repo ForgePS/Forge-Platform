@@ -396,6 +396,8 @@ function ShellBody({ children }: { children: ReactNode }) {
           entitled: true,
           permissions,
           flags,
+          enabledModules: me?.activeModules ?? [],
+          strictEntitlements: true,
         }),
         {
           code: "SETTINGS",
@@ -403,7 +405,9 @@ function ShellBody({ children }: { children: ReactNode }) {
           group: "System Tools",
           route: "/settings/",
           migrationStatus: "LIVE",
+          implementationStatus: "AVAILABLE" as const,
           awsEnabled: true,
+          customerEnabled: true,
           available: true,
           requiredPermissions: ["industrial.access"],
         },
@@ -679,10 +683,6 @@ function ShellBody({ children }: { children: ReactNode }) {
                     <ul className="menu-sub">
                       {items.map((item) => {
                           const active = routeIsActive(pathname, item.route);
-                          const label =
-                            item.migrationStatus === "LEGACY_FIREBASE"
-                              ? `${item.name} (migration pending)`
-                              : item.name;
                           return (
                             <li key={item.code} className={active ? "menu-item active" : "menu-item"}>
                               <Link
@@ -692,7 +692,7 @@ function ShellBody({ children }: { children: ReactNode }) {
                                 onClick={() => setMenuOpen(false)}
                               >
                                 <i className={`menu-icon tf-icons bx ${iconForModule(item.code, item.group)}`} />
-                                <div>{label}</div>
+                                <div>{item.name}</div>
                               </Link>
                             </li>
                           );

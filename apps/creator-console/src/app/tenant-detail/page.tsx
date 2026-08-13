@@ -251,13 +251,21 @@ function TenantDetailInner() {
         title={tenant?.displayName ?? "Customer detail"}
         subtitle={
           tenant
-            ? `${tenant.tenantKey} · ${tenant.id}`
-            : "Customer / tenant detail from live platform APIs."
+            ? `Status ${tenant.status}`
+            : "Customer detail from live platform APIs."
         }
         actions={
-          <Link className="forge-btn forge-btn--outline" href="/customers/">
-            All customers
-          </Link>
+          <>
+            <Link
+              className="forge-btn"
+              href={`/industrial-modules/?tenantId=${encodeURIComponent(tenantId)}`}
+            >
+              Manage Modules
+            </Link>
+            <Link className="forge-btn forge-btn--outline" href="/customers/">
+              All customers
+            </Link>
+          </>
         }
       />
 
@@ -541,19 +549,25 @@ function TenantDetailInner() {
           {tab === "modules" ? (
           <div className={styles.panel} id="modules">
             <h2>Modules</h2>
+            <p className={styles.muted}>
+              Manage Forge Industrial Safety module access with Ready / On / Off controls. Migration
+              constants stay in technical details.
+            </p>
             {(entitlements?.modules?.length ?? 0) === 0 ? (
-              <p className={styles.muted}>No module entitlements.</p>
+              <p className={styles.muted}>No module entitlements assigned yet.</p>
             ) : (
               <ul>
                 {entitlements!.modules.map((row) => (
                   <li key={row.moduleCode}>
-                    <span className={styles.mono}>{row.moduleCode}</span> · {row.moduleName} ·{" "}
-                    {row.status}
+                    {row.moduleName} · {row.status === "ACTIVE" ? "On" : "Off"}
                   </li>
                 ))}
               </ul>
             )}
             <nav className={styles.linkRow}>
+              <Link className="forge-btn" href={`/industrial-modules/?tenantId=${encodeURIComponent(tenantId)}`}>
+                Manage Modules
+              </Link>
               <Link href="/modules">Module catalog</Link>
             </nav>
           </div>

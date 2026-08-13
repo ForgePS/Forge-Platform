@@ -139,6 +139,9 @@ importers:
 
   apps/creator-console:
     dependencies:
+      '@forge/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@forge/design-system':
         specifier: workspace:*
         version: link:../../packages/design-system

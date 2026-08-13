@@ -1,12 +1,19 @@
-import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
+import {
+  INDUSTRIAL_MODULE_REGISTRY,
+  industrialAvailabilityLabel,
+  type IndustrialImplementationStatus,
+} from "@forge/contracts";
 
 export type IndustrialNavItem = {
   code: string;
   name: string;
   group: string;
   route: string;
+  /** @deprecated Prefer implementationStatus for UX. */
   migrationStatus: string;
+  implementationStatus: IndustrialImplementationStatus;
   awsEnabled: boolean;
+  customerEnabled: boolean;
   available: boolean;
   requiredPermissions: string[];
 };
@@ -54,53 +61,106 @@ export function featureFlagForModule(code: string): string {
   return FLAG_BY_CODE[code] ?? `industrial.module.${code.toLowerCase()}.enabled`;
 }
 
+function asSet(value?: ReadonlySet<string> | readonly string[] | null): Set<string> {
+  if (!value) return new Set();
+  return value instanceof Set ? new Set(value) : new Set(value);
+}
+
+/**
+ * Resolve whether a deployment feature flag blocks an AVAILABLE module.
+ * Missing flag keys default ON for AVAILABLE modules so Creator entitlements
+ * are the commercial control plane (flags stay Advanced overrides).
+ */
+function deploymentAllows(
+  implementationStatus: IndustrialImplementationStatus,
+  flagKey: string,
+  flags: Record<string, boolean>,
+): boolean {
+  if (implementationStatus !== "AVAILABLE") {
+    return Boolean(flags[flagKey]);
+  }
+  if (Object.prototype.hasOwnProperty.call(flags, flagKey)) {
+    return Boolean(flags[flagKey]);
+  }
+  return true;
+}
+
 export function buildIndustrialNavigation(input: {
   entitled: boolean;
   permissions: ReadonlySet<string> | string[];
   flags: Record<string, boolean>;
+  /** Customer module entitlements / me.activeModules. CORE follows product entitlement. */
+  enabledModules?: ReadonlySet<string> | readonly string[] | null;
+  /**
+   * When true, an empty enabledModules set means only CORE is customer-enabled
+   * (Creator entitlements are authoritative). When false, empty falls back to
+   * deployment flags for backward-compatible bootstrap-only shells.
+   */
+  strictEntitlements?: boolean;
+  /** When true (platform admin diagnostic), keep non-available modules in the returned list. */
+  includeUnavailable?: boolean;
 }): IndustrialNavItem[] {
   if (!input.entitled) {
     return [];
   }
-  const perms = input.permissions instanceof Set ? input.permissions : new Set(input.permissions);
+  const perms = asSet(input.permissions);
   if (!perms.has("industrial.access")) {
     return [];
   }
+  const enabledModules = asSet(input.enabledModules);
+  const strict = Boolean(input.strictEntitlements);
 
-  return INDUSTRIAL_MODULE_REGISTRY.map((entry) => {
+  const items = INDUSTRIAL_MODULE_REGISTRY.map((entry) => {
     const flagKey = featureFlagForModule(entry.code);
-    const awsEnabled =
-      entry.code === "CORE"
-        ? Boolean(input.flags["industrial.enabled"])
-        : Boolean(input.flags[flagKey]);
-
-    const requiredPermissions =
-      entry.code === "CORE"
-        ? ["industrial.access"]
-        : ["industrial.access"];
-
+    const requiredPermissions = ["industrial.access"];
     const hasPerms = requiredPermissions.every((p) => perms.has(p));
-    const migrationStatus: string = entry.migrationStatus;
+    const implementationStatus = entry.implementationStatus;
+    const deploymentOk = deploymentAllows(implementationStatus, flagKey, input.flags);
+    const customerEnabled =
+      entry.code === "CORE"
+        ? true
+        : strict || enabledModules.size > 0
+          ? enabledModules.has(entry.code)
+          : deploymentOk;
+
+    const awsEnabled = deploymentOk;
     const available =
       hasPerms &&
-      (migrationStatus === "FOUNDATION_ONLY" ||
-        (awsEnabled &&
-          migrationStatus !== "LEGACY_FIREBASE" &&
-          migrationStatus !== "DISABLED"));
+      implementationStatus === "AVAILABLE" &&
+      customerEnabled &&
+      deploymentOk;
 
     return {
       code: entry.code,
       name: entry.name,
       group: entry.group,
       route: entry.route,
-      migrationStatus,
+      migrationStatus: entry.migrationStatus,
+      implementationStatus,
       awsEnabled,
+      customerEnabled,
       available,
       requiredPermissions,
     };
   });
+
+  if (input.includeUnavailable) {
+    return items;
+  }
+  return items.filter((item) => item.available);
 }
 
 export function moduleUnavailableMessage(moduleName: string): string {
-  return `This module (${moduleName}) remains on the current Forge Industrial system while its AWS migration is in progress.`;
+  return `${moduleName} is not available in Forge AWS for this customer yet.`;
+}
+
+export function moduleAvailabilityCaption(
+  item: Pick<IndustrialNavItem, "implementationStatus" | "customerEnabled" | "available">,
+): string {
+  if (item.available) return "Ready";
+  if (item.implementationStatus !== "AVAILABLE") {
+    return industrialAvailabilityLabel(item.implementationStatus);
+  }
+  if (!item.customerEnabled) return "Not enabled";
+  return "Unavailable";
 }

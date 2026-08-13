@@ -636,8 +636,12 @@ export {
   INDUSTRIAL_PERMISSIONS,
   INDUSTRIAL_MODULE_REGISTRY,
   INDUSTRIAL_FEATURE_FLAGS,
+  industrialAvailabilityLabel,
+  industrialModuleIsToggleable,
+  industrialModulesByImplementation,
   type IndustrialPermission,
   type IndustrialMigrationStatus,
+  type IndustrialImplementationStatus,
   type IndustrialModuleRegistryEntry,
 } from "./industrial.js";
 

@@ -15,28 +15,45 @@ describe("industrial navigation foundation", () => {
     expect(nav).toEqual([]);
   });
 
-  it("keeps IND-3 modules unavailable when flags are off", () => {
+  it("hides AVAILABLE modules when strict entitlements and none enabled", () => {
     const nav = buildIndustrialNavigation({
       entitled: true,
       permissions: ["industrial.access"],
       flags: {},
+      enabledModules: [],
+      strictEntitlements: true,
+      includeUnavailable: true,
     });
     const personnel = nav.find((n) => n.code === "PERSONNEL");
     expect(personnel?.available).toBe(false);
-    expect(personnel?.migrationStatus).toBe("MIGRATION_IN_PROGRESS");
+    expect(personnel?.implementationStatus).toBe("AVAILABLE");
+    expect(personnel?.customerEnabled).toBe(false);
   });
 
-  it("enables IND-3 module when flag on and access granted", () => {
+  it("enables IND-3 module when entitled and access granted", () => {
     const nav = buildIndustrialNavigation({
       entitled: true,
       permissions: ["industrial.access"],
-      flags: {
-        "industrial.enabled": true,
-        "industrial.module.personnel.enabled": true,
-      },
+      flags: {},
+      enabledModules: ["PERSONNEL"],
+      strictEntitlements: true,
     });
     const personnel = nav.find((n) => n.code === "PERSONNEL");
     expect(personnel?.available).toBe(true);
+  });
+
+  it("blocks LEGACY_ONLY modules even when listed in entitlements", () => {
+    const nav = buildIndustrialNavigation({
+      entitled: true,
+      permissions: ["industrial.access"],
+      flags: { "industrial.module.analytics.enabled": true },
+      enabledModules: ["ANALYTICS"],
+      strictEntitlements: true,
+      includeUnavailable: true,
+    });
+    const analytics = nav.find((n) => n.code === "ANALYTICS");
+    expect(analytics?.implementationStatus).toBe("LEGACY_ONLY");
+    expect(analytics?.available).toBe(false);
   });
 
   it("does not treat feature flags as authorization bypass", () => {
@@ -44,19 +61,36 @@ describe("industrial navigation foundation", () => {
       entitled: true,
       permissions: [],
       flags: { "industrial.enabled": true, "industrial.module.personnel.enabled": true },
+      enabledModules: ["PERSONNEL"],
+      strictEntitlements: true,
     });
     expect(nav).toEqual([]);
   });
 
-  it("marks CORE as foundation-only available with industrial.access", () => {
+  it("marks CORE available with industrial.access when product entitled", () => {
     const nav = buildIndustrialNavigation({
       entitled: true,
       permissions: ["industrial.access"],
       flags: {},
+      enabledModules: [],
+      strictEntitlements: true,
+      includeUnavailable: true,
     });
     const core = nav.find((n) => n.code === "CORE");
     expect(core?.available).toBe(true);
-    expect(core?.migrationStatus).toBe("FOUNDATION_ONLY");
+    expect(core?.implementationStatus).toBe("AVAILABLE");
+  });
+
+  it("honors explicit feature-flag OFF for AVAILABLE modules", () => {
+    const nav = buildIndustrialNavigation({
+      entitled: true,
+      permissions: ["industrial.access"],
+      flags: { "industrial.module.personnel.enabled": false },
+      enabledModules: ["PERSONNEL"],
+      strictEntitlements: true,
+      includeUnavailable: true,
+    });
+    expect(nav.find((n) => n.code === "PERSONNEL")?.available).toBe(false);
   });
 
   it("maps JSAS to industrial.module.jsa.enabled", () => {
@@ -68,12 +102,13 @@ describe("industrial navigation foundation", () => {
       entitled: true,
       permissions: ["industrial.access"],
       flags: {},
+      includeUnavailable: true,
     });
     expect(nav.some((n) => n.code === "SCAN")).toBe(true);
     expect(nav.some((n) => n.code === "QR_LINKS")).toBe(true);
   });
 
   it("uses explicit unavailable messaging", () => {
-    expect(moduleUnavailableMessage("Personnel")).toContain("AWS migration is in progress");
+    expect(moduleUnavailableMessage("Personnel")).toContain("not available in Forge AWS");
   });
 });
