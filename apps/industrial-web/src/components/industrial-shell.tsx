@@ -654,7 +654,8 @@ function ShellBody({ children }: { children: ReactNode }) {
             {groups
               .filter((group) => group !== "Dashboard")
               .map((group) => {
-              const items = nav.filter((item) => item.group === group);
+              const items = nav.filter((item) => item.group === group && item.available);
+              if (items.length === 0) return null;
               const groupOpen = openGroups[group] === true;
               const groupHasActive = items.some((item) => routeIsActive(pathname, item.route));
               return (
@@ -677,27 +678,25 @@ function ShellBody({ children }: { children: ReactNode }) {
                   {groupOpen ? (
                     <ul className="menu-sub">
                       {items.map((item) => {
-                        const active = routeIsActive(pathname, item.route);
-                        const label =
-                          item.migrationStatus === "LEGACY_FIREBASE"
-                            ? `${item.name} (migration pending)`
-                            : item.migrationStatus === "MIGRATION_IN_PROGRESS" && !item.available
-                              ? `${item.name} (flag off)`
+                          const active = routeIsActive(pathname, item.route);
+                          const label =
+                            item.migrationStatus === "LEGACY_FIREBASE"
+                              ? `${item.name} (migration pending)`
                               : item.name;
-                        return (
-                          <li key={item.code} className={active ? "menu-item active" : "menu-item"}>
-                            <Link
-                              href={item.route}
-                              className="menu-link"
-                              aria-current={active ? "page" : undefined}
-                              onClick={() => setMenuOpen(false)}
-                            >
-                              <i className={`menu-icon tf-icons bx ${iconForModule(item.code, item.group)}`} />
-                              <div>{label}</div>
-                            </Link>
-                          </li>
-                        );
-                      })}
+                          return (
+                            <li key={item.code} className={active ? "menu-item active" : "menu-item"}>
+                              <Link
+                                href={item.route}
+                                className="menu-link"
+                                aria-current={active ? "page" : undefined}
+                                onClick={() => setMenuOpen(false)}
+                              >
+                                <i className={`menu-icon tf-icons bx ${iconForModule(item.code, item.group)}`} />
+                                <div>{label}</div>
+                              </Link>
+                            </li>
+                          );
+                        })}
                     </ul>
                   ) : null}
                 </li>

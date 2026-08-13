@@ -9,6 +9,7 @@ import {
   ForgeAppShell,
   ForgeBreadcrumbs,
   ForgeFacilitySelector,
+  ForgePage,
   ForgeProductSwitcher,
   ForgeShellState,
   ForgeTenantSwitcher,
@@ -205,7 +206,7 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
             <ForgeBreadcrumbs items={crumbs} renderLink={renderLink} />
           </div>
         ) : null}
-        {children}
+        <ForgePage>{children}</ForgePage>
       </ForgeAppShell>
     </ToastProvider>
   );

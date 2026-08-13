@@ -51,6 +51,7 @@ export { ForgeSidebar } from "./shell/ForgeSidebar.js";
 export { ForgeTopbar } from "./shell/ForgeTopbar.js";
 export { ForgeBreadcrumbs } from "./shell/ForgeBreadcrumbs.js";
 export { ForgePageHeader, ForgePageActions } from "./shell/ForgePageHeader.js";
+export { ForgePage, ForgePageBody, ForgePagePanel } from "./shell/ForgePage.js";
 export {
   ForgeFacilitySelector,
   ForgeHelpMenu,
@@ -92,6 +93,12 @@ export { ForgeSidebar as Sidebar } from "./shell/ForgeSidebar.js";
 export { ForgeTopbar as Topbar } from "./shell/ForgeTopbar.js";
 export { ForgeBreadcrumbs as Breadcrumbs } from "./shell/ForgeBreadcrumbs.js";
 export { ForgePageHeader as PageHeader, ForgePageActions as PageActions } from "./shell/ForgePageHeader.js";
+export {
+  ForgePage as Page,
+  ForgePageBody as PageBody,
+  ForgePagePanel as PagePanel,
+  ForgePage as PageContainer,
+} from "./shell/ForgePage.js";
 export { ForgeDataTable as DataTable } from "./table/ForgeDataTable.js";
 export { ForgeStepper as Stepper } from "./dashboard/ForgeDashboard.js";
 export { ForgeSkeleton as Skeleton } from "./primitives.js";

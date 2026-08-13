@@ -4,7 +4,10 @@ import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
+  Alert,
+  Button,
   Card,
+  Checkbox,
   ComingLater,
   ConfirmationDialog,
   ErrorState,
@@ -12,8 +15,11 @@ import {
   ForgeBreadcrumbs,
   ForgeMetricCard,
   ForgeMetricGrid,
+  ForgePageBody,
   ForgePageHeader,
+  ForgePagePanel,
   ForgeStepper,
+  FormField,
   LoadingIndicator,
   StatusBadge,
   useToast,
@@ -57,6 +63,10 @@ function stageIndex(status: MigrationUiStatus): number {
   }
 }
 
+function normalizeConfirm(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toUpperCase();
+}
+
 function MigrationDetailInner() {
   const params = useSearchParams();
   const id = params.get("id") ?? "";
@@ -74,8 +84,7 @@ function MigrationDetailInner() {
   });
 
   const canCutover =
-    Boolean(me?.isPlatformAdmin) ||
-    hasPermission("platform.tenant.read");
+    Boolean(me?.isPlatformAdmin) || hasPermission("platform.tenant.read");
 
   useEffect(() => {
     let cancelled = false;
@@ -98,6 +107,10 @@ function MigrationDetailInner() {
   }, [id]);
 
   const activeIndex = useMemo(() => (detail ? stageIndex(detail.status) : 0), [detail]);
+  const expectedConfirm = useMemo(
+    () => (detail ? normalizeConfirm(detail.tenantDisplayName) : ""),
+    [detail],
+  );
 
   if (loading) return <LoadingIndicator label="Loading migration…" />;
   if (missing || !detail) {
@@ -109,15 +122,16 @@ function MigrationDetailInner() {
     );
   }
 
+  const confirmMatches = normalizeConfirm(confirmPhrase) === expectedConfirm;
   const gateReady =
     checklist.validation &&
     checklist.reconciliation &&
     checklist.permissionAck &&
-    confirmPhrase.trim().toUpperCase() === "CUTOVER" &&
+    confirmMatches &&
     canCutover;
 
   return (
-    <div>
+    <>
       <ForgePageHeader
         breadcrumbs={
           <ForgeBreadcrumbs
@@ -130,142 +144,176 @@ function MigrationDetailInner() {
         }
         title={detail.tenantDisplayName}
         subtitle={`${detail.migrationType} · ${detail.source} → ${detail.destination}`}
-        actions={<StatusBadge tone={detail.status === "FAILED" ? "danger" : "info"}>{detail.status}</StatusBadge>}
+        actions={
+          <StatusBadge tone={detail.status === "FAILED" ? "danger" : "info"}>{detail.status}</StatusBadge>
+        }
       />
-      {detail.dataSource === "MOCK" ? (
-        <FixtureBanner>Fixture migration detail — adapter boundary only; no migration engine calls.</FixtureBanner>
-      ) : null}
 
-      <ForgeStepper steps={STAGES} activeIndex={activeIndex} />
+      <ForgePageBody>
+        {detail.dataSource === "MOCK" ? (
+          <FixtureBanner>
+            Fixture migration detail — adapter boundary only; no migration engine calls.
+          </FixtureBanner>
+        ) : null}
 
-      <ForgeMetricGrid>
-        <ForgeMetricCard
-          label="Progress"
-          value={detail.progressPercent == null ? null : `${detail.progressPercent}%`}
-        />
-        <ForgeMetricCard label="Issues" value={detail.issueCount} />
-        <ForgeMetricCard label="Users migrated" value={detail.users.migrated} />
-        <ForgeMetricCard label="Users pending" value={detail.users.pending} />
-      </ForgeMetricGrid>
+        <ForgeStepper steps={STAGES} activeIndex={activeIndex} />
 
-      <div style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))" }}>
-        <Card title="Reconciliation">
-          <table>
-            <thead>
-              <tr>
-                <th>Collection</th>
-                <th>Status</th>
-                <th>Records</th>
-              </tr>
-            </thead>
-            <tbody>
-              {detail.collections.map((c) => (
-                <tr key={c.name}>
-                  <td>{c.name}</td>
-                  <td>
-                    <StatusBadge>{c.status}</StatusBadge>
-                  </td>
-                  <td>{c.recordCount ?? "Not available"}</td>
+        <ForgeMetricGrid>
+          <ForgeMetricCard
+            label="Progress"
+            value={detail.progressPercent == null ? null : `${detail.progressPercent}%`}
+          />
+          <ForgeMetricCard label="Issues" value={detail.issueCount} />
+          <ForgeMetricCard label="Users migrated" value={detail.users.migrated} />
+          <ForgeMetricCard label="Users pending" value={detail.users.pending} />
+        </ForgeMetricGrid>
+
+        <div
+          style={{
+            display: "grid",
+            gap: "1rem",
+            gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
+          }}
+        >
+          <Card title="Reconciliation">
+            <table>
+              <thead>
+                <tr>
+                  <th>Collection</th>
+                  <th>Status</th>
+                  <th>Records</th>
                 </tr>
+              </thead>
+              <tbody>
+                {detail.collections.map((c) => (
+                  <tr key={c.name}>
+                    <td>{c.name}</td>
+                    <td>
+                      <StatusBadge>{c.status}</StatusBadge>
+                    </td>
+                    <td>{c.recordCount ?? "Not available"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+          <Card title="Actionable errors">
+            {detail.exceptions.length === 0 ? <p>None</p> : null}
+            <ul>
+              {detail.exceptions.map((ex) => (
+                <li key={ex.id}>
+                  [{ex.severity}] {ex.message}
+                </li>
               ))}
-            </tbody>
-          </table>
-        </Card>
-        <Card title="Actionable errors">
-          {detail.exceptions.length === 0 ? <p>None</p> : null}
-          <ul>
-            {detail.exceptions.map((ex) => (
-              <li key={ex.id}>
-                [{ex.severity}] {ex.message}
-              </li>
-            ))}
-          </ul>
-        </Card>
-        <Card title="Documents / files">
-          <ul>
-            {detail.documents.map((d) => (
-              <li key={d.name}>
-                {d.name}: <StatusBadge>{d.status}</StatusBadge>
-              </li>
-            ))}
-          </ul>
-        </Card>
-        <Card title="DataSync">
-          <ComingLater>DataSync panel — Coming later (no API wired)</ComingLater>
-        </Card>
-      </div>
-
-      <Card title="Guarded cutover">
-        <p>
-          Cutover requires checklist completion, typed confirmation, and permission. There is no single-click cutover
-          and no live cutover API in this console yet.
-        </p>
-        <label style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
-          <input
-            type="checkbox"
-            checked={checklist.validation}
-            onChange={(e) => setChecklist((c) => ({ ...c, validation: e.target.checked }))}
-          />
-          Validation complete and reviewed
-        </label>
-        <label style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
-          <input
-            type="checkbox"
-            checked={checklist.reconciliation}
-            onChange={(e) => setChecklist((c) => ({ ...c, reconciliation: e.target.checked }))}
-          />
-          Reconciliation table accepted
-        </label>
-        <label style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
-          <input
-            type="checkbox"
-            checked={checklist.permissionAck}
-            onChange={(e) => setChecklist((c) => ({ ...c, permissionAck: e.target.checked }))}
-          />
-          I acknowledge DNS/customer cutover is out of band and not executed here
-        </label>
-        <label style={{ display: "grid", gap: "0.35rem", marginTop: "0.75rem", maxWidth: "24rem" }}>
-          <span>Type CUTOVER to enable the next confirmation</span>
-          <input className="forge-input" value={confirmPhrase} onChange={(e) => setConfirmPhrase(e.target.value)} />
-        </label>
-        <div style={{ marginTop: "1rem" }}>
-          <button
-            type="button"
-            className="forge-btn forge-btn--danger"
-            disabled={!gateReady}
-            onClick={() => setCutoverStep(1)}
-          >
-            Begin cutover confirmation
-          </button>
+            </ul>
+          </Card>
+          <Card title="Documents / files">
+            <ul>
+              {detail.documents.map((d) => (
+                <li key={d.name}>
+                  {d.name}: <StatusBadge>{d.status}</StatusBadge>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Card title="DataSync">
+            <ComingLater>DataSync panel — Coming later (no API wired)</ComingLater>
+          </Card>
         </div>
-      </Card>
 
-      <ConfirmationDialog
-        open={cutoverStep === 1}
-        title="Cutover step 1 of 2"
-        description="Confirm you reviewed validation and reconciliation. This still will not execute DNS or customer cutover."
-        confirmLabel="Continue"
-        danger
-        onCancel={() => setCutoverStep(0)}
-        onConfirm={() => setCutoverStep(2)}
-      />
-      <ConfirmationDialog
-        open={cutoverStep === 2}
-        title="Cutover step 2 of 2"
-        description="No cutover API is connected. Confirming only records that cutover was requested in the UI and will not change production traffic."
-        confirmLabel="Acknowledge (no cutover executed)"
-        danger
-        onCancel={() => setCutoverStep(0)}
-        onConfirm={() => {
-          setCutoverStep(0);
-          toast.push("Cutover not executed — no live cutover API connected", "warning");
-        }}
-      />
+        <ForgePagePanel>
+          <Card title="Final Cutover Approval">
+            <Alert tone="danger">
+              This action is intentionally protected. Customer traffic and DNS are not changed from this
+              screen unless an authorized cutover workflow exists.
+            </Alert>
 
-      <p style={{ marginTop: "1rem" }}>
-        <Link href="/migrations/">Back to Migration Center</Link>
-      </p>
-    </div>
+            <h3 style={{ margin: "1.25rem 0 0.75rem", fontSize: "1rem" }}>Pre-cutover requirements</h3>
+            <Checkbox
+              id="cutover-validation"
+              label="Validation complete and reviewed"
+              checked={checklist.validation}
+              onChange={(e) => setChecklist((c) => ({ ...c, validation: e.target.checked }))}
+            />
+            <Checkbox
+              id="cutover-reconciliation"
+              label="Reconciliation accepted"
+              checked={checklist.reconciliation}
+              onChange={(e) => setChecklist((c) => ({ ...c, reconciliation: e.target.checked }))}
+            />
+            <Checkbox
+              id="cutover-dns-ack"
+              label="I acknowledge DNS/customer cutover is handled separately"
+              description="This console does not execute DNS or live customer cutover."
+              checked={checklist.permissionAck}
+              onChange={(e) => setChecklist((c) => ({ ...c, permissionAck: e.target.checked }))}
+            />
+
+            <h3 style={{ margin: "1.25rem 0 0.5rem", fontSize: "1rem" }}>Typed confirmation</h3>
+            <FormField
+              label="Type the customer name exactly to enable approval"
+              htmlFor="cutover-confirm"
+              hint={`Type: ${detail.tenantDisplayName}`}
+              required
+            >
+              <input
+                id="cutover-confirm"
+                className="forge-input"
+                autoComplete="off"
+                spellCheck={false}
+                value={confirmPhrase}
+                onChange={(e) => setConfirmPhrase(e.target.value)}
+                aria-describedby="cutover-confirm-hint"
+                placeholder={detail.tenantDisplayName}
+              />
+            </FormField>
+            <p id="cutover-confirm-hint" className="forge-form-field__hint">
+              Required phrase: <strong>{detail.tenantDisplayName}</strong>
+            </p>
+
+            {!canCutover ? (
+              <Alert tone="info">You do not have permission to request cutover confirmation.</Alert>
+            ) : null}
+
+            <div style={{ marginTop: "1.25rem" }}>
+              <Button
+                variant="danger"
+                disabled={!gateReady}
+                onClick={() => setCutoverStep(1)}
+              >
+                Approve Final Migration
+              </Button>
+            </div>
+          </Card>
+        </ForgePagePanel>
+
+        <ConfirmationDialog
+          open={cutoverStep === 1}
+          title="Cutover step 1 of 2"
+          description="Confirm you reviewed validation and reconciliation. This still will not execute DNS or customer cutover."
+          confirmLabel="Continue"
+          danger
+          onCancel={() => setCutoverStep(0)}
+          onConfirm={() => setCutoverStep(2)}
+        />
+        <ConfirmationDialog
+          open={cutoverStep === 2}
+          title="Cutover step 2 of 2"
+          description="No cutover API is connected. Confirming only records that cutover was requested in the UI and will not change production traffic."
+          confirmLabel="Acknowledge (no cutover executed)"
+          danger
+          onCancel={() => setCutoverStep(0)}
+          onConfirm={() => {
+            setCutoverStep(0);
+            toast.push("Cutover not executed — no live cutover API connected", "warning");
+          }}
+        />
+
+        <p>
+          <Link href="/migrations/">Back to Migration Center</Link>
+        </p>
+      </ForgePageBody>
+    </>
   );
 }
 

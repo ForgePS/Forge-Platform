@@ -75,26 +75,47 @@ export function Textarea({
 
 export function Checkbox({
   label,
+  description,
   id,
+  className,
   ...props
-}: InputHTMLAttributes<HTMLInputElement> & { label: string; id: string }) {
+}: InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  description?: string;
+  id: string;
+}) {
   return (
-    <label htmlFor={id} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+    <label
+      htmlFor={id}
+      className={["forge-checkbox-row", className].filter(Boolean).join(" ")}
+    >
       <input id={id} type="checkbox" {...props} />
-      <span>{label}</span>
+      <span className="forge-checkbox-row__body">
+        <span className="forge-checkbox-row__label">{label}</span>
+        {description ? <span className="forge-checkbox-row__description">{description}</span> : null}
+      </span>
     </label>
   );
 }
 
 export function Radio({
   label,
+  description,
   id,
+  className,
   ...props
-}: InputHTMLAttributes<HTMLInputElement> & { label: string; id: string }) {
+}: InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  description?: string;
+  id: string;
+}) {
   return (
-    <label htmlFor={id} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+    <label htmlFor={id} className={["forge-radio-row", className].filter(Boolean).join(" ")}>
       <input id={id} type="radio" {...props} />
-      <span>{label}</span>
+      <span className="forge-radio-row__body">
+        <span className="forge-radio-row__label">{label}</span>
+        {description ? <span className="forge-radio-row__description">{description}</span> : null}
+      </span>
     </label>
   );
 }

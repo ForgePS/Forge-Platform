@@ -159,8 +159,10 @@ a:hover {
 .forge-sidebar {
   background: var(--forge-color-surface);
   border-right: 1px solid var(--forge-color-border);
-  padding: var(--forge-space-4) var(--forge-space-3);
+  padding: var(--forge-space-4) var(--forge-space-4);
   box-shadow: var(--forge-shadow-sm);
+  overflow-y: auto;
+  min-width: 0;
 }
 
 .forge-sidebar__brand {
@@ -191,11 +193,16 @@ a:hover {
   display: flex;
   align-items: center;
   gap: var(--forge-space-3);
-  padding: 0.625rem 1rem;
+  padding: 0.625rem 0.875rem;
   margin: 0.0625rem 0;
   border-radius: var(--forge-radius-md);
   color: var(--forge-color-text);
   min-height: var(--forge-touch-min);
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
 }
 
 .forge-nav-link:hover {
@@ -229,6 +236,37 @@ a:hover {
 
 .forge-content {
   padding: var(--forge-space-6);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.forge-page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--forge-space-6);
+}
+
+.forge-page__body {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--forge-space-6);
+}
+
+.forge-page__panel {
+  width: 100%;
+  max-width: 56rem; /* ~896px — constrained forms / dangerous actions */
+  min-width: 0;
+}
+
+.forge-page__panel--wide {
+  max-width: 64rem;
 }
 
 @media (max-width: 991.98px) {
@@ -316,11 +354,13 @@ button.forge-btn {
 .forge-input,
 .forge-select,
 .forge-textarea,
-label > input,
+label > input:not([type="checkbox"]):not([type="radio"]),
 label > select,
 label > textarea {
   display: block;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   margin-top: var(--forge-space-1);
   min-height: 2.5rem;
   padding: 0.5rem 0.875rem;
@@ -331,7 +371,7 @@ label > textarea {
   font: inherit;
 }
 
-label > input:focus,
+label > input:not([type="checkbox"]):not([type="radio"]):focus,
 label > select:focus,
 label > textarea:focus,
 .forge-input:focus,
@@ -348,6 +388,58 @@ label {
   color: var(--forge-color-heading);
   font-size: var(--forge-text-sm);
   font-weight: 500;
+}
+
+/* Accessible checkbox / radio rows — never stretch like text fields */
+.forge-checkbox-row,
+.forge-radio-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--forge-space-3);
+  margin-bottom: var(--forge-space-3);
+  max-width: 40rem;
+  cursor: pointer;
+  font-weight: 400;
+  color: var(--forge-color-text);
+}
+
+.forge-checkbox-row input[type="checkbox"],
+.forge-radio-row input[type="radio"] {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  min-height: 0;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  border: 1px solid var(--forge-color-border);
+  border-radius: var(--forge-radius-sm);
+  background: var(--forge-color-surface);
+  accent-color: var(--forge-color-primary);
+  box-shadow: none;
+}
+
+.forge-checkbox-row__body,
+.forge-radio-row__body {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.forge-checkbox-row__label,
+.forge-radio-row__label {
+  color: var(--forge-color-heading);
+  font-size: var(--forge-text-sm);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.forge-checkbox-row__description,
+.forge-radio-row__description {
+  margin: 0;
+  color: var(--forge-color-muted);
+  font-size: var(--forge-text-xs);
+  line-height: 1.4;
 }
 
 [role="alert"],

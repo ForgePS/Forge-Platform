@@ -1,11 +1,14 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import {
   Can,
+  Checkbox,
   ForgeCommandPalette,
   ForgeFacilitySelector,
+  ForgePage,
   ForgePageHeader,
+  ForgePagePanel,
   ForgeSearchTrigger,
   ForgeShellState,
   Input,
@@ -32,6 +35,40 @@ describe("ui accessibility", () => {
   it("renders page header title", () => {
     render(<ForgePageHeader title="Creator Console" subtitle="Ops" />);
     expect(screen.getByRole("heading", { name: "Creator Console" })).toBeTruthy();
+  });
+});
+
+describe("CREATOR-UX-REPAIR checkbox row", () => {
+  it("associates label click with checkbox and keeps adjacent structure", () => {
+    const onChange = vi.fn();
+    render(
+      <Checkbox
+        id="cutover-validation"
+        label="Validation complete and reviewed"
+        description="Required before cutover"
+        onChange={onChange}
+      />,
+    );
+    const checkbox = screen.getByRole("checkbox", {
+      name: /Validation complete and reviewed/,
+    }) as HTMLInputElement;
+    expect(checkbox.id).toBe("cutover-validation");
+    expect(checkbox.closest("label")?.className).toContain("forge-checkbox-row");
+    expect(screen.queryByText(/\(flag off\)/i)).toBeNull();
+    fireEvent.click(screen.getByText("Validation complete and reviewed"));
+    expect(onChange).toHaveBeenCalled();
+  });
+
+  it("renders page container contract classes", () => {
+    const { container } = render(
+      <ForgePage>
+        <ForgePagePanel>
+          <span>panel</span>
+        </ForgePagePanel>
+      </ForgePage>,
+    );
+    expect(container.querySelector(".forge-page")).toBeTruthy();
+    expect(container.querySelector(".forge-page__panel")).toBeTruthy();
   });
 });
 
