@@ -33,6 +33,7 @@ import { PersonsModule } from "./modules/persons/persons.module.js";
 import { RmsMasterDataModule } from "./modules/rms/rms-master-data.module.js";
 import { ProductsModule } from "./modules/products/products.module.js";
 import { SubscriptionsModule } from "./modules/subscriptions/subscriptions.module.js";
+import { CommercialModule } from "./modules/commercial/commercial.module.js";
 import { TenantsModule } from "./modules/tenants/tenants.module.js";
 import { UsersModule } from "./modules/users/users.module.js";
 import { IndustrialModule } from "./modules/industrial/industrial.module.js";
@@ -60,6 +61,7 @@ export class AppModule {
         ProductsModule,
         EntitlementsModule,
         SubscriptionsModule,
+        CommercialModule,
         FeatureFlagsModule,
         ConfigurationModule,
         ImportsModule,

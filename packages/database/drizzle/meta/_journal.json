@@ -211,6 +211,13 @@
       "when": 1754700000000,
       "tag": "0029_tenant_domain_lookup",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1754800000000,
+      "tag": "0030_subscription_commercial_s1",
+      "breakpoints": true
     }
   ]
 }

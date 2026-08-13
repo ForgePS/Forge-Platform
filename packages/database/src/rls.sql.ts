@@ -62,6 +62,16 @@ export const TENANT_RLS_TABLES = [
   "tenant_module_entitlements",
   "subscriptions",
   "subscription_events",
+  // Commercial / subscription (Subscription-S1)
+  "subscription_items",
+  "subscription_changes",
+  "invoices",
+  "invoice_line_items",
+  "payments",
+  "payment_allocations",
+  "account_credits",
+  "subscription_discount_links",
+  "subscription_contracts",
   // Sprint 1E additions.
   "user_tenant_memberships",
   "membership_role_assignments",
@@ -159,4 +169,6 @@ export const NULLABLE_TENANT_RLS_TABLES = [
   "ai_narrative_policies",
   "ai_narrative_templates",
   "ai_narrative_template_versions",
+  // Commercial discounts may be platform-scoped (tenant_id NULL).
+  "discount_definitions",
 ] as const;

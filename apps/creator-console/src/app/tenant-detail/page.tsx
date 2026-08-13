@@ -13,6 +13,19 @@ import {
   ForgeStatusBadge,
 } from "@/components/creator-page";
 import { apiGet, apiGetResult, apiSend, listMemberships, toIfMatch } from "@/lib/api";
+import {
+  COMMERCIAL_PATHS,
+  commercialGet,
+  subscriptionDetailHref,
+  unwrapItems,
+  type CommercialSubscriptionListItem,
+} from "@/lib/commercial-api";
+import {
+  billingFrequencyLabel,
+  commercialStatusLabel,
+  formatDate,
+  formatUsd,
+} from "@/lib/commercial-format";
 import { getMigrationStatusService } from "@/lib/migrations/mock-migration.service";
 import { migrationStageLabel, type MigrationSummary } from "@/lib/migrations/migration.types";
 import styles from "../page.module.css";
@@ -149,6 +162,9 @@ function TenantDetailInner() {
   const [usersOk, setUsersOk] = useState(false);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [subscriptionOk, setSubscriptionOk] = useState(false);
+  const [commercialSubs, setCommercialSubs] = useState<CommercialSubscriptionListItem[]>([]);
+  const [commercialSubsOk, setCommercialSubsOk] = useState(false);
+  const [commercialUnavailable, setCommercialUnavailable] = useState(false);
   const [migration, setMigration] = useState<MigrationSummary | null>(null);
   const [migrationOk, setMigrationOk] = useState(false);
   const [activity, setActivity] = useState<AuditEvent[] | null>(null);
@@ -168,6 +184,9 @@ function TenantDetailInner() {
     setUsersOk(false);
     setSubscription(null);
     setSubscriptionOk(false);
+    setCommercialSubs([]);
+    setCommercialSubsOk(false);
+    setCommercialUnavailable(false);
     setMigration(null);
     setMigrationOk(false);
     setActivity(null);
@@ -187,6 +206,9 @@ function TenantDetailInner() {
         apiGet<Subscription>(`/api/v1/tenants/${tenantId}/subscriptions/current`),
         getMigrationStatusService().listMigrations(),
         apiGet<AuditEvent[]>(`/api/v1/tenants/${tenantId}/audit-events?page=1&pageSize=5`),
+        commercialGet<
+          CommercialSubscriptionListItem[] | { items: CommercialSubscriptionListItem[] }
+        >(COMMERCIAL_PATHS.tenantSubscriptions(tenantId)),
       ]);
 
       if (sideEffects[0].status === "fulfilled") {
@@ -230,6 +252,23 @@ function TenantDetailInner() {
       if (sideEffects[5].status === "fulfilled") {
         setActivityOk(true);
         setActivity(sideEffects[5].value);
+      }
+
+      if (sideEffects[6].status === "fulfilled") {
+        const commercialResult = sideEffects[6].value;
+        if (commercialResult.status === "unavailable") {
+          setCommercialUnavailable(true);
+          setCommercialSubsOk(false);
+          setCommercialSubs([]);
+        } else if (commercialResult.status === "ok") {
+          setCommercialSubsOk(true);
+          setCommercialUnavailable(false);
+          setCommercialSubs(unwrapItems(commercialResult.data));
+        } else {
+          setCommercialSubsOk(false);
+          setCommercialUnavailable(false);
+          setCommercialSubs([]);
+        }
       }
     } catch (err) {
       setError(friendlyError(err));
@@ -644,21 +683,108 @@ function TenantDetailInner() {
             {tab === "billing" ? (
               <ForgePageSection title="Billing">
                 <nav className={styles.linkRow}>
-                  <Link href={`/subscriptions${q}`}>Subscriptions</Link>
-                  <Link href={`/billing${q}`}>Billing</Link>
+                  <Link href="/business">Business</Link>
+                  <Link href="/business/subscriptions">Subscriptions</Link>
+                  <Link href={`/subscriptions${q}`}>Legacy subscriptions</Link>
                 </nav>
-                {!subscriptionOk || !subscription ? (
-                  <p className={styles.muted}>{NA}</p>
-                ) : (
+
+                <p className={styles.muted} role="status">
+                  Payment Processing: Manual
+                </p>
+
+                {commercialUnavailable ? (
+                  <EmptyState
+                    title="Commercial API not available"
+                    description="CONDITION: Commercial backend is not deployed. Deploy the Subscription-S1 platform-api commercial module to enable this view."
+                  />
+                ) : null}
+
+                {commercialSubsOk && commercialSubs.length === 0 ? (
+                  <EmptyState
+                    title="No commercial subscriptions"
+                    description="Create a commercial subscription for this customer from Business."
+                    action={
+                      <Link className="forge-btn forge-btn--outline" href="/business/subscriptions">
+                        Open Business subscriptions
+                      </Link>
+                    }
+                  />
+                ) : null}
+
+                {commercialSubsOk && commercialSubs.length > 0 ? (
+                  <>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>Number</th>
+                          <th>Status</th>
+                          <th>Plan</th>
+                          <th>Billing</th>
+                          <th>Price</th>
+                          <th>Renewal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {commercialSubs.map((row) => (
+                          <tr key={row.id}>
+                            <td className={styles.mono}>
+                              <Link href={subscriptionDetailHref(row.id, row.tenantId)}>
+                                {row.subscriptionNumber ?? row.id.slice(0, 8)}
+                              </Link>
+                            </td>
+                            <td>
+                              <ForgeStatusBadge
+                                status={row.commercialStatus}
+                                label={commercialStatusLabel(row.commercialStatus)}
+                              />
+                            </td>
+                            <td>{row.planName ?? row.planCode ?? "—"}</td>
+                            <td>{billingFrequencyLabel(row.billingFrequency)}</td>
+                            <td>{formatUsd(row.effectivePriceCents)}</td>
+                            <td>{formatDate(row.renewalDate ?? row.currentPeriodEnd)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className={styles.actions} style={{ marginTop: "0.75rem" }}>
+                      <Link
+                        className="forge-btn forge-btn--primary"
+                        href={subscriptionDetailHref(commercialSubs[0]!.id, commercialSubs[0]!.tenantId)}
+                      >
+                        Open Subscription
+                      </Link>
+                      <Link
+                        className="forge-btn forge-btn--outline"
+                        href={`/business/invoices?tenantId=${encodeURIComponent(tenantId)}&subscriptionId=${encodeURIComponent(commercialSubs[0]!.id)}`}
+                      >
+                        Create Invoice
+                      </Link>
+                      <Link
+                        className="forge-btn forge-btn--outline"
+                        href={`/business/payments?tenantId=${encodeURIComponent(tenantId)}&subscriptionId=${encodeURIComponent(commercialSubs[0]!.id)}`}
+                      >
+                        Record Payment
+                      </Link>
+                    </div>
+                  </>
+                ) : null}
+
+                {!commercialSubsOk && !commercialUnavailable ? (
                   <dl className={styles.dl}>
-                    <dt>Current status</dt>
+                    <dt>Legacy current status</dt>
                     <dd>
-                      <ForgeStatusBadge status={subscription.status} />
+                      {!subscriptionOk || !subscription ? (
+                        NA
+                      ) : (
+                        <ForgeStatusBadge status={subscription.status} />
+                      )}
                     </dd>
-                    <dt>Plan</dt>
-                    <dd>{subscription.planCode ?? "—"}</dd>
+                    <dt>Legacy plan</dt>
+                    <dd>
+                      {!subscriptionOk || !subscription ? NA : (subscription.planCode ?? "—")}
+                    </dd>
                   </dl>
-                )}
+                ) : null}
               </ForgePageSection>
             ) : null}
 

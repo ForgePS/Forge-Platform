@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import {
   EmptyState,
   ErrorState,
+  ForgeContextBar,
   ForgePageContainer,
   ForgePageHeader,
   ForgePageSection,
@@ -15,6 +16,7 @@ import {
 export {
   EmptyState,
   ErrorState,
+  ForgeContextBar,
   ForgePageContainer,
   ForgePageHeader,
   ForgePageSection,

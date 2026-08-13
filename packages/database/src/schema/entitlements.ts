@@ -9,6 +9,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createdAtColumn, recordVersionColumn, updatedAtColumn } from "./common.js";
 import { organizations } from "./organizations.js";
 import {
@@ -71,28 +72,56 @@ export const tenantModuleEntitlements = pgTable(
   ],
 );
 
-export const subscriptions = pgTable("subscriptions", {
-  id: uuid("id").primaryKey(),
-  tenantId: uuid("tenant_id")
-    .notNull()
-    .references(() => tenants.id),
-  planId: uuid("plan_id")
-    .notNull()
-    .references(() => subscriptionPlans.id),
-  status: varchar("status", { length: 32 }).notNull().default("TRIAL"),
-  billingProvider: varchar("billing_provider", { length: 64 }).notNull().default("NONE"),
-  externalSubscriptionId: varchar("external_subscription_id", { length: 255 }),
-  startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
-  currentPeriodStart: timestamp("current_period_start", { withTimezone: true }).notNull(),
-  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }).notNull(),
-  graceEndsAt: timestamp("grace_ends_at", { withTimezone: true }),
-  cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
-  canceledAt: timestamp("canceled_at", { withTimezone: true }),
-  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
-  recordVersion: recordVersionColumn,
-  createdAt: createdAtColumn,
-  updatedAt: updatedAtColumn,
-});
+export const subscriptions = pgTable(
+  "subscriptions",
+  {
+    id: uuid("id").primaryKey(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => subscriptionPlans.id),
+    status: varchar("status", { length: 32 }).notNull().default("TRIAL"),
+    billingProvider: varchar("billing_provider", { length: 64 }).notNull().default("NONE"),
+    externalSubscriptionId: varchar("external_subscription_id", { length: 255 }),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    currentPeriodStart: timestamp("current_period_start", { withTimezone: true }).notNull(),
+    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }).notNull(),
+    graceEndsAt: timestamp("grace_ends_at", { withTimezone: true }),
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+    canceledAt: timestamp("canceled_at", { withTimezone: true }),
+    suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+    // Commercial fields (Subscription-S1) — columns added via migration 0030.
+    subscriptionNumber: varchar("subscription_number", { length: 64 }),
+    commercialStatus: varchar("commercial_status", { length: 32 }).notNull().default("ACTIVE"),
+    currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+    billingFrequency: varchar("billing_frequency", { length: 32 }).notNull().default("ANNUAL"),
+    autoRenew: boolean("auto_renew").notNull().default(true),
+    contractStartDate: timestamp("contract_start_date", { withTimezone: true }),
+    renewalDate: timestamp("renewal_date", { withTimezone: true }),
+    billingContactName: varchar("billing_contact_name", { length: 200 }),
+    billingContactEmail: varchar("billing_contact_email", { length: 320 }),
+    accountOwnerUserId: uuid("account_owner_user_id").references(() => users.id),
+    notes: text("notes"),
+    catalogPriceCents: integer("catalog_price_cents"),
+    effectivePriceCents: integer("effective_price_cents"),
+    implementationFeeCents: integer("implementation_fee_cents"),
+    discountCents: integer("discount_cents"),
+    taxExempt: boolean("tax_exempt").notNull().default(false),
+    taxNotes: text("tax_notes"),
+    paymentTerms: varchar("payment_terms", { length: 64 }).notNull().default("NET_30"),
+    accessPolicy: varchar("access_policy", { length: 32 }).notNull().default("FULL_ACCESS"),
+    recordVersion: recordVersionColumn,
+    createdAt: createdAtColumn,
+    updatedAt: updatedAtColumn,
+  },
+  (table) => [
+    uniqueIndex("subscriptions_subscription_number_uidx")
+      .on(table.subscriptionNumber)
+      .where(sql`${table.subscriptionNumber} IS NOT NULL`),
+  ],
+);
 
 export const subscriptionEvents = pgTable("subscription_events", {
   id: uuid("id").primaryKey(),

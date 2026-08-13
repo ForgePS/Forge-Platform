@@ -63,6 +63,27 @@ export const PLATFORM_PERMISSIONS = [
   "platform.ai.provider.manage",
   "platform.ai.policy.manage",
   "platform.ai.usage.view",
+  // Commercial / subscription (Subscription-S1)
+  "platform.subscription.view",
+  "platform.subscription.create",
+  "platform.subscription.update",
+  "platform.subscription.activate",
+  "platform.subscription.suspend",
+  "platform.subscription.cancel",
+  "platform.subscription.renew",
+  "platform.plan.view",
+  "platform.plan.manage",
+  "platform.billing.view",
+  "platform.invoice.create",
+  "platform.invoice.update",
+  "platform.invoice.void",
+  "platform.payment.view",
+  "platform.payment.record",
+  "platform.discount.manage",
+  "platform.credit.manage",
+  "platform.contract.view",
+  "platform.contract.manage",
+  "platform.revenue.view",
 ] as const;
 
 /** Universal Import Platform permissions (unscoped names; assignment decides principal scope). */
@@ -101,6 +122,16 @@ export const CREATOR_ONLY_PERMISSIONS = [
   "platform.ai.narrative.manage",
   "platform.ai.provider.manage",
   "platform.ai.policy.manage",
+  // Commercial billing manage (creator-only)
+  "platform.plan.manage",
+  "platform.invoice.void",
+  "platform.payment.record",
+  "platform.discount.manage",
+  "platform.credit.manage",
+  "platform.revenue.view",
+  "platform.subscription.activate",
+  "platform.subscription.suspend",
+  "platform.subscription.cancel",
 ] as const satisfies readonly PlatformPermission[];
 
 export function isCreatorOnlyPermission(code: string): boolean {
@@ -332,6 +363,7 @@ export const completeOnboardingStepInputSchema = z.object({
 });
 
 export * from "./starter-templates.js";
+export * from "./commercial.js";
 export {
   RMS_PERMISSIONS,
   NERIS_INCIDENT_STATUSES,
@@ -418,6 +450,7 @@ export {
   type IndustrialMigrationStatus,
   type IndustrialModuleRegistryEntry,
 } from "./industrial.js";
+
 
 /** All seeded permission codes (platform + RMS + industrial + product AI + import). */
 export const ALL_PERMISSIONS = [
