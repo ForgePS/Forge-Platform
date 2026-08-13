@@ -2,6 +2,13 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ErrorState,
+  ForgeModuleGrid,
+  ForgePageHeader,
+  LoadingState,
+  ModuleCard,
+} from "@forge/ui";
+import {
   filterBySearch,
   ListControls,
   paginate,
@@ -66,11 +73,13 @@ function ProductsInner() {
 
   return (
     <section className={styles.page}>
-      <h1>Products</h1>
-      <p className={styles.lead}>Platform product and module catalog from the live API.</p>
+      <ForgePageHeader
+        title="Products"
+        subtitle="Platform product and module catalog from the live API."
+      />
 
-      {error ? <p className={styles.error}>{error}</p> : null}
-      {loading ? <p className={styles.muted}>Loading…</p> : null}
+      {error ? <ErrorState title="Unable to load catalog" description={error} /> : null}
+      {loading ? <LoadingState label="Loading catalog…" /> : null}
 
       <div className={styles.panel}>
         <h2>Products</h2>
@@ -118,24 +127,18 @@ function ProductsInner() {
         {modules.length === 0 ? (
           <p className={styles.muted}>No modules in catalog.</p>
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Name</th>
-                <th>ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {modules.map((row) => (
-                <tr key={row.id}>
-                  <td className={styles.mono}>{row.code}</td>
-                  <td>{row.name}</td>
-                  <td className={styles.mono}>{row.id}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ForgeModuleGrid>
+            {modules.map((row) => (
+              <ModuleCard
+                key={row.id}
+                name={row.name}
+                meta={`${row.code}${row.status ? ` · ${row.status}` : ""} · ${row.id}`}
+                href="/modules/"
+                disabled
+                disabledReason="Catalog entry"
+              />
+            ))}
+          </ForgeModuleGrid>
         )}
       </div>
     </section>
@@ -145,7 +148,7 @@ function ProductsInner() {
 export default function ProductsPage() {
   return (
     <PlatformPageGate title="Products" permission="platform.entitlement.manage">
-      <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+      <Suspense fallback={<LoadingState label="Loading…" />}>
         <ProductsInner />
       </Suspense>
     </PlatformPageGate>

@@ -17,6 +17,35 @@ export {
   Textarea,
 } from "./primitives.js";
 
+export {
+  StatusBadge,
+  LoadingState,
+  Tabs,
+  FormSection,
+  FormField,
+  Drawer,
+  ConfirmationDialog,
+  ConfirmDialog,
+  ToastProvider,
+  useToast,
+} from "./composites.js";
+export type { StatusTone, TabItem } from "./composites.js";
+
+export { SearchInput, FilterBar, Pagination } from "./list.js";
+
+export {
+  ActivityTimeline,
+  AuditTimeline,
+  UserAvatar,
+  TenantAvatar,
+  DatePicker,
+  MultiSelect,
+  FileUploader,
+  PermissionMatrix,
+  ComingLater,
+} from "./mission.js";
+export type { TimelineItem, PermissionMatrixCell } from "./mission.js";
+
 export { ForgeAppShell } from "./shell/ForgeAppShell.js";
 export { ForgeSidebar } from "./shell/ForgeSidebar.js";
 export { ForgeTopbar } from "./shell/ForgeTopbar.js";
@@ -42,8 +71,11 @@ export { flattenNavItems, isNavActive } from "./shell/types.js";
 
 export {
   ForgeMetricCard,
+  StatCard,
+  ChartCard,
   ForgeMetricGrid,
   ForgeModuleCard,
+  ModuleCard,
   ForgeModuleGrid,
   ForgeStatusCard,
   ForgeStepper,
@@ -53,3 +85,13 @@ export { ForgeDataTable } from "./table/ForgeDataTable.js";
 export type { ForgeDataTableColumn } from "./table/ForgeDataTable.js";
 
 export { Can, PermissionDenied } from "./permission/Can.js";
+
+/* Mission aliases for shell chrome */
+export { ForgeAppShell as AppShell } from "./shell/ForgeAppShell.js";
+export { ForgeSidebar as Sidebar } from "./shell/ForgeSidebar.js";
+export { ForgeTopbar as Topbar } from "./shell/ForgeTopbar.js";
+export { ForgeBreadcrumbs as Breadcrumbs } from "./shell/ForgeBreadcrumbs.js";
+export { ForgePageHeader as PageHeader, ForgePageActions as PageActions } from "./shell/ForgePageHeader.js";
+export { ForgeDataTable as DataTable } from "./table/ForgeDataTable.js";
+export { ForgeStepper as Stepper } from "./dashboard/ForgeDashboard.js";
+export { ForgeSkeleton as Skeleton } from "./primitives.js";

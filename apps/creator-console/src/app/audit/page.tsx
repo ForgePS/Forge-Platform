@@ -84,7 +84,7 @@ function AuditInner() {
       <h1>Audit</h1>
       <p className={styles.lead}>
         Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={tenantDetailHref(tenantId)}>Tenant detail</Link>
+        <Link href={tenantDetailHref(tenantId)}>Customer detail</Link>
       </p>
 
       {error ? <p className={styles.error}>{error}</p> : null}

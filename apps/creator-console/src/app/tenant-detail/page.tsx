@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
+import { ComingLater, ForgePageHeader, StatusBadge, Tabs } from "@forge/ui";
 import { PlatformPageGate } from "@/components/platform-page-gate";
 import { listMemberships, type Membership, apiGet, apiGetResult, apiSend, toIfMatch } from "@/lib/api";
 import styles from "../page.module.css";
@@ -70,20 +71,16 @@ type BillingOverview = {
   invoices: Array<{ id: string; status: string; amountDueCents: number; createdAt: string }>;
 };
 
-const SECTIONS = [
-  { id: "summary", label: "Summary" },
-  { id: "status", label: "Status" },
-  { id: "contacts", label: "Contacts" },
+const CUSTOMER_TABS = [
+  { id: "overview", label: "Overview" },
   { id: "facilities", label: "Facilities" },
-  { id: "members", label: "Members" },
+  { id: "users", label: "Users" },
   { id: "products", label: "Products" },
   { id: "modules", label: "Modules" },
-  { id: "subscription", label: "Subscription" },
-  { id: "contract", label: "Contract" },
   { id: "branding", label: "Branding" },
-  { id: "feature-flags", label: "Feature Flags" },
-  { id: "usage", label: "Usage" },
-  { id: "activity", label: "Activity" },
+  { id: "domains", label: "Domains" },
+  { id: "billing", label: "Billing" },
+  { id: "migration", label: "Migration" },
   { id: "audit", label: "Audit" },
 ] as const;
 
@@ -106,6 +103,7 @@ function TenantDetailInner() {
   const [audit, setAudit] = useState<AuditEvent[]>([]);
   const [billing, setBilling] = useState<BillingOverview | null>(null);
   const [sectionErrors, setSectionErrors] = useState<Record<string, string>>({});
+  const [tab, setTab] = useState<string>("overview");
 
   const loadCore = useCallback(async () => {
     if (!tenantId) return;
@@ -238,9 +236,9 @@ function TenantDetailInner() {
   if (!tenantId) {
     return (
       <section className={styles.page}>
-        <h1>Tenant detail</h1>
+        <h1>Customer detail</h1>
         <p className={styles.error}>Missing tenantId query parameter.</p>
-        <Link href="/tenants">← Tenants</Link>
+        <Link href="/customers/">← Customers</Link>
       </section>
     );
   }
@@ -249,30 +247,35 @@ function TenantDetailInner() {
 
   return (
     <section className={styles.page}>
-      <h1>Tenant detail</h1>
-      <p className={styles.lead}>
-        <Link href="/tenants">← Tenants</Link>
-        {tenant ? (
-          <>
-            {" "}
-            · {tenant.displayName} · <span className={styles.mono}>{tenant.id}</span>
-          </>
-        ) : null}
-      </p>
+      <ForgePageHeader
+        title={tenant?.displayName ?? "Customer detail"}
+        subtitle={
+          tenant
+            ? `${tenant.tenantKey} · ${tenant.id}`
+            : "Customer / tenant detail from live platform APIs."
+        }
+        actions={
+          <Link className="forge-btn forge-btn--outline" href="/customers/">
+            All customers
+          </Link>
+        }
+      />
 
       {error ? <p className={styles.error}>{error}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
 
       {tenant ? (
         <>
-          <nav className={styles.linkRow} aria-label="Tenant sections">
-            {SECTIONS.map((section) => (
-              <a key={section.id} href={`#${section.id}`}>
-                {section.label}
-              </a>
-            ))}
-          </nav>
+          <p style={{ marginBottom: "1rem" }}>
+            Status{" "}
+            <StatusBadge tone={tenant.status === "ACTIVE" ? "success" : tenant.status === "SUSPENDED" ? "danger" : "info"}>
+              {tenant.status}
+            </StatusBadge>
+          </p>
+          <Tabs items={[...CUSTOMER_TABS]} value={tab} onChange={setTab} />
 
+          {tab === "overview" ? (
+            <>
           <div className={styles.panel} id="summary">
             <h2>Summary</h2>
             <dl className={styles.dl}>
@@ -351,6 +354,39 @@ function TenantDetailInner() {
             </nav>
           </div>
 
+          <div className={styles.panel} id="feature-flags">
+            <h2>Feature flags</h2>
+            {sectionErrors.features ? <p className={styles.error}>{sectionErrors.features}</p> : null}
+            {features.length === 0 ? (
+              <p className={styles.muted}>No effective features.</p>
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Name</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {features.slice(0, 15).map((row) => (
+                    <tr key={row.key}>
+                      <td className={styles.mono}>{row.key}</td>
+                      <td>{row.name}</td>
+                      <td className={styles.mono}>{JSON.stringify(row.value)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <nav className={styles.linkRow}>
+              <Link href={`/features${q}`}>Feature Flags</Link>
+            </nav>
+          </div>
+            </>
+          ) : null}
+
+          {tab === "facilities" ? (
           <div className={styles.panel} id="facilities">
             <h2>Facilities</h2>
             {sectionErrors.facilities ? (
@@ -384,9 +420,11 @@ function TenantDetailInner() {
               <Link href={`/studio/facilities${q}`}>Studio · Facilities</Link>
             </nav>
           </div>
+          ) : null}
 
+          {tab === "users" ? (
           <div className={styles.panel} id="members">
-            <h2>Members</h2>
+            <h2>Users</h2>
             {sectionErrors.members ? <p className={styles.error}>{sectionErrors.members}</p> : null}
             {members.length === 0 ? (
               <p className={styles.muted}>No memberships (or unavailable).</p>
@@ -415,7 +453,9 @@ function TenantDetailInner() {
               <Link href={`/users${q}`}>Users</Link>
             </nav>
           </div>
+          ) : null}
 
+          {tab === "products" ? (
           <div className={styles.panel} id="products">
             <h2>Products</h2>
             {sectionErrors.entitlements ? (
@@ -438,7 +478,9 @@ function TenantDetailInner() {
               <Link href="/products">Catalog</Link>
             </nav>
           </div>
+          ) : null}
 
+          {tab === "modules" ? (
           <div className={styles.panel} id="modules">
             <h2>Modules</h2>
             {(entitlements?.modules?.length ?? 0) === 0 ? (
@@ -457,7 +499,29 @@ function TenantDetailInner() {
               <Link href="/modules">Module catalog</Link>
             </nav>
           </div>
+          ) : null}
 
+          {tab === "branding" ? (
+          <div className={styles.panel} id="branding">
+            <h2>Branding</h2>
+            {sectionErrors.branding ? <p className={styles.error}>{sectionErrors.branding}</p> : null}
+            <dl className={styles.dl}>
+              <dt>Primary</dt>
+              <dd className={styles.mono}>{branding?.primaryColor ?? "—"}</dd>
+              <dt>Secondary</dt>
+              <dd className={styles.mono}>{branding?.secondaryColor ?? "—"}</dd>
+            </dl>
+            <nav className={styles.linkRow}>
+              <Link href={`/branding${q}`}>Branding editor</Link>
+              <Link href={`/studio/branding${q}`}>Studio · Branding</Link>
+            </nav>
+          </div>
+          ) : null}
+
+          {tab === "domains" ? <ComingLater>Domains management — Coming later</ComingLater> : null}
+
+          {tab === "billing" ? (
+          <>
           <div className={styles.panel} id="subscription">
             <h2>Subscription</h2>
             {sectionErrors.billing ? <p className={styles.error}>{sectionErrors.billing}</p> : null}
@@ -512,51 +576,6 @@ function TenantDetailInner() {
             </nav>
           </div>
 
-          <div className={styles.panel} id="branding">
-            <h2>Branding</h2>
-            {sectionErrors.branding ? <p className={styles.error}>{sectionErrors.branding}</p> : null}
-            <dl className={styles.dl}>
-              <dt>Primary</dt>
-              <dd className={styles.mono}>{branding?.primaryColor ?? "—"}</dd>
-              <dt>Secondary</dt>
-              <dd className={styles.mono}>{branding?.secondaryColor ?? "—"}</dd>
-            </dl>
-            <nav className={styles.linkRow}>
-              <Link href={`/branding${q}`}>Branding editor</Link>
-              <Link href={`/studio/branding${q}`}>Studio · Branding</Link>
-            </nav>
-          </div>
-
-          <div className={styles.panel} id="feature-flags">
-            <h2>Feature Flags</h2>
-            {sectionErrors.features ? <p className={styles.error}>{sectionErrors.features}</p> : null}
-            {features.length === 0 ? (
-              <p className={styles.muted}>No effective features.</p>
-            ) : (
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Key</th>
-                    <th>Name</th>
-                    <th>Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {features.slice(0, 15).map((row) => (
-                    <tr key={row.key}>
-                      <td className={styles.mono}>{row.key}</td>
-                      <td>{row.name}</td>
-                      <td className={styles.mono}>{JSON.stringify(row.value)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-            <nav className={styles.linkRow}>
-              <Link href={`/features${q}`}>Feature Flags</Link>
-            </nav>
-          </div>
-
           <div className={styles.panel} id="usage">
             <h2>Usage</h2>
             <p className={styles.muted}>
@@ -568,7 +587,24 @@ function TenantDetailInner() {
               <Link href={`/ai/usage${q}`}>AI usage</Link>
             </nav>
           </div>
+          </>
+          ) : null}
 
+          {tab === "migration" ? (
+            <div className={styles.panel}>
+              <h2>Migration</h2>
+              <p className={styles.muted}>
+                Open Migration Center for staged progress. Cutover is never single-click.
+              </p>
+              <nav className={styles.linkRow}>
+                <Link href="/migrations/">Migration Center</Link>
+              </nav>
+              <ComingLater>Per-customer migration stepper wiring — Coming later when live adapter exists</ComingLater>
+            </div>
+          ) : null}
+
+          {tab === "audit" ? (
+          <>
           <div className={styles.panel} id="activity">
             <h2>Activity</h2>
             {audit.length === 0 ? (
@@ -616,6 +652,8 @@ function TenantDetailInner() {
               <Link href={`/audit${q}`}>Full audit</Link>
             </nav>
           </div>
+          </>
+          ) : null}
         </>
       ) : null}
     </section>
@@ -624,7 +662,7 @@ function TenantDetailInner() {
 
 export default function TenantDetailPage() {
   return (
-    <PlatformPageGate title="Tenant detail" permission="platform.tenant.read">
+    <PlatformPageGate title="Customer detail" permission="platform.tenant.read">
       <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
         <TenantDetailInner />
       </Suspense>

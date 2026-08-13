@@ -2,31 +2,88 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
-import type { ForgeLinkRender } from "@forge/ui";
+import { useEffect, useMemo, useState } from "react";
+import type { ForgeBreadcrumbItem, ForgeLinkRender } from "@forge/ui";
 import {
   EnvironmentBanner,
   ForgeAppShell,
+  ForgeBreadcrumbs,
   ForgeFacilitySelector,
-  ForgeHelpMenu,
   ForgeProductSwitcher,
   ForgeShellState,
   ForgeTenantSwitcher,
   ForgeUserMenu,
+  StatusBadge,
+  ToastProvider,
+  UserAvatar,
 } from "@forge/ui";
 import { filterNavigationForSession, useAuth } from "@forge/web-kit";
 import { ConnectedCommandPalette } from "@/components/connected-command-palette";
 import { ConnectedNotificationMenu } from "@/components/connected-notification-menu";
+import { fetchHealth, fetchReady } from "@/lib/api";
 import { CREATOR_NAV_GROUPS } from "@/lib/navigation";
 import styles from "../app/shell.module.css";
 
 const appEnv = process.env.NEXT_PUBLIC_APP_ENV ?? process.env.APP_ENV ?? "local";
+const isProduction = appEnv === "production" || appEnv === "govcloud-production";
+
+function displayNameFromMe(me: {
+  userId: string;
+  personId: string | null;
+  isPlatformAdmin: boolean;
+}): string {
+  if (me.isPlatformAdmin) return "Platform admin";
+  if (me.personId) return `Person ${me.personId}`;
+  return me.userId;
+}
+
+function breadcrumbsForPath(pathname: string): ForgeBreadcrumbItem[] {
+  const clean = pathname.replace(/\/+$/, "") || "/";
+  if (clean === "/") {
+    return [{ label: "Overview" }];
+  }
+  const segments = clean.split("/").filter(Boolean);
+  const items: ForgeBreadcrumbItem[] = [{ label: "Overview", href: "/" }];
+  let acc = "";
+  for (let i = 0; i < segments.length; i += 1) {
+    acc += `/${segments[i]}`;
+    const label = segments[i]!
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    const last = i === segments.length - 1;
+    items.push(last ? { label } : { label, href: `${acc}/` });
+  }
+  return items;
+}
 
 export function ShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
   const { me, loading, error, logout, chooseTenant } = useAuth();
+  const [healthOk, setHealthOk] = useState<boolean | null>(null);
 
   const groups = useMemo(() => filterNavigationForSession(CREATOR_NAV_GROUPS, me), [me]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const [healthResult, readyResult] = await Promise.allSettled([fetchHealth(), fetchReady()]);
+      if (cancelled) return;
+      const healthOkLocal = healthResult.status === "fulfilled";
+      const readyOkLocal = readyResult.status === "fulfilled";
+      if (!healthOkLocal && !readyOkLocal) {
+        setHealthOk(false);
+        return;
+      }
+      const status =
+        healthResult.status === "fulfilled"
+          ? String(healthResult.value.status ?? "").toLowerCase()
+          : "unknown";
+      setHealthOk(readyOkLocal && (status === "ok" || status === "healthy" || status === "up" || status === "unknown" || healthOkLocal));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const tenants =
     me?.tenants.map((t) => ({
@@ -44,6 +101,8 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
   const activeTenantLabel =
     tenants.find((t) => t.tenantId === me?.tenantId)?.displayName ?? me?.tenantId ?? "—";
 
+  const userLabel = me ? displayNameFromMe(me) : "Signed in";
+
   const renderLink: ForgeLinkRender = ({ href, className, children: linkChildren, "aria-current": ariaCurrent, onClick }) => {
     const props: {
       href: string;
@@ -58,73 +117,96 @@ export function ShellInner({ children }: { children: React.ReactNode }) {
     return <Link {...props} />;
   };
 
+  const crumbs = breadcrumbsForPath(pathname);
+
   return (
-    <ForgeAppShell
-      brand="Forge Creator"
-      brandMark="FC"
-      productLabel="Control plane"
-      groups={groups}
-      activePath={pathname}
-      envBanner={<EnvironmentBanner environment={appEnv} />}
-      renderLink={renderLink}
-      session={
-        loading ? (
-          <ForgeShellState state="loading" title="Loading session…" />
-        ) : me ? (
+    <ToastProvider>
+      <ForgeAppShell
+        brand="Forge Creator"
+        brandMark="FC"
+        productLabel="Creator Console"
+        groups={groups}
+        activePath={pathname}
+        envBanner={<EnvironmentBanner environment={appEnv} />}
+        renderLink={renderLink}
+        session={
+          loading ? (
+            <ForgeShellState state="loading" title="Loading session…" />
+          ) : me ? (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
+                <UserAvatar name={userLabel} size="md" />
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {userLabel}
+                  </p>
+                  <p style={{ margin: "0.15rem 0 0", color: "var(--forge-color-muted)", fontSize: "var(--forge-text-xs)" }}>
+                    {me.isPlatformAdmin ? "Platform admin" : "Operator"} · {activeTenantLabel}
+                  </p>
+                </div>
+              </div>
+            </>
+          ) : error ? (
+            <p className={styles.authError}>{error}</p>
+          ) : (
+            <ForgeShellState state="empty" title="Not signed in" description="Sign in to manage customers." />
+          )
+        }
+        topbarCenter={
+          <span className="forge-topbar__meta" style={{ display: "inline-flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap" }}>
+            <span className={isProduction ? "forge-env-pill forge-env-pill--production" : "forge-env-pill"}>
+              {isProduction ? "Production" : appEnv}
+            </span>
+            <StatusBadge
+              tone={healthOk === null ? "neutral" : healthOk ? "success" : "danger"}
+            >
+              {healthOk === null ? "Health…" : healthOk ? "API healthy" : "API issue"}
+            </StatusBadge>
+            <span>Creator · {activeTenantLabel}</span>
+          </span>
+        }
+        topbarRight={
           <>
-            <p style={{ margin: 0, color: "var(--forge-color-muted)", fontSize: "var(--forge-text-xs)" }}>
-              Signed in
-            </p>
-            <p style={{ margin: "0.15rem 0 0.5rem", fontWeight: 600 }}>{me.userId.slice(0, 8)}…</p>
-            <p style={{ margin: 0, color: "var(--forge-color-muted)", fontSize: "var(--forge-text-xs)" }}>
-              Tenant
-            </p>
-            <p style={{ margin: "0.15rem 0 0", fontWeight: 600 }}>{activeTenantLabel}</p>
+            <ConnectedCommandPalette />
+            {me ? (
+              <ForgeProductSwitcher
+                products={products}
+                {...(products[0]?.id ? { activeProductId: products[0].id } : {})}
+                state={products.length === 0 ? "empty" : "ready"}
+              />
+            ) : null}
+            <ForgeFacilitySelector facilities={[]} state={me ? "empty" : "unauthorized"} />
+            {me ? (
+              <ForgeTenantSwitcher
+                tenants={tenants}
+                activeTenantId={me.tenantId}
+                onSelect={(id) => void chooseTenant(id)}
+                disabled={tenants.filter((t) => t.selectable !== false).length <= 1}
+                state={tenants.length === 0 ? "empty" : "ready"}
+              />
+            ) : null}
+            <ConnectedNotificationMenu viewAllHref="/notifications/" renderLink={renderLink} />
+            {me ? (
+              <ForgeUserMenu
+                label={userLabel}
+                onSignOut={() => void logout()}
+                renderLink={renderLink}
+                items={[
+                  { label: "Profile", href: "/profile/" },
+                  { label: "Settings", href: "/settings/" },
+                ]}
+              />
+            ) : null}
           </>
-        ) : error ? (
-          <p className={styles.authError}>{error}</p>
-        ) : (
-          <ForgeShellState state="empty" title="Not signed in" description="Sign in to manage tenants." />
-        )
-      }
-      topbarCenter={<span>Creator Console · {activeTenantLabel}</span>}
-      topbarRight={
-        <>
-          <ConnectedCommandPalette />
-          {me ? (
-            <ForgeProductSwitcher
-              products={products}
-              {...(products[0]?.id ? { activeProductId: products[0].id } : {})}
-              state={products.length === 0 ? "empty" : "ready"}
-            />
-          ) : null}
-          <ForgeFacilitySelector facilities={[]} state={me ? "empty" : "unauthorized"} />
-          {me ? (
-            <ForgeTenantSwitcher
-              tenants={tenants}
-              activeTenantId={me.tenantId}
-              onSelect={(id) => void chooseTenant(id)}
-              disabled={tenants.filter((t) => t.selectable !== false).length <= 1}
-              state={tenants.length === 0 ? "empty" : "ready"}
-            />
-          ) : null}
-          <ForgeHelpMenu href="/profile/" renderLink={renderLink} label="Help" />
-          <ConnectedNotificationMenu viewAllHref="/notifications/" renderLink={renderLink} />
-          {me ? (
-            <ForgeUserMenu
-              label={me.isPlatformAdmin ? "Platform admin" : "Signed in"}
-              onSignOut={() => void logout()}
-              renderLink={renderLink}
-              items={[
-                { label: "Profile", href: "/profile/" },
-                { label: "Settings", href: "/studio/tenant-profile/" },
-              ]}
-            />
-          ) : null}
-        </>
-      }
-    >
-      {children}
-    </ForgeAppShell>
+        }
+      >
+        {pathname !== "/login" && pathname !== "/select-tenant" ? (
+          <div style={{ marginBottom: "1rem" }}>
+            <ForgeBreadcrumbs items={crumbs} renderLink={renderLink} />
+          </div>
+        ) : null}
+        {children}
+      </ForgeAppShell>
+    </ToastProvider>
   );
 }

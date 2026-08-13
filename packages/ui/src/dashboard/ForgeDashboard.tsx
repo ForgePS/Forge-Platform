@@ -6,19 +6,50 @@ export function ForgeMetricCard({
   value,
   hint,
   loading,
+  unavailableLabel = "Not available",
 }: {
   label: string;
   value: string | number | null | undefined;
   hint?: string;
   loading?: boolean;
+  /** Shown when value is null/undefined (never fabricate 0). */
+  unavailableLabel?: string;
 }) {
-  const display =
-    loading ? "…" : value === null || value === undefined ? "—" : value;
+  const display = loading
+    ? "…"
+    : value === null || value === undefined
+      ? unavailableLabel
+      : value;
   return (
     <article className="forge-metric-card">
       <p className="forge-metric-card__label">{label}</p>
       <p className="forge-metric-card__value">{display}</p>
       {hint ? <p className="forge-metric-card__hint">{hint}</p> : null}
+    </article>
+  );
+}
+
+/** Mission alias for ForgeMetricCard */
+export const StatCard = ForgeMetricCard;
+
+export function ChartCard({
+  title,
+  description,
+  children,
+  emptyLabel = "No chart data available.",
+}: {
+  title: string;
+  description?: string;
+  children?: ReactNode;
+  emptyLabel?: string;
+}) {
+  return (
+    <article className="forge-chart-card">
+      <header className="forge-chart-card__header">
+        <h3 className="forge-chart-card__title">{title}</h3>
+        {description ? <p className="forge-chart-card__desc">{description}</p> : null}
+      </header>
+      <div className="forge-chart-card__body">{children ?? <p className="forge-muted">{emptyLabel}</p>}</div>
     </article>
   );
 }
@@ -101,6 +132,9 @@ export function ForgeModuleCard({
 export function ForgeModuleGrid({ children }: { children: ReactNode }) {
   return <div className="forge-module-grid">{children}</div>;
 }
+
+/** Mission alias for ForgeModuleCard */
+export const ModuleCard = ForgeModuleCard;
 
 export function ForgeStepper({
   steps,

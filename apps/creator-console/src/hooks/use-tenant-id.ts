@@ -20,7 +20,7 @@ export function tenantQuery(tenantId: string): string {
 }
 
 export function tenantDetailHref(tenantId: string): string {
-  return `/tenant-detail?tenantId=${encodeURIComponent(tenantId)}`;
+  return `/customers/detail/?tenantId=${encodeURIComponent(tenantId)}`;
 }
 
 export function personDetailHref(personId: string, tenantId: string): string {

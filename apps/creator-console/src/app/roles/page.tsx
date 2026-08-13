@@ -94,8 +94,8 @@ function RolesInner() {
     <section className={styles.page}>
       <h1>Roles</h1>
       <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={tenantDetailHref(tenantId)}>Tenant detail</Link> ·{" "}
+        Security · Roles · Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
+        <Link href={tenantDetailHref(tenantId)}>Customer detail</Link> ·{" "}
         <Link href={`/users?tenantId=${encodeURIComponent(tenantId)}`}>Users</Link>
       </p>
 

@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
+import { ForgePageHeader, LoadingState } from "@forge/ui";
 import { PlatformPageGate } from "@/components/platform-page-gate";
+import { TenantPicker } from "@/components/tenant-picker";
 import { tenantDetailHref } from "@/hooks/use-tenant-id";
-import { TenantRequired } from "@/components/tenant-required";
 import { apiGet, apiSend } from "@/lib/api";
 import styles from "../page.module.css";
 
@@ -118,22 +119,30 @@ function EntitlementsInner() {
   if (!tenantId) {
     return (
       <section className={styles.page}>
-        <h1>Entitlements</h1>
-        <TenantRequired />
+        <ForgePageHeader
+          title="Entitlements"
+          subtitle="Manage product and module entitlements for a tenant."
+        />
+        <TenantPicker
+          targetPath="/entitlements"
+          description="Select a tenant before editing entitlements. Avoids loading an unusable cross-tenant grid."
+        />
       </section>
     );
   }
 
   return (
     <section className={styles.page}>
-      <h1>Entitlements</h1>
+      <ForgePageHeader
+        title="Entitlements"
+        subtitle={`Tenant ${tenantId}`}
+      />
       <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
         <Link href={tenantDetailHref(tenantId)}>Tenant detail</Link>
       </p>
 
       {error ? <p className={styles.error}>{error}</p> : null}
-      {loading ? <p className={styles.muted}>Loading…</p> : null}
+      {loading ? <LoadingState label="Loading entitlements…" /> : null}
 
       <div className={styles.panel}>
         <h2>Put product entitlement</h2>
@@ -275,7 +284,7 @@ function EntitlementsInner() {
 export default function EntitlementsPage() {
   return (
     <PlatformPageGate title="Entitlements" permission="platform.entitlement.manage">
-      <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+      <Suspense fallback={<LoadingState label="Loading…" />}>
         <EntitlementsInner />
       </Suspense>
     </PlatformPageGate>

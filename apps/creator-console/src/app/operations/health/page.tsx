@@ -2,10 +2,16 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import {
+  ForgePageHeader,
+  ForgeStatusCard,
+  LoadingState,
+} from "@forge/ui";
+import { PlatformPageGate } from "@/components/platform-page-gate";
 import { fetchHealth, fetchReady, type HealthPayload, type ReadyPayload } from "@/lib/api";
-import styles from "../page.module.css";
+import styles from "../../page.module.css";
 
-export default function HealthPage() {
+function OperationsHealthInner() {
   const [health, setHealth] = useState<HealthPayload | null>(null);
   const [ready, setReady] = useState<ReadyPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -15,10 +21,7 @@ export default function HealthPage() {
     setLoading(true);
     setError(null);
     try {
-      const [healthResult, readyResult] = await Promise.allSettled([
-        fetchHealth(),
-        fetchReady(),
-      ]);
+      const [healthResult, readyResult] = await Promise.allSettled([fetchHealth(), fetchReady()]);
       if (healthResult.status === "fulfilled") {
         setHealth(healthResult.value);
       } else {
@@ -29,11 +32,7 @@ export default function HealthPage() {
             : "Health check failed",
         );
       }
-      if (readyResult.status === "fulfilled") {
-        setReady(readyResult.value);
-      } else {
-        setReady(null);
-      }
+      setReady(readyResult.status === "fulfilled" ? readyResult.value : null);
     } finally {
       setLoading(false);
     }
@@ -43,43 +42,42 @@ export default function HealthPage() {
     void load();
   }, [load]);
 
-  const consoleHealth = {
-    status: "healthy",
-    service: "creator-console",
-    environment: process.env.NEXT_PUBLIC_APP_ENV ?? process.env.APP_ENV ?? "local",
-    version: process.env.NEXT_PUBLIC_APP_VERSION ?? "0.1.0",
-    timestamp: new Date().toISOString(),
-  };
+  const apiStatus = health?.status ?? (loading ? "Loading…" : "Not available");
+  const dbStatus = ready?.checks.database
+    ? "ready"
+    : ready
+      ? "not ready"
+      : loading
+        ? "Loading…"
+        : "Not available";
 
   return (
     <section className={styles.page}>
-      <h1>Platform health</h1>
-      <p className={styles.lead}>
-        Live checks against platform-api <code>/health</code> and <code>/ready</code>.
-      </p>
+      <ForgePageHeader
+        title="Operations health"
+        subtitle="Live platform-api /health and /ready probes only. No fabricated cloud metrics."
+      />
 
       {error ? <p className={styles.error}>{error}</p> : null}
-      {loading ? <p className={styles.muted}>Loading health…</p> : null}
+      {loading ? <LoadingState label="Loading health…" /> : null}
 
       <div className={styles.statGrid}>
-        <div className={styles.statCard}>
-          <p className={styles.statLabel}>API status</p>
-          <p className={styles.statValue}>{health?.status ?? "—"}</p>
-        </div>
-        <div className={styles.statCard}>
-          <p className={styles.statLabel}>Database</p>
-          <p className={styles.statValue}>
-            {ready?.checks.database ? "ready" : ready ? "not ready" : "—"}
-          </p>
-        </div>
-        <div className={styles.statCard}>
-          <p className={styles.statLabel}>Queue</p>
-          <p className={styles.statValue}>Not available</p>
-        </div>
+        <ForgeStatusCard
+          title="API status"
+          status={apiStatus}
+          {...(health?.service ? { detail: health.service } : {})}
+        />
+        <ForgeStatusCard
+          title="Database"
+          status={dbStatus}
+          {...(ready?.status ? { detail: ready.status } : {})}
+        />
+        <ForgeStatusCard title="Queue" status="Not available" detail="No queue probe exposed" />
+        <ForgeStatusCard title="AWS metrics" status="Not available" detail="No AWS metrics endpoint" />
       </div>
 
       <div className={styles.panel}>
-        <h2>Platform API</h2>
+        <h2>Platform API health</h2>
         {health ? (
           <pre className={styles.pre}>{JSON.stringify(health, null, 2)}</pre>
         ) : (
@@ -96,17 +94,20 @@ export default function HealthPage() {
         )}
       </div>
 
-      <div className={styles.panel}>
-        <h2>Creator console</h2>
-        <pre className={styles.pre}>{JSON.stringify(consoleHealth, null, 2)}</pre>
-      </div>
-
       <div className={styles.actions}>
         <button type="button" className={styles.buttonSecondary} onClick={() => void load()}>
           Refresh
         </button>
-        <Link href="/">Back to dashboard</Link>
+        <Link href="/health/">System health detail</Link>
       </div>
     </section>
+  );
+}
+
+export default function OperationsHealthPage() {
+  return (
+    <PlatformPageGate title="Operations health" permission="platform.tenant.read">
+      <OperationsHealthInner />
+    </PlatformPageGate>
   );
 }

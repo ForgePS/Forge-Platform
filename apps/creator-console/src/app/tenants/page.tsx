@@ -121,7 +121,10 @@ function TenantsInner() {
   return (
     <section className={styles.page}>
       <h1>Tenants</h1>
-      <p className={styles.lead}>Platform tenants and lifecycle.</p>
+      <p className={styles.lead}>
+        Legacy path for platform tenants. Prefer{" "}
+        <Link href="/customers/">Customers</Link> for the mission UX.
+      </p>
 
       {error ? <p className={styles.error}>{error}</p> : null}
 

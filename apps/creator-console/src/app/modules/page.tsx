@@ -2,26 +2,26 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
-  filterBySearch,
-  ListControls,
-  paginate,
-  sortByField,
-} from "@/components/list-controls";
+  EmptyState,
+  ErrorState,
+  FilterBar,
+  ForgeModuleGrid,
+  ForgePageHeader,
+  LoadingState,
+  ModuleCard,
+  SearchInput,
+} from "@forge/ui";
 import { PlatformPageGate } from "@/components/platform-page-gate";
 import { apiGet } from "@/lib/api";
 import styles from "../page.module.css";
 
 type CatalogModule = { id: string; code: string; name: string; status?: string };
 
-const PAGE_SIZE = 20;
-
 function ModulesInner() {
   const [modules, setModules] = useState<CatalogModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState("code");
-  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -39,73 +39,46 @@ function ModulesInner() {
     void load();
   }, [load]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [search, sort]);
-
   const filtered = useMemo(() => {
-    const searched = filterBySearch(modules, search, [
-      (row) => row.code,
-      (row) => row.name,
-      (row) => row.id,
-    ]);
-    return sortByField(searched, sort, {
-      code: (row) => row.code,
-      name: (row) => row.name,
-    });
-  }, [modules, search, sort]);
-
-  const pageItems = paginate(filtered, page, PAGE_SIZE);
+    const needle = search.trim().toLowerCase();
+    if (!needle) return modules;
+    return modules.filter((row) =>
+      [row.code, row.name, row.id, row.status ?? ""].join(" ").toLowerCase().includes(needle),
+    );
+  }, [modules, search]);
 
   return (
     <section className={styles.page}>
-      <h1>Modules</h1>
-      <p className={styles.lead}>Platform module catalog (control plane).</p>
+      <ForgePageHeader
+        title="Modules"
+        subtitle="Platform module catalog (control plane)."
+      />
 
-      {error ? <p className={styles.error}>{error}</p> : null}
-      {loading ? <p className={styles.muted}>Loading…</p> : null}
+      {error ? <ErrorState title="Unable to load modules" description={error} /> : null}
 
-      <div className={styles.panel}>
-        <ListControls
-          search={search}
-          onSearchChange={setSearch}
-          sort={sort}
-          sortOptions={[
-            { value: "code", label: "Code" },
-            { value: "name", label: "Name" },
-          ]}
-          onSortChange={setSort}
-          page={page}
-          pageSize={PAGE_SIZE}
-          total={filtered.length}
-          onPageChange={setPage}
-        />
-        {!loading && filtered.length === 0 ? (
-          <p className={styles.muted}>No modules found.</p>
-        ) : null}
-        {pageItems.length > 0 ? (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Name</th>
-                <th>Status</th>
-                <th>ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pageItems.map((row) => (
-                <tr key={row.id}>
-                  <td className={styles.mono}>{row.code}</td>
-                  <td>{row.name}</td>
-                  <td>{row.status ?? "—"}</td>
-                  <td className={styles.mono}>{row.id}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : null}
-      </div>
+      <FilterBar>
+        <SearchInput value={search} onChange={setSearch} placeholder="Search modules…" />
+      </FilterBar>
+
+      {loading ? <LoadingState label="Loading modules…" /> : null}
+      {!loading && filtered.length === 0 ? (
+        <EmptyState title="No modules found" description="Adjust your search or check the platform catalog." />
+      ) : null}
+
+      {filtered.length > 0 ? (
+        <ForgeModuleGrid>
+          {filtered.map((row) => (
+            <ModuleCard
+              key={row.id}
+              name={row.name}
+              meta={`${row.code}${row.status ? ` · ${row.status}` : ""}`}
+              href="/modules/"
+              disabled
+              disabledReason={row.id}
+            />
+          ))}
+        </ForgeModuleGrid>
+      ) : null}
     </section>
   );
 }
@@ -113,7 +86,7 @@ function ModulesInner() {
 export default function ModulesPage() {
   return (
     <PlatformPageGate title="Modules" permission="platform.entitlement.manage">
-      <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+      <Suspense fallback={<LoadingState label="Loading…" />}>
         <ModulesInner />
       </Suspense>
     </PlatformPageGate>

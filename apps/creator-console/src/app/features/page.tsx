@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
+import { ConfirmationDialog, ForgePageHeader, LoadingState } from "@forge/ui";
 import { PlatformPageGate } from "@/components/platform-page-gate";
+import { TenantPicker } from "@/components/tenant-picker";
 import { tenantDetailHref } from "@/hooks/use-tenant-id";
-import { TenantRequired } from "@/components/tenant-required";
 import { apiGet, apiSend } from "@/lib/api";
 import styles from "../page.module.css";
 
@@ -24,6 +25,7 @@ function FeaturesInner() {
   const [loading, setLoading] = useState(Boolean(tenantId));
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const [featureKey, setFeatureKey] = useState("");
   const [valueText, setValueText] = useState("true");
@@ -50,8 +52,7 @@ function FeaturesInner() {
     void load();
   }, [load]);
 
-  async function onOverride(event: FormEvent) {
-    event.preventDefault();
+  async function putOverride() {
     if (!tenantId || !featureKey) return;
     setSubmitting(true);
     setError(null);
@@ -67,31 +68,47 @@ function FeaturesInner() {
         ...(reason.trim() ? { reason: reason.trim() } : {}),
       });
       setReason("");
+      setConfirmOpen(false);
       const rows = await apiGet<EffectiveFeature[]>(
         `/api/v1/tenants/${tenantId}/features/effective`,
       );
       setFeatures(rows);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to put feature override");
+      setConfirmOpen(false);
     } finally {
       setSubmitting(false);
     }
   }
 
+  function onOverrideRequest(event: FormEvent) {
+    event.preventDefault();
+    if (!tenantId || !featureKey) return;
+    setConfirmOpen(true);
+  }
+
   if (!tenantId) {
     return (
       <section className={styles.page}>
-        <h1>Features</h1>
-        <TenantRequired />
+        <ForgePageHeader
+          title="Features"
+          subtitle="View effective feature flags and apply tenant overrides."
+        />
+        <TenantPicker
+          targetPath="/features"
+          description="Select a tenant before viewing or overriding feature flags."
+        />
       </section>
     );
   }
 
   return (
     <section className={styles.page}>
-      <h1>Features</h1>
+      <ForgePageHeader
+        title="Features"
+        subtitle={`Tenant ${tenantId}`}
+      />
       <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
         <Link href={tenantDetailHref(tenantId)}>Tenant detail</Link>
       </p>
 
@@ -99,7 +116,7 @@ function FeaturesInner() {
 
       <div className={styles.panel}>
         <h2>Put tenant override</h2>
-        <form className={styles.form} onSubmit={onOverride}>
+        <form className={styles.form} onSubmit={onOverrideRequest}>
           <div className={styles.formRow}>
             <label htmlFor="featureKey">Feature key</label>
             <select
@@ -130,15 +147,38 @@ function FeaturesInner() {
           </div>
           <div className={styles.actions}>
             <button className={styles.button} type="submit" disabled={submitting}>
-              {submitting ? "Saving…" : "Put override"}
+              Put override
             </button>
           </div>
         </form>
       </div>
 
+      <ConfirmationDialog
+        open={confirmOpen}
+        title="Apply feature override?"
+        description={
+          <>
+            This calls <code>PUT /api/v1/tenants/{tenantId}/features/{featureKey || "…"}</code> with
+            value <code>{valueText}</code>
+            {reason.trim() ? (
+              <>
+                {" "}
+                and reason &ldquo;{reason.trim()}&rdquo;.
+              </>
+            ) : (
+              "."
+            )}
+          </>
+        }
+        confirmLabel="Apply override"
+        busy={submitting}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => void putOverride()}
+      />
+
       <div className={styles.panel}>
         <h2>Effective features</h2>
-        {loading ? <p className={styles.muted}>Loading…</p> : null}
+        {loading ? <LoadingState label="Loading features…" /> : null}
         {!loading && features.length === 0 ? (
           <p className={styles.muted}>No feature definitions.</p>
         ) : null}
@@ -172,7 +212,7 @@ function FeaturesInner() {
 export default function FeaturesPage() {
   return (
     <PlatformPageGate title="Feature Flags" permission="platform.feature.manage">
-      <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+      <Suspense fallback={<LoadingState label="Loading…" />}>
         <FeaturesInner />
       </Suspense>
     </PlatformPageGate>
