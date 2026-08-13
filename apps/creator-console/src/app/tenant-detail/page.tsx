@@ -4,6 +4,13 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { INDUSTRIAL_PRODUCT_CODE } from "@forge/contracts";
+import {
+  ForgeContextBar,
+  ForgePageContainer,
+  ForgePageHeader,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@forge/ui";
 import { apiGetResult, apiSend, toIfMatch } from "@/lib/api";
 import styles from "../page.module.css";
 
@@ -135,41 +142,65 @@ function TenantDetailInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Tenant detail</h1>
-        <p className={styles.error}>Missing tenantId query parameter.</p>
-        <Link href="/tenants">← Tenants</Link>
-      </section>
+      <ForgePageContainer>
+        <ForgePageHeader title="Customer" subtitle="Missing customer selection." />
+        <p className={styles.error}>Open a customer from the Customers list.</p>
+        <Link className="forge-btn forge-btn--secondary" href="/tenants">
+          Back to Customers
+        </Link>
+      </ForgePageContainer>
     );
   }
 
   const q = `?tenantId=${encodeURIComponent(tenantId)}`;
 
   return (
-    <section className={styles.page}>
-      <h1>Tenant detail</h1>
-      <p className={styles.lead}>
-        <Link href="/tenants">← Tenants</Link>
-      </p>
+    <ForgePageContainer>
+      <ForgePageHeader
+        title={tenant?.displayName ?? "Customer"}
+        subtitle="Customer overview, lifecycle actions, and related configuration."
+        actions={
+          <Link className="forge-btn forge-btn--secondary" href="/tenants">
+            Back to Customers
+          </Link>
+        }
+      />
 
       {error ? <p className={styles.error}>{error}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
 
       {tenant ? (
         <>
-          <div className={styles.panel}>
-            <h2>{tenant.displayName}</h2>
+          <ForgeContextBar
+            title={tenant.displayName}
+            status={<ForgeStatusBadge status={tenant.status} />}
+            subtitle={tenant.legalName}
+            meta={<span>{tenant.slug}.forgepublicsafety.com</span>}
+            actions={
+              <>
+                {industrialEntitled ? (
+                  <a
+                    className="forge-btn"
+                    href={`${INDUSTRIAL_APP_URL}/`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open Application
+                  </a>
+                ) : null}
+                <Link className="forge-btn forge-btn--outline" href={`/entitlements${q}`}>
+                  Products & Modules
+                </Link>
+              </>
+            }
+          />
+
+          <ForgePageSection title="Overview">
             <dl className={styles.dl}>
-              <dt>ID</dt>
-              <dd className={styles.mono}>{tenant.id}</dd>
               <dt>Key</dt>
               <dd className={styles.mono}>{tenant.tenantKey}</dd>
               <dt>Slug</dt>
               <dd className={styles.mono}>{tenant.slug}</dd>
-              <dt>Legal name</dt>
-              <dd>{tenant.legalName}</dd>
-              <dt>Status</dt>
-              <dd>{tenant.status}</dd>
               <dt>Type</dt>
               <dd>{tenant.tenantType}</dd>
               <dt>Timezone</dt>
@@ -178,26 +209,21 @@ function TenantDetailInner() {
               <dd>{tenant.defaultLocale}</dd>
               <dt>Region</dt>
               <dd>{tenant.dataRegion}</dd>
-              {etag ? (
-                <>
-                  <dt>Version</dt>
-                  <dd className={styles.mono}>{tenant.recordVersion}</dd>
-                </>
-              ) : null}
             </dl>
 
-            {industrialEntitled ? (
-              <div className={styles.actions} style={{ marginTop: "1rem" }}>
-                <a
-                  className={styles.button}
-                  href={`${INDUSTRIAL_APP_URL}/`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open Industrial Console
-                </a>
-              </div>
-            ) : null}
+            <details className="forge-advanced-details">
+              <summary>Advanced Details</summary>
+              <dl className={styles.dl}>
+                <dt>Customer ID</dt>
+                <dd className={styles.mono}>{tenant.id}</dd>
+                {etag ? (
+                  <>
+                    <dt>Version</dt>
+                    <dd className={styles.mono}>{tenant.recordVersion}</dd>
+                  </>
+                ) : null}
+              </dl>
+            </details>
 
             <div className={styles.actions} style={{ marginTop: "1rem" }}>
               <button
@@ -231,26 +257,28 @@ function TenantDetailInner() {
                 </button>
               </div>
             </div>
-          </div>
+          </ForgePageSection>
 
-          <nav className={styles.linkRow}>
-            <Link href={`/organizations${q}`}>Organizations</Link>
-            <Link href={`/persons${q}`}>Persons</Link>
-            <Link href={`/users${q}`}>Users</Link>
-            <Link href={`/roles${q}`}>Roles</Link>
-            <Link href={`/memberships${q}`}>Memberships</Link>
-            <Link href={`/invitations${q}`}>Invitations</Link>
-            <Link href={`/subscriptions${q}`}>Subscriptions</Link>
-            <Link href={`/branding${q}`}>Branding</Link>
-            <Link href={`/permissions${q}`}>Permissions</Link>
-            <Link href={`/entitlements${q}`}>Entitlements</Link>
-            <Link href={`/features${q}`}>Features</Link>
-            <Link href={`/configuration${q}`}>Configuration</Link>
-            <Link href={`/audit${q}`}>Audit</Link>
-          </nav>
+          <ForgePageSection title="Related" description="Jump to customer-scoped configuration.">
+            <nav className={styles.linkRow}>
+              <Link href={`/entitlements${q}`}>Products & Modules</Link>
+              <Link href={`/organizations${q}`}>Organizations</Link>
+              <Link href={`/persons${q}`}>Persons</Link>
+              <Link href={`/users${q}`}>Users</Link>
+              <Link href={`/roles${q}`}>Roles</Link>
+              <Link href={`/memberships${q}`}>Memberships</Link>
+              <Link href={`/invitations${q}`}>Invitations</Link>
+              <Link href={`/subscriptions${q}`}>Subscriptions</Link>
+              <Link href={`/branding${q}`}>Branding</Link>
+              <Link href={`/permissions${q}`}>Permissions</Link>
+              <Link href={`/features${q}`}>Features</Link>
+              <Link href={`/configuration${q}`}>Configuration</Link>
+              <Link href={`/audit${q}`}>Audit</Link>
+            </nav>
+          </ForgePageSection>
         </>
       ) : null}
-    </section>
+    </ForgePageContainer>
   );
 }
 

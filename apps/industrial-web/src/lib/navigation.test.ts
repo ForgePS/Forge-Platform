@@ -74,6 +74,9 @@ describe("industrial navigation foundation", () => {
   });
 
   it("uses explicit unavailable messaging", () => {
-    expect(moduleUnavailableMessage("Personnel")).toContain("AWS migration is in progress");
+    expect(moduleUnavailableMessage("Personnel", "MIGRATION_IN_PROGRESS")).toContain(
+      "Ask a platform admin to enable it",
+    );
+    expect(moduleUnavailableMessage("Personnel")).toContain("not available in this environment");
   });
 });

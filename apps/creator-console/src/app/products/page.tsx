@@ -1,12 +1,25 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ForgePageContainer,
+  ForgePageHeader,
+  ForgePageSection,
+  ForgeStatusBadge,
+  ForgeToolbar,
+} from "@forge/ui";
 import { filterBySearch, ListControls, paginate, sortByField } from "@/components/list-controls";
 import { apiGet } from "@/lib/api";
 import styles from "../page.module.css";
 
 type CatalogProduct = { id: string; code: string; name: string; status?: string };
-type CatalogModule = { id: string; code: string; name: string; status?: string };
+type CatalogModule = {
+  id: string;
+  code: string;
+  name: string;
+  status?: string;
+  productId?: string;
+};
 
 const PAGE_SIZE = 10;
 
@@ -18,6 +31,8 @@ function ProductsInner() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("code");
   const [page, setPage] = useState(1);
+  const [moduleSearch, setModuleSearch] = useState("");
+  const [modulePage, setModulePage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,11 +59,14 @@ function ProductsInner() {
     setPage(1);
   }, [search, sort]);
 
+  useEffect(() => {
+    setModulePage(1);
+  }, [moduleSearch]);
+
   const filtered = useMemo(() => {
     const searched = filterBySearch(products, search, [
       (row) => row.code,
       (row) => row.name,
-      (row) => row.id,
     ]);
     return sortByField(searched, sort, {
       code: (row) => row.code,
@@ -58,16 +76,27 @@ function ProductsInner() {
 
   const pageItems = paginate(filtered, page, PAGE_SIZE);
 
+  const filteredModules = useMemo(
+    () =>
+      filterBySearch(modules, moduleSearch, [
+        (row) => row.code,
+        (row) => row.name,
+      ]),
+    [modules, moduleSearch],
+  );
+  const modulePageItems = paginate(filteredModules, modulePage, PAGE_SIZE);
+
   return (
-    <section className={styles.page}>
-      <h1>Products</h1>
-      <p className={styles.lead}>Platform product and module catalog from the live API.</p>
+    <ForgePageContainer>
+      <ForgePageHeader
+        title="Product Catalog"
+        subtitle="Platform product and module catalog from the live API."
+      />
 
       {error ? <p className={styles.error}>{error}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
 
-      <div className={styles.panel}>
-        <h2>Products</h2>
+      <ForgePageSection title="Products" description="Commercial Forge products available to entitle.">
         <ListControls
           search={search}
           onSearchChange={setSearch}
@@ -89,50 +118,94 @@ function ProductsInner() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Code</th>
                 <th>Name</th>
-                <th>ID</th>
+                <th>Code</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {pageItems.map((row) => (
                 <tr key={row.id}>
-                  <td className={styles.mono}>{row.code}</td>
                   <td>{row.name}</td>
-                  <td className={styles.mono}>{row.id}</td>
+                  <td className={styles.mono}>{row.code}</td>
+                  <td>
+                    <ForgeStatusBadge status={row.status ?? "ACTIVE"} />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : null}
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>Modules</h2>
-        {modules.length === 0 ? (
+      <ForgePageSection title="Modules" description="Modules across all products.">
+        <ForgeToolbar>
+          <input
+            className="forge-input"
+            type="search"
+            placeholder="Search modules..."
+            value={moduleSearch}
+            onChange={(e) => setModuleSearch(e.target.value)}
+            aria-label="Search modules"
+          />
+        </ForgeToolbar>
+        {filteredModules.length === 0 ? (
           <p className={styles.muted}>No modules in catalog.</p>
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Name</th>
-                <th>ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {modules.map((row) => (
-                <tr key={row.id}>
-                  <td className={styles.mono}>{row.code}</td>
-                  <td>{row.name}</td>
-                  <td className={styles.mono}>{row.id}</td>
+          <>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Code</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {modulePageItems.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.name}</td>
+                    <td className={styles.mono}>{row.code}</td>
+                    <td>
+                      <ForgeStatusBadge status={row.status ?? "ACTIVE"} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className={styles.pagination}>
+              <span className={styles.muted}>
+                Showing{" "}
+                {filteredModules.length === 0
+                  ? 0
+                  : (modulePage - 1) * PAGE_SIZE + 1}
+                –
+                {Math.min(modulePage * PAGE_SIZE, filteredModules.length)} of{" "}
+                {filteredModules.length}
+              </span>
+              <div className={styles.actions}>
+                <button
+                  type="button"
+                  className={styles.buttonSecondary}
+                  disabled={modulePage <= 1}
+                  onClick={() => setModulePage((p) => Math.max(1, p - 1))}
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  className={styles.buttonSecondary}
+                  disabled={modulePage * PAGE_SIZE >= filteredModules.length}
+                  onClick={() => setModulePage((p) => p + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
         )}
-      </div>
-    </section>
+      </ForgePageSection>
+    </ForgePageContainer>
   );
 }
 

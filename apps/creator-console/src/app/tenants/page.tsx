@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  ForgePageContainer,
+  ForgePageHeader,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@forge/ui";
 import { tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGet, apiSend } from "@/lib/api";
 import styles from "../page.module.css";
@@ -109,18 +115,18 @@ export default function TenantsPage() {
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Tenants</h1>
-      <p className={styles.lead}>Platform tenants and lifecycle.</p>
+    <ForgePageContainer>
+      <ForgePageHeader
+        title="Customers"
+        subtitle="Platform tenants and lifecycle."
+      />
 
       {error ? <p className={styles.error}>{error}</p> : null}
 
-      <div className={styles.panel}>
-        <h2>Create tenant</h2>
-        <p className={styles.muted}>
-          Keys/slugs must be lowercase. Slug may use hyphens only (no underscores). Example key{" "}
-          <code>acme-fire</code>, slug <code>acme-fire</code>.
-        </p>
+      <ForgePageSection
+        title="Create Customer"
+        description="Keys and slugs must be lowercase. Slug may use hyphens only."
+      >
         <form className={styles.form} onSubmit={onCreate}>
           <div className={styles.formRow}>
             <label htmlFor="tenantKey">Tenant key</label>
@@ -181,12 +187,11 @@ export default function TenantsPage() {
             </button>
           </div>
         </form>
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>All tenants</h2>
+      <ForgePageSection title="All Customers">
         {loading ? <p className={styles.muted}>Loading…</p> : null}
-        {!loading && tenants.length === 0 ? <p className={styles.muted}>No tenants yet.</p> : null}
+        {!loading && tenants.length === 0 ? <p className={styles.muted}>No customers yet.</p> : null}
         {tenants.length > 0 ? (
           <table className={styles.table}>
             <thead>
@@ -204,14 +209,16 @@ export default function TenantsPage() {
                     <Link href={tenantDetailHref(tenant.id)}>{tenant.displayName}</Link>
                   </td>
                   <td className={styles.mono}>{tenant.tenantKey}</td>
-                  <td>{tenant.status}</td>
+                  <td>
+                    <ForgeStatusBadge status={tenant.status} />
+                  </td>
                   <td>{tenant.tenantType}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : null}
-      </div>
-    </section>
+      </ForgePageSection>
+    </ForgePageContainer>
   );
 }

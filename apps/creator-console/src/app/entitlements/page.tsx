@@ -1,11 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  ForgeContextBar,
+  ForgePageContainer,
+  ForgePageHeader,
+  ForgePageSection,
+  ForgeSkeleton,
+  ForgeStatusBadge,
+  ForgeTenantSwitcher,
+  ForgeToolbar,
+} from "@forge/ui";
+import { useAuth } from "@/hooks/use-auth";
 import { tenantDetailHref, useTenantId } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
 import { apiGet, apiSend } from "@/lib/api";
-import styles from "../page.module.css";
 
 type ProductEntitlement = {
   id: string;
@@ -26,43 +41,96 @@ type EntitlementsPayload = {
   modules: ModuleEntitlement[];
 };
 
-type CatalogProduct = { id: string; code: string; name: string };
-type CatalogModule = { id: string; code: string; name: string };
+type CatalogProduct = {
+  id: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  status?: string;
+};
+
+type CatalogModule = {
+  id: string;
+  code: string;
+  name: string;
+  productId: string;
+  description?: string | null;
+  status?: string;
+  isCore?: boolean;
+};
+
+type TenantSummary = {
+  id: string;
+  displayName: string;
+  status: string;
+  slug: string;
+  tenantKey: string;
+};
+
+const PRODUCT_ICONS: Record<string, string> = {
+  FORGE_INDUSTRIAL: "IS",
+  FORGE_RMS: "RM",
+  FORGE_ACADEMY: "AC",
+};
+
+function productIcon(code: string): string {
+  return PRODUCT_ICONS[code] ?? (code.slice(0, 2).toUpperCase() || "FP");
+}
+
+function isProductActive(status: string | undefined): boolean {
+  if (!status) return false;
+  const s = status.toUpperCase();
+  return s === "ACTIVE" || s === "ENTITLED";
+}
 
 function EntitlementsInner() {
+  const router = useRouter();
   const tenantId = useTenantId();
+  const { me, chooseTenant } = useAuth();
 
   const [data, setData] = useState<EntitlementsPayload | null>(null);
   const [catalogProducts, setCatalogProducts] = useState<CatalogProduct[]>([]);
   const [catalogModules, setCatalogModules] = useState<CatalogModule[]>([]);
+  const [tenant, setTenant] = useState<TenantSummary | null>(null);
   const [loading, setLoading] = useState(Boolean(tenantId));
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const [productCode, setProductCode] = useState("");
-  const [productStatus, setProductStatus] = useState<"ACTIVE" | "DISABLED">("ACTIVE");
-  const [moduleCode, setModuleCode] = useState("");
-  const [moduleStatus, setModuleStatus] = useState<"ACTIVE" | "PENDING" | "SUSPENDED" | "GRACE">(
-    "ACTIVE",
+  const [selectedProductCode, setSelectedProductCode] = useState<string | null>(null);
+  const [moduleSearch, setModuleSearch] = useState("");
+  const [moduleGroupFilter, setModuleGroupFilter] = useState<"all" | "core" | "optional">("all");
+  const [moduleStatusFilter, setModuleStatusFilter] = useState<"all" | "enabled" | "disabled">(
+    "all",
   );
+
+  const tenants =
+    me?.tenants.map((t) => ({
+      tenantId: t.tenantId,
+      displayName: t.displayName,
+      selectable: t.selectable,
+    })) ?? [];
 
   const load = useCallback(async () => {
     if (!tenantId) return;
     setLoading(true);
     setError(null);
     try {
-      const [entitlements, products, modules] = await Promise.all([
+      const [entitlements, products, modules, tenantRow] = await Promise.all([
         apiGet<EntitlementsPayload>(`/api/v1/tenants/${tenantId}/entitlements`),
         apiGet<CatalogProduct[]>("/api/v1/platform/products"),
         apiGet<CatalogModule[]>("/api/v1/platform/modules"),
+        apiGet<TenantSummary>(`/api/v1/platform/tenants/${tenantId}`).catch(() => null),
       ]);
       setData(entitlements);
       setCatalogProducts(products);
       setCatalogModules(modules);
-      setProductCode((current) => current || products[0]?.code || "");
-      setModuleCode((current) => current || modules[0]?.code || "");
+      setTenant(tenantRow);
+      setSelectedProductCode((current) => {
+        if (current && products.some((p) => p.code === current)) return current;
+        const active = entitlements.products.find((p) => isProductActive(p.status));
+        return active?.productCode ?? products[0]?.code ?? null;
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load entitlements");
+      setError(err instanceof Error ? err.message : "We couldn't load products and modules.");
     } finally {
       setLoading(false);
     }
@@ -72,206 +140,446 @@ function EntitlementsInner() {
     void load();
   }, [load]);
 
-  async function putProduct(event: FormEvent) {
-    event.preventDefault();
-    if (!tenantId || !productCode) return;
+  const entitlementByProduct = useMemo(() => {
+    const map = new Map<string, ProductEntitlement>();
+    for (const row of data?.products ?? []) map.set(row.productCode, row);
+    return map;
+  }, [data]);
+
+  const entitlementByModule = useMemo(() => {
+    const map = new Map<string, ModuleEntitlement>();
+    for (const row of data?.modules ?? []) map.set(row.moduleCode, row);
+    return map;
+  }, [data]);
+
+  const selectedProduct = catalogProducts.find((p) => p.code === selectedProductCode) ?? null;
+  const selectedEntitlement = selectedProductCode
+    ? entitlementByProduct.get(selectedProductCode)
+    : undefined;
+  const selectedActive = isProductActive(selectedEntitlement?.status);
+
+  const productModules = useMemo(() => {
+    if (!selectedProduct) return [];
+    return catalogModules.filter((m) => m.productId === selectedProduct.id);
+  }, [catalogModules, selectedProduct]);
+
+  const enabledModuleCount = useMemo(() => {
+    return productModules.filter((m) => isProductActive(entitlementByModule.get(m.code)?.status))
+      .length;
+  }, [productModules, entitlementByModule]);
+
+  const filteredModules = useMemo(() => {
+    const q = moduleSearch.trim().toLowerCase();
+    return productModules.filter((m) => {
+      const ent = entitlementByModule.get(m.code);
+      const enabled = isProductActive(ent?.status);
+      if (moduleGroupFilter === "core" && !m.isCore) return false;
+      if (moduleGroupFilter === "optional" && m.isCore) return false;
+      if (moduleStatusFilter === "enabled" && !enabled) return false;
+      if (moduleStatusFilter === "disabled" && enabled) return false;
+      if (!q) return true;
+      return (
+        m.name.toLowerCase().includes(q) ||
+        m.code.toLowerCase().includes(q) ||
+        (m.description ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [
+    productModules,
+    entitlementByModule,
+    moduleSearch,
+    moduleGroupFilter,
+    moduleStatusFilter,
+  ]);
+
+  const coreModules = filteredModules.filter((m) => m.isCore);
+  const optionalModules = filteredModules.filter((m) => !m.isCore);
+
+  async function switchCustomer(nextTenantId: string) {
+    await chooseTenant(nextTenantId);
+    router.push(`/entitlements?tenantId=${encodeURIComponent(nextTenantId)}`);
+  }
+
+  async function setProductStatus(productCode: string, status: "ACTIVE" | "DISABLED") {
+    if (!tenantId) return;
     setSubmitting(true);
     setError(null);
     try {
-      await apiSend(`/api/v1/tenants/${tenantId}/products/${productCode}`, "PUT", {
-        status: productStatus,
-      });
-      const entitlements = await apiGet<EntitlementsPayload>(
-        `/api/v1/tenants/${tenantId}/entitlements`,
-      );
-      setData(entitlements);
+      await apiSend(`/api/v1/tenants/${tenantId}/products/${productCode}`, "PUT", { status });
+      await load();
+      setSelectedProductCode(productCode);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to put product entitlement");
+      setError(err instanceof Error ? err.message : "Failed to update product");
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function putModule(event: FormEvent) {
-    event.preventDefault();
-    if (!tenantId || !moduleCode) return;
+  async function setModuleStatus(moduleCode: string, status: "ACTIVE" | "SUSPENDED") {
+    if (!tenantId) return;
     setSubmitting(true);
     setError(null);
     try {
       await apiSend(`/api/v1/tenants/${tenantId}/modules/${moduleCode}/entitlement`, "PUT", {
-        status: moduleStatus,
+        status,
       });
       const entitlements = await apiGet<EntitlementsPayload>(
         `/api/v1/tenants/${tenantId}/entitlements`,
       );
       setData(entitlements);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to put module entitlement");
+      setError(err instanceof Error ? err.message : "Failed to update module");
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (!tenantId) {
+  async function enableAllVisible() {
+    for (const mod of filteredModules) {
+      if (!isProductActive(entitlementByModule.get(mod.code)?.status)) {
+        await setModuleStatus(mod.code, "ACTIVE");
+      }
+    }
+  }
+
+  function renderModuleGroup(title: string, rows: CatalogModule[]) {
+    if (rows.length === 0) return null;
     return (
-      <section className={styles.page}>
-        <h1>Entitlements</h1>
-        <TenantRequired />
-      </section>
+      <div style={{ marginBottom: "1rem" }}>
+        <h3
+          style={{
+            margin: "0 0 0.5rem",
+            fontSize: "0.8rem",
+            textTransform: "uppercase",
+            letterSpacing: "0.04em",
+            color: "var(--forge-color-muted)",
+          }}
+        >
+          {title}
+        </h3>
+        <div className="forge-module-list">
+          {rows.map((mod) => {
+            const ent = entitlementByModule.get(mod.code);
+            const enabled = isProductActive(ent?.status);
+            return (
+              <div key={mod.id} className="forge-module-row">
+                <div>
+                  <div className="forge-module-row__name">{mod.name}</div>
+                  <div className="forge-module-row__meta">
+                    {mod.isCore ? "Core" : "Optional"}
+                    {ent?.status ? ` · ${ent.status === "ACTIVE" ? "Enabled" : "Not enabled"}` : ""}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <ForgeStatusBadge
+                    status={enabled ? "ACTIVE" : "INACTIVE"}
+                    label={enabled ? "Enabled" : "Not enabled"}
+                  />
+                  <Button
+                    type="button"
+                    variant={enabled ? "secondary" : "primary"}
+                    disabled={submitting || !selectedActive}
+                    onClick={() =>
+                      void setModuleStatus(mod.code, enabled ? "SUSPENDED" : "ACTIVE")
+                    }
+                  >
+                    {enabled ? "Disable" : "Enable"}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     );
   }
 
+  if (!tenantId) {
+    return (
+      <ForgePageContainer>
+        <ForgePageHeader
+          title="Products & Modules"
+          subtitle="Select a customer to configure product and module access."
+        />
+        <TenantRequired />
+      </ForgePageContainer>
+    );
+  }
+
+  const customerName =
+    tenant?.displayName ??
+    tenants.find((t) => t.tenantId === tenantId)?.displayName ??
+    "Customer";
+
   return (
-    <section className={styles.page}>
-      <h1>Entitlements</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={tenantDetailHref(tenantId)}>Tenant detail</Link>
-      </p>
+    <ForgePageContainer>
+      <ForgePageHeader
+        title="Products & Modules"
+        subtitle={`Configure the Forge products and modules available to ${customerName}.`}
+        actions={
+          <>
+            <Link className="forge-btn forge-btn--secondary" href={tenantDetailHref(tenantId)}>
+              Back to Customer
+            </Link>
+            <ForgeTenantSwitcher
+              label="Customer"
+              tenants={tenants}
+              activeTenantId={tenantId}
+              onSelect={(id) => void switchCustomer(id)}
+              disabled={submitting}
+            />
+          </>
+        }
+      />
 
-      {error ? <p className={styles.error}>{error}</p> : null}
-      {loading ? <p className={styles.muted}>Loading…</p> : null}
+      <ForgeContextBar
+        title={customerName}
+        status={tenant ? <ForgeStatusBadge status={tenant.status} /> : undefined}
+        subtitle={
+          selectedActive && selectedProduct
+            ? `${selectedProduct.name} · ${enabledModuleCount} modules enabled`
+            : "No product selected for module management"
+        }
+        meta={
+          tenant?.slug ? (
+            <span>{tenant.slug}.forgepublicsafety.com</span>
+          ) : undefined
+        }
+        icon={<span aria-hidden>{productIcon(selectedProductCode ?? "")}</span>}
+        actions={
+          <Link className="forge-btn forge-btn--outline" href={tenantDetailHref(tenantId)}>
+            Open Customer
+          </Link>
+        }
+      />
 
-      <div className={styles.panel}>
-        <h2>Put product entitlement</h2>
-        <form className={styles.form} onSubmit={putProduct}>
-          <div className={styles.formRow}>
-            <label htmlFor="productCode">Product</label>
-            <select
-              id="productCode"
-              value={productCode}
-              onChange={(e) => setProductCode(e.target.value)}
-              required
-            >
-              {catalogProducts.map((p) => (
-                <option key={p.id} value={p.code}>
-                  {p.code} — {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.formRow}>
-            <label htmlFor="productStatus">Status</label>
-            <select
-              id="productStatus"
-              value={productStatus}
-              onChange={(e) => setProductStatus(e.target.value as "ACTIVE" | "DISABLED")}
-            >
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="DISABLED">DISABLED</option>
-            </select>
-          </div>
-          <div className={styles.actions}>
-            <button className={styles.button} type="submit" disabled={submitting}>
-              Put product
-            </button>
-          </div>
-        </form>
-      </div>
+      {error ? (
+        <ErrorState title="Something went wrong" description={error} />
+      ) : null}
 
-      <div className={styles.panel}>
-        <h2>Put module entitlement</h2>
-        <form className={styles.form} onSubmit={putModule}>
-          <div className={styles.formRow}>
-            <label htmlFor="moduleCode">Module</label>
-            <select
-              id="moduleCode"
-              value={moduleCode}
-              onChange={(e) => setModuleCode(e.target.value)}
-              required
-            >
-              {catalogModules.map((m) => (
-                <option key={m.id} value={m.code}>
-                  {m.code} — {m.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.formRow}>
-            <label htmlFor="moduleStatus">Status</label>
-            <select
-              id="moduleStatus"
-              value={moduleStatus}
-              onChange={(e) =>
-                setModuleStatus(e.target.value as "ACTIVE" | "PENDING" | "SUSPENDED" | "GRACE")
+      {loading ? (
+        <ForgePageSection title="Products">
+          <ForgeSkeleton height="6rem" />
+        </ForgePageSection>
+      ) : (
+        <>
+          <ForgePageSection
+            title="Products"
+            description="Enable a product for this customer, then manage its modules."
+          >
+            {catalogProducts.length === 0 ? (
+              <EmptyState
+                title="No products in catalog"
+                description="Platform products will appear here once the catalog is seeded."
+              />
+            ) : (
+              <div className="forge-product-grid">
+                {catalogProducts.map((product) => {
+                  const ent = entitlementByProduct.get(product.code);
+                  const active = isProductActive(ent?.status);
+                  const selected = product.code === selectedProductCode;
+                  const modsForProduct = catalogModules.filter((m) => m.productId === product.id);
+                  const enabledCount = modsForProduct.filter((m) =>
+                    isProductActive(entitlementByModule.get(m.code)?.status),
+                  ).length;
+                  return (
+                    <Card
+                      key={product.id}
+                      className="forge-product-card"
+                      variant={selected ? "selected" : "interactive"}
+                      onClick={() => setSelectedProductCode(product.code)}
+                    >
+                      <div className="forge-product-card__top">
+                        <div className="forge-product-card__icon" aria-hidden>
+                          {productIcon(product.code)}
+                        </div>
+                        <div>
+                          <h3 className="forge-product-card__name">{product.name}</h3>
+                          <ForgeStatusBadge
+                            status={active ? "ACTIVE" : "INACTIVE"}
+                            label={active ? "Active" : "Not enabled"}
+                          />
+                        </div>
+                      </div>
+                      <p className="forge-product-card__meta">
+                        {active
+                          ? `${enabledCount} of ${modsForProduct.length} modules enabled`
+                          : product.description || "Not enabled for this customer"}
+                      </p>
+                      <div className="forge-product-card__actions">
+                        {active ? (
+                          <Button
+                            type="button"
+                            variant="primary"
+                            disabled={submitting}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProductCode(product.code);
+                            }}
+                          >
+                            Manage Modules
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="primary"
+                            disabled={submitting}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void setProductStatus(product.code, "ACTIVE");
+                            }}
+                          >
+                            Add Product
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </ForgePageSection>
+
+          {selectedProduct ? (
+            <ForgePageSection
+              title={selectedProduct.name}
+              description={
+                selectedActive
+                  ? `${enabledModuleCount} of ${productModules.length} available modules selected`
+                  : "Enable this product to manage modules."
+              }
+              actions={
+                selectedActive ? (
+                  <Button
+                    type="button"
+                    variant="danger"
+                    disabled={submitting}
+                    onClick={() => void setProductStatus(selectedProduct.code, "DISABLED")}
+                  >
+                    Disable Product
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="primary"
+                    disabled={submitting}
+                    onClick={() => void setProductStatus(selectedProduct.code, "ACTIVE")}
+                  >
+                    Add Product
+                  </Button>
+                )
               }
             >
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="PENDING">PENDING</option>
-              <option value="SUSPENDED">SUSPENDED</option>
-              <option value="GRACE">GRACE</option>
-            </select>
-          </div>
-          <div className={styles.actions}>
-            <button className={styles.button} type="submit" disabled={submitting}>
-              Put module
-            </button>
-          </div>
-        </form>
-      </div>
+              {selectedActive ? (
+                <>
+                  <ForgeToolbar
+                    actions={
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={submitting || filteredModules.length === 0}
+                        onClick={() => void enableAllVisible()}
+                      >
+                        Select All Available
+                      </Button>
+                    }
+                  >
+                    <input
+                      className="forge-input"
+                      type="search"
+                      placeholder="Search modules..."
+                      value={moduleSearch}
+                      onChange={(e) => setModuleSearch(e.target.value)}
+                      aria-label="Search modules"
+                    />
+                    <select
+                      className="forge-select"
+                      aria-label="Category"
+                      value={moduleGroupFilter}
+                      onChange={(e) =>
+                        setModuleGroupFilter(e.target.value as "all" | "core" | "optional")
+                      }
+                      style={{ width: "auto", minWidth: "9rem", marginTop: 0 }}
+                    >
+                      <option value="all">All categories</option>
+                      <option value="core">Core</option>
+                      <option value="optional">Optional</option>
+                    </select>
+                    <select
+                      className="forge-select"
+                      aria-label="Status"
+                      value={moduleStatusFilter}
+                      onChange={(e) =>
+                        setModuleStatusFilter(e.target.value as "all" | "enabled" | "disabled")
+                      }
+                      style={{ width: "auto", minWidth: "9rem", marginTop: 0 }}
+                    >
+                      <option value="all">All statuses</option>
+                      <option value="enabled">Enabled</option>
+                      <option value="disabled">Not enabled</option>
+                    </select>
+                  </ForgeToolbar>
 
-      {data ? (
-        <>
-          <div className={styles.panel}>
-            <h2>Product entitlements</h2>
-            {data.products.length === 0 ? (
-              <p className={styles.muted}>None</p>
-            ) : (
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Code</th>
-                    <th>Name</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.products.map((row) => (
-                    <tr key={row.id}>
-                      <td className={styles.mono}>{row.productCode}</td>
-                      <td>{row.productName}</td>
-                      <td>{row.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                  {filteredModules.length === 0 ? (
+                    <EmptyState
+                      title="No modules match"
+                      description="Try adjusting search or filters."
+                    />
+                  ) : (
+                    <>
+                      {renderModuleGroup("Core modules", coreModules)}
+                      {renderModuleGroup("Optional modules", optionalModules)}
+                    </>
+                  )}
+                </>
+              ) : (
+                <EmptyState
+                  title="Product not enabled"
+                  description={`Add ${selectedProduct.name} to configure modules for this customer.`}
+                  action={
+                    <Button
+                      type="button"
+                      variant="primary"
+                      disabled={submitting}
+                      onClick={() => void setProductStatus(selectedProduct.code, "ACTIVE")}
+                    >
+                      Add Product
+                    </Button>
+                  }
+                />
+              )}
 
-          <div className={styles.panel}>
-            <h2>Module entitlements</h2>
-            {data.modules.length === 0 ? (
-              <p className={styles.muted}>None</p>
-            ) : (
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Code</th>
-                    <th>Name</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.modules.map((row) => (
-                    <tr key={row.id}>
-                      <td className={styles.mono}>{row.moduleCode}</td>
-                      <td>{row.moduleName}</td>
-                      <td>{row.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+              <details className="forge-advanced-details">
+                <summary>Advanced Details</summary>
+                <p style={{ fontSize: "0.85rem", color: "var(--forge-color-muted)" }}>
+                  Customer ID: <code>{tenantId}</code>
+                  {tenant?.tenantKey ? (
+                    <>
+                      <br />
+                      Tenant key: <code>{tenant.tenantKey}</code>
+                    </>
+                  ) : null}
+                  <br />
+                  Product code: <code>{selectedProduct.code}</code>
+                </p>
+              </details>
+            </ForgePageSection>
+          ) : null}
         </>
-      ) : null}
-    </section>
+      )}
+    </ForgePageContainer>
   );
 }
 
 export default function EntitlementsPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense
+      fallback={
+        <ForgePageContainer>
+          <ForgeSkeleton height="2rem" width="16rem" />
+        </ForgePageContainer>
+      }
+    >
       <EntitlementsInner />
     </Suspense>
   );

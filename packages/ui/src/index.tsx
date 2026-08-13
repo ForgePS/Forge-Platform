@@ -22,6 +22,11 @@ export { ForgeSidebar } from "./shell/ForgeSidebar.js";
 export { ForgeTopbar } from "./shell/ForgeTopbar.js";
 export { ForgeBreadcrumbs } from "./shell/ForgeBreadcrumbs.js";
 export { ForgePageHeader, ForgePageActions } from "./shell/ForgePageHeader.js";
+export { ForgePageContainer } from "./shell/ForgePageContainer.js";
+export { ForgePageSection, ForgeSectionHeader } from "./shell/ForgePageSection.js";
+export { ForgeToolbar } from "./shell/ForgeToolbar.js";
+export { ForgeStatusBadge, humanizeStatus } from "./shell/ForgeStatusBadge.js";
+export { ForgeContextBar } from "./shell/ForgeContextBar.js";
 export {
   ForgeNotificationMenu,
   ForgeProductSwitcher,

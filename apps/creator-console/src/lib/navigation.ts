@@ -41,7 +41,7 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
     label: "Catalog",
     items: [
       { id: "products", label: "Products", route: "/products" },
-      { id: "entitlements", label: "Entitlements", route: "/entitlements" },
+      { id: "entitlements", label: "Products & Modules", route: "/entitlements" },
       { id: "subscriptions", label: "Subscriptions", route: "/subscriptions" },
       { id: "features", label: "Feature flags", route: "/features" },
     ],

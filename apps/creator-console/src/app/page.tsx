@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState } from "react";
+import { ForgePageContainer, ForgePageHeader, ForgePageSection, ForgeStatusBadge } from "@forge/ui";
 import {
   apiGet,
   fetchHealth,
@@ -151,41 +152,31 @@ function DashboardInner() {
   const appEnv = process.env.NEXT_PUBLIC_APP_ENV ?? process.env.APP_ENV ?? "local";
 
   return (
-    <section className={styles.page}>
-      <div className="forge-page-header">
-        <div>
-          <h1 className="forge-page-header__title">Creator Console</h1>
-          <p className="forge-page-header__subtitle">
-            Platform operations, customer management and system administration.
-            {!me ? (
-              <>
-                {" "}
-                <Link href="/login">Sign in</Link> to load tenant-scoped stats.
-              </>
-            ) : (
-              <>
-                {" "}
-                Tenant <span className={styles.mono}>{me.tenantId}</span> ·{" "}
-                <Link href="/select-tenant">Switch tenant</Link>
-              </>
-            )}
-          </p>
-        </div>
-        <div className="forge-page-actions">
-          <Link className="forge-btn" href="/tenants">
-            + New Tenant
-          </Link>
-          <Link className="forge-btn forge-btn--outline" href="/users">
-            + Invite User
-          </Link>
-          <Link className="forge-btn forge-btn--secondary" href="/entitlements">
-            + Assign Product
-          </Link>
-          <Link className="forge-btn forge-btn--secondary" href="/onboarding">
-            + Start Onboarding
-          </Link>
-        </div>
-      </div>
+    <ForgePageContainer>
+      <ForgePageHeader
+        title="Creator Console"
+        subtitle={
+          !me
+            ? "Platform operations, customer management and system administration. Sign in to load tenant-scoped stats."
+            : "Platform operations, customer management and system administration."
+        }
+        actions={
+          <>
+            <Link className="forge-btn" href="/tenants">
+              New Customer
+            </Link>
+            <Link className="forge-btn forge-btn--outline" href="/users">
+              Invite User
+            </Link>
+            <Link className="forge-btn forge-btn--secondary" href="/entitlements">
+              Products & Modules
+            </Link>
+            <Link className="forge-btn forge-btn--secondary" href="/onboarding">
+              Start Onboarding
+            </Link>
+          </>
+        }
+      />
 
       {authError ? <p className={styles.error}>{authError}</p> : null}
       {error ? <p className={styles.error}>{error}</p> : null}
@@ -237,35 +228,34 @@ function DashboardInner() {
             </article>
           </div>
 
-          <div className={styles.panel}>
-            <h2>Platform health</h2>
+          <ForgePageSection title="Platform Status" description="Live health probes for the platform API.">
             <dl className={styles.dl}>
               <dt>API</dt>
               <dd>
                 {stats.health ? (
-                  <span className={styles.badgeOk}>{stats.health.status}</span>
+                  <ForgeStatusBadge status="ACTIVE" label={stats.health.status} />
                 ) : (
-                  <span className={styles.badgeBad}>unreachable</span>
+                  <ForgeStatusBadge status="SUSPENDED" label="Unreachable" />
                 )}
               </dd>
               <dt>Database</dt>
               <dd>
                 {stats.ready?.checks.database ? (
-                  <span className={styles.badgeOk}>ready</span>
+                  <ForgeStatusBadge status="READY" label="Ready" />
                 ) : stats.ready ? (
-                  <span className={styles.badgeBad}>not ready</span>
+                  <ForgeStatusBadge status="NEEDS_ATTENTION" label="Not ready" />
                 ) : (
-                  <span className={styles.badgeWarn}>unknown</span>
+                  <ForgeStatusBadge status="PENDING" label="Unknown" />
                 )}
               </dd>
               <dt>Queue</dt>
               <dd>
                 {stats.queueHealth === "ok" ? (
-                  <span className={styles.badgeOk}>ok</span>
+                  <ForgeStatusBadge status="ACTIVE" label="Healthy" />
                 ) : stats.queueHealth === "degraded" ? (
-                  <span className={styles.badgeWarn}>degraded</span>
+                  <ForgeStatusBadge status="NEEDS_ATTENTION" label="Degraded" />
                 ) : (
-                  <span className={styles.badgeWarn}>{stats.queueHealth ?? "unavailable"}</span>
+                  <ForgeStatusBadge status="PENDING" label={stats.queueHealth ?? "Unavailable"} />
                 )}
               </dd>
               <dt>Environment</dt>
@@ -274,20 +264,15 @@ function DashboardInner() {
               <dd>{stats.health?.version ?? "—"}</dd>
               <dt>Console version</dt>
               <dd>{appVersion}</dd>
-              <dt>Last checked</dt>
-              <dd className={styles.mono}>
-                {stats.health?.timestamp ?? stats.ready?.timestamp ?? "—"}
-              </dd>
             </dl>
             <p className={styles.linkRow}>
               <Link href="/health">Platform health detail</Link>
               <Link href="/deployment">Deployment information</Link>
               <Link href="/migrations">Data migration</Link>
             </p>
-          </div>
+          </ForgePageSection>
 
-          <div className={styles.panel}>
-            <h2>Recent audit</h2>
+          <ForgePageSection title="Recent Activity" description="Latest audit events for the active customer.">
             {!me ? (
               <p className={styles.muted}>Sign in and select a tenant to load audit events.</p>
             ) : stats.recentAudit.length === 0 ? (
@@ -308,7 +293,9 @@ function DashboardInner() {
                       <td className={styles.mono}>{event.occurredAt}</td>
                       <td>{event.action}</td>
                       <td>{event.resourceType}</td>
-                      <td>{event.result}</td>
+                      <td>
+                        <ForgeStatusBadge status={event.result} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -319,10 +306,10 @@ function DashboardInner() {
                 <Link href={`/audit${tenantQuery(me.tenantId)}`}>View full audit log</Link>
               </p>
             ) : null}
-          </div>
+          </ForgePageSection>
         </>
       ) : null}
-    </section>
+    </ForgePageContainer>
   );
 }
 

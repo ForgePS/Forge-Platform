@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Badge, FixtureBanner, ForgeDataTable, ForgePageHeader, LoadingIndicator } from "@forge/ui";
+import { Badge, FixtureBanner, ForgeDataTable, ForgePageContainer, ForgePageHeader, LoadingIndicator } from "@forge/ui";
 import { getMigrationStatusService } from "@/lib/migrations/mock-migration.service";
 import type { MigrationSummary } from "@/lib/migrations/migration.types";
 
@@ -26,7 +26,7 @@ export default function MigrationsPage() {
   }, []);
 
   return (
-    <div>
+    <ForgePageContainer width="wide">
       <ForgePageHeader
         title="Data migration"
         subtitle="Track tenant migration progress while AWS cutover continues. This center does not run migration jobs."
@@ -71,6 +71,6 @@ export default function MigrationsPage() {
           },
         ]}
       />
-    </div>
+    </ForgePageContainer>
   );
 }

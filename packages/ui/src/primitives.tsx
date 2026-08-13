@@ -13,7 +13,7 @@ export function Button({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
-  variant?: "primary" | "secondary" | "danger" | "outline";
+  variant?: "primary" | "secondary" | "danger" | "outline" | "ghost";
 }) {
   const variantClass =
     variant === "secondary"
@@ -22,7 +22,9 @@ export function Button({
         ? "forge-btn forge-btn--danger"
         : variant === "outline"
           ? "forge-btn forge-btn--outline"
-          : "forge-btn";
+          : variant === "ghost"
+            ? "forge-btn forge-btn--ghost"
+            : "forge-btn";
   return (
     <button
       type="button"
@@ -127,9 +129,45 @@ export function Badge({ children }: { children: ReactNode }) {
   return <span data-component="badge">{children}</span>;
 }
 
-export function Card({ children, title }: { children: ReactNode; title?: string }) {
+export function Card({
+  children,
+  title,
+  className,
+  variant = "standard",
+  onClick,
+}: {
+  children: ReactNode;
+  title?: string;
+  className?: string;
+  variant?: "standard" | "interactive" | "selected";
+  onClick?: () => void;
+}) {
+  const variantClass =
+    variant === "interactive"
+      ? "forge-card--interactive"
+      : variant === "selected"
+        ? "forge-card--selected"
+        : null;
+  const interactive = Boolean(onClick) || variant === "interactive" || variant === "selected";
   return (
-    <section data-component="card" className="forge-card">
+    <section
+      data-component="card"
+      className={["forge-card", variantClass, className].filter(Boolean).join(" ")}
+      onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      data-interactive={interactive ? "true" : undefined}
+    >
       {title ? <h2>{title}</h2> : null}
       {children}
     </section>

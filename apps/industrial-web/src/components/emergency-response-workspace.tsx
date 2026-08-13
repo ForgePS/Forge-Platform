@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ApiError, apiGet, apiSend } from "@forge/web-kit";
 
 const categories = ["eap", "scenarios", "drills", "responseTeams", "jsas"] as const;
@@ -20,7 +20,7 @@ export function EmergencyResponseWorkspace({ moduleName }: { moduleName: string 
   const [planId, setPlanId] = useState("");
   const [eventDate, setEventDate] = useState("");
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       setItems(
         (await apiGet<{ items: RecordRow[] }>(`/api/v1/industrial/emergency-response/${category}`))
@@ -30,11 +30,11 @@ export function EmergencyResponseWorkspace({ moduleName }: { moduleName: string 
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Unable to load emergency response records");
     }
-  }
+  }, [category]);
 
   useEffect(() => {
     void load();
-  }, [category]);
+  }, [load]);
 
   async function createRecord(e: React.FormEvent) {
     e.preventDefault();
