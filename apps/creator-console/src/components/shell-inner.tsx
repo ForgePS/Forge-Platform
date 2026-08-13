@@ -44,13 +44,28 @@ function breadcrumbsForPath(pathname: string): ForgeBreadcrumbItem[] {
     return [{ label: "Overview" }];
   }
   const segments = clean.split("/").filter(Boolean);
-  const items: ForgeBreadcrumbItem[] = [{ label: "Overview", href: "/" }];
+  const items: ForgeBreadcrumbItem[] = [{ label: "Home", href: "/" }];
+  const labelMap: Record<string, string> = {
+    tenants: "Customers",
+    "tenant-detail": "Customer",
+    "select-tenant": "Select customer",
+    entitlements: "Product access",
+    migrations: "Migration Center",
+    support: "Support",
+    sessions: "Access sessions",
+    renewals: "Renewals",
+    facilities: "Facilities",
+    domains: "Domains",
+    email: "Email",
+    activity: "Activity",
+    notifications: "Notifications",
+  };
   let acc = "";
   for (let i = 0; i < segments.length; i += 1) {
     acc += `/${segments[i]}`;
-    const label = segments[i]!
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
+    const seg = segments[i]!;
+    const label =
+      labelMap[seg] ?? seg.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     const last = i === segments.length - 1;
     items.push(last ? { label } : { label, href: `${acc}/` });
   }

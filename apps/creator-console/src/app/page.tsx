@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityTimeline,
   EmptyState,
@@ -27,6 +27,13 @@ import {
 } from "@/lib/api";
 import { getMigrationStatusService } from "@/lib/migrations/mock-migration.service";
 import type { MigrationSummary } from "@/lib/migrations/migration.types";
+import {
+  customerStatusTone,
+  humanActivityTitle,
+  humanCustomerStatus,
+  humanMigrationStatus,
+  unavailableLabel,
+} from "@/lib/presentation";
 import styles from "./page.module.css";
 
 type AnalyticsOverview = {
@@ -65,9 +72,17 @@ type TenantRow = {
   displayName: string;
   status: string;
   tenantKey: string;
+  updatedAt?: string;
 };
 
 type JobRow = { id: string; status?: string };
+
+type AttentionItem = {
+  id: string;
+  title: string;
+  href: string;
+  tone: "warning" | "danger" | "info";
+};
 
 function metricOrUnavailable(value: number | null | undefined, loading: boolean) {
   if (loading) return undefined;
@@ -90,7 +105,14 @@ function DashboardInner() {
   const canAnalytics = hasPermission("platform.analytics.read") || Boolean(me?.isPlatformAdmin);
   const canTenants = hasPermission("platform.tenant.read") || Boolean(me?.isPlatformAdmin);
   const canInvites = hasPermission("platform.invitation.read") || Boolean(me?.isPlatformAdmin);
-  const canJobs = hasPermission("platform.jobs.read") || hasPermission("import.view") || Boolean(me?.isPlatformAdmin);
+  const canJobs =
+    hasPermission("platform.jobs.read") ||
+    hasPermission("import.view") ||
+    Boolean(me?.isPlatformAdmin);
+  const canBilling =
+    hasPermission("platform.entitlement.manage") ||
+    hasPermission("tenant.billing.read") ||
+    Boolean(me?.isPlatformAdmin);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -156,7 +178,7 @@ function DashboardInner() {
         setMigrations(null);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load dashboard");
+      setError(err instanceof Error ? err.message : "We couldn't load the dashboard.");
     } finally {
       setLoading(false);
     }
@@ -167,39 +189,119 @@ function DashboardInner() {
   }, [authLoading, load]);
 
   const customerCount = tenants?.length ?? overview?.tenants.total ?? null;
-  const recentCustomers = (tenants ?? []).slice(0, 5);
-  const recentMigrations = (migrations ?? []).slice(0, 5);
+  const recentCustomers = useMemo(
+    () =>
+      [...(tenants ?? [])]
+        .sort((a, b) => String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")))
+        .slice(0, 8),
+    [tenants],
+  );
+  const openMigrations =
+    migrations?.filter((m) => m.status !== "COMPLETE" && m.status !== "NOT_STARTED").length ?? null;
+  const reviewMigrations =
+    migrations?.filter((m) => m.status === "VALIDATION_REQUIRED" || m.status === "FAILED").length ??
+    0;
+
+  const attention = useMemo(() => {
+    const items: AttentionItem[] = [];
+    if (pendingInvites != null && pendingInvites > 0) {
+      items.push({
+        id: "invites",
+        title: `${pendingInvites} invitation${pendingInvites === 1 ? "" : "s"} pending`,
+        href: "/invitations/",
+        tone: "warning",
+      });
+    }
+    if (reviewMigrations > 0) {
+      items.push({
+        id: "mig-review",
+        title: `${reviewMigrations} migration${reviewMigrations === 1 ? "" : "s"} require review`,
+        href: "/migrations/",
+        tone: "danger",
+      });
+    }
+    if (overview && overview.onboarding.inProgress > 0) {
+      items.push({
+        id: "onboarding",
+        title: `${overview.onboarding.inProgress} customer${overview.onboarding.inProgress === 1 ? "" : "s"} still onboarding`,
+        href: "/onboarding/",
+        tone: "info",
+      });
+    }
+    if (ready?.checks.database === false) {
+      items.push({
+        id: "db",
+        title: "Database needs attention",
+        href: "/operations/health/",
+        tone: "danger",
+      });
+    }
+    if (health && String(health.status).toLowerCase() !== "ok" && String(health.status).toLowerCase() !== "healthy") {
+      items.push({
+        id: "api",
+        title: "Platform API reported an issue",
+        href: "/operations/health/",
+        tone: "danger",
+      });
+    }
+    return items;
+  }, [health, overview, pendingInvites, ready, reviewMigrations]);
+
   const activityItems =
-    overview?.recentActivity.slice(0, 8).map((event, index) => ({
-      id: `${event.occurredAt}-${index}`,
-      title: event.action,
-      detail: `${event.resourceType} · ${event.result}${event.tenantKey ? ` · ${event.tenantKey}` : ""}`,
-      at: new Date(event.occurredAt).toLocaleString(),
-      tone: event.result.toLowerCase().includes("fail") ? ("danger" as const) : ("neutral" as const),
-    })) ?? [];
+    overview?.recentActivity.slice(0, 8).map((event, index) => {
+      const item: {
+        id: string;
+        title: string;
+        detail?: string;
+        at: string;
+        tone: "danger" | "neutral";
+      } = {
+        id: `${event.occurredAt}-${index}`,
+        title: humanActivityTitle(event.action, event.resourceType, event.result),
+        at: new Date(event.occurredAt).toLocaleString(),
+        tone: event.result.toLowerCase().includes("fail") ? "danger" : "neutral",
+      };
+      if (event.tenantKey) item.detail = `Customer · ${event.tenantKey}`;
+      return item;
+    }) ?? [];
+
+  const apiHealthy =
+    health != null &&
+    ["ok", "healthy", "up"].includes(String(health.status).toLowerCase());
+  const dbHealthy = ready?.checks.database === true;
 
   return (
     <section className={styles.page}>
       <ForgePageHeader
-        title="Overview"
-        subtitle="Platform home — live metrics only. Missing data shows Not available."
+        title="Forge Creator Console"
+        subtitle="Manage customers, products, users, migrations, and platform operations."
         actions={
           <ForgePageActions>
-            <Link className="forge-btn" href="/customers/new/">
-              Add customer
-            </Link>
-            <Link className="forge-btn forge-btn--outline" href="/invitations/">
-              Invitations
-            </Link>
-            <Link className="forge-btn forge-btn--secondary" href="/migrations/">
-              Migration Center
+            {canTenants ? (
+              <Link className="forge-btn" href="/customers/new/">
+                + Add Customer
+              </Link>
+            ) : null}
+            <Link className="forge-btn forge-btn--outline" href="/migrations/">
+              Start Migration
             </Link>
           </ForgePageActions>
         }
       />
 
       {authError ? <p className={styles.error}>{authError}</p> : null}
-      {error ? <ErrorState title="Dashboard error" description={error} /> : null}
+      {error ? (
+        <ErrorState
+          title="We couldn't load your dashboard"
+          description={error}
+          action={
+            <button type="button" className="forge-btn" onClick={() => void load()}>
+              Try again
+            </button>
+          }
+        />
+      ) : null}
+
       {loading || authLoading ? (
         <ForgeMetricGrid>
           <ForgeSkeleton height="5rem" />
@@ -209,135 +311,254 @@ function DashboardInner() {
         </ForgeMetricGrid>
       ) : null}
 
+      <div className={styles.panel}>
+        <h2>Needs your attention</h2>
+        {loading ? (
+          <p className={styles.muted}>Checking…</p>
+        ) : attention.length === 0 ? (
+          <EmptyState title="You're all caught up" description="No urgent items right now." />
+        ) : (
+          <ul className={styles.attentionList}>
+            {attention.map((item) => (
+              <li key={item.id}>
+                <Link href={item.href} className={styles.attentionLink}>
+                  <StatusBadge tone={item.tone === "danger" ? "danger" : item.tone === "warning" ? "warning" : "info"}>
+                    Attention
+                  </StatusBadge>
+                  <span>{item.title}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <ForgeMetricGrid>
         <ForgeMetricCard
-          label="Customers"
-          value={metricOrUnavailable(customerCount, loading)}
-          {...(overview ? { hint: `Active ${overview.tenants.active}` } : {})}
+          label="Active customers"
+          value={metricOrUnavailable(overview?.tenants.active ?? customerCount, loading)}
+        />
+        <ForgeMetricCard
+          label="Active users"
+          value={metricOrUnavailable(overview?.users.activeMemberships, loading || overviewUnavailable)}
+          {...(overviewUnavailable ? { hint: "Analytics overview unavailable" } : {})}
+        />
+        <ForgeMetricCard
+          label="Products enabled"
+          value={metricOrUnavailable(
+            overview?.products.tenantAssignmentsActive,
+            loading || overviewUnavailable,
+          )}
+        />
+        <ForgeMetricCard
+          label="Open migrations"
+          value={metricOrUnavailable(openMigrations, loading)}
         />
         <ForgeMetricCard
           label="Pending invitations"
           value={metricOrUnavailable(pendingInvites, loading)}
-          {...(!canInvites ? { hint: "Requires invitation read permission" } : {})}
         />
         <ForgeMetricCard
-          label="Import / jobs"
+          label="Background jobs"
           value={metricOrUnavailable(importJobs, loading)}
-          {...(!canJobs ? { hint: "Requires jobs or import permission" } : {})}
         />
         <ForgeMetricCard
-          label="Onboarding in progress"
-          value={metricOrUnavailable(overview?.onboarding.inProgress, loading || overviewUnavailable)}
+          label="Monthly / annual revenue"
+          value={null}
+          hint="Billing totals require configured invoices — open Billing"
+        />
+        <ForgeMetricCard
+          label="Renewals due"
+          value={null}
+          hint="Open Renewals when subscription end dates are available"
         />
       </ForgeMetricGrid>
 
       <div className={styles.panel}>
-        <h2>Platform health</h2>
-        <ForgeMetricGrid>
-          <ForgeStatusCard
-            title="API"
-            status={health?.status ?? "Not available"}
-            {...(health?.version ? { detail: `Version ${health.version}` } : {})}
-          />
-          <ForgeStatusCard
-            title="Database"
-            status={
-              ready?.checks.database === true
-                ? "ready"
-                : ready?.checks.database === false
-                  ? "not ready"
-                  : "Not available"
-            }
-          />
-          <ForgeStatusCard title="Workers" status="Not available" detail="No workers endpoint in API" />
-          <ForgeStatusCard title="CloudFront" status="Not available" detail="No CloudFront metric endpoint" />
-          <ForgeStatusCard title="Cognito" status="Not available" detail="No Cognito health endpoint" />
-        </ForgeMetricGrid>
-        <p className={styles.linkRow}>
-          <Link href="/operations/health/">Operations health</Link>
-          <Link href="/health/">System health detail</Link>
-        </p>
+        <h2>Quick actions</h2>
+        <div className={styles.actions}>
+          {canTenants ? (
+            <Link className="forge-btn" href="/customers/new/">
+              Add Customer
+            </Link>
+          ) : null}
+          {canInvites ? (
+            <Link className="forge-btn forge-btn--outline" href="/invitations/">
+              Invite User
+            </Link>
+          ) : null}
+          <Link className="forge-btn forge-btn--outline" href="/migrations/">
+            Start Migration
+          </Link>
+          {hasPermission("platform.entitlement.manage") || me?.isPlatformAdmin ? (
+            <Link className="forge-btn forge-btn--outline" href="/products/">
+              Add Product
+            </Link>
+          ) : null}
+          {canBilling ? (
+            <Link className="forge-btn forge-btn--secondary" href="/billing/">
+              View Billing
+            </Link>
+          ) : null}
+          <Link className="forge-btn forge-btn--secondary" href="/operations/health/">
+            View Health
+          </Link>
+          <Link className="forge-btn forge-btn--secondary" href="/support/">
+            Customer Support
+          </Link>
+        </div>
       </div>
 
       <div className={styles.panel}>
-        <h2>Recent customers</h2>
+        <h2>Customer overview</h2>
         {tenants === null && !loading ? (
-          <p className={styles.muted}>Not available</p>
+          <p className={styles.muted}>Customer list unavailable.</p>
         ) : recentCustomers.length === 0 ? (
-          <EmptyState title="No customers yet" description="Create a customer to get started." action={<Link className="forge-btn" href="/customers/new/">Add customer</Link>} />
+          <EmptyState
+            title="No customers yet"
+            description="Add your first customer to begin using Forge."
+            action={
+              <Link className="forge-btn" href="/customers/new/">
+                Add Customer
+              </Link>
+            }
+          />
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Status</th>
-                <th>Key</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentCustomers.map((row) => (
-                <tr key={row.id}>
-                  <td>
-                    <Link href={tenantDetailHref(row.id)}>{row.displayName}</Link>
-                  </td>
-                  <td>
-                    <StatusBadge tone={row.status === "ACTIVE" ? "success" : "neutral"}>{row.status}</StatusBadge>
-                  </td>
-                  <td className={styles.mono}>{row.tenantKey}</td>
+          <div style={{ overflowX: "auto" }}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Status</th>
+                  <th>Last activity</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recentCustomers.map((row) => (
+                  <tr key={row.id}>
+                    <td>
+                      <Link href={tenantDetailHref(row.id)}>{row.displayName}</Link>
+                    </td>
+                    <td>
+                      <StatusBadge tone={customerStatusTone(row.status)}>
+                        {humanCustomerStatus(row.status)}
+                      </StatusBadge>
+                    </td>
+                    <td>
+                      {row.updatedAt ? new Date(row.updatedAt).toLocaleString() : unavailableLabel()}
+                    </td>
+                    <td className={styles.actions}>
+                      <Link href={tenantDetailHref(row.id)}>Open</Link>
+                      <Link href={`${tenantDetailHref(row.id)}&tab=products`}>Manage</Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
         <p className={styles.linkRow}>
           <Link href="/customers/">All customers</Link>
         </p>
       </div>
 
-      <div className={styles.panel}>
-        <h2>Recent migrations</h2>
-        {migrations === null ? (
-          <p className={styles.muted}>Not available</p>
-        ) : recentMigrations.length === 0 ? (
-          <EmptyState title="No migrations" description="Migration jobs appear when an adapter is connected." />
-        ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Status</th>
-                <th>Data</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentMigrations.map((row) => (
-                <tr key={row.id}>
-                  <td>
-                    <Link href={`/migrations/detail/?id=${encodeURIComponent(row.id)}`}>{row.tenantDisplayName}</Link>
-                  </td>
-                  <td>
-                    <StatusBadge tone={row.status === "FAILED" ? "danger" : row.status === "COMPLETE" ? "success" : "info"}>
-                      {row.status}
-                    </StatusBadge>
-                  </td>
-                  <td>{row.dataSource}</td>
+      <div className={styles.twoCol}>
+        <div className={styles.panel}>
+          <h2>System health</h2>
+          <ForgeMetricGrid>
+            <ForgeStatusCard
+              title="Forge Platform"
+              status={apiHealthy ? "Healthy" : health ? "Needs attention" : "Unavailable"}
+            />
+            <ForgeStatusCard
+              title="Sign in"
+              status={apiHealthy ? "Healthy" : "Unavailable"}
+              detail="Application authentication"
+            />
+            <ForgeStatusCard
+              title="Database"
+              status={dbHealthy ? "Healthy" : ready ? "Needs attention" : "Unavailable"}
+            />
+            <ForgeStatusCard
+              title="Email"
+              status="Unavailable"
+              detail="Email service status is not wired yet — open Email"
+            />
+          </ForgeMetricGrid>
+          <p className={styles.linkRow}>
+            <Link href="/operations/health/">View details</Link>
+          </p>
+        </div>
+
+        <div className={styles.panel}>
+          <h2>Recent migrations</h2>
+          {migrations === null ? (
+            <p className={styles.muted}>Migration status unavailable.</p>
+          ) : migrations.length === 0 ? (
+            <EmptyState
+              title="No migrations"
+              description="Start a migration when moving an existing customer into Forge."
+              action={
+                <Link className="forge-btn" href="/migrations/">
+                  Start Migration
+                </Link>
+              }
+            />
+          ) : (
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Status</th>
+                  <th>Progress</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody>
+                {migrations.slice(0, 5).map((row) => (
+                  <tr key={row.id}>
+                    <td>
+                      <Link href={`/migrations/detail/?id=${encodeURIComponent(row.id)}`}>
+                        {row.tenantDisplayName}
+                      </Link>
+                    </td>
+                    <td>
+                      <StatusBadge
+                        tone={
+                          row.status === "FAILED"
+                            ? "danger"
+                            : row.status === "COMPLETE"
+                              ? "success"
+                              : "info"
+                        }
+                      >
+                        {humanMigrationStatus(row.status)}
+                      </StatusBadge>
+                    </td>
+                    <td>
+                      {row.progressPercent == null ? unavailableLabel() : `${row.progressPercent}%`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
 
       <div className={styles.panel}>
-        <h2>Admin activity</h2>
+        <h2>Activity</h2>
         {overviewUnavailable || !overview ? (
           <p className={styles.muted}>
-            {canAnalytics ? "Not available" : "Requires platform.analytics.read"}
+            {canAnalytics
+              ? "Activity feed unavailable right now."
+              : "You need permission to view platform activity."}
           </p>
         ) : (
-          <ActivityTimeline items={activityItems} emptyLabel="No recent audit events." />
+          <ActivityTimeline items={activityItems} emptyLabel="No recent activity." />
         )}
         <p className={styles.linkRow}>
+          <Link href="/activity/">Full activity</Link>
           <Link href="/audit/">Audit log</Link>
         </p>
       </div>
@@ -347,7 +568,7 @@ function DashboardInner() {
 
 export default function HomePage() {
   return (
-    <PlatformPageGate title="Overview" anyOf={["platform.tenant.read", "platform.analytics.read"]}>
+    <PlatformPageGate title="Dashboard" anyOf={["platform.tenant.read", "platform.analytics.read"]}>
       <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
         <DashboardInner />
       </Suspense>

@@ -120,8 +120,8 @@ function EntitlementsInner() {
     return (
       <section className={styles.page}>
         <ForgePageHeader
-          title="Entitlements"
-          subtitle="Manage product and module entitlements for a tenant."
+          title="Product Access"
+          subtitle="Choose a customer before editing which products and modules they can use."
         />
         <TenantPicker
           targetPath="/entitlements"
@@ -134,8 +134,8 @@ function EntitlementsInner() {
   return (
     <section className={styles.page}>
       <ForgePageHeader
-        title="Entitlements"
-        subtitle={`Tenant ${tenantId}`}
+        title="Product Access"
+        subtitle="Products and modules enabled for this customer."
       />
       <p className={styles.lead}>
         <Link href={tenantDetailHref(tenantId)}>Tenant detail</Link>
@@ -283,7 +283,7 @@ function EntitlementsInner() {
 
 export default function EntitlementsPage() {
   return (
-    <PlatformPageGate title="Entitlements" permission="platform.entitlement.manage">
+    <PlatformPageGate title="Product Access" permission="platform.entitlement.manage">
       <Suspense fallback={<LoadingState label="Loading…" />}>
         <EntitlementsInner />
       </Suspense>

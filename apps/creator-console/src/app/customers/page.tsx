@@ -16,6 +16,7 @@ import {
 import { PlatformPageGate } from "@/components/platform-page-gate";
 import { tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGet } from "@/lib/api";
+import { customerStatusTone, humanCustomerStatus, unavailableLabel } from "@/lib/presentation";
 import styles from "../page.module.css";
 
 type Tenant = {
@@ -47,7 +48,7 @@ function CustomersInner() {
     try {
       setTenants(await apiGet<Tenant[]>("/api/v1/platform/tenants"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load customers");
+      setError(err instanceof Error ? err.message : "We couldn't load your customers.");
     } finally {
       setLoading(false);
     }
@@ -66,7 +67,7 @@ function CustomersInner() {
     return tenants.filter((t) => {
       if (statusFilter && t.status !== statusFilter) return false;
       if (!needle) return true;
-      return [t.displayName, t.legalName, t.tenantKey, t.slug, t.primaryDomain ?? ""]
+      return [t.displayName, t.legalName, t.slug, t.primaryDomain ?? ""]
         .join(" ")
         .toLowerCase()
         .includes(needle);
@@ -79,20 +80,27 @@ function CustomersInner() {
     <section className={styles.page}>
       <ForgePageHeader
         title="Customers"
-        subtitle="Platform tenants managed as customer accounts."
+        subtitle="Manage every organization using Forge."
         actions={
           <ForgePageActions>
             <Link className="forge-btn" href="/customers/new/">
-              Add customer
-            </Link>
-            <Link className="forge-btn forge-btn--outline" href="/tenants/">
-              Legacy tenants view
+              + Add Customer
             </Link>
           </ForgePageActions>
         }
       />
 
-      {error ? <ErrorState title="Unable to load customers" description={error} /> : null}
+      {error ? (
+        <ErrorState
+          title="We couldn't load your customers"
+          description={error}
+          action={
+            <button type="button" className="forge-btn" onClick={() => void load()}>
+              Try again
+            </button>
+          }
+        />
+      ) : null}
 
       <FilterBar>
         <SearchInput value={search} onChange={setSearch} placeholder="Search customers…" />
@@ -104,11 +112,11 @@ function CustomersInner() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="">All</option>
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="TRIAL">TRIAL</option>
-            <option value="SUSPENDED">SUSPENDED</option>
-            <option value="ONBOARDING">ONBOARDING</option>
+            <option value="">All statuses</option>
+            <option value="ACTIVE">Active</option>
+            <option value="TRIAL">Trial</option>
+            <option value="ONBOARDING">Onboarding</option>
+            <option value="SUSPENDED">Suspended</option>
           </select>
         </label>
       </FilterBar>
@@ -116,11 +124,15 @@ function CustomersInner() {
       {loading ? <LoadingState label="Loading customers…" /> : null}
       {!loading && filtered.length === 0 ? (
         <EmptyState
-          title="No customers match"
-          description="Adjust filters or add a new customer."
+          title={tenants.length === 0 ? "No customers yet" : "No customers match"}
+          description={
+            tenants.length === 0
+              ? "Add your first customer to begin using Forge."
+              : "Adjust filters or add a new customer."
+          }
           action={
             <Link className="forge-btn" href="/customers/new/">
-              Add customer
+              Add Customer
             </Link>
           }
         />
@@ -134,11 +146,7 @@ function CustomersInner() {
                 <tr>
                   <th>Customer</th>
                   <th>Status</th>
-                  <th>Products</th>
-                  <th>Facilities</th>
-                  <th>Users</th>
-                  <th>Domain</th>
-                  <th>Created</th>
+                  <th>Web address</th>
                   <th>Last activity</th>
                   <th>Actions</th>
                 </tr>
@@ -148,21 +156,28 @@ function CustomersInner() {
                   <tr key={tenant.id}>
                     <td>
                       <Link href={tenantDetailHref(tenant.id)}>{tenant.displayName}</Link>
-                      <div className={styles.muted}>{tenant.tenantKey}</div>
+                      {tenant.legalName && tenant.legalName !== tenant.displayName ? (
+                        <div className={styles.muted}>{tenant.legalName}</div>
+                      ) : null}
                     </td>
                     <td>
-                      <StatusBadge tone={tenant.status === "ACTIVE" ? "success" : tenant.status === "SUSPENDED" ? "danger" : "info"}>
-                        {tenant.status}
+                      <StatusBadge tone={customerStatusTone(tenant.status)}>
+                        {humanCustomerStatus(tenant.status)}
                       </StatusBadge>
                     </td>
-                    <td className={styles.muted}>Not available</td>
-                    <td className={styles.muted}>Not available</td>
-                    <td className={styles.muted}>Not available</td>
-                    <td>{tenant.primaryDomain ?? tenant.slug}</td>
-                    <td className={styles.mono}>{tenant.createdAt ? new Date(tenant.createdAt).toLocaleDateString() : "Not available"}</td>
-                    <td className={styles.mono}>{tenant.updatedAt ? new Date(tenant.updatedAt).toLocaleDateString() : "Not available"}</td>
+                    <td>{tenant.primaryDomain ?? `${tenant.slug}.forgepublicsafety.com`}</td>
                     <td>
-                      <Link href={tenantDetailHref(tenant.id)}>Open</Link>
+                      {tenant.updatedAt
+                        ? new Date(tenant.updatedAt).toLocaleDateString()
+                        : unavailableLabel()}
+                    </td>
+                    <td>
+                      <div className={styles.actions}>
+                        <Link href={tenantDetailHref(tenant.id)}>Open</Link>
+                        <Link href={`${tenantDetailHref(tenant.id)}&tab=users`}>Users</Link>
+                        <Link href={`${tenantDetailHref(tenant.id)}&tab=products`}>Products</Link>
+                        <Link href="/migrations/">Migration</Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

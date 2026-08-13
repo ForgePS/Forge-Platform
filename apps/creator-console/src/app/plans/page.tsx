@@ -69,8 +69,10 @@ function PlansInner() {
 
   return (
     <section className={styles.page}>
-      <h1>Plans</h1>
-      <p className={styles.lead}>Subscription plan catalog from the live platform API.</p>
+      <h1>Plans & Pricing</h1>
+      <p className={styles.lead}>
+        Configured Forge plans and base prices. Values come from the live catalog — nothing is hardcoded here.
+      </p>
 
       {error ? <p className={styles.error}>{error}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}

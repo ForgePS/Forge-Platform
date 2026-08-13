@@ -1,14 +1,14 @@
 import type { ForgeNavigationGroup } from "@forge/design-system";
 
 /**
- * Creator Console mission IA (CREATOR-UX-S1B).
- * Item `permission` / `anyOfPermissions` filter UX only — API auth is authoritative.
- * Routes stay backend-aligned; Customers uses /tenants with /customers aliases.
+ * Creator Console end-user IA (CREATOR-UX-S2).
+ * Visibility filters are UX only — API auth remains authoritative.
+ * Engineering surfaces live under Advanced; default labels avoid AWS jargon.
  */
 export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
   {
-    id: "overview",
-    label: "Overview",
+    id: "home",
+    label: "Home",
     items: [
       {
         id: "dashboard",
@@ -17,10 +17,10 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
         anyOfPermissions: ["platform.tenant.read", "platform.analytics.read"],
       },
       {
-        id: "analytics",
-        label: "Analytics",
-        route: "/analytics",
-        permission: "platform.analytics.read",
+        id: "activity",
+        label: "Activity",
+        route: "/activity",
+        anyOfPermissions: ["platform.analytics.read", "platform.audit.read"],
       },
     ],
   },
@@ -28,13 +28,7 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
     id: "customers",
     label: "Customers",
     items: [
-      { id: "customers-list", label: "All customers", route: "/customers", permission: "platform.tenant.read" },
-      {
-        id: "invitations",
-        label: "Invitations",
-        route: "/invitations",
-        permission: "platform.invitation.read",
-      },
+      { id: "customers-list", label: "Customers", route: "/customers", permission: "platform.tenant.read" },
       {
         id: "onboarding",
         label: "Onboarding",
@@ -42,19 +36,18 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
         permission: "platform.onboarding.manage",
       },
       {
-        id: "memberships",
-        label: "Memberships",
-        route: "/memberships",
-        permission: "platform.membership.read",
+        id: "facilities",
+        label: "Facilities",
+        route: "/facilities",
+        permission: "platform.configuration.update",
       },
-      {
-        id: "organizations",
-        label: "Organizations",
-        route: "/organizations",
-        permission: "platform.organization.read",
-      },
-      { id: "persons", label: "Persons", route: "/persons", permission: "platform.person.read" },
       { id: "users", label: "Users", route: "/users", permission: "platform.user.invite" },
+      {
+        id: "invitations",
+        label: "Invitations",
+        route: "/invitations",
+        permission: "platform.invitation.read",
+      },
     ],
   },
   {
@@ -74,20 +67,8 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
         permission: "platform.entitlement.manage",
       },
       {
-        id: "entitlements",
-        label: "Entitlements",
-        route: "/entitlements",
-        permission: "platform.entitlement.manage",
-      },
-      {
-        id: "features",
-        label: "Feature flags",
-        route: "/features",
-        permission: "platform.feature.manage",
-      },
-      {
         id: "plans",
-        label: "Plans",
+        label: "Plans & Pricing",
         route: "/plans",
         permission: "platform.entitlement.manage",
       },
@@ -97,23 +78,11 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
         route: "/subscriptions",
         permission: "platform.entitlement.manage",
       },
-      {
-        id: "contracts",
-        label: "Contracts",
-        route: "/contracts",
-        anyOfPermissions: ["platform.entitlement.manage", "tenant.billing.read"],
-      },
-      {
-        id: "billing",
-        label: "Billing",
-        route: "/billing",
-        anyOfPermissions: ["platform.entitlement.manage", "tenant.billing.read"],
-      },
     ],
   },
   {
-    id: "migration",
-    label: "Migration",
+    id: "data",
+    label: "Data",
     items: [
       {
         id: "migrations",
@@ -121,79 +90,37 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
         route: "/migrations",
         anyOfPermissions: ["platform.tenant.read", "import.view"],
       },
-      { id: "import-center", label: "Import Center", route: "/imports", permission: "import.view" },
-      { id: "jobs", label: "Jobs", route: "/jobs", permission: "platform.jobs.read" },
+      { id: "imports", label: "Imports", route: "/imports", permission: "import.view" },
       {
         id: "exports",
-        label: "Data export",
+        label: "Exports",
         route: "/exports",
         permission: "tenant.export.create",
       },
+      {
+        id: "reconciliation",
+        label: "Reconciliation",
+        route: "/migrations",
+        anyOfPermissions: ["platform.tenant.read", "import.view"],
+      },
     ],
   },
   {
-    id: "platform",
-    label: "Platform",
+    id: "support",
+    label: "Support",
     items: [
       {
-        id: "studio-home",
-        label: "Configuration studio",
-        route: "/studio",
-        permission: "platform.configuration.update",
+        id: "support-center",
+        label: "Customer Support",
+        route: "/support",
+        permission: "platform.tenant.read",
       },
       {
-        id: "studio-tenant",
-        label: "Tenant profile",
-        route: "/studio/tenant-profile",
-        permission: "platform.configuration.update",
+        id: "access-sessions",
+        label: "Access Sessions",
+        route: "/support/sessions",
+        permission: "platform.tenant.read",
       },
-      {
-        id: "studio-branding",
-        label: "Branding",
-        route: "/studio/branding",
-        permission: "platform.configuration.update",
-      },
-      {
-        id: "studio-facilities",
-        label: "Facilities",
-        route: "/studio/facilities",
-        permission: "platform.configuration.update",
-      },
-      {
-        id: "neris-packages",
-        label: "NERIS packages",
-        route: "/neris/packages",
-        permission: "platform.neris.schema.read",
-      },
-      {
-        id: "neris-modules",
-        label: "NERIS modules",
-        route: "/neris/modules",
-        permission: "platform.neris.schema.read",
-      },
-      { id: "ai-overview", label: "AI management", route: "/ai" },
-    ],
-  },
-  {
-    id: "security",
-    label: "Security",
-    items: [
-      {
-        id: "security-hub",
-        label: "Security hub",
-        route: "/security",
-        anyOfPermissions: ["platform.audit.read", "platform.role.assign", "platform.permission.read"],
-      },
-      { id: "roles", label: "Roles", route: "/roles", permission: "platform.role.assign" },
-      {
-        id: "permissions",
-        label: "Permissions",
-        route: "/permissions",
-        permission: "platform.permission.read",
-      },
-      { id: "audit", label: "Audit log", route: "/audit", permission: "platform.audit.read" },
-      { id: "login", label: "Login", route: "/login" },
-      { id: "select-tenant", label: "Select tenant", route: "/select-tenant" },
     ],
   },
   {
@@ -202,35 +129,156 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
     items: [
       {
         id: "ops-health",
-        label: "Health",
+        label: "System Health",
         route: "/operations/health",
         permission: "platform.tenant.read",
       },
       {
-        id: "ops-alerts",
-        label: "Alerts",
-        route: "/operations/alerts",
+        id: "notifications",
+        label: "Notifications",
+        route: "/notifications",
+      },
+      {
+        id: "jobs",
+        label: "Background Jobs",
+        route: "/jobs",
+        permission: "platform.jobs.read",
+      },
+      {
+        id: "email",
+        label: "Email",
+        route: "/email",
         permission: "platform.tenant.read",
       },
-      { id: "health", label: "System health", route: "/health", permission: "platform.tenant.read" },
-      { id: "system", label: "System", route: "/system", permission: "platform.tenant.read" },
     ],
   },
   {
-    id: "system-nav",
-    label: "System",
+    id: "security",
+    label: "Security",
     items: [
+      {
+        id: "platform-users",
+        label: "Platform Users",
+        route: "/users",
+        permission: "platform.user.invite",
+      },
+      { id: "roles", label: "Roles", route: "/roles", permission: "platform.role.assign" },
+      {
+        id: "permissions",
+        label: "Permissions",
+        route: "/permissions",
+        permission: "platform.permission.read",
+      },
+      { id: "audit", label: "Audit Log", route: "/audit", permission: "platform.audit.read" },
+    ],
+  },
+  {
+    id: "business",
+    label: "Business",
+    items: [
+      {
+        id: "billing",
+        label: "Billing",
+        route: "/billing",
+        anyOfPermissions: ["platform.entitlement.manage", "tenant.billing.read"],
+      },
+      {
+        id: "contracts",
+        label: "Invoices",
+        route: "/contracts",
+        anyOfPermissions: ["platform.entitlement.manage", "tenant.billing.read"],
+      },
+      {
+        id: "renewals",
+        label: "Renewals",
+        route: "/renewals",
+        anyOfPermissions: ["platform.entitlement.manage", "tenant.billing.read"],
+      },
+    ],
+  },
+  {
+    id: "configuration",
+    label: "Configuration",
+    items: [
+      {
+        id: "branding",
+        label: "Branding",
+        route: "/studio/branding",
+        permission: "platform.configuration.update",
+      },
+      {
+        id: "domains",
+        label: "Domains",
+        route: "/domains",
+        permission: "platform.configuration.update",
+      },
+      {
+        id: "studio",
+        label: "Templates",
+        route: "/studio",
+        permission: "platform.configuration.update",
+      },
       {
         id: "settings",
         label: "Settings",
         route: "/settings",
         permission: "platform.configuration.update",
       },
-      { id: "profile", label: "Profile", route: "/profile" },
+    ],
+  },
+  {
+    id: "advanced",
+    label: "Advanced",
+    items: [
       {
-        id: "notifications",
-        label: "Notifications",
-        route: "/notifications",
+        id: "product-access",
+        label: "Product Access",
+        route: "/entitlements",
+        permission: "platform.entitlement.manage",
+      },
+      {
+        id: "features",
+        label: "Feature Flags",
+        route: "/features",
+        permission: "platform.feature.manage",
+      },
+      {
+        id: "memberships",
+        label: "Memberships",
+        route: "/memberships",
+        permission: "platform.membership.read",
+      },
+      {
+        id: "organizations",
+        label: "Organizations",
+        route: "/organizations",
+        permission: "platform.organization.read",
+      },
+      { id: "persons", label: "Persons", route: "/persons", permission: "platform.person.read" },
+      {
+        id: "customer-profile",
+        label: "Customer Profile (Studio)",
+        route: "/studio/tenant-profile",
+        permission: "platform.configuration.update",
+      },
+      {
+        id: "neris",
+        label: "NERIS Schema",
+        route: "/neris/packages",
+        permission: "platform.neris.schema.read",
+      },
+      { id: "ai", label: "AI Management", route: "/ai" },
+      {
+        id: "analytics",
+        label: "Analytics (raw)",
+        route: "/analytics",
+        permission: "platform.analytics.read",
+      },
+      {
+        id: "system",
+        label: "Developer Tools",
+        route: "/system",
+        permission: "platform.tenant.read",
       },
     ],
   },

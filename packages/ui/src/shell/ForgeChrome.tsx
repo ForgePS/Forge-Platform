@@ -8,32 +8,35 @@ export function ForgeTenantSwitcher({
   onSelect,
   disabled,
   state = "ready",
+  label = "Customer",
 }: {
   tenants: ForgeShellTenant[];
   activeTenantId?: string | null;
   onSelect: (tenantId: string) => void;
   disabled?: boolean;
   state?: "ready" | "loading" | "empty" | "error" | "unauthorized" | "disabled_entitlement";
+  /** User-facing label (Creator defaults to Customer; avoid Tenant jargon). */
+  label?: string;
 }) {
   if (state === "loading") {
-    return <span className="forge-topbar__meta">Loading tenants…</span>;
+    return <span className="forge-topbar__meta">Loading {label.toLowerCase()}s…</span>;
   }
   if (state === "error") {
-    return <span className="forge-topbar__meta">Tenant list unavailable</span>;
+    return <span className="forge-topbar__meta">{label} list unavailable</span>;
   }
   if (state === "unauthorized" || state === "disabled_entitlement") {
-    return <span className="forge-topbar__meta">Tenant switch unavailable</span>;
+    return <span className="forge-topbar__meta">{label} switch unavailable</span>;
   }
   const selectable = tenants.filter((t) => t.selectable !== false);
   if (selectable.length === 0 || state === "empty") {
-    return <span className="forge-topbar__meta">No tenants</span>;
+    return <span className="forge-topbar__meta">No {label.toLowerCase()}s</span>;
   }
   return (
     <label className="forge-topbar__meta" style={{ display: "inline-flex", gap: "0.5rem", alignItems: "center" }}>
-      <span>Tenant</span>
+      <span>{label}</span>
       <select
         className="forge-select"
-        aria-label="Switch tenant"
+        aria-label={`Switch ${label.toLowerCase()}`}
         disabled={disabled}
         value={activeTenantId ?? ""}
         onChange={(e) => {

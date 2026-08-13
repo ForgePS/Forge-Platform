@@ -27,20 +27,9 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { getMigrationStatusService } from "@/lib/migrations/mock-migration.service";
 import type { MigrationDetail, MigrationUiStatus } from "@/lib/migrations/migration.types";
+import { FRIENDLY_MIGRATION_STAGES, humanMigrationStatus } from "@/lib/presentation";
 
-const STAGES = [
-  { id: "discover", label: "Discover" },
-  { id: "export", label: "Export" },
-  { id: "transform", label: "Transform" },
-  { id: "validate", label: "Validate" },
-  { id: "load", label: "Load" },
-  { id: "reconcile", label: "Reconcile" },
-  { id: "verify", label: "Verify" },
-  { id: "dry-run", label: "Dry run" },
-  { id: "gate", label: "Gate check" },
-  { id: "cutover", label: "Cutover" },
-  { id: "complete", label: "Complete" },
-];
+const STAGES = FRIENDLY_MIGRATION_STAGES.map((s) => ({ id: s.id, label: s.label }));
 
 function stageIndex(status: MigrationUiStatus): number {
   switch (status) {
@@ -51,13 +40,13 @@ function stageIndex(status: MigrationUiStatus): number {
     case "READY":
       return 2;
     case "IMPORTING":
-      return 4;
+      return 3;
     case "VALIDATION_REQUIRED":
-      return 5;
+      return 6;
     case "COMPLETE":
-      return 10;
+      return 8;
     case "FAILED":
-      return 5;
+      return 6;
     default:
       return 0;
   }
@@ -145,7 +134,9 @@ function MigrationDetailInner() {
         title={detail.tenantDisplayName}
         subtitle={`${detail.migrationType} · ${detail.source} → ${detail.destination}`}
         actions={
-          <StatusBadge tone={detail.status === "FAILED" ? "danger" : "info"}>{detail.status}</StatusBadge>
+          <StatusBadge tone={detail.status === "FAILED" ? "danger" : "info"}>
+            {humanMigrationStatus(detail.status)}
+          </StatusBadge>
         }
       />
 
@@ -222,36 +213,36 @@ function MigrationDetailInner() {
         </div>
 
         <ForgePagePanel>
-          <Card title="Final Cutover Approval">
+          <Card title="Ready to launch?">
             <Alert tone="danger">
-              This action is intentionally protected. Customer traffic and DNS are not changed from this
-              screen unless an authorized cutover workflow exists.
+              Launch is intentionally protected. Customer traffic and web address changes are not
+              performed from this screen unless an authorized launch workflow exists.
             </Alert>
 
-            <h3 style={{ margin: "1.25rem 0 0.75rem", fontSize: "1rem" }}>Pre-cutover requirements</h3>
+            <h3 style={{ margin: "1.25rem 0 0.75rem", fontSize: "1rem" }}>Launch checklist</h3>
             <Checkbox
               id="cutover-validation"
-              label="Validation complete and reviewed"
+              label="Data validated"
               checked={checklist.validation}
               onChange={(e) => setChecklist((c) => ({ ...c, validation: e.target.checked }))}
             />
             <Checkbox
               id="cutover-reconciliation"
-              label="Reconciliation accepted"
+              label="Records compared and accepted"
               checked={checklist.reconciliation}
               onChange={(e) => setChecklist((c) => ({ ...c, reconciliation: e.target.checked }))}
             />
             <Checkbox
               id="cutover-dns-ack"
-              label="I acknowledge DNS/customer cutover is handled separately"
-              description="This console does not execute DNS or live customer cutover."
+              label="Web address and email readiness handled separately"
+              description="This console does not change live customer traffic by itself."
               checked={checklist.permissionAck}
               onChange={(e) => setChecklist((c) => ({ ...c, permissionAck: e.target.checked }))}
             />
 
             <h3 style={{ margin: "1.25rem 0 0.5rem", fontSize: "1rem" }}>Typed confirmation</h3>
             <FormField
-              label="Type the customer name exactly to enable approval"
+              label="Type the customer name exactly to enable launch"
               htmlFor="cutover-confirm"
               hint={`Type: ${detail.tenantDisplayName}`}
               required
@@ -272,7 +263,7 @@ function MigrationDetailInner() {
             </p>
 
             {!canCutover ? (
-              <Alert tone="info">You do not have permission to request cutover confirmation.</Alert>
+              <Alert tone="info">You do not have permission to request launch confirmation.</Alert>
             ) : null}
 
             <div style={{ marginTop: "1.25rem" }}>
@@ -281,7 +272,7 @@ function MigrationDetailInner() {
                 disabled={!gateReady}
                 onClick={() => setCutoverStep(1)}
               >
-                Approve Final Migration
+                Launch Customer
               </Button>
             </div>
           </Card>
@@ -289,8 +280,8 @@ function MigrationDetailInner() {
 
         <ConfirmationDialog
           open={cutoverStep === 1}
-          title="Cutover step 1 of 2"
-          description="Confirm you reviewed validation and reconciliation. This still will not execute DNS or customer cutover."
+          title="Launch step 1 of 2"
+          description="Confirm you reviewed validation and reconciliation. This still will not change live customer traffic."
           confirmLabel="Continue"
           danger
           onCancel={() => setCutoverStep(0)}
@@ -298,14 +289,14 @@ function MigrationDetailInner() {
         />
         <ConfirmationDialog
           open={cutoverStep === 2}
-          title="Cutover step 2 of 2"
-          description="No cutover API is connected. Confirming only records that cutover was requested in the UI and will not change production traffic."
-          confirmLabel="Acknowledge (no cutover executed)"
+          title="Launch step 2 of 2"
+          description="No launch API is connected. Confirming only records that launch was requested in the UI and will not change production traffic."
+          confirmLabel="Acknowledge (no launch executed)"
           danger
           onCancel={() => setCutoverStep(0)}
           onConfirm={() => {
             setCutoverStep(0);
-            toast.push("Cutover not executed — no live cutover API connected", "warning");
+            toast.push("Launch not executed — no live launch API connected", "warning");
           }}
         />
 

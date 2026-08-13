@@ -207,11 +207,20 @@ export function EmptyState({
   );
 }
 
-export function ErrorState({ title, description }: { title: string; description: string }) {
+export function ErrorState({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: ReactNode;
+}) {
   return (
     <div role="alert" data-component="error-state" className="forge-alert forge-alert--danger">
       <h2>{title}</h2>
       <p>{description}</p>
+      {action ? <div style={{ marginTop: "0.75rem" }}>{action}</div> : null}
     </div>
   );
 }

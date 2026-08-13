@@ -15,6 +15,7 @@ import {
 import { PlatformPageGate } from "@/components/platform-page-gate";
 import { getMigrationStatusService } from "@/lib/migrations/mock-migration.service";
 import type { MigrationSummary, MigrationUiStatus } from "@/lib/migrations/migration.types";
+import { humanMigrationStatus } from "@/lib/presentation";
 
 function countBy(rows: MigrationSummary[], predicate: (row: MigrationSummary) => boolean): number {
   return rows.filter(predicate).length;
@@ -68,27 +69,27 @@ function MigrationsInner() {
     <div>
       <ForgePageHeader
         title="Migration Center"
-        subtitle="Track tenant migration progress. Counts come from the active migration adapter only — never hardcoded production facts."
+        subtitle="Move existing customers into Forge. Progress comes from the migration adapter — never invented."
       />
       {usingFixture ? (
         <FixtureBanner>
-          Showing development fixture migrations — not live production migration state. Do not treat these counts as DM-S0 facts.
+          Showing sample migrations for UI review — not live production migration state.
         </FixtureBanner>
       ) : null}
 
       <ForgeMetricGrid>
-        <ForgeMetricCard label="Active" value={metrics.active} />
-        <ForgeMetricCard label="Validation" value={metrics.validation} />
+        <ForgeMetricCard label="In progress" value={metrics.active} />
+        <ForgeMetricCard label="Needs review" value={metrics.validation} />
         <ForgeMetricCard label="Failed" value={metrics.failed} />
         <ForgeMetricCard label="Completed" value={metrics.completed} />
-        <ForgeMetricCard label="Cutover pending" value={metrics.cutoverPending} />
+        <ForgeMetricCard label="Ready to launch" value={metrics.cutoverPending} />
       </ForgeMetricGrid>
 
       {loading ? <LoadingIndicator label="Loading migrations…" /> : null}
       {!loading && rows.length === 0 ? (
         <EmptyState
           title="No migrations"
-          description="Migration jobs will appear here when a live adapter is connected."
+          description="Start a migration when moving an existing customer into Forge."
         />
       ) : null}
 
@@ -105,9 +106,21 @@ function MigrationsInner() {
               <Link href={`/migrations/detail/?id=${encodeURIComponent(row.id)}`}>{row.tenantDisplayName}</Link>
             ),
           },
-          { id: "source", header: "Source", cell: (row) => row.source },
-          { id: "destination", header: "Destination", cell: (row) => row.destination },
-          { id: "type", header: "Type", cell: (row) => row.migrationType },
+          {
+            id: "source",
+            header: "From",
+            cell: (row) =>
+              row.source.toLowerCase().includes("firebase") ? "Existing Forge system" : row.source,
+          },
+          {
+            id: "destination",
+            header: "To",
+            cell: (row) =>
+              row.destination.toLowerCase().includes("aurora") ||
+              row.destination.toLowerCase().includes("aws")
+                ? "Forge AWS"
+                : row.destination,
+          },
           {
             id: "status",
             header: "Status",
@@ -123,21 +136,16 @@ function MigrationsInner() {
                         : "info"
                 }
               >
-                {row.status}
+                {humanMigrationStatus(row.status)}
               </StatusBadge>
             ),
           },
           {
             id: "progress",
             header: "Progress",
-            cell: (row) => (row.progressPercent == null ? "Not available" : `${row.progressPercent}%`),
+            cell: (row) => (row.progressPercent == null ? "—" : `${row.progressPercent}%`),
           },
-          { id: "issues", header: "Issues", cell: (row) => String(row.issueCount) },
-          {
-            id: "sourceTag",
-            header: "Data",
-            cell: (row) => <StatusBadge tone={row.dataSource === "LIVE" ? "success" : "neutral"}>{row.dataSource}</StatusBadge>,
-          },
+          { id: "issues", header: "Problems", cell: (row) => String(row.issueCount) },
         ]}
       />
     </div>

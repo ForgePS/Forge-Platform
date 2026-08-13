@@ -16,10 +16,15 @@ import {
 } from "@/components/list-controls";
 import { PlatformPageGate } from "@/components/platform-page-gate";
 import { apiGet } from "@/lib/api";
+import { productDisplayName } from "@/lib/presentation";
 import styles from "../page.module.css";
 
 type CatalogProduct = { id: string; code: string; name: string; status?: string };
 type CatalogModule = { id: string; code: string; name: string; status?: string };
+
+function humanModuleStatus(status: string): string {
+  return status === "ACTIVE" ? "Active" : status.replace(/_/g, " ");
+}
 
 const PAGE_SIZE = 10;
 
@@ -75,21 +80,21 @@ function ProductsInner() {
     <section className={styles.page}>
       <ForgePageHeader
         title="Products"
-        subtitle="Platform product and module catalog from the live API."
+        subtitle="Forge products customers can use. Module catalog is available under Modules."
       />
 
-      {error ? <ErrorState title="Unable to load catalog" description={error} /> : null}
-      {loading ? <LoadingState label="Loading catalog…" /> : null}
+      {error ? <ErrorState title="Unable to load products" description={error} /> : null}
+      {loading ? <LoadingState label="Loading products…" /> : null}
 
       <div className={styles.panel}>
-        <h2>Products</h2>
+        <h2>Product catalog</h2>
         <ListControls
           search={search}
           onSearchChange={setSearch}
           sort={sort}
           sortOptions={[
-            { value: "code", label: "Code" },
             { value: "name", label: "Name" },
+            { value: "code", label: "Internal code" },
           ]}
           onSortChange={setSort}
           page={page}
@@ -101,24 +106,14 @@ function ProductsInner() {
           <p className={styles.muted}>No products found.</p>
         ) : null}
         {pageItems.length > 0 ? (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Name</th>
-                <th>ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pageItems.map((row) => (
-                <tr key={row.id}>
-                  <td className={styles.mono}>{row.code}</td>
-                  <td>{row.name}</td>
-                  <td className={styles.mono}>{row.id}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className={styles.productCardGrid}>
+            {pageItems.map((row) => (
+              <div key={row.id} className={styles.productCard}>
+                <strong>{row.name || productDisplayName(row.code)}</strong>
+                <span className={styles.muted}>Status: {row.status ?? "Active"}</span>
+              </div>
+            ))}
+          </div>
         ) : null}
       </div>
 
@@ -132,10 +127,10 @@ function ProductsInner() {
               <ModuleCard
                 key={row.id}
                 name={row.name}
-                meta={`${row.code}${row.status ? ` · ${row.status}` : ""} · ${row.id}`}
+                meta={row.status ? humanModuleStatus(row.status) : "Available"}
                 href="/modules/"
                 disabled
-                disabledReason="Catalog entry"
+                disabledReason="Open Modules to manage assignments"
               />
             ))}
           </ForgeModuleGrid>

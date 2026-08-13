@@ -16,6 +16,7 @@ function OperationsHealthInner() {
   const [ready, setReady] = useState<ReadyPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showTechnical, setShowTechnical] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -29,7 +30,7 @@ function OperationsHealthInner() {
         setError(
           healthResult.reason instanceof Error
             ? healthResult.reason.message
-            : "Health check failed",
+            : "We couldn't check platform health.",
         );
       }
       setReady(readyResult.status === "fulfilled" ? readyResult.value : null);
@@ -42,71 +43,81 @@ function OperationsHealthInner() {
     void load();
   }, [load]);
 
-  const apiStatus = health?.status ?? (loading ? "Loading…" : "Not available");
-  const dbStatus = ready?.checks.database
-    ? "ready"
-    : ready
-      ? "not ready"
-      : loading
-        ? "Loading…"
-        : "Not available";
+  const apiOk =
+    health != null &&
+    ["ok", "healthy", "up"].includes(String(health.status).toLowerCase());
+  const dbOk = ready?.checks.database === true;
 
   return (
     <section className={styles.page}>
       <ForgePageHeader
-        title="Operations health"
-        subtitle="Live platform-api /health and /ready probes only. No fabricated cloud metrics."
+        title="System Health"
+        subtitle="Business-friendly status for Forge services. Technical probes stay optional."
       />
 
       {error ? <p className={styles.error}>{error}</p> : null}
-      {loading ? <LoadingState label="Loading health…" /> : null}
+      {loading ? <LoadingState label="Checking health…" /> : null}
 
       <div className={styles.statGrid}>
         <ForgeStatusCard
-          title="API status"
-          status={apiStatus}
-          {...(health?.service ? { detail: health.service } : {})}
+          title="Forge Platform"
+          status={apiOk ? "Healthy" : health ? "Needs attention" : "Unavailable"}
+        />
+        <ForgeStatusCard
+          title="Authentication"
+          status={apiOk ? "Healthy" : "Unavailable"}
+          detail="Sign-in service"
         />
         <ForgeStatusCard
           title="Database"
-          status={dbStatus}
-          {...(ready?.status ? { detail: ready.status } : {})}
+          status={dbOk ? "Healthy" : ready ? "Needs attention" : "Unavailable"}
         />
-        <ForgeStatusCard title="Queue" status="Not available" detail="No queue probe exposed" />
-        <ForgeStatusCard title="AWS metrics" status="Not available" detail="No AWS metrics endpoint" />
+        <ForgeStatusCard
+          title="Background processing"
+          status="Unavailable"
+          detail="No queue probe exposed yet"
+        />
+        <ForgeStatusCard title="Email" status="Unavailable" detail="Open Email for setup status" />
+        <ForgeStatusCard title="Alerts" status="Unavailable" detail="Alert feed not connected" />
       </div>
 
-      <div className={styles.panel}>
-        <h2>Platform API health</h2>
-        {health ? (
-          <pre className={styles.pre}>{JSON.stringify(health, null, 2)}</pre>
-        ) : (
-          <p className={styles.muted}>Platform API health unavailable.</p>
-        )}
-      </div>
-
-      <div className={styles.panel}>
-        <h2>Readiness</h2>
-        {ready ? (
-          <pre className={styles.pre}>{JSON.stringify(ready, null, 2)}</pre>
-        ) : (
-          <p className={styles.muted}>Readiness probe unavailable or database not ready.</p>
-        )}
-      </div>
-
-      <div className={styles.actions}>
-        <button type="button" className={styles.buttonSecondary} onClick={() => void load()}>
+      <p className={styles.linkRow}>
+        <button type="button" className="forge-btn forge-btn--outline" onClick={() => setShowTechnical((v) => !v)}>
+          {showTechnical ? "Hide technical details" : "View technical details"}
+        </button>
+        <button type="button" className="forge-btn forge-btn--secondary" onClick={() => void load()}>
           Refresh
         </button>
-        <Link href="/health/">System health detail</Link>
-      </div>
+        <Link href="/email/">Email service</Link>
+      </p>
+
+      {showTechnical ? (
+        <>
+          <div className={styles.panel}>
+            <h2>Technical — health probe</h2>
+            {health ? (
+              <pre className={styles.pre}>{JSON.stringify(health, null, 2)}</pre>
+            ) : (
+              <p className={styles.muted}>Unavailable</p>
+            )}
+          </div>
+          <div className={styles.panel}>
+            <h2>Technical — readiness probe</h2>
+            {ready ? (
+              <pre className={styles.pre}>{JSON.stringify(ready, null, 2)}</pre>
+            ) : (
+              <p className={styles.muted}>Unavailable</p>
+            )}
+          </div>
+        </>
+      ) : null}
     </section>
   );
 }
 
 export default function OperationsHealthPage() {
   return (
-    <PlatformPageGate title="Operations health" permission="platform.tenant.read">
+    <PlatformPageGate title="System Health" permission="platform.tenant.read">
       <OperationsHealthInner />
     </PlatformPageGate>
   );
