@@ -6,7 +6,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   FORGE_PLATFORMS,
   catalogAvailabilityLabel,
-  modulesForProduct,
+  findCatalogModule,
 } from "@forge/contracts";
 import {
   Alert,
@@ -46,6 +46,21 @@ type EntitlementsPayload = {
   modules: ModuleEntitlement[];
 };
 
+type PlatformProduct = { id: string; code: string; name: string };
+
+type RawCatalogModule = {
+  id: string;
+  code: string;
+  name: string;
+  productId?: string;
+  productCode?: string;
+  isCore?: boolean;
+  category?: string;
+  classification?: string;
+  implementationStatus?: string;
+  customerAssignable?: boolean;
+};
+
 type CatalogModule = {
   id: string;
   code: string;
@@ -64,6 +79,54 @@ function isActive(status: string | undefined): boolean {
   return (status ?? "").toUpperCase() === "ACTIVE";
 }
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
+}
+
+function normalizeCatalog(
+  modules: RawCatalogModule[],
+  products: PlatformProduct[],
+): CatalogModule[] {
+  const productById = new Map(products.map((p) => [p.id, p]));
+  return modules
+    .map((row) => {
+      const productCode =
+        row.productCode ??
+        (row.productId ? productById.get(row.productId)?.code : undefined) ??
+        "";
+      if (!productCode || !isUuid(row.id)) return null;
+      const meta = findCatalogModule(productCode, row.code);
+      const isCore = Boolean(row.isCore) || row.code === "CORE";
+      const classification =
+        row.classification ??
+        meta?.classification ??
+        (isCore ? "PLATFORM_CORE" : "CUSTOMER_MODULE");
+      const implementationStatus =
+        row.implementationStatus ?? meta?.implementationStatus ?? "READY";
+      const customerAssignable =
+        row.customerAssignable ??
+        meta?.customerAssignable ??
+        (!isCore &&
+          productCode !== "FORGE_CREATOR" &&
+          classification !== "PLATFORM_CORE" &&
+          classification !== "INTERNAL_TOOL");
+      return {
+        id: row.id,
+        code: row.code,
+        name: meta?.name ?? row.name,
+        productCode,
+        category: row.category ?? meta?.category ?? (isCore ? "Platform" : "General"),
+        classification,
+        implementationStatus,
+        customerAssignable,
+        isCore,
+      } satisfies CatalogModule;
+    })
+    .filter((row): row is CatalogModule => row !== null);
+}
+
 const CUSTOMER_PLATFORMS = FORGE_PLATFORMS.filter((p) => p.customerAssignable);
 
 function CustomerModulesInner() {
@@ -79,6 +142,7 @@ function CustomerModulesInner() {
   const [error, setError] = useState<string | null>(null);
   const [productCode, setProductCode] = useState(productParam ?? "FORGE_INDUSTRIAL");
   const [draft, setDraft] = useState<Record<string, boolean>>({});
+  const [baseline, setBaseline] = useState<Record<string, boolean>>({});
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [bulkOpen, setBulkOpen] = useState<"enable" | "disable" | null>(null);
@@ -89,20 +153,22 @@ function CustomerModulesInner() {
     setLoading(true);
     setError(null);
     try {
-      const [entitlements, tenants, modules] = await Promise.all([
+      const [entitlements, tenants, products, modules] = await Promise.all([
         apiGet<EntitlementsPayload>(`/api/v1/tenants/${tenantId}/entitlements`),
         apiGet<TenantRow[]>("/api/v1/platform/tenants").catch(() => [] as TenantRow[]),
-        apiGet<CatalogModule[]>("/api/v1/platform/modules"),
+        apiGet<PlatformProduct[]>("/api/v1/platform/products"),
+        apiGet<RawCatalogModule[]>("/api/v1/platform/modules"),
       ]);
       setData(entitlements);
       setTenantName(tenants.find((t) => t.id === tenantId)?.displayName ?? "Customer");
-      setCatalog(modules);
+      setCatalog(normalizeCatalog(modules, products));
       const activeProduct =
         productParam &&
         entitlements.products.some((p) => p.productCode === productParam && isActive(p.status))
           ? productParam
-          : entitlements.products.find((p) => isActive(p.status) && p.productCode !== "FORGE_CREATOR")
-              ?.productCode ?? "FORGE_INDUSTRIAL";
+          : entitlements.products.find(
+              (p) => isActive(p.status) && p.productCode !== "FORGE_CREATOR",
+            )?.productCode ?? "FORGE_INDUSTRIAL";
       setProductCode(activeProduct);
     } catch (err) {
       setError(err instanceof Error ? err.message : "We couldn't load products and modules.");
@@ -115,11 +181,40 @@ function CustomerModulesInner() {
     void load();
   }, [load]);
 
+  const productEntitled = useMemo(
+    () => Boolean(data?.products.some((p) => p.productCode === productCode && isActive(p.status))),
+    [data, productCode],
+  );
+
+  const platform = CUSTOMER_PLATFORMS.find((p) => p.productCode === productCode);
+
+  const productModules = useMemo(
+    () =>
+      catalog.filter(
+        (m) =>
+          m.productCode === productCode &&
+          m.customerAssignable &&
+          !m.isCore &&
+          m.classification !== "PLATFORM_CORE" &&
+          m.classification !== "INTERNAL_TOOL",
+      ),
+    [catalog, productCode],
+  );
+
+  const selectable = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return productModules
+      .filter((m) => {
+        if (!needle) return true;
+        return [m.name, m.code, m.category].join(" ").toLowerCase().includes(needle);
+      })
+      .sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+  }, [productModules, search]);
+
   useEffect(() => {
     if (!data) return;
     const next: Record<string, boolean> = {};
-    for (const mod of modulesForProduct(productCode)) {
-      if (!mod.customerAssignable) continue;
+    for (const mod of productModules) {
       const ent = data.modules.find(
         (m) =>
           m.moduleCode === mod.code &&
@@ -128,49 +223,9 @@ function CustomerModulesInner() {
       next[mod.code] = isActive(ent?.status);
     }
     setDraft(next);
+    setBaseline(next);
     setDirty(false);
-  }, [data, productCode]);
-
-  const productEntitled = useMemo(
-    () => Boolean(data?.products.some((p) => p.productCode === productCode && isActive(p.status))),
-    [data, productCode],
-  );
-
-  const platform = CUSTOMER_PLATFORMS.find((p) => p.productCode === productCode);
-
-  const selectable = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    const fromApi = catalog.filter(
-      (m) =>
-        m.productCode === productCode &&
-        m.customerAssignable &&
-        !m.isCore &&
-        m.classification !== "PLATFORM_CORE" &&
-        m.classification !== "INTERNAL_TOOL",
-    );
-    const source =
-      fromApi.length > 0
-        ? fromApi
-        : modulesForProduct(productCode)
-            .filter((m) => m.customerAssignable)
-            .map((m) => ({
-              id: m.code,
-              code: m.code,
-              name: m.name,
-              productCode: m.productCode,
-              category: m.category,
-              classification: m.classification,
-              implementationStatus: m.implementationStatus,
-              customerAssignable: m.customerAssignable,
-              isCore: false,
-            }));
-    return source
-      .filter((m) => {
-        if (!needle) return true;
-        return [m.name, m.code, m.category].join(" ").toLowerCase().includes(needle);
-      })
-      .sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
-  }, [catalog, productCode, search]);
+  }, [data, productCode, productModules]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, typeof selectable>();
@@ -211,31 +266,61 @@ function CustomerModulesInner() {
     }
   }
 
+  async function putOneModule(code: string, status: "ACTIVE" | "SUSPENDED") {
+    if (!tenantId) return;
+    await apiSend(`/api/v1/tenants/${tenantId}/modules/${code}/entitlement`, "PUT", {
+      status,
+      productCode,
+    });
+  }
+
   async function saveModules() {
     if (!tenantId || !productEntitled) return;
+    const changes = productModules
+      .filter((m) => m.implementationStatus === "READY")
+      .filter((m) => Boolean(draft[m.code]) !== Boolean(baseline[m.code]))
+      .map((m) => ({
+        code: m.code,
+        name: m.name,
+        status: (draft[m.code] ? "ACTIVE" : "SUSPENDED") as "ACTIVE" | "SUSPENDED",
+      }));
+
+    if (changes.length === 0) {
+      toast.push("No module changes to save.", "info");
+      setDirty(false);
+      return;
+    }
+
     setSaving(true);
     try {
-      const modules = selectable
-        .filter((m) => m.implementationStatus === "READY")
-        .map((m) => ({
-          code: m.code,
-          status: (draft[m.code] ? "ACTIVE" : "SUSPENDED") as "ACTIVE" | "SUSPENDED",
-        }));
       try {
         await apiSend(`/api/v1/tenants/${tenantId}/products/${productCode}/modules`, "PUT", {
-          modules,
+          modules: changes,
         });
       } catch (batchErr) {
-        // Fallback when batch endpoint is not yet deployed.
-        for (const item of modules) {
-          await apiSend(`/api/v1/tenants/${tenantId}/modules/${item.code}/entitlement`, "PUT", {
-            status: item.status,
-            productCode,
-          });
+        const message = batchErr instanceof Error ? batchErr.message : "";
+        const batchMissing =
+          /not found|404|Cannot PUT|Cannot POST|Cannot GET/i.test(message) ||
+          /modules/.test(message);
+        if (!batchMissing) throw batchErr;
+        // Production API may not have the batch route yet — save only changed, seeded modules.
+        for (const item of changes) {
+          try {
+            await putOneModule(item.code, item.status);
+          } catch (oneErr) {
+            const oneMsg = oneErr instanceof Error ? oneErr.message : "Module update failed";
+            throw new Error(
+              `Could not ${item.status === "ACTIVE" ? "enable" : "disable"} ${item.name}. ${oneMsg}`,
+            );
+          }
         }
-        if (modules.length === 0) throw batchErr;
       }
-      toast.push("Module access saved", "success");
+      toast.push(
+        changes.length === 1
+          ? `${changes[0]!.name} updated`
+          : `${changes.length} modules updated`,
+        "success",
+      );
       setDirty(false);
       await load();
     } catch (err) {
@@ -247,7 +332,7 @@ function CustomerModulesInner() {
 
   function applyBulk(mode: "enable" | "disable") {
     const next = { ...draft };
-    for (const m of selectable) {
+    for (const m of productModules) {
       if (m.implementationStatus !== "READY") continue;
       if (mode === "enable" && m.classification !== "CUSTOMER_MODULE") continue;
       next[m.code] = mode === "enable";
@@ -279,10 +364,7 @@ function CustomerModulesInner() {
         <Link className="forge-btn forge-btn--secondary" href={tenantDetailHref(tenantId)}>
           Back to customer
         </Link>
-        <TenantPicker
-          targetPath="/customer-modules"
-          description="Switch customer"
-        />
+        <TenantPicker targetPath="/customer-modules" description="Switch customer" />
       </ForgePageActions>
 
       {error ? <ErrorState title="Unable to load" description={error} /> : null}
@@ -390,7 +472,7 @@ function CustomerModulesInner() {
                       {rows.map((row) => {
                         const ready = row.implementationStatus === "READY";
                         return (
-                          <li key={row.code}>
+                          <li key={row.id}>
                             <div className={localStyles.moduleRow}>
                               <span>
                                 <strong>{row.name}</strong>
@@ -403,7 +485,7 @@ function CustomerModulesInner() {
                                 </StatusBadge>
                               </span>
                               <label>
-                                <span className="sr-only">Enable {row.name}</span>
+                                <span className={localStyles.srOnly}>Enable {row.name}</span>
                                 <input
                                   type="checkbox"
                                   checked={Boolean(draft[row.code])}
@@ -424,8 +506,8 @@ function CustomerModulesInner() {
 
                 {selectable.length === 0 ? (
                   <EmptyState
-                    title="No assignable modules"
-                    description="Catalog modules for this platform are missing or not assignable."
+                    title="No assignable modules in catalog"
+                    description="This product has no customer-assignable modules seeded in the platform catalog yet. Run catalog seed after migration 0039, or use Industrial Modules for the seeded subset."
                   />
                 ) : null}
 
@@ -449,7 +531,7 @@ function CustomerModulesInner() {
       <ConfirmationDialog
         open={bulkOpen === "enable"}
         title="Select all available modules?"
-        description="Only ready customer modules will be selected. Core and unavailable modules stay unchanged."
+        description="Only ready customer modules already in the platform catalog will be selected."
         confirmLabel="Select all available"
         onCancel={() => setBulkOpen(null)}
         onConfirm={() => applyBulk("enable")}

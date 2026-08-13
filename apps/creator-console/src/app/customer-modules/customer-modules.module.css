@@ -113,7 +113,8 @@
   flex: 0 0 auto;
 }
 
-.sr-only {
+.sr-only,
+.srOnly {
   position: absolute;
   width: 1px;
   height: 1px;
