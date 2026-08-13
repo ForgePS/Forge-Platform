@@ -21,6 +21,8 @@ export type AuthMe = {
   activeModules: string[];
   isPlatformAdmin: boolean;
   authProvider: string;
+  /** MEMBER for ordinary tenants; PLATFORM_ADMIN_SUPPORT for platform admin context. */
+  accessMode?: "MEMBER" | "PLATFORM_ADMIN_SUPPORT";
   tenants: AuthTenant[];
 };
 
@@ -28,8 +30,15 @@ export function authMe(): Promise<AuthMe> {
   return apiGet<AuthMe>("/api/v1/auth/me");
 }
 
-export function selectTenant(tenantId: string): Promise<AuthMe> {
-  return apiSend<AuthMe>("/api/v1/auth/select-tenant", "POST", { tenantId });
+export function selectTenant(
+  tenantId: string,
+  options?: { productCode?: string; reason?: string },
+): Promise<AuthMe> {
+  return apiSend<AuthMe>("/api/v1/auth/select-tenant", "POST", {
+    tenantId,
+    ...(options?.productCode ? { productCode: options.productCode } : {}),
+    ...(options?.reason ? { reason: options.reason } : {}),
+  });
 }
 
 export function logoutAll(): Promise<{ sessionVersion: number }> {

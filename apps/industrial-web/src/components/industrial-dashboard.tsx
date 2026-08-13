@@ -12,7 +12,7 @@ import { buildIndustrialNavigation } from "@/lib/navigation";
  */
 export function IndustrialDashboard() {
   const { me, hasPermission } = useAuth();
-  const entitled = Boolean(me?.activeProducts?.includes(INDUSTRIAL_PRODUCT_CODE));
+  const entitled = Boolean(me?.isPlatformAdmin) || Boolean(me?.activeProducts?.includes(INDUSTRIAL_PRODUCT_CODE));
   const nav = buildIndustrialNavigation({
     entitled,
     permissions: me?.isPlatformAdmin

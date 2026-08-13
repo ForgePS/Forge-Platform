@@ -6,6 +6,7 @@ const TENANT_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 
 const withTenantTransaction = vi.fn();
+const withBypassRlsTransaction = vi.fn();
 const lookupUserTenants = vi.fn();
 
 vi.mock("@forge/database", async () => {
@@ -13,6 +14,7 @@ vi.mock("@forge/database", async () => {
   return {
     ...actual,
     withTenantTransaction: (...args: unknown[]) => withTenantTransaction(...args),
+    withBypassRlsTransaction: (...args: unknown[]) => withBypassRlsTransaction(...args),
     lookupUserTenants: (...args: unknown[]) => lookupUserTenants(...args),
   };
 });
@@ -24,7 +26,7 @@ function principal(overrides?: Partial<{ isPlatformAdmin: boolean; tenantId: str
     personId: null,
     tenantId: overrides?.tenantId ?? TENANT_A,
     organizationIds: [],
-    permissions: new Set<string>(),
+    permissions: new Set<string>(["platform.tenant.read"]),
     activeProducts: new Set<string>(),
     activeModules: new Set<string>(),
     correlationId: "corr-1",
@@ -38,7 +40,8 @@ function createService() {
   const env = { APP_ENV: "testing" } as never;
   const cognito = { enabled: false, globalSignOut: vi.fn() };
   const db = {} as never;
-  return new AuthContextService(db, env, cognito as never);
+  const audit = { writeInTransaction: vi.fn(async () => "audit-1") };
+  return new AuthContextService(db, env, cognito as never, audit as never);
 }
 
 describe("AuthContextService selectTenant membership rules", () => {
@@ -61,7 +64,6 @@ describe("AuthContextService selectTenant membership rules", () => {
           tenants: {
             findFirst: vi.fn(async () => ({ id: TENANT_A, status: "ACTIVE" })),
           },
-          userTenantMembershipsForPerms: undefined,
         },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
@@ -72,7 +74,6 @@ describe("AuthContextService selectTenant membership rules", () => {
           })),
         })),
       };
-      // loadPermissions expects userTenantMemberships.findFirst again
       tx.query.userTenantMemberships.findFirst = vi.fn(async () => ({
         id: "m1",
         tenantId: TENANT_A,
@@ -143,6 +144,57 @@ describe("AuthContextService selectTenant membership rules", () => {
     });
   });
 
+  it("allows platform admin support access without membership and audits", async () => {
+    withTenantTransaction.mockImplementation(async (_db, tenantId, fn) => {
+      const tx = {
+        query: {
+          userTenantMemberships: { findFirst: vi.fn(async () => null) },
+          userTenantAccess: { findFirst: vi.fn(async () => null) },
+          tenants: {
+            findFirst: vi.fn(async () => ({ id: tenantId, status: "ACTIVE" })),
+          },
+        },
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            innerJoin: vi.fn(() => ({
+              where: vi.fn(async () => [{ code: "FORGE_INDUSTRIAL" }]),
+            })),
+            where: vi.fn(async () => []),
+          })),
+        })),
+      };
+      return fn(tx);
+    });
+
+    const service = createService();
+    const summary = await service.selectTenant(principal({ isPlatformAdmin: true }), TENANT_B, {
+      productCode: "FORGE_INDUSTRIAL",
+      reason: "admin-preview",
+    });
+    expect(summary.tenantId).toBe(TENANT_B);
+    expect(summary.accessMode).toBe("PLATFORM_ADMIN_SUPPORT");
+    expect(summary.isPlatformAdmin).toBe(true);
+    expect(summary.activeProducts).toContain("FORGE_INDUSTRIAL");
+  });
+
+  it("rejects platform admin unknown tenant", async () => {
+    withTenantTransaction.mockImplementation(async (_db, _tenantId, fn) => {
+      const tx = {
+        query: {
+          userTenantMemberships: { findFirst: vi.fn(async () => null) },
+          userTenantAccess: { findFirst: vi.fn(async () => null) },
+          tenants: { findFirst: vi.fn(async () => null) },
+        },
+      };
+      return fn(tx);
+    });
+
+    const service = createService();
+    await expect(
+      service.selectTenant(principal({ isPlatformAdmin: true }), TENANT_B),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
   it("rejects inactive (SUSPENDED) membership selection", async () => {
     withTenantTransaction.mockImplementation(async (_db, _tenantId, fn) => {
       const tx = {
@@ -170,31 +222,35 @@ describe("AuthContextService selectTenant membership rules", () => {
     });
   });
 
-  it("rejects removed (REVOKED) membership selection", async () => {
-    withTenantTransaction.mockImplementation(async (_db, _tenantId, fn) => {
-      const tx = {
+  it("lists platform admin catalog tenants as selectable support contexts", async () => {
+    lookupUserTenants.mockResolvedValue([
+      {
+        tenantId: TENANT_A,
+        tenantSlug: "a",
+        tenantDisplayName: "A",
+        tenantStatus: "ACTIVE",
+        membershipId: "m1",
+        membershipStatus: "ACTIVE",
+        isDefaultTenant: true,
+      },
+    ]);
+    withBypassRlsTransaction.mockImplementation(async (_db, fn) =>
+      fn({
         query: {
-          userTenantMemberships: {
-            findFirst: vi.fn(async () => ({
-              id: "m1",
-              tenantId: TENANT_B,
-              userId: USER_ID,
-              status: "REVOKED",
-            })),
-          },
-          userTenantAccess: { findFirst: vi.fn(async () => null) },
           tenants: {
-            findFirst: vi.fn(async () => ({ id: TENANT_B, status: "ACTIVE" })),
+            findMany: vi.fn(async () => [
+              { id: TENANT_A, slug: "a", displayName: "A", status: "ACTIVE" },
+              { id: TENANT_B, slug: "b", displayName: "B", status: "ACTIVE" },
+            ]),
           },
         },
-      };
-      return fn(tx);
-    });
+      }),
+    );
 
     const service = createService();
-    await expect(service.selectTenant(principal(), TENANT_B)).rejects.toMatchObject({
-      code: "FORBIDDEN",
-    });
+    const tenants = await service.listAvailableTenants(USER_ID, { isPlatformAdmin: true });
+    expect(tenants.find((t) => t.tenantId === TENANT_B)?.selectable).toBe(true);
+    expect(tenants.find((t) => t.tenantId === TENANT_B)?.accessMode).toBe("PLATFORM_ADMIN_SUPPORT");
   });
 
   it("lists only ACTIVE memberships as selectable for multi-tenant users", async () => {

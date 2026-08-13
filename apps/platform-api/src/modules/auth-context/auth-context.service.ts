@@ -29,19 +29,23 @@ import {
   users,
   userTenantAccess,
   userTenantMemberships,
+  withBypassRlsTransaction,
   withTenantTransaction,
   type Database,
 } from "@forge/database";
 import type { ForgeEnvironment } from "@forge/environment";
 import { ForgeError } from "@forge/errors";
 import type { ForgePrincipal, TenantOperationalState } from "@forge/tenant-context";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne } from "drizzle-orm";
 import { APP_ENV, DATABASE } from "../../tokens.js";
 import type { RequestWithIds } from "../../common/request-ids.js";
 import { getRequestIds } from "../../common/request-ids.js";
+import { AuditService } from "../audit/audit.service.js";
 import { CognitoAdminService } from "../cognito/cognito-admin.service.js";
 
 const PLATFORM_SUPER_ADMIN = "PLATFORM_SUPER_ADMIN";
+
+export type AuthAccessMode = "MEMBER" | "PLATFORM_ADMIN_SUPPORT";
 
 @Injectable()
 export class AuthContextService {
@@ -49,6 +53,7 @@ export class AuthContextService {
     @Inject(DATABASE) private readonly db: Database,
     @Inject(APP_ENV) private readonly env: ForgeEnvironment,
     private readonly cognito: CognitoAdminService,
+    private readonly audit: AuditService,
   ) {}
 
   async resolvePrincipal(req: RequestWithIds): Promise<ForgePrincipal> {
@@ -182,7 +187,9 @@ export class AuthContextService {
     }
 
     const entitlements = tenant
-      ? await this.loadEntitlements(tenantId, access?.membershipId ?? null)
+      ? await this.loadEntitlements(tenantId, access?.membershipId ?? null, {
+          preferTenantCatalog: isSuper,
+        })
       : { products: new Set<string>(), modules: new Set<string>() };
 
     const memberships = user.personId
@@ -213,7 +220,7 @@ export class AuthContextService {
     };
   }
 
-  async listAvailableTenants(userId: string) {
+  async listAvailableTenants(userId: string, options?: { isPlatformAdmin?: boolean }) {
     let rows: Awaited<ReturnType<typeof lookupUserTenants>>;
     try {
       rows = await lookupUserTenants(this.db, userId);
@@ -232,7 +239,8 @@ export class AuthContextService {
         },
       );
     }
-    return rows.map((row) => {
+
+    const membershipRows = rows.map((row) => {
       const tenantSession = evaluateTenantOperationalState({
         tenantStatus: row.tenantStatus,
         subscriptionStatus: "ACTIVE",
@@ -247,15 +255,57 @@ export class AuthContextService {
         isDefaultTenant: row.isDefaultTenant,
         selectable:
           isMembershipStatusActive(row.membershipStatus) && tenantSession.canAuthenticate,
+        accessMode: "MEMBER" as AuthAccessMode,
       };
     });
+
+    if (!options?.isPlatformAdmin) {
+      return membershipRows;
+    }
+
+    // Platform admins may open any existing non-deleted tenant in support context.
+    // Catalog read uses controlled bypass_rls (same path as platform tenant list).
+    const catalog = await withBypassRlsTransaction(this.db, async (tx) =>
+      tx.query.tenants.findMany({
+        where: ne(tenants.status, "ARCHIVED"),
+        orderBy: (t, { asc }) => [asc(t.displayName)],
+      }),
+    );
+
+    const byId = new Map(membershipRows.map((row) => [row.tenantId, row]));
+    for (const tenant of catalog) {
+      const existing = byId.get(tenant.id);
+      const tenantSession = evaluateTenantOperationalState({
+        tenantStatus: tenant.status,
+        subscriptionStatus: "ACTIVE",
+      });
+      if (existing) {
+        existing.selectable = existing.selectable || tenantSession.canAuthenticate;
+        continue;
+      }
+      byId.set(tenant.id, {
+        tenantId: tenant.id,
+        slug: tenant.slug,
+        displayName: tenant.displayName,
+        tenantStatus: tenant.status,
+        membershipId: null,
+        membershipStatus: "PLATFORM_ADMIN_SUPPORT",
+        isDefaultTenant: false,
+        selectable: tenantSession.canAuthenticate,
+        accessMode: "PLATFORM_ADMIN_SUPPORT",
+      });
+    }
+
+    return [...byId.values()].sort((a, b) => a.displayName.localeCompare(b.displayName));
   }
 
   async selectTenant(
     principal: ForgePrincipal,
     tenantId: string,
-  ): Promise<ReturnType<AuthContextService["toClientSummary"]>> {
+    options?: { productCode?: string; reason?: string },
+  ): Promise<ReturnType<AuthContextService["toClientSummary"]> & { accessMode: AuthAccessMode }> {
     const access = await this.resolveTenantAccess(principal.userId, tenantId);
+
     if (!access || !isMembershipStatusActive(access.status)) {
       if (!principal.isPlatformAdmin) {
         throw new ForgeError("FORBIDDEN", "No active membership for the selected tenant");
@@ -270,16 +320,66 @@ export class AuthContextService {
     }
     this.assertTenantSessionEligible(tenant.status, principal.isPlatformAdmin);
 
-    const permissions = await this.loadPermissions(tenantId, principal.userId);
-    const entitlements = await this.loadEntitlements(tenantId, access?.membershipId ?? null);
+    // Platform admin support context keeps authoritative home permissions.
+    // Membership path still loads tenant-local roles when present.
+    let permissionCodes = principal.permissions;
+    if (access && isMembershipStatusActive(access.status) && !principal.isPlatformAdmin) {
+      const permissions = await this.loadPermissions(tenantId, principal.userId);
+      permissionCodes = permissions.permissionCodes;
+    } else if (access && isMembershipStatusActive(access.status) && principal.isPlatformAdmin) {
+      const membershipPermissions = await this.loadPermissions(tenantId, principal.userId);
+      permissionCodes = new Set([...principal.permissions, ...membershipPermissions.permissionCodes]);
+    }
+
+    const entitlements = await this.loadEntitlements(tenantId, access?.membershipId ?? null, {
+      preferTenantCatalog: principal.isPlatformAdmin,
+    });
+
+    const resolvedAccessMode: AuthAccessMode =
+      principal.isPlatformAdmin && (!access || !isMembershipStatusActive(access.status))
+        ? "PLATFORM_ADMIN_SUPPORT"
+        : principal.isPlatformAdmin
+          ? "PLATFORM_ADMIN_SUPPORT"
+          : "MEMBER";
+
+    if (principal.isPlatformAdmin) {
+      await withTenantTransaction(this.db, tenantId, async (tx) => {
+        await this.audit.writeInTransaction(tx, {
+          tenantId,
+          actorUserId: principal.userId,
+          actorPersonId: principal.personId,
+          actorType: "USER",
+          action: "PLATFORM_ADMIN_TENANT_ACCESS_STARTED",
+          resourceType: "tenant",
+          resourceId: tenantId,
+          result: "SUCCESS",
+          riskLevel: "HIGH",
+          correlationId: principal.correlationId,
+          requestId: principal.requestId,
+          after: {
+            platformRole: "PLATFORM_SUPER_ADMIN",
+            platformAdmin: true,
+            targetTenantId: tenantId,
+            targetProduct: options?.productCode ?? null,
+            reason: options?.reason ?? "select-tenant",
+            accessMode: resolvedAccessMode,
+            membershipId: access?.membershipId ?? null,
+          },
+        });
+      }, principal.userId);
+    }
+
     const summaryPrincipal: ForgePrincipal = {
       ...principal,
       tenantId,
-      permissions: permissions.permissionCodes,
+      permissions: permissionCodes,
       activeProducts: entitlements.products,
       activeModules: entitlements.modules,
     };
-    return this.toClientSummary(summaryPrincipal);
+    return {
+      ...this.toClientSummary(summaryPrincipal),
+      accessMode: resolvedAccessMode,
+    };
   }
 
   /**
@@ -444,10 +544,50 @@ export class AuthContextService {
     }, userId);
   }
 
-  private async loadEntitlements(tenantId: string, membershipId: string | null) {
+  private async loadEntitlements(
+    tenantId: string,
+    membershipId: string | null,
+    options?: { preferTenantCatalog?: boolean },
+  ) {
     return withTenantTransaction(this.db, tenantId, async (tx) => {
       const products = new Set<string>();
       const modules = new Set<string>();
+
+      // Platform admin support / no membership: expose the tenant catalog as-is
+      // (does not invent grants; reflects tenant product ownership only).
+      if (!membershipId || options?.preferTenantCatalog) {
+        const tp = await tx
+          .select({ code: platformProducts.code })
+          .from(tenantProducts)
+          .innerJoin(platformProducts, eq(platformProducts.id, tenantProducts.productId))
+          .where(and(eq(tenantProducts.tenantId, tenantId), eq(tenantProducts.status, "ACTIVE")));
+        for (const row of tp) {
+          products.add(row.code);
+        }
+
+        const now = new Date();
+        const tm = await tx
+          .select({
+            code: platformModules.code,
+            startsAt: tenantModuleEntitlements.startsAt,
+            endsAt: tenantModuleEntitlements.endsAt,
+          })
+          .from(tenantModuleEntitlements)
+          .innerJoin(platformModules, eq(platformModules.id, tenantModuleEntitlements.moduleId))
+          .where(
+            and(
+              eq(tenantModuleEntitlements.tenantId, tenantId),
+              inArray(tenantModuleEntitlements.status, ["ACTIVE", "GRACE"]),
+            ),
+          );
+        for (const row of tm) {
+          if (isModuleEntitlementWithinWindow(row, now)) {
+            modules.add(row.code);
+          }
+        }
+
+        return { products, modules };
+      }
 
       if (membershipId) {
         const mp = await tx
@@ -524,36 +664,6 @@ export class AuthContextService {
         return { products, modules };
       }
 
-      const tp = await tx
-        .select({ code: platformProducts.code })
-        .from(tenantProducts)
-        .innerJoin(platformProducts, eq(platformProducts.id, tenantProducts.productId))
-        .where(and(eq(tenantProducts.tenantId, tenantId), eq(tenantProducts.status, "ACTIVE")));
-      for (const row of tp) {
-        products.add(row.code);
-      }
-
-      const now = new Date();
-      const tm = await tx
-        .select({
-          code: platformModules.code,
-          startsAt: tenantModuleEntitlements.startsAt,
-          endsAt: tenantModuleEntitlements.endsAt,
-        })
-        .from(tenantModuleEntitlements)
-        .innerJoin(platformModules, eq(platformModules.id, tenantModuleEntitlements.moduleId))
-        .where(
-          and(
-            eq(tenantModuleEntitlements.tenantId, tenantId),
-            inArray(tenantModuleEntitlements.status, ["ACTIVE", "GRACE"]),
-          ),
-        );
-      for (const row of tm) {
-        if (isModuleEntitlementWithinWindow(row, now)) {
-          modules.add(row.code);
-        }
-      }
-
       return { products, modules };
     });
   }
@@ -572,7 +682,7 @@ export class AuthContextService {
     }
   }
 
-  toClientSummary(principal: ForgePrincipal) {
+  toClientSummary(principal: ForgePrincipal, accessMode: AuthAccessMode = "MEMBER") {
     return {
       userId: principal.userId,
       personId: principal.personId,
@@ -583,6 +693,7 @@ export class AuthContextService {
       activeModules: [...principal.activeModules],
       isPlatformAdmin: principal.isPlatformAdmin,
       authProvider: principal.authProvider,
+      accessMode,
     };
   }
 }

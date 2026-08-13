@@ -8,13 +8,21 @@ import type { AuthMe } from "./auth-api.js";
 export async function switchActiveTenant(input: {
   tenantId: string;
   previousTenantId: string | null;
-  selectTenant: (tenantId: string) => Promise<AuthMe>;
+  selectTenant: (
+    tenantId: string,
+    options?: { productCode?: string; reason?: string },
+  ) => Promise<AuthMe>;
   setActiveTenantId: (tenantId: string) => void;
   clearActiveTenantId: () => void;
+  productCode?: string;
+  reason?: string;
 }): Promise<AuthMe> {
   input.setActiveTenantId(input.tenantId);
   try {
-    return await input.selectTenant(input.tenantId);
+    return await input.selectTenant(input.tenantId, {
+      ...(input.productCode ? { productCode: input.productCode } : {}),
+      ...(input.reason ? { reason: input.reason } : {}),
+    });
   } catch (error) {
     if (input.previousTenantId) {
       input.setActiveTenantId(input.previousTenantId);

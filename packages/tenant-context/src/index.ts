@@ -40,9 +40,11 @@ export function hasAllPermissions(principal: ForgePrincipal, codes: string[]): b
 }
 
 export function hasProduct(principal: ForgePrincipal, productCode: string): boolean {
+  if (principal.isPlatformAdmin) return true;
   return principal.activeProducts.has(productCode);
 }
 
 export function hasModule(principal: ForgePrincipal, moduleCode: string): boolean {
+  if (principal.isPlatformAdmin) return true;
   return principal.activeModules.has(moduleCode);
 }

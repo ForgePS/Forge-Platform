@@ -160,7 +160,8 @@ function GateCard({
 
 function ShellBody({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { me, loading, error, logout, loginWithCognito, chooseTenant, hasPermission } = useAuth();
+  const { me, loading, error, logout, loginWithCognito, chooseTenant, hasPermission, hasProduct } =
+    useAuth();
   const {
     productDisplayName,
     appShortName,
@@ -209,15 +210,22 @@ function ShellBody({ children }: { children: ReactNode }) {
   const tenantId = me?.tenantId ?? null;
   const userId = me?.userId ?? null;
   const products = new Set(me?.activeProducts ?? []);
-  const entitled = products.has(INDUSTRIAL_PRODUCT_CODE);
-  // Prefer hasPermission so PLATFORM_SUPER_ADMIN matches API evaluateAuthorization
-  // (isPlatformAdmin bypasses the industrial.access requirement).
+  const tenantProductEntitled = products.has(INDUSTRIAL_PRODUCT_CODE);
+  const isPlatformAdmin = Boolean(me?.isPlatformAdmin);
+  const adminSupport = isPlatformAdmin;
   const hasIndustrialAccess = hasPermission("industrial.access");
   const permissions = new Set(me?.permissions ?? []);
   if (hasIndustrialAccess) {
     permissions.add("industrial.access");
   }
-  const hasAccess = Boolean(me && tenantId && entitled && hasIndustrialAccess);
+  // Platform admin support does not require ordinary customer product grants.
+  // Customer users still need ACTIVE product + industrial.access.
+  const entitled = hasProduct(INDUSTRIAL_PRODUCT_CODE);
+  const hasAccess = Boolean(
+    me &&
+      tenantId &&
+      (adminSupport ? hasIndustrialAccess : entitled && hasIndustrialAccess),
+  );
 
   // Vanity hosts (e.g. producers-rice-mill) map to a tenant via login-branding.
   // Prefer that tenant once after sign-in so a leftover Creator localStorage
@@ -514,7 +522,7 @@ function ShellBody({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!entitled) {
+  if (!entitled && !adminSupport) {
     const alternates = me.tenants.filter(
       (t) => t.selectable && t.tenantId !== me.tenantId,
     );
@@ -543,6 +551,33 @@ function ShellBody({ children }: { children: ReactNode }) {
         <button type="button" className="btn btn-outline-secondary d-grid w-100" onClick={() => void signOut()}>
           Sign out
         </button>
+      </GateCard>
+    );
+  }
+
+  if (adminSupport && !tenantId) {
+    const selectable = me.tenants.filter((t) => t.selectable);
+    return (
+      <GateCard
+        title="Select a customer"
+        body="Platform Admin support requires an explicit customer tenant context."
+        muted="Administrative Access"
+        {...gateBrand}
+      >
+        <div className="d-grid gap-2">
+          {selectable.map((t) => (
+            <button
+              key={t.tenantId}
+              type="button"
+              className="btn btn-outline-primary"
+              onClick={() =>
+                void chooseTenant(t.tenantId)
+              }
+            >
+              {t.displayName}
+            </button>
+          ))}
+        </div>
       </GateCard>
     );
   }
@@ -691,6 +726,15 @@ function ShellBody({ children }: { children: ReactNode }) {
 
             <div className="navbar-nav-right d-flex align-items-center flex-wrap gap-2 w-100" id="navbar-collapse">
               <div className="navbar-nav align-items-center flex-grow-1 min-w-0 gap-2 flex-wrap">
+                {adminSupport ? (
+                  <span
+                    className="badge bg-label-warning text-wrap"
+                    title="Platform administrative support context — not customer impersonation"
+                  >
+                    Platform Admin · Viewing: {tenantLabel}
+                    {!tenantProductEntitled ? " · Product not enabled for this customer" : ""}
+                  </span>
+                ) : null}
                 <label className="nav-item ind-tenant-switcher mb-0">
                   <i className="bx bx-buildings flex-shrink-0" aria-hidden="true" />
                   <span className="ind-tenant-switcher__label">Tenant</span>

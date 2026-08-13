@@ -461,18 +461,76 @@ function TenantDetailInner() {
             {sectionErrors.entitlements ? (
               <p className={styles.error}>{sectionErrors.entitlements}</p>
             ) : null}
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { code: "FORGE_INDUSTRIAL", name: "Forge Industrial Safety" },
+                  { code: "FORGE_RMS", name: "Forge RMS" },
+                  { code: "FORGE_ACADEMY", name: "Forge Academy" },
+                ].map((catalog) => {
+                  const row = entitlements?.products?.find((p) => p.productCode === catalog.code);
+                  const status = row?.status ?? "NOT PURCHASED";
+                  const active = status === "ACTIVE";
+                  const industrialUrl =
+                    process.env.NEXT_PUBLIC_INDUSTRIAL_APP_URL?.replace(/\/$/, "") ||
+                    "https://d1n0e5wvjwbpdf.cloudfront.net";
+                  return (
+                    <tr key={catalog.code}>
+                      <td>
+                        {catalog.name}
+                        <div className={styles.mono}>{catalog.code}</div>
+                      </td>
+                      <td>
+                        <StatusBadge tone={active ? "success" : status === "NOT PURCHASED" ? "neutral" : "warning"}>
+                          {status}
+                        </StatusBadge>
+                      </td>
+                      <td>
+                        {catalog.code === "FORGE_INDUSTRIAL" && active ? (
+                          <a
+                            className="forge-btn forge-btn--outline"
+                            href={`${industrialUrl}/?tenantId=${encodeURIComponent(tenantId)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Open Industrial
+                          </a>
+                        ) : null}
+                        {catalog.code === "FORGE_INDUSTRIAL" && !active ? (
+                          <>
+                            <Link className="forge-btn forge-btn--outline" href={`/entitlements${q}`}>
+                              Configure Product
+                            </Link>{" "}
+                            <a
+                              className="forge-btn forge-btn--secondary"
+                              href={`${industrialUrl}/?tenantId=${encodeURIComponent(tenantId)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="Platform Admin support preview"
+                            >
+                              Admin Preview
+                            </a>
+                          </>
+                        ) : null}
+                        {catalog.code !== "FORGE_INDUSTRIAL" ? (
+                          <Link href={`/entitlements${q}`}>Manage</Link>
+                        ) : null}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
             {(entitlements?.products?.length ?? 0) === 0 ? (
-              <p className={styles.muted}>No product entitlements.</p>
-            ) : (
-              <ul>
-                {entitlements!.products.map((row) => (
-                  <li key={row.productCode}>
-                    <span className={styles.mono}>{row.productCode}</span> · {row.productName} ·{" "}
-                    {row.status}
-                  </li>
-                ))}
-              </ul>
-            )}
+              <p className={styles.muted}>No product entitlements returned from API (shown as NOT PURCHASED).</p>
+            ) : null}
             <nav className={styles.linkRow}>
               <Link href={`/entitlements${q}`}>Entitlements</Link>
               <Link href="/products">Catalog</Link>

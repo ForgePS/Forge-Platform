@@ -859,6 +859,11 @@ export class MembershipsService {
   /**
    * Grants product and module access, intersected with what the tenant is
    * actually entitled to. A membership can never exceed its tenant.
+   *
+   * When productCodes is empty, grants every ACTIVE tenant product so newly
+   * provisioned memberships are usable without manual post-provision patching.
+   * Explicit empty arrays after a non-empty replace still clear via callers that
+   * delete rows first; this path only fills defaults on create/invite when omitted.
    */
   async applyProductsAndModules(
     tx: DatabaseTransaction,
@@ -868,11 +873,24 @@ export class MembershipsService {
       principal: ForgePrincipal;
       productCodes: readonly string[];
       moduleCodes: readonly string[];
+      /** When true (default), empty productCodes expands to the tenant catalog. */
+      defaultToTenantProducts?: boolean;
     },
   ): Promise<void> {
     const now = new Date();
+    const defaultToTenantProducts = input.defaultToTenantProducts !== false;
 
-    if (input.productCodes.length > 0) {
+    let productCodes = [...input.productCodes];
+    if (productCodes.length === 0 && defaultToTenantProducts) {
+      const catalog = await tx
+        .select({ code: platformProducts.code })
+        .from(tenantProducts)
+        .innerJoin(platformProducts, eq(platformProducts.id, tenantProducts.productId))
+        .where(and(eq(tenantProducts.tenantId, input.tenantId), eq(tenantProducts.status, "ACTIVE")));
+      productCodes = catalog.map((row) => row.code);
+    }
+
+    if (productCodes.length > 0) {
       const entitled = await tx
         .select({ id: platformProducts.id, code: platformProducts.code })
         .from(tenantProducts)
@@ -881,11 +899,11 @@ export class MembershipsService {
           and(
             eq(tenantProducts.tenantId, input.tenantId),
             eq(tenantProducts.status, "ACTIVE"),
-            inArray(platformProducts.code, [...input.productCodes]),
+            inArray(platformProducts.code, productCodes),
           ),
         );
       const entitledCodes = new Set(entitled.map((row) => row.code));
-      const notEntitled = input.productCodes.filter((code) => !entitledCodes.has(code));
+      const notEntitled = productCodes.filter((code) => !entitledCodes.has(code));
       if (notEntitled.length > 0) {
         throw new ForgeError(
           "ENTITLEMENT_REQUIRED",
@@ -909,7 +927,22 @@ export class MembershipsService {
       }
     }
 
-    if (input.moduleCodes.length > 0) {
+    let moduleCodes = [...input.moduleCodes];
+    if (moduleCodes.length === 0 && defaultToTenantProducts && productCodes.length > 0) {
+      const catalog = await tx
+        .select({ code: platformModules.code })
+        .from(tenantModuleEntitlements)
+        .innerJoin(platformModules, eq(platformModules.id, tenantModuleEntitlements.moduleId))
+        .where(
+          and(
+            eq(tenantModuleEntitlements.tenantId, input.tenantId),
+            inArray(tenantModuleEntitlements.status, ["ACTIVE", "GRACE"]),
+          ),
+        );
+      moduleCodes = catalog.map((row) => row.code);
+    }
+
+    if (moduleCodes.length > 0) {
       const entitled = await tx
         .select({ id: platformModules.id, code: platformModules.code })
         .from(tenantModuleEntitlements)
@@ -918,11 +951,11 @@ export class MembershipsService {
           and(
             eq(tenantModuleEntitlements.tenantId, input.tenantId),
             inArray(tenantModuleEntitlements.status, ["ACTIVE", "GRACE"]),
-            inArray(platformModules.code, [...input.moduleCodes]),
+            inArray(platformModules.code, moduleCodes),
           ),
         );
       const entitledCodes = new Set(entitled.map((row) => row.code));
-      const notEntitled = input.moduleCodes.filter((code) => !entitledCodes.has(code));
+      const notEntitled = moduleCodes.filter((code) => !entitledCodes.has(code));
       if (notEntitled.length > 0) {
         throw new ForgeError(
           "ENTITLEMENT_REQUIRED",

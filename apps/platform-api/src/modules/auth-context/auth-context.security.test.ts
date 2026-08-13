@@ -131,7 +131,9 @@ function createService(overrides?: {
   } as never;
 
   const cognito = { enabled: false, globalSignOut: vi.fn() };
-  return new AuthContextService(db as never, env, cognito as never);
+  return new AuthContextService(db as never, env, cognito as never, {
+    writeInTransaction: vi.fn(async () => "audit-1"),
+  } as never);
 }
 
 function request(headers: Record<string, string | undefined>, params: Record<string, string> = {}) {

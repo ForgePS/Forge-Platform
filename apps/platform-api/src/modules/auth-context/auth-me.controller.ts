@@ -8,6 +8,8 @@ import { Principal } from "./principal.decorator.js";
 
 const selectTenantSchema = z.object({
   tenantId: z.string().uuid(),
+  productCode: z.string().min(1).max(64).optional(),
+  reason: z.string().min(1).max(256).optional(),
 });
 
 @Controller("api/v1/auth")
@@ -16,10 +18,13 @@ export class AuthMeController {
 
   @Get("me")
   async me(@Principal() principal: ForgePrincipal, @Req() req: RequestWithIds) {
-    const tenants = await this.authContext.listAvailableTenants(principal.userId);
+    const tenants = await this.authContext.listAvailableTenants(principal.userId, {
+      isPlatformAdmin: principal.isPlatformAdmin,
+    });
+    const accessMode = principal.isPlatformAdmin ? "PLATFORM_ADMIN_SUPPORT" : "MEMBER";
     return ok(
       {
-        ...this.authContext.toClientSummary(principal),
+        ...this.authContext.toClientSummary(principal, accessMode),
         tenants,
       },
       getRequestIds(req),
@@ -32,9 +37,14 @@ export class AuthMeController {
     @Principal() principal: ForgePrincipal,
     @Req() req: RequestWithIds,
   ) {
-    const { tenantId } = selectTenantSchema.parse(body);
-    const selected = await this.authContext.selectTenant(principal, tenantId);
-    const tenants = await this.authContext.listAvailableTenants(principal.userId);
+    const parsed = selectTenantSchema.parse(body);
+    const selected = await this.authContext.selectTenant(principal, parsed.tenantId, {
+      ...(parsed.productCode ? { productCode: parsed.productCode } : {}),
+      ...(parsed.reason ? { reason: parsed.reason } : {}),
+    });
+    const tenants = await this.authContext.listAvailableTenants(principal.userId, {
+      isPlatformAdmin: principal.isPlatformAdmin,
+    });
     return ok({ ...selected, tenants }, getRequestIds(req));
   }
 
