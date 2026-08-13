@@ -6,7 +6,7 @@ import { Suspense, useCallback, useEffect, useState, type FormEvent } from "reac
 import { PlatformPageGate } from "@/components/platform-page-gate";
 import { tenantDetailHref } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
-import { apiGet, apiSend } from "@/lib/api";
+import { createInvitation, apiGet } from "@/lib/api";
 import styles from "../page.module.css";
 
 type User = {
@@ -19,14 +19,6 @@ type User = {
   activatedAt: string | null;
 };
 
-type InviteResult = {
-  invitationId: string;
-  userId: string;
-  email: string;
-  expiresAt: string;
-  token: string;
-};
-
 function UsersInner() {
   const searchParams = useSearchParams();
   const tenantId = searchParams.get("tenantId");
@@ -35,8 +27,10 @@ function UsersInner() {
   const [loading, setLoading] = useState(Boolean(tenantId));
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [inviteResult, setInviteResult] = useState<InviteResult | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   const load = useCallback(async () => {
     if (!tenantId) return;
@@ -60,15 +54,27 @@ function UsersInner() {
     if (!tenantId) return;
     setSubmitting(true);
     setError(null);
-    setInviteResult(null);
+    setSuccess(null);
     try {
-      const result = await apiSend<InviteResult>(
-        `/api/v1/tenants/${tenantId}/users/invitations`,
-        "POST",
-        { email: email.trim() },
+      const invitation = await createInvitation(
+        {
+          tenantId,
+          email: email.trim(),
+          ...(firstName.trim() ? { firstName: firstName.trim() } : {}),
+          ...(lastName.trim() ? { lastName: lastName.trim() } : {}),
+          roleCodes: ["TENANT_ADMIN"],
+          send: true,
+        },
+        { idempotencyKey: crypto.randomUUID() },
       );
-      setInviteResult(result);
+      setSuccess(
+        invitation.status === "SENT"
+          ? `Invitation email sent to ${email.trim()}. Ask them to check inbox and spam.`
+          : `Invitation created for ${email.trim()} (status: ${invitation.status}).`,
+      );
       setEmail("");
+      setFirstName("");
+      setLastName("");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to invite user");
@@ -92,19 +98,18 @@ function UsersInner() {
       <p className={styles.lead}>
         Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
         <Link href={tenantDetailHref(tenantId)}>Tenant detail</Link> ·{" "}
+        <Link href={`/invitations?tenantId=${encodeURIComponent(tenantId)}`}>Invitations</Link> ·{" "}
         <Link href={`/roles?tenantId=${encodeURIComponent(tenantId)}`}>Roles</Link>
       </p>
 
       {error ? <p className={styles.error}>{error}</p> : null}
-      {inviteResult ? (
-        <div className={styles.success}>
-          Invited {inviteResult.email}. Invitation token (shown once):{" "}
-          <span className={styles.mono}>{inviteResult.token}</span>
-        </div>
-      ) : null}
+      {success ? <div className={styles.success}>{success}</div> : null}
 
       <div className={styles.panel}>
         <h2>Invite user</h2>
+        <p className={styles.muted}>
+          Sends a Cognito invitation email so the user can set their password and sign in.
+        </p>
         <form className={styles.form} onSubmit={onInvite}>
           <div className={styles.formRow}>
             <label htmlFor="email">Email</label>
@@ -116,9 +121,21 @@ function UsersInner() {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
+          <div className={styles.formRow}>
+            <label htmlFor="firstName">First name</label>
+            <input
+              id="firstName"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
+          </div>
+          <div className={styles.formRow}>
+            <label htmlFor="lastName">Last name</label>
+            <input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+          </div>
           <div className={styles.actions}>
             <button className={styles.button} type="submit" disabled={submitting}>
-              {submitting ? "Inviting…" : "Invite"}
+              {submitting ? "Sending invitation…" : "Send invitation"}
             </button>
           </div>
         </form>
@@ -159,7 +176,10 @@ function UsersInner() {
 
 export default function UsersPage() {
   return (
-    <PlatformPageGate title="Users" permission="platform.user.invite">
+    <PlatformPageGate
+      title="Users"
+      anyOf={["platform.user.invite", "platform.invitation.manage"]}
+    >
       <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
         <UsersInner />
       </Suspense>

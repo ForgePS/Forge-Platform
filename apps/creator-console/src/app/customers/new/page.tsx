@@ -209,26 +209,31 @@ function AddCustomerInner() {
       setProvisionSteps([...steps]);
 
       let adminOk = true;
+      let adminError: string | null = null;
       try {
-        await createInvitation({
-          tenantId: created.id,
-          email: adminEmail.trim(),
-          roleCodes: ["customer_admin"],
-          firstName: adminFirst.trim(),
-          lastName: adminLast.trim(),
-        });
-      } catch {
-        try {
-          await apiSend(`/api/v1/tenants/${created.id}/users/invitations`, "POST", {
+        await createInvitation(
+          {
+            tenantId: created.id,
             email: adminEmail.trim(),
+            roleCodes: ["TENANT_ADMIN"],
             firstName: adminFirst.trim(),
             lastName: adminLast.trim(),
-          });
-        } catch {
-          adminOk = false;
-        }
+            send: true,
+          },
+          { idempotencyKey: crypto.randomUUID() },
+        );
+      } catch (err) {
+        adminOk = false;
+        adminError = err instanceof Error ? err.message : "Administrator invitation failed";
       }
-      steps[2] = { ...steps[2]!, done: true, failed: !adminOk };
+      steps[2] = {
+        ...steps[2]!,
+        done: true,
+        failed: !adminOk,
+        label: adminOk
+          ? "Administrator invitation emailed"
+          : `Administrator invitation failed${adminError ? `: ${adminError}` : ""}`,
+      };
       steps[3] = { ...steps[3]!, done: true };
       setProvisionSteps([...steps]);
 

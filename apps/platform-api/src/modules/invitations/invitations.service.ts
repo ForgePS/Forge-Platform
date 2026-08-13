@@ -108,6 +108,10 @@ export class InvitationsService {
           firstName: data.firstName,
           lastName: data.lastName,
         });
+        // Existing Cognito users do not get a welcome email on create — resend it.
+        if (provisioned && !provisioned.created) {
+          await this.cognito.resendInvitation(provisioned.username);
+        }
       } catch (error) {
         throw error instanceof ForgeError
           ? error

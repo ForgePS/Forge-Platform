@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
 import {
   createId,
@@ -16,6 +16,7 @@ import { z } from "zod";
 import { concurrencyConflict } from "../../common/concurrency.js";
 import { DATABASE } from "../../tokens.js";
 import { AuditService } from "../audit/audit.service.js";
+import { InvitationsService } from "../invitations/invitations.service.js";
 import { OutboxService } from "../outbox/outbox.service.js";
 
 type ExpectedVersion = number | "*";
@@ -23,7 +24,10 @@ type ExpectedVersion = number | "*";
 const inviteSchema = z.object({
   email: z.string().email().max(320),
   personId: z.string().uuid().optional(),
-  expiresInHours: z.number().int().min(1).max(720).default(72),
+  firstName: z.string().min(1).max(100).optional(),
+  lastName: z.string().min(1).max(100).optional(),
+  roleCodes: z.array(z.string().min(1).max(64)).max(20).optional(),
+  expiresInHours: z.number().int().min(1).max(720).default(168),
 });
 
 const patchUserSchema = z.object({
@@ -47,90 +51,38 @@ export class UsersService {
     @Inject(DATABASE) private readonly db: Database,
     private readonly outbox: OutboxService,
     private readonly audit: AuditService,
+    private readonly invitations: InvitationsService,
   ) {}
 
+  /**
+   * Legacy Creator Users endpoint.
+   * Delegates to the authoritative invitation + Cognito email path (ADR-020).
+   * Does not return a plaintext invite token — delivery is via Cognito email.
+   */
   async invite(tenantId: string, input: unknown, principal: ForgePrincipal) {
     const data = inviteSchema.parse(input);
-    const token = randomBytes(32).toString("base64url");
-    const tokenHash = hashToken(token);
-
-    return withTenantTransaction(this.db, tenantId, async (tx) => {
-      const existing = await tx.query.users.findFirst({
-        where: and(eq(users.tenantId, tenantId), eq(users.primaryEmail, data.email)),
-      });
-
-      let userId = existing?.id;
-      const now = new Date();
-      if (!existing) {
-        userId = createId();
-        await tx.insert(users).values({
-          id: userId,
-          tenantId,
-          personId: data.personId,
-          primaryEmail: data.email,
-          status: "INVITED",
-          invitedAt: now,
-          createdAt: now,
-          updatedAt: now,
-        });
-        await tx.insert(userTenantAccess).values({
-          id: createId(),
-          tenantId,
-          userId,
-          status: "ACTIVE",
-          isDefaultTenant: true,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-
-      const invitationId = createId();
-      const expiresAt = new Date(now.getTime() + data.expiresInHours * 3600_000);
-      await tx.insert(userInvitations).values({
-        id: invitationId,
+    const invitation = await this.invitations.create(
+      {
         tenantId,
         email: data.email,
-        personId: data.personId,
-        invitationTokenHash: tokenHash,
-        expiresAt,
-        status: "PENDING",
-        invitedByUserId: principal.userId,
-        createdAt: now,
-      });
+        ...(data.firstName ? { firstName: data.firstName } : {}),
+        ...(data.lastName ? { lastName: data.lastName } : {}),
+        roleCodes: data.roleCodes ?? [],
+        expiresInHours: data.expiresInHours,
+        send: true,
+      },
+      principal,
+    );
 
-      await this.outbox.write(tx, {
-        tenantId,
-        aggregateType: "user",
-        aggregateId: userId!,
-        eventType: DOMAIN_EVENT_TYPES.USER_INVITED,
-        payload: { userId, email: data.email, invitationId, tenantId },
-        correlationId: principal.correlationId,
-        actorUserId: principal.userId,
-      });
-      await this.audit.writeInTransaction(tx, {
-        tenantId,
-        actorUserId: principal.userId,
-        actorPersonId: principal.personId,
-        actorType: "USER",
-        action: "user.invite",
-        resourceType: "user_invitation",
-        resourceId: invitationId,
-        result: "SUCCESS",
-        riskLevel: "MEDIUM",
-        correlationId: principal.correlationId,
-        requestId: principal.requestId,
-        after: { invitationId, email: data.email, expiresAt },
-      });
-
-      // Return plaintext token once; only hash is persisted.
-      return {
-        invitationId,
-        userId,
-        email: data.email,
-        expiresAt,
-        token,
-      };
-    }, principal.userId);
+    return {
+      invitationId: invitation.id,
+      membershipId: invitation.membershipId,
+      email: data.email.toLowerCase(),
+      expiresAt: invitation.expiresAt,
+      status: invitation.status,
+      delivery: "COGNITO_EMAIL" as const,
+      token: null,
+    };
   }
 
   async acceptInvitation(input: unknown, ids: { correlationId: string; requestId: string }) {

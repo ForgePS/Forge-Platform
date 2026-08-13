@@ -157,8 +157,10 @@ function InvitationsInner() {
     <section className={styles.page}>
       <h1>Invitations</h1>
       <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={`/audit${q}`}>Audit history</Link>
+        Invite people by email. Forge sends the Cognito invitation message so they can set a
+        password and sign in. Use Resend if the email was lost or the Cognito user already
+        existed. Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
+        <Link href={`/users${q}`}>Users</Link> · <Link href={`/audit${q}`}>Audit history</Link>
       </p>
 
       {!canRead ? (
