@@ -24,3 +24,4 @@ export * from "./ai-narrative.js";
 export * from "./configuration-studio.js";
 export * from "./imports.js";
 export * from "./platform-jobs.js";
+export * from "./industrial.js";

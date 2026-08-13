@@ -281,6 +281,13 @@
       "when": 1754940000000,
       "tag": "0039_module_catalog_s2",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1754950000000,
+      "tag": "0040_industrial_domain_s1",
+      "breakpoints": true
     }
   ]
 }

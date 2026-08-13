@@ -7,7 +7,7 @@ import { MATRIX_BY_COLLECTION, assertMatrixComplete, TARGET_SCHEMA_GAPS } from "
 import { isCustomerImportTenant, resolveAwsTenant } from "./tenant-map.js";
 import type { ExtractedRecord, GateCounts, IdMapEntry, TransformError } from "./types.js";
 
-export const TOOL_VERSION = "0.1.0";
+export const TOOL_VERSION = "0.2.0";
 
 function pickEffectiveTenantKey(rec: ExtractedRecord): string | null {
   if (rec._migration.sourceTenantKey) return rec._migration.sourceTenantKey;

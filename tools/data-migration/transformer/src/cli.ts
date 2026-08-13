@@ -8,8 +8,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { runTransform, TOOL_VERSION } from "./transform.js";
-import { SOURCE_TARGET_MATRIX, TARGET_SCHEMA_GAPS } from "./source-target-matrix.js";
+import { SOURCE_TARGET_MATRIX, TARGET_SCHEMA_GAPS, TARGET_MISSING } from "./source-target-matrix.js";
 import { AUTHORITATIVE_CUSTOMER_AWS_TENANT } from "./tenant-map.js";
+import { dryValidateImportPackage } from "./dry-validate.js";
 
 type CliArgs = {
   input?: string;
@@ -84,12 +85,32 @@ async function main(): Promise<void> {
     customerOnly: Boolean(args.customerOnly),
   });
 
+  const dry = dryValidateImportPackage(outputDir);
+
+  const dispositionBuckets = {
+    AURORA_OPERATIONAL_SOURCE_DOCS: dry.dispositionCounts.AURORA_OPERATIONAL,
+    AURORA_HISTORY_SOURCE_DOCS: dry.dispositionCounts.AURORA_HISTORY,
+    S3_ARCHIVE_SOURCE_DOCS: dry.dispositionCounts.S3_ARCHIVE,
+    PLATFORM_GLOBAL_SOURCE_DOCS: dry.dispositionCounts.PLATFORM_GLOBAL,
+    EXCLUDE_APPROVED_SOURCE_DOCS: dry.dispositionCounts.EXCLUDE_APPROVED,
+  };
+  const accounted =
+    dispositionBuckets.AURORA_OPERATIONAL_SOURCE_DOCS +
+    dispositionBuckets.AURORA_HISTORY_SOURCE_DOCS +
+    dispositionBuckets.S3_ARCHIVE_SOURCE_DOCS +
+    dispositionBuckets.PLATFORM_GLOBAL_SOURCE_DOCS +
+    dispositionBuckets.EXCLUDE_APPROVED_SOURCE_DOCS;
+
   const readiness = {
     SOURCE_FIRESTORE_DOCUMENTS: result.sourceDocumentCount,
     TRANSFORMED_RECORDS: result.transformedRecordCount,
+    SOURCE_DOCS_ACCOUNTED_FOR: accounted,
+    UNACCOUNTED_SOURCE_DOCS: result.sourceDocumentCount - accounted,
+    ...dispositionBuckets,
+    TOTAL_ACCOUNTED: accounted,
     TENANT_MAPPING:
       result.gates.UNKNOWN_TENANT === 0 && result.unknownMappings.length === 0 ? "PASS" : "FAIL",
-    TARGET_SCHEMA: TARGET_SCHEMA_GAPS.length === 0 ? "PASS" : "CONDITIONS",
+    TARGET_SCHEMA: TARGET_SCHEMA_GAPS.length === 0 && TARGET_MISSING.length === 0 ? "PASS" : "FAIL",
     TRANSFORMER:
       result.gates.FATAL_TRANSFORM_ERRORS === 0 && result.unknownMappings.length === 0
         ? "PASS"
@@ -102,6 +123,9 @@ async function main(): Promise<void> {
     FATAL_ERRORS: result.errors.filter((e) => e.severity === "FATAL").slice(0, 50),
     GATES: result.gates,
     TARGET_SCHEMA_GAPS: TARGET_SCHEMA_GAPS,
+    TARGET_MISSING: TARGET_MISSING,
+    IMPORT_DRY_VALIDATION: dry.ok ? "PASS" : "FAIL",
+    DRY_VALIDATION: dry,
     PACKAGE_MANIFEST: result.packageManifestPath,
   };
 
@@ -112,7 +136,9 @@ async function main(): Promise<void> {
     result.gates.UNKNOWN_TENANT > 0 ||
     result.gates.UNKNOWN_TARGET > 0 ||
     result.gates.DUPLICATE_TARGET_KEYS > 0 ||
-    result.unknownMappings.length > 0;
+    result.unknownMappings.length > 0 ||
+    !dry.ok ||
+    accounted !== result.sourceDocumentCount;
 
   if (hardFail) {
     process.exitCode = 2;
