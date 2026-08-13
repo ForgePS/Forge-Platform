@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { ApiError, apiGet, apiSend, useAuth } from "@forge/web-kit";
+import { EmptyState, PageHeader, PageSection } from "@/components/layout/page-chrome";
 import { ModuleUnavailable } from "@/components/module-unavailable";
 
 type ListResponse = { items: Array<Record<string, unknown>>; page: number; pageSize: number };
@@ -12,53 +13,49 @@ type Bootstrap = {
 
 type StepForm = {
   energySourceName: string;
-  energyMagnitude: string;
   isolationLocationText: string;
-  lockoutDeviceName: string;
   isolationAction: string;
   verificationMethodName: string;
 };
 
 const emptyStep = (): StepForm => ({
   energySourceName: "",
-  energyMagnitude: "",
   isolationLocationText: "",
-  lockoutDeviceName: "",
   isolationAction: "",
   verificationMethodName: "",
 });
 
+const LOTO_STATUSES = ["DRAFT", "IN_REVIEW", "ACTIVE", "ARCHIVED"] as const;
+
 export function LotoWorkspace({ moduleName }: { moduleName: string }) {
   const { me } = useAuth();
   const permissions = new Set(me?.permissions ?? []);
-  const canView = permissions.has("industrial.loto.view") || permissions.has("industrial.admin");
+  const canView =
+    Boolean(me?.isPlatformAdmin) ||
+    permissions.has("industrial.loto.view") ||
+    permissions.has("industrial.admin") ||
+    permissions.has("industrial.access");
   const canEdit =
+    Boolean(me?.isPlatformAdmin) ||
     permissions.has("industrial.loto.edit") ||
     permissions.has("industrial.loto.manage") ||
     permissions.has("industrial.loto.create") ||
-    permissions.has("industrial.admin");
-  const canApprove =
-    permissions.has("industrial.loto.approve") || permissions.has("industrial.admin");
-  const canPrint =
-    permissions.has("industrial.loto.print") ||
-    permissions.has("industrial.loto.view") ||
     permissions.has("industrial.admin");
 
   const [bootstrap, setBootstrap] = useState<Bootstrap | null>(null);
   const [items, setItems] = useState<Array<Record<string, unknown>>>([]);
   const [equipment, setEquipment] = useState<Array<Record<string, unknown>>>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
-  const [printHtml, setPrintHtml] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
+  const [statusDraft, setStatusDraft] = useState("DRAFT");
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [title, setTitle] = useState("");
   const [equipmentName, setEquipmentName] = useState("");
   const [equipmentId, setEquipmentId] = useState("");
   const [scope, setScope] = useState("");
-  const [title, setTitle] = useState("");
   const [steps, setSteps] = useState<StepForm[]>([emptyStep()]);
-  const [restorationLabel, setRestorationLabel] = useState("Guards replaced / personnel clear");
 
   const modEntry = bootstrap?.modules.find((m) => m.code === "LOCKOUT_TAGOUT");
   const awsReady =
@@ -86,6 +83,7 @@ export function LotoWorkspace({ moduleName }: { moduleName: string }) {
       setEquipment(equip.items ?? []);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Failed to load LOTO");
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -100,322 +98,439 @@ export function LotoWorkspace({ moduleName }: { moduleName: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [awsReady]);
 
-  async function openDetail(id: string) {
-    setSelectedId(id);
-    setPrintHtml(null);
+  async function openDetail(row: Record<string, unknown>) {
+    setSelected(row);
+    setStatusDraft(String(row.status ?? "DRAFT"));
     try {
-      const data = await apiGet<Record<string, unknown>>(`/api/v1/industrial/loto/${id}`);
-      setDetail(data);
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to load procedure");
+      const data = await apiGet<Record<string, unknown>>(
+        `/api/v1/industrial/loto/${String(row.id)}`,
+      );
+      setSelected(data);
+      setStatusDraft(String(data.status ?? "DRAFT"));
+    } catch {
+      // List payload is enough.
     }
   }
 
   async function onCreate(e: FormEvent) {
     e.preventDefault();
     if (!canEdit) return;
+    setCreating(true);
     setError(null);
     try {
-      const payload = {
-        title: title || null,
+      const created = await apiSend<Record<string, unknown>>("/api/v1/industrial/loto", "POST", {
+        title: title || undefined,
         equipmentName,
         equipmentId: equipmentId || null,
         scope,
+        status: "DRAFT",
         steps: steps.map((s, i) => ({
-          sortOrder: i,
           stepNumber: i + 1,
           ...s,
         })),
-        restorationChecks: restorationLabel
-          ? [{ sortOrder: 0, checkKey: "clearance", label: restorationLabel, completed: false }]
-          : [],
-      };
-      const created = await apiSend<{ procedure: { id: string } }>(
-        "/api/v1/industrial/loto",
-        "POST",
-        payload,
-      );
+      });
       setTitle("");
       setEquipmentName("");
       setEquipmentId("");
       setScope("");
       setSteps([emptyStep()]);
       await loadList();
-      if (created?.procedure?.id) await openDetail(created.procedure.id);
+      if (created?.id) await openDetail(created);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Create failed");
+    } finally {
+      setCreating(false);
     }
   }
 
-  async function transition(path: string, body: Record<string, unknown> = {}) {
-    if (!selectedId) return;
+  async function saveStatus() {
+    if (!canEdit || !selected?.id) return;
+    setError(null);
     try {
-      await apiSend(`/api/v1/industrial/loto/${selectedId}/${path}`, "POST", body);
-      await openDetail(selectedId);
+      const updated = await apiSend<Record<string, unknown>>(
+        `/api/v1/industrial/loto/${String(selected.id)}/status`,
+        "POST",
+        { status: statusDraft },
+      );
+      setSelected(updated);
       await loadList();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Transition failed");
+      setError(err instanceof ApiError ? err.message : "Status update failed");
     }
   }
 
-  async function loadPrint() {
-    if (!selectedId || !canPrint) return;
-    try {
-      const data = await apiGet<{ html: string }>(
-        `/api/v1/industrial/loto/${selectedId}/printable`,
-      );
-      setPrintHtml(data.html);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Printable failed");
-    }
+  if (!canView) {
+    return (
+      <div className="card">
+        <div className="card-body">
+          <h4 className="card-title mb-2">{moduleName}</h4>
+          <p className="mb-0">You do not have permission to view lockout/tagout.</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!awsReady && bootstrap) {
+  if (bootstrap && !awsReady) {
     return (
       <ModuleUnavailable
         moduleName={moduleName}
-        status={modEntry?.migrationStatus ?? "LEGACY_FIREBASE"}
+        status={modEntry?.migrationStatus ?? "MIGRATION_IN_PROGRESS"}
+        flagOff={!modEntry?.awsEnabled}
       />
     );
   }
 
-  const procedure = detail?.procedure as Record<string, unknown> | undefined;
-  const revision = detail?.revision as Record<string, unknown> | undefined;
-  const detailSteps = (detail?.steps as Array<Record<string, unknown>>) ?? [];
+  if (!bootstrap) {
+    return (
+      <div className="card">
+        <div className="card-body">
+          <h4 className="card-title mb-2">{moduleName}</h4>
+          <p className="text-muted mb-0">Checking module availability…</p>
+        </div>
+      </div>
+    );
+  }
+
+  const detailSteps = (Array.isArray(selected?.steps) ? selected.steps : []) as Array<
+    Record<string, unknown>
+  >;
 
   return (
-    <section className="ops-workspace loto-workspace">
-      <header className="ops-workspace__header">
-        <h1>{moduleName}</h1>
-        <p>
-          Structured LOTO procedures with ordered energy/isolation/verification steps, restoration,
-          approvals, and revision history. QR runtime not enabled (adapter boundary only).
-        </p>
-      </header>
+    <div className="ind-ops">
+      <PageHeader
+        title={moduleName}
+        description="Draft procedures with isolation steps and status tracking (MVP)."
+      />
 
-      {error ? <p role="alert">{error}</p> : null}
+      <PageSection title="Filters" bodyClassName="pt-3">
+        <form
+          className="row g-3 align-items-end"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void loadList();
+          }}
+        >
+          <div className="col-md-8">
+            <label className="form-label" htmlFor="loto-search">
+              Search
+            </label>
+            <input
+              id="loto-search"
+              className="form-control form-control-sm"
+              value={q}
+              onChange={(ev) => setQ(ev.target.value)}
+              placeholder="Title or equipment…"
+              autoComplete="off"
+            />
+          </div>
+          <div className="col-md-4">
+            <button type="submit" className="btn btn-primary btn-sm" disabled={loading}>
+              Apply
+            </button>
+          </div>
+        </form>
+      </PageSection>
 
-      <div className="ops-workspace__toolbar">
-        <label>
-          Search
-          <input value={q} onChange={(ev) => setQ(ev.target.value)} placeholder="Procedure #…" />
-        </label>
-        <button type="button" onClick={() => void loadList()} disabled={loading}>
-          Refresh
-        </button>
+      {error ? (
+        <div className="alert alert-danger" role="alert">
+          {error}
+        </div>
+      ) : null}
+
+      <div className="row g-4">
+        <div className={selected ? "col-lg-7" : "col-12"}>
+          <div className="card mb-0">
+            <div className="card-header d-flex justify-content-between align-items-center">
+              <h5 className="card-title mb-0">Procedures</h5>
+              <span className="text-muted small">
+                {loading ? "Loading…" : `${items.length} shown`}
+              </span>
+            </div>
+            {loading ? null : items.length === 0 ? (
+              <EmptyState
+                title="No LOTO procedures yet"
+                description="Created lockout/tagout procedures for this tenant will appear here."
+              />
+            ) : (
+              <div className="table-responsive text-nowrap">
+                <table className="table table-hover table-sm mb-0">
+                  <thead>
+                    <tr>
+                      <th>Procedure</th>
+                      <th>Equipment</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="table-border-bottom-0">
+                    {items.map((item) => {
+                      const active = selected && String(selected.id) === String(item.id);
+                      return (
+                        <tr
+                          key={String(item.id)}
+                          className={active ? "table-active" : undefined}
+                          style={{ cursor: "pointer" }}
+                          onClick={() => void openDetail(item)}
+                        >
+                          <td className="fw-medium">
+                            {String(item.title ?? item.displayName ?? item.id)}
+                          </td>
+                          <td>{String(item.equipmentName ?? "—")}</td>
+                          <td>
+                            <span className="badge bg-label-secondary">
+                              {String(item.status ?? "—")}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {selected ? (
+          <div className="col-lg-5">
+            <div className="card">
+              <div className="card-header d-flex justify-content-between align-items-center">
+                <h5 className="card-title mb-0">Detail</h5>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => setSelected(null)}
+                >
+                  Close
+                </button>
+              </div>
+              <div className="card-body">
+                <dl className="row mb-3 small">
+                  <dt className="col-sm-4 text-muted">Title</dt>
+                  <dd className="col-sm-8">{String(selected.title ?? "—")}</dd>
+                  <dt className="col-sm-4 text-muted">Equipment</dt>
+                  <dd className="col-sm-8">{String(selected.equipmentName ?? "—")}</dd>
+                  <dt className="col-sm-4 text-muted">Scope</dt>
+                  <dd className="col-sm-8">{String(selected.scope ?? "—")}</dd>
+                </dl>
+                {detailSteps.length > 0 ? (
+                  <ol className="small mb-3">
+                    {detailSteps.map((s, idx) => (
+                      <li key={String(s.stepNumber ?? idx)}>
+                        {String(s.energySourceName)}
+                        {s.isolationLocationText
+                          ? ` @ ${String(s.isolationLocationText)}`
+                          : ""}
+                        {s.verificationMethodName
+                          ? ` — verify ${String(s.verificationMethodName)}`
+                          : ""}
+                      </li>
+                    ))}
+                  </ol>
+                ) : null}
+                {canEdit ? (
+                  <div className="d-flex flex-wrap gap-2 align-items-end">
+                    <div className="flex-grow-1">
+                      <label className="form-label" htmlFor="loto-status">
+                        Status
+                      </label>
+                      <select
+                        id="loto-status"
+                        className="form-select form-select-sm"
+                        value={statusDraft}
+                        onChange={(e) => setStatusDraft(e.target.value)}
+                      >
+                        {LOTO_STATUSES.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => void saveStatus()}>
+                      Update status
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {canEdit ? (
-        <form className="ops-workspace__create loto-builder" onSubmit={(e) => void onCreate(e)}>
-          <h2>Create procedure</h2>
-          <label>
-            Title
-            <input value={title} onChange={(ev) => setTitle(ev.target.value)} />
-          </label>
-          <label>
-            Equipment name *
-            <input
-              required
-              value={equipmentName}
-              onChange={(ev) => setEquipmentName(ev.target.value)}
-            />
-          </label>
-          <label>
-            Link equipment
-            <select
-              value={equipmentId}
-              onChange={(ev) => {
-                const id = ev.target.value;
-                setEquipmentId(id);
-                const match = equipment.find((x) => String(x.id) === id);
-                if (match?.equipmentName) setEquipmentName(String(match.equipmentName));
-              }}
-            >
-              <option value="">— optional —</option>
-              {equipment.map((eq) => (
-                <option key={String(eq.id)} value={String(eq.id)}>
-                  {String(eq.equipmentName)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Scope
-            <textarea value={scope} onChange={(ev) => setScope(ev.target.value)} rows={3} />
-          </label>
-
-          <h3>Isolation steps</h3>
-          {steps.map((step, idx) => (
-            <fieldset key={idx} className="loto-step">
-              <legend>Step {idx + 1}</legend>
-              <label>
-                Energy source *
+        <div className="card mt-4">
+          <div className="card-header">
+            <h5 className="card-title mb-0">Create procedure</h5>
+          </div>
+          <div className="card-body">
+            <form className="row g-3" onSubmit={(e) => void onCreate(e)}>
+              <div className="col-md-6">
+                <label className="form-label" htmlFor="loto-title">
+                  Title
+                </label>
                 <input
+                  id="loto-title"
+                  className="form-control form-control-sm"
+                  value={title}
+                  onChange={(ev) => setTitle(ev.target.value)}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label" htmlFor="loto-equip-name">
+                  Equipment name *
+                </label>
+                <input
+                  id="loto-equip-name"
+                  className="form-control form-control-sm"
                   required
-                  value={step.energySourceName}
-                  onChange={(ev) =>
-                    setSteps((prev) =>
-                      prev.map((s, i) =>
-                        i === idx ? { ...s, energySourceName: ev.target.value } : s,
-                      ),
-                    )
-                  }
+                  value={equipmentName}
+                  onChange={(ev) => setEquipmentName(ev.target.value)}
                 />
-              </label>
-              <label>
-                Magnitude
-                <input
-                  value={step.energyMagnitude}
-                  onChange={(ev) =>
-                    setSteps((prev) =>
-                      prev.map((s, i) =>
-                        i === idx ? { ...s, energyMagnitude: ev.target.value } : s,
-                      ),
-                    )
-                  }
+              </div>
+              <div className="col-md-6">
+                <label className="form-label" htmlFor="loto-equip-link">
+                  Link equipment
+                </label>
+                <select
+                  id="loto-equip-link"
+                  className="form-select form-select-sm"
+                  value={equipmentId}
+                  onChange={(ev) => {
+                    const id = ev.target.value;
+                    setEquipmentId(id);
+                    const match = equipment.find((x) => String(x.id) === id);
+                    if (match?.equipmentName) setEquipmentName(String(match.equipmentName));
+                  }}
+                >
+                  <option value="">— optional —</option>
+                  {equipment.map((eq) => (
+                    <option key={String(eq.id)} value={String(eq.id)}>
+                      {String(eq.equipmentName ?? eq.title)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-12">
+                <label className="form-label" htmlFor="loto-scope">
+                  Scope
+                </label>
+                <textarea
+                  id="loto-scope"
+                  className="form-control form-control-sm"
+                  rows={2}
+                  value={scope}
+                  onChange={(ev) => setScope(ev.target.value)}
                 />
-              </label>
-              <label>
-                Isolation location
-                <input
-                  value={step.isolationLocationText}
-                  onChange={(ev) =>
-                    setSteps((prev) =>
-                      prev.map((s, i) =>
-                        i === idx ? { ...s, isolationLocationText: ev.target.value } : s,
-                      ),
-                    )
-                  }
-                />
-              </label>
-              <label>
-                Lockout device
-                <input
-                  value={step.lockoutDeviceName}
-                  onChange={(ev) =>
-                    setSteps((prev) =>
-                      prev.map((s, i) =>
-                        i === idx ? { ...s, lockoutDeviceName: ev.target.value } : s,
-                      ),
-                    )
-                  }
-                />
-              </label>
-              <label>
-                Lockout method
-                <input
-                  value={step.isolationAction}
-                  onChange={(ev) =>
-                    setSteps((prev) =>
-                      prev.map((s, i) =>
-                        i === idx ? { ...s, isolationAction: ev.target.value } : s,
-                      ),
-                    )
-                  }
-                />
-              </label>
-              <label>
-                Verification
-                <input
-                  value={step.verificationMethodName}
-                  onChange={(ev) =>
-                    setSteps((prev) =>
-                      prev.map((s, i) =>
-                        i === idx ? { ...s, verificationMethodName: ev.target.value } : s,
-                      ),
-                    )
-                  }
-                />
-              </label>
-              {steps.length > 1 ? (
+              </div>
+
+              {steps.map((step, idx) => (
+                <div className="col-12" key={idx}>
+                  <div className="border rounded p-3">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <strong className="small">Step {idx + 1}</strong>
+                      {steps.length > 1 ? (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-secondary"
+                          onClick={() => setSteps((prev) => prev.filter((_, i) => i !== idx))}
+                        >
+                          Remove
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="row g-2">
+                      <div className="col-md-6">
+                        <label className="form-label" htmlFor={`loto-step-energy-${idx}`}>
+                          Energy source *
+                        </label>
+                        <input
+                          id={`loto-step-energy-${idx}`}
+                          className="form-control form-control-sm"
+                          required
+                          value={step.energySourceName}
+                          onChange={(ev) =>
+                            setSteps((prev) =>
+                              prev.map((s, i) =>
+                                i === idx ? { ...s, energySourceName: ev.target.value } : s,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label" htmlFor={`loto-step-loc-${idx}`}>
+                          Isolation location
+                        </label>
+                        <input
+                          id={`loto-step-loc-${idx}`}
+                          className="form-control form-control-sm"
+                          value={step.isolationLocationText}
+                          onChange={(ev) =>
+                            setSteps((prev) =>
+                              prev.map((s, i) =>
+                                i === idx ? { ...s, isolationLocationText: ev.target.value } : s,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label" htmlFor={`loto-step-action-${idx}`}>
+                          Lockout method
+                        </label>
+                        <input
+                          id={`loto-step-action-${idx}`}
+                          className="form-control form-control-sm"
+                          value={step.isolationAction}
+                          onChange={(ev) =>
+                            setSteps((prev) =>
+                              prev.map((s, i) =>
+                                i === idx ? { ...s, isolationAction: ev.target.value } : s,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label" htmlFor={`loto-step-verify-${idx}`}>
+                          Verification
+                        </label>
+                        <input
+                          id={`loto-step-verify-${idx}`}
+                          className="form-control form-control-sm"
+                          value={step.verificationMethodName}
+                          onChange={(ev) =>
+                            setSteps((prev) =>
+                              prev.map((s, i) =>
+                                i === idx
+                                  ? { ...s, verificationMethodName: ev.target.value }
+                                  : s,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <div className="col-12 d-flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => setSteps((prev) => prev.filter((_, i) => i !== idx))}
+                  className="btn btn-outline-secondary btn-sm"
+                  onClick={() => setSteps((prev) => [...prev, emptyStep()])}
                 >
-                  Remove step
+                  Add step
                 </button>
-              ) : null}
-            </fieldset>
-          ))}
-          <button type="button" onClick={() => setSteps((prev) => [...prev, emptyStep()])}>
-            Add step
-          </button>
-
-          <label>
-            Restoration check
-            <input
-              value={restorationLabel}
-              onChange={(ev) => setRestorationLabel(ev.target.value)}
-            />
-          </label>
-          <button type="submit">Create draft</button>
-        </form>
-      ) : null}
-
-      {loading ? <p>Loading…</p> : null}
-      <ul className="ops-workspace__list">
-        {items.map((item) => (
-          <li key={String(item.id)}>
-            <button type="button" onClick={() => void openDetail(String(item.id))}>
-              <strong>{String(item.procedureNumber)}</strong> · {String(item.equipmentName)} ·{" "}
-              {String(item.status)}
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      {procedure ? (
-        <article className="loto-detail">
-          <h2>
-            {String(procedure.procedureNumber)} — {String(procedure.status)}
-          </h2>
-          <p>
-            Rev {String(revision?.revisionNumber)} · Equipment {String(procedure.equipmentName)}
-          </p>
-          <ol>
-            {detailSteps.map((s) => (
-              <li key={String(s.id)}>
-                {String(s.stepNumber)}. {String(s.energySourceName)} @{" "}
-                {String(s.isolationLocationText)} — verify {String(s.verificationMethodName)}
-              </li>
-            ))}
-          </ol>
-          <div className="loto-actions">
-            {canEdit ? (
-              <button type="button" onClick={() => void transition("submit-review")}>
-                Submit review
-              </button>
-            ) : null}
-            {canEdit ? (
-              <button type="button" onClick={() => void transition("submit-approval")}>
-                Submit approval
-              </button>
-            ) : null}
-            {canApprove ? (
-              <button type="button" onClick={() => void transition("approve")}>
-                Approve
-              </button>
-            ) : null}
-            {canApprove ? (
-              <button type="button" onClick={() => void transition("activate")}>
-                Activate
-              </button>
-            ) : null}
-            {canPrint ? (
-              <button type="button" onClick={() => void loadPrint()}>
-                Printable
-              </button>
-            ) : null}
+                <button type="submit" className="btn btn-primary btn-sm" disabled={creating}>
+                  {creating ? "Saving…" : "Create draft"}
+                </button>
+              </div>
+            </form>
           </div>
-          {printHtml ? (
-            <iframe title="LOTO printable" srcDoc={printHtml} className="loto-print-frame" />
-          ) : null}
-          <p className="loto-qr-note">
-            Future QR targets: industrial.loto.procedure / industrial.loto.revision (runtime not
-            authorized).
-          </p>
-        </article>
+        </div>
       ) : null}
-    </section>
+    </div>
   );
 }

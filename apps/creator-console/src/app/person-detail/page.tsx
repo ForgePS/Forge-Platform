@@ -1,9 +1,18 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ErrorState,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useCallback, useEffect, useState } from "react";
 import { TenantRequired } from "@/components/tenant-required";
+import { tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGetResult, apiSend, toIfMatch } from "@/lib/api";
 import styles from "../page.module.css";
 
@@ -72,7 +81,7 @@ function PersonDetailInner() {
       setForm(formFromPerson(result.data));
       setEtag(result.etag ?? toIfMatch(result.data.recordVersion));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load person");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -123,41 +132,58 @@ function PersonDetailInner() {
 
   if (!tenantId || !personId) {
     return (
-      <section className={styles.page}>
-        <h1>Person detail</h1>
+      <CreatorPage title="Person detail">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   const q = `?tenantId=${encodeURIComponent(tenantId)}`;
 
   return (
-    <section className={styles.page}>
-      <h1>Person detail</h1>
-      <p className={styles.lead}>
-        <Link href={`/persons${q}`}>← Persons</Link>
-        {" · "}
-        <Link href="/profile/">My profile</Link>
-      </p>
-
-      {error ? <p className={styles.error}>{error}</p> : null}
+    <CreatorPage
+      title="Person detail"
+      subtitle={
+        <>
+          <Link href={tenantDetailHref(tenantId)}>Back to Customer</Link>
+          {" · "}
+          <Link href={`/persons${q}`}>Persons</Link>
+          {" · "}
+          <Link href="/profile/">My profile</Link>
+        </>
+      }
+    >
+      {error ? (
+        error.toLowerCase().includes("save") ? (
+          <p className={styles.error}>{error}</p>
+        ) : (
+          <ErrorState title="We couldn't load this information." description={error} />
+        )
+      ) : null}
       {saved ? <p className={styles.success}>Person saved.</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
 
       {person && form ? (
-        <div className={styles.panel}>
-          <h2>{person.displayName}</h2>
+        <ForgePageSection title={person.displayName}>
           <dl className={styles.dl}>
-            <dt>ID</dt>
-            <dd className={styles.mono}>{person.id}</dd>
             <dt>Forge #</dt>
             <dd className={styles.mono}>{person.forgePersonNumber}</dd>
             <dt>Status</dt>
-            <dd>{person.status}</dd>
+            <dd>
+              <ForgeStatusBadge status={person.status} />
+            </dd>
             <dt>Record source</dt>
             <dd>{person.recordSource}</dd>
           </dl>
+          <details className="forge-advanced-details">
+            <summary>Advanced Details</summary>
+            <dl className={styles.dl}>
+              <dt>Person ID</dt>
+              <dd className={styles.mono}>{person.id}</dd>
+              <dt>Customer ID</dt>
+              <dd className={styles.mono}>{tenantId}</dd>
+            </dl>
+          </details>
 
           <form className={styles.form} onSubmit={(e) => void onSave(e)}>
             {(
@@ -189,15 +215,15 @@ function PersonDetailInner() {
               </button>
             </div>
           </form>
-        </div>
+        </ForgePageSection>
       ) : null}
-    </section>
+    </CreatorPage>
   );
 }
 
 export default function PersonDetailPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense fallback={<CreatorLoading />}>
       <PersonDetailInner />
     </Suspense>
   );

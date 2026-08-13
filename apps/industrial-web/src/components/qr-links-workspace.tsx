@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { ApiError, apiGet, apiSend, useAuth } from "@forge/web-kit";
+import { EmptyState, PageHeader, PageSection } from "@/components/layout/page-chrome";
 
 type QrLink = {
   id: string;
@@ -36,6 +37,7 @@ export function QrLinksWorkspace({ moduleName }: { moduleName: string }) {
   const permissions = new Set(me?.permissions ?? []);
   const [items, setItems] = useState<QrLink[]>([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
   const [oneTimeToken, setOneTimeToken] = useState<{ id: string; token: string } | null>(null);
   const [form, setForm] = useState({
     name: "",
@@ -44,18 +46,24 @@ export function QrLinksWorkspace({ moduleName }: { moduleName: string }) {
   });
 
   async function load() {
+    setLoading(true);
     try {
       const data = await apiGet<{ items: QrLink[] }>("/api/v1/qr-links");
       setItems(data.items);
       setError("");
     } catch (cause) {
+      setItems([]);
       setError(cause instanceof ApiError ? cause.message : "Unable to load QR links");
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    if (permissions.has("qr.view")) void load();
-  }, [me]);
+    if (permissions.has("qr.view") || me?.isPlatformAdmin) void load();
+    else setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me?.tenantId]);
 
   async function create(event: FormEvent) {
     event.preventDefault();
@@ -105,100 +113,146 @@ export function QrLinksWorkspace({ moduleName }: { moduleName: string }) {
   }
 
   return (
-    <section className="ind-ops">
-      <header className="ind-ops-header">
-        <h1>{moduleName}</h1>
-        <p>
-          Industrial QR links use one-time public tokens. Save the generated image before leaving.
-        </p>
-      </header>
-      {error && (
-        <p role="alert" className="ind-error">
+    <div className="ind-ops">
+      <PageHeader
+        title={moduleName}
+        description="Industrial QR links use one-time public tokens. Save the generated image before leaving."
+      />
+
+      {error ? (
+        <div className="alert alert-warning" role="alert">
           {error}
-        </p>
-      )}
-      {oneTimeToken && (
-        <div className="ind-toolbar" role="status">
-          <span>
-            Token ending {oneTimeToken.token.slice(-4)} is available only in this session.
-          </span>
-          <button type="button" onClick={() => void downloadSvg()}>
+        </div>
+      ) : null}
+
+      {oneTimeToken ? (
+        <div className="alert alert-info d-flex flex-wrap gap-2 align-items-center" role="status">
+          <span>Token ending {oneTimeToken.token.slice(-4)} is available only in this session.</span>
+          <button type="button" className="btn btn-sm btn-primary" onClick={() => void downloadSvg()}>
             Download SVG
           </button>
-          <button type="button" onClick={() => setOneTimeToken(null)}>
-            Dismiss token
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-secondary"
+            onClick={() => setOneTimeToken(null)}
+          >
+            Dismiss
           </button>
         </div>
-      )}
-      {permissions.has("qr.create") && (
-        <form className="ind-form" onSubmit={(event) => void create(event)}>
-          <label>
-            Link name
-            <input
-              required
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-          </label>
-          <label>
-            Target type
-            <select
-              value={form.targetType}
-              onChange={(e) =>
-                setForm({ ...form, targetType: e.target.value as typeof form.targetType })
-              }
-            >
-              {TARGET_TYPES.map((targetType) => (
-                <option key={targetType}>{targetType}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Target ID
-            <input
-              required
-              value={form.targetId}
-              onChange={(e) => setForm({ ...form, targetId: e.target.value })}
-            />
-          </label>
-          <button type="submit">Create QR link</button>
-        </form>
-      )}
-      <div className="ind-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Token hint</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((link) => (
-              <tr key={link.id}>
-                <td>{link.name}</td>
-                <td>{link.qrType}</td>
-                <td>{link.publicTokenHint ? `…${link.publicTokenHint}` : "—"}</td>
-                <td>{link.status}</td>
-                <td>
-                  {link.status !== "ACTIVE" && permissions.has("qr.activate") && (
-                    <button type="button" onClick={() => void transition(link.id, "ACTIVE")}>
-                      Activate
-                    </button>
-                  )}
-                  {link.status !== "REVOKED" && permissions.has("qr.revoke") && (
-                    <button type="button" onClick={() => void transition(link.id, "REVOKED")}>
-                      Revoke
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      ) : null}
+
+      {permissions.has("qr.create") || me?.isPlatformAdmin ? (
+        <PageSection title="Create QR link">
+          <form className="row g-3" onSubmit={(event) => void create(event)}>
+            <div className="col-md-4">
+              <label className="form-label" htmlFor="qr-name">
+                Link name
+              </label>
+              <input
+                id="qr-name"
+                className="form-control form-control-sm"
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </div>
+            <div className="col-md-4">
+              <label className="form-label" htmlFor="qr-target-type">
+                Target type
+              </label>
+              <select
+                id="qr-target-type"
+                className="form-select form-select-sm"
+                value={form.targetType}
+                onChange={(e) =>
+                  setForm({ ...form, targetType: e.target.value as typeof form.targetType })
+                }
+              >
+                {TARGET_TYPES.map((targetType) => (
+                  <option key={targetType}>{targetType}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-4">
+              <label className="form-label" htmlFor="qr-target-id">
+                Target ID
+              </label>
+              <input
+                id="qr-target-id"
+                className="form-control form-control-sm"
+                required
+                value={form.targetId}
+                onChange={(e) => setForm({ ...form, targetId: e.target.value })}
+              />
+            </div>
+            <div className="col-12">
+              <button type="submit" className="btn btn-primary btn-sm">
+                Create QR link
+              </button>
+            </div>
+          </form>
+        </PageSection>
+      ) : null}
+
+      <div className="card">
+        <div className="card-header">
+          <h5 className="card-title mb-0">QR links</h5>
+        </div>
+        {loading ? (
+          <div className="card-body text-muted">Loading…</div>
+        ) : items.length === 0 ? (
+          <EmptyState
+            title="No QR links yet"
+            description="Created QR links for this tenant will appear here."
+          />
+        ) : (
+          <div className="table-responsive text-nowrap">
+            <table className="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Token hint</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody className="table-border-bottom-0">
+                {items.map((link) => (
+                  <tr key={link.id}>
+                    <td className="fw-medium">{link.name}</td>
+                    <td>{link.qrType}</td>
+                    <td>{link.publicTokenHint ? `…${link.publicTokenHint}` : "—"}</td>
+                    <td>
+                      <span className="badge bg-label-secondary">{link.status}</span>
+                    </td>
+                    <td className="d-flex gap-1">
+                      {link.status !== "ACTIVE" && permissions.has("qr.activate") ? (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={() => void transition(link.id, "ACTIVE")}
+                        >
+                          Activate
+                        </button>
+                      ) : null}
+                      {link.status !== "REVOKED" && permissions.has("qr.revoke") ? (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => void transition(link.id, "REVOKED")}
+                        >
+                          Revoke
+                        </button>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-    </section>
+    </div>
   );
 }

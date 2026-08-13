@@ -1,10 +1,15 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  } from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
+import { tenantQuery, useTenantId, tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGet, apiSend } from "@/lib/api";
 import styles from "../../page.module.css";
 
@@ -35,7 +40,7 @@ function Inner() {
     try {
       setData(await apiGet<AiOverview>("/api/v1/ai/management/overview", { query: { tenantId } }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load tenant access");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -47,20 +52,17 @@ function Inner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>AI Tenant Access</h1>
+      <CreatorPage title="AI Tenant Access">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>AI Tenant Access</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link>
-      </p>
+    <CreatorPage
+      title="AI Tenant Access"
+      subtitle={<><Link href={tenantDetailHref(tenantId)}>Back to Customer</Link> ·{" "}<Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link></>}
+      >
       {!canRead ? <p className={styles.error}>Missing platform AI management permission</p> : null}
       {error ? <p className={styles.error}>{error}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
@@ -119,18 +121,14 @@ function Inner() {
           ) : null}
         </div>
       ) : null}
-    </section>
+    </CreatorPage>
   );
 }
 
 export default function Page() {
   return (
     <Suspense
-      fallback={
-        <main className={styles.page}>
-          <p className={styles.muted}>Loading…</p>
-        </main>
-      }
+      fallback={<CreatorLoading />}
     >
       <Inner />
     </Suspense>

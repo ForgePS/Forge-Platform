@@ -97,6 +97,47 @@ export function buildIndustrialNavigation(input: {
   });
 }
 
-export function moduleUnavailableMessage(moduleName: string): string {
-  return `This module (${moduleName}) remains on the current Forge Industrial system while its AWS migration is in progress.`;
+export function moduleUnavailableMessage(moduleName: string, status?: string): string {
+  if (status === "LEGACY_FIREBASE") {
+    return `${moduleName} is coming soon.`;
+  }
+  if (status === "DISABLED") {
+    return `${moduleName} is disabled for your organization.`;
+  }
+  if (status === "MIGRATION_IN_PROGRESS") {
+    return `${moduleName} is disabled for your organization. Ask a platform admin if you need access.`;
+  }
+  return `${moduleName} is not available yet.`;
+}
+
+/** Friendly admin-facing summary — never exposes raw migration enums. */
+export function moduleUnavailableSummary(status?: string): string {
+  if (status === "LEGACY_FIREBASE") {
+    return "This module has not shipped on the current platform yet.";
+  }
+  if (status === "DISABLED") {
+    return "This module is turned off for the current organization.";
+  }
+  if (status === "MIGRATION_IN_PROGRESS") {
+    return "This module exists but is not enabled for the current organization.";
+  }
+  return "This module is not available in the current environment.";
+}
+
+export function navLabelForItem(
+  item: Pick<IndustrialNavItem, "name" | "migrationStatus" | "available" | "awsEnabled">,
+): string {
+  if (item.migrationStatus === "LEGACY_FIREBASE") {
+    return `${item.name} (coming soon)`;
+  }
+  if (item.migrationStatus === "DISABLED") {
+    return `${item.name} (disabled)`;
+  }
+  if (
+    (item.migrationStatus === "MIGRATION_IN_PROGRESS" || item.migrationStatus === "LIVE") &&
+    !item.available
+  ) {
+    return item.awsEnabled ? item.name : `${item.name} (not available yet)`;
+  }
+  return item.name;
 }

@@ -18,7 +18,10 @@ export function PersonnelWorkspace({ moduleName }: { moduleName: string }) {
   const { me } = useAuth();
   const permissions = new Set(me?.permissions ?? []);
   const canView =
-    permissions.has("industrial.personnel.view") || permissions.has("industrial.admin");
+    Boolean(me?.isPlatformAdmin) ||
+    permissions.has("industrial.personnel.view") ||
+    permissions.has("industrial.admin") ||
+    permissions.has("industrial.access");
 
   const [bootstrap, setBootstrap] = useState<Bootstrap | null>(null);
   const [view, setView] = useState<PersonnelView>("roster");
@@ -52,7 +55,7 @@ export function PersonnelWorkspace({ moduleName }: { moduleName: string }) {
             type="button"
             role="tab"
             aria-selected={view === "roster"}
-            className={`btn ${view === "roster" ? "btn-primary" : "btn-outline-secondary"}`}
+            className={`btn btn-sm ${view === "roster" ? "btn-primary" : "btn-outline-secondary"}`}
             onClick={() => setView("roster")}
           >
             Roster
@@ -61,9 +64,9 @@ export function PersonnelWorkspace({ moduleName }: { moduleName: string }) {
             type="button"
             role="tab"
             aria-selected={view === "seasonal"}
-            className={`btn ${view === "seasonal" ? "btn-primary" : "btn-outline-secondary"}`}
+            className={`btn btn-sm ${view === "seasonal" ? "btn-primary" : "btn-outline-secondary"}`}
             onClick={() => setView("seasonal")}
-            title={seasonalOn ? undefined : "Seasonal lifecycle flag is off for this tenant"}
+            title={seasonalOn ? undefined : "Seasonal workforce is not available yet for this organization"}
           >
             Seasonal Workforce
           </button>

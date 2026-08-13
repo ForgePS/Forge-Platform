@@ -1,5 +1,7 @@
 "use client";
 
+import { ErrorState } from "@/components/creator-page";
+
 import { useCallback, useEffect, useState } from "react";
 import { ListControls } from "@/components/list-controls";
 import { NerisPageShell } from "@/components/neris-schema-gate";
@@ -34,7 +36,7 @@ export default function NerisConditionsPage() {
       if (parseStatus) params.set("parseStatus", parseStatus);
       setItems(await apiGet<ConditionRow[]>(`/api/v1/platform/neris/conditions?${params}`));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load conditions");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -50,7 +52,9 @@ export default function NerisConditionsPage() {
       subtitle="Raw possible_if expressions and safe structured rule trees (no eval)."
     >
       {loading ? <p>Loading…</p> : null}
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {error ? (
+        <ErrorState title="We couldn't load this information." description={error} />
+      ) : null}
       <ListControls
         search={search}
         onSearchChange={(value) => {

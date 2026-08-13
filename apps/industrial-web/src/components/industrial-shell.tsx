@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { AuthProvider, apiGet, useAuth } from "@forge/web-kit";
 import { EnvironmentBanner } from "@forge/ui";
 import { INDUSTRIAL_MODULE_REGISTRY, INDUSTRIAL_PRODUCT_CODE } from "@forge/contracts";
-import { buildIndustrialNavigation, featureFlagForModule } from "@/lib/navigation";
+import { buildIndustrialNavigation, featureFlagForModule, navLabelForItem } from "@/lib/navigation";
 import { clearAllOfflineData } from "@/lib/offline/cache";
 import { NetworkStatusBanner } from "@/lib/offline/network-status";
 import { ThemeModeToggle, useIndustrialThemeMode } from "@/components/theme-mode-toggle";
@@ -14,6 +14,17 @@ import { useLoginBranding } from "@/hooks/use-login-branding";
 import { useTenantBranding } from "@/hooks/use-tenant-branding";
 
 const appEnv = process.env.NEXT_PUBLIC_APP_ENV ?? process.env.APP_ENV ?? "local";
+
+/** Static export uses trailingSlash — normalize for route matching. */
+function normalizePath(path: string | null | undefined): string {
+  if (!path) return "/";
+  if (path.length > 1 && path.endsWith("/")) return path.slice(0, -1);
+  return path;
+}
+
+function pathsMatch(a: string | null | undefined, b: string | null | undefined): boolean {
+  return normalizePath(a) === normalizePath(b);
+}
 
 function defaultBrandMark(primaryColor = "#696cff") {
   return (
@@ -95,6 +106,21 @@ function iconForModule(code: string, group: string): string {
   return "bx-cube";
 }
 
+function iconForGroup(group: string): string {
+  const g = group.toLowerCase();
+  if (g.includes("people") || g.includes("training")) return "bx-group";
+  if (g.includes("incident") || g.includes("claim")) return "bx-error";
+  if (g.includes("risk") || g.includes("prevention")) return "bx-shield";
+  if (g.includes("compliance")) return "bx-check-shield";
+  if (g.includes("equipment") || g.includes("operations")) return "bx-wrench";
+  if (g.includes("high")) return "bx-error-circle";
+  if (g.includes("facility")) return "bx-buildings";
+  if (g.includes("emergency")) return "bx-plus-medical";
+  if (g.includes("system")) return "bx-slider-alt";
+  if (g.includes("dashboard")) return "bx-home-circle";
+  return "bx-folder";
+}
+
 function GateCard({
   title,
   body,
@@ -153,6 +179,34 @@ function ShellBody({ children }: { children: ReactNode }) {
   const themeMode = useIndustrialThemeMode();
   const [flags, setFlags] = useState<Record<string, boolean>>({});
   const [menuOpen, setMenuOpen] = useState(false);
+  /** Sneat group toggles — start collapsed; open the group that owns the current route. */
+  const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(() => new Set());
+
+  function toggleNavGroup(group: string) {
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(group)) next.delete(group);
+      else next.add(group);
+      return next;
+    });
+  }
+
+  useEffect(() => {
+    if (!pathname) return;
+    const current = normalizePath(pathname);
+    const group =
+      current === "/settings"
+        ? "System Tools"
+        : (INDUSTRIAL_MODULE_REGISTRY.find((entry) => pathsMatch(entry.route, current))?.group ??
+          null);
+    if (!group) return;
+    setOpenGroups((prev) => {
+      if (prev.has(group)) return prev;
+      const next = new Set(prev);
+      next.add(group);
+      return next;
+    });
+  }, [pathname]);
 
   // Dark forest brand primaries clash on dark surfaces — keep Sneat purple in dark mode.
   const brandStyle = (
@@ -372,50 +426,70 @@ function ShellBody({ children }: { children: ReactNode }) {
           <div className="menu-inner-shadow" />
 
           <ul className="menu-inner py-1">
-            <li className={pathname === "/" ? "menu-item active" : "menu-item"}>
-              <Link href="/" className="menu-link" onClick={() => setMenuOpen(false)}>
-                <i className="menu-icon tf-icons bx bx-home-circle" />
-                <div>Dashboard</div>
-              </Link>
-            </li>
-            <li className={pathname === "/settings" ? "menu-item active" : "menu-item"}>
-              <Link href="/settings" className="menu-link" onClick={() => setMenuOpen(false)}>
-                <i className="menu-icon tf-icons bx bx-cog" />
-                <div>Settings</div>
-              </Link>
-            </li>
+            {groups.map((group) => {
+              const isOpen = openGroups.has(group);
+              const childItems = nav.filter((item) => item.group === group);
+              const settingsActive = group === "System Tools" && pathsMatch(pathname, "/settings");
+              const groupActive =
+                settingsActive || childItems.some((item) => pathsMatch(pathname, item.route));
 
-            {groups.flatMap((group) => [
-              <li key={`hdr-${group}`} className="menu-header small text-uppercase">
-                <span className="menu-header-text">{group}</span>
-              </li>,
-              ...nav
-                .filter((item) => item.group === group)
-                .map((item) => {
-                  const active = pathname === item.route;
-                  const label =
-                    item.migrationStatus === "LEGACY_FIREBASE"
-                      ? `${item.name} (migration pending)`
-                      : item.migrationStatus === "MIGRATION_IN_PROGRESS" && !item.available
-                        ? `${item.name} (flag off)`
-                        : item.name;
-                  return (
-                    <li key={item.code} className={active ? "menu-item active" : "menu-item"}>
-                      <Link
-                        href={item.route}
-                        className="menu-link"
-                        aria-current={active ? "page" : undefined}
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        <i
-                          className={`menu-icon tf-icons bx ${iconForModule(item.code, item.group)}`}
-                        />
-                        <div>{label}</div>
-                      </Link>
-                    </li>
-                  );
-                }),
-            ])}
+              return (
+                <li
+                  key={group}
+                  className={`menu-item${isOpen ? " open" : ""}${groupActive ? " active" : ""}`}
+                >
+                  <a
+                    href={`#nav-${group.replace(/\s+/g, "-").toLowerCase()}`}
+                    className="menu-link menu-toggle"
+                    aria-expanded={isOpen}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toggleNavGroup(group);
+                    }}
+                  >
+                    <i className={`menu-icon tf-icons bx ${iconForGroup(group)}`} />
+                    <div>{group}</div>
+                  </a>
+                  <ul className="menu-sub">
+                    {childItems.map((item) => {
+                      const active = pathsMatch(pathname, item.route);
+                      const label = navLabelForItem(item);
+                      return (
+                        <li
+                          key={item.code}
+                          className={active ? "menu-item active" : "menu-item"}
+                        >
+                          <Link
+                            href={item.route}
+                            className="menu-link"
+                            aria-current={active ? "page" : undefined}
+                            onClick={() => setMenuOpen(false)}
+                          >
+                            <i
+                              className={`menu-icon tf-icons bx ${iconForModule(item.code, item.group)}`}
+                            />
+                            <div>{label}</div>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                    {group === "System Tools" ? (
+                      <li className={settingsActive ? "menu-item active" : "menu-item"}>
+                        <Link
+                          href="/settings"
+                          className="menu-link"
+                          aria-current={settingsActive ? "page" : undefined}
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          <i className="menu-icon tf-icons bx bx-cog" />
+                          <div>Settings</div>
+                        </Link>
+                      </li>
+                    ) : null}
+                  </ul>
+                </li>
+              );
+            })}
           </ul>
         </aside>
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
+import { CreatorLoading, CreatorPage, ForgePageSection } from "@/components/creator-page";
 import { useAuth } from "@/hooks/use-auth";
 import { apiGet } from "@/lib/api";
 import styles from "../app/page.module.css";
@@ -31,7 +32,7 @@ export function NerisSchemaGate({ title, children }: { title: string; children: 
       const match = features.find((f) => f.key === SCHEMA_BROWSER_FLAG);
       setFlagEnabled(match ? Boolean(match.value) : false);
     } catch (err) {
-      setFlagError(err instanceof Error ? err.message : "Failed to resolve feature flag");
+      setFlagError(err instanceof Error ? err.message : "We couldn't load this information.");
       setFlagEnabled(false);
     }
   }, [me?.tenantId, canRead, isPlatformAdmin]);
@@ -42,35 +43,38 @@ export function NerisSchemaGate({ title, children }: { title: string; children: 
 
   if (!canRead) {
     return (
-      <section className={styles.page}>
-        <h1>{title}</h1>
+      <CreatorPage title={title}>
         <p className={styles.error}>You do not have permission to browse NERIS schema.</p>
-      </section>
+      </CreatorPage>
     );
   }
 
   if (flagEnabled === null) {
     return (
-      <section className={styles.page}>
-        <h1>{title}</h1>
+      <CreatorPage title={title}>
         <p>Checking feature flag…</p>
-      </section>
+      </CreatorPage>
     );
   }
 
   if (!flagEnabled) {
     return (
-      <section className={styles.page}>
-        <h1>{title}</h1>
+      <CreatorPage title={title}>
         <p className={styles.error}>
-          NERIS schema browser is not enabled for this tenant ({SCHEMA_BROWSER_FLAG}).
+          NERIS schema browser is not enabled for this tenant.
           {flagError ? ` ${flagError}` : ""}
         </p>
         <p>
           Platform administrators can enable the flag under Feature flags, or sign in as a creator
           principal.
         </p>
-      </section>
+        <details className="forge-advanced-details">
+          <summary>Advanced Details</summary>
+          <p className={styles.muted}>
+            Flag key: <span className={styles.mono}>{SCHEMA_BROWSER_FLAG}</span>
+          </p>
+        </details>
+      </CreatorPage>
     );
   }
 
@@ -110,24 +114,15 @@ export function NerisPageShell({
   children: ReactNode;
 }) {
   return (
-    <Suspense
-      fallback={
-        <section className={styles.page}>
-          <h1>{title}</h1>
-          <p>Loading…</p>
-        </section>
-      }
-    >
+    <Suspense fallback={<CreatorLoading />}>
       <NerisSchemaGate title={title}>
-        <section className={styles.page}>
-          <h1>{title}</h1>
-          <p>{subtitle}</p>
+        <CreatorPage title={title} subtitle={subtitle}>
           <p className={styles.muted}>
             Official NERIS codes and mappings are read-only after a schema version is published.
           </p>
           <NerisNav />
-          {children}
-        </section>
+          <ForgePageSection flush>{children}</ForgePageSection>
+        </CreatorPage>
       </NerisSchemaGate>
     </Suspense>
   );

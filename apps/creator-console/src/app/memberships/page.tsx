@@ -1,12 +1,19 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { filterBySearch, ListControls, paginate, sortByField } from "@/components/list-controls";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
+import { tenantQuery, useTenantId, tenantDetailHref } from "@/hooks/use-tenant-id";
 import {
   activateMembership,
   createMembership,
@@ -54,7 +61,7 @@ function MembershipsInner() {
       const query = filter ? { status: filter } : undefined;
       setItems(await listMemberships(tenantId, query));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load memberships");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -138,22 +145,19 @@ function MembershipsInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Memberships</h1>
+      <CreatorPage title="Memberships">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   const q = tenantQuery(tenantId);
 
   return (
-    <section className={styles.page}>
-      <h1>Memberships</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={`/audit${q}`}>Audit history</Link>
-      </p>
+    <CreatorPage
+      title="Memberships"
+      subtitle={<><Link href={tenantDetailHref(tenantId)}>Back to Customer</Link> ·{" "}<Link href={`/audit${q}`}>Audit history</Link></>}
+      >
 
       {!canRead ? (
         <p className={styles.error}>Missing permission: platform.membership.read</p>
@@ -161,8 +165,7 @@ function MembershipsInner() {
       {error ? <p className={styles.error}>{error}</p> : null}
 
       {canManage ? (
-        <div className={styles.panel}>
-          <h2>Create membership</h2>
+        <ForgePageSection title="Create membership">
           <form className={styles.form} onSubmit={onCreate}>
             <div className={styles.formRow}>
               <label htmlFor="userId">User ID</label>
@@ -191,11 +194,10 @@ function MembershipsInner() {
               </button>
             </div>
           </form>
-        </div>
+        </ForgePageSection>
       ) : null}
 
-      <div className={styles.panel}>
-        <h2>Memberships</h2>
+      <ForgePageSection title="Memberships">
         {canRead ? (
           <ListControls
             search={search}
@@ -244,8 +246,8 @@ function MembershipsInner() {
               {pageItems.map((row) => (
                 <tr key={row.id}>
                   <td>{row.email}</td>
-                  <td>{row.status}</td>
-                  <td>{row.userStatus}</td>
+                  <td><ForgeStatusBadge status={row.status} /></td>
+                  <td><ForgeStatusBadge status={row.userStatus} /></td>
                   <td>{row.isDefaultTenant ? "Yes" : "No"}</td>
                   <td>
                     <div className={styles.actions}>
@@ -284,7 +286,7 @@ function MembershipsInner() {
             </tbody>
           </table>
         ) : null}
-      </div>
+      </ForgePageSection>
 
       <ConfirmDialog
         open={Boolean(actionTarget)}
@@ -330,13 +332,13 @@ function MembershipsInner() {
           setActionReason("");
         }}
       />
-    </section>
+    </CreatorPage>
   );
 }
 
 export default function MembershipsPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense fallback={<CreatorLoading />}>
       <MembershipsInner />
     </Suspense>
   );

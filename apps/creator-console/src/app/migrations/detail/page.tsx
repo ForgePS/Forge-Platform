@@ -4,13 +4,14 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  Badge,
   Card,
   FixtureBanner,
   ForgeBreadcrumbs,
   ForgeMetricCard,
   ForgeMetricGrid,
+  ForgePageContainer,
   ForgePageHeader,
+  ForgeStatusBadge,
   LoadingIndicator,
   ErrorState,
 } from "@forge/ui";
@@ -44,18 +45,26 @@ function MigrationDetailInner() {
     };
   }, [id]);
 
-  if (loading) return <LoadingIndicator label="Loading migration…" />;
+  if (loading) {
+    return (
+      <ForgePageContainer>
+        <LoadingIndicator label="Loading migration…" />
+      </ForgePageContainer>
+    );
+  }
   if (missing || !detail) {
     return (
-      <ErrorState
-        title="Migration unavailable"
-        description="No migration record found for this id. Fixture data only exists for demo ids."
-      />
+      <ForgePageContainer>
+        <ErrorState
+          title="Migration unavailable"
+          description="No migration record found for this id. Fixture data only exists for demo ids."
+        />
+      </ForgePageContainer>
     );
   }
 
   return (
-    <div>
+    <ForgePageContainer width="wide">
       <ForgePageHeader
         breadcrumbs={
           <ForgeBreadcrumbs
@@ -68,7 +77,7 @@ function MigrationDetailInner() {
         }
         title={detail.tenantDisplayName}
         subtitle={`${detail.migrationType} · ${detail.source} → ${detail.destination}`}
-        actions={<Badge>{detail.status}</Badge>}
+        actions={<ForgeStatusBadge status={detail.status} />}
       />
       <FixtureBanner>
         Fixture migration detail — adapter boundary only; no migration engine calls.
@@ -93,7 +102,7 @@ function MigrationDetailInner() {
           <ul>
             {detail.collections.map((c) => (
               <li key={c.name}>
-                {c.name}: <Badge>{c.status}</Badge> ({c.recordCount ?? "—"})
+                {c.name}: <ForgeStatusBadge status={c.status} /> ({c.recordCount ?? "—"})
               </li>
             ))}
           </ul>
@@ -102,7 +111,7 @@ function MigrationDetailInner() {
           <ul>
             {detail.documents.map((d) => (
               <li key={d.name}>
-                {d.name}: <Badge>{d.status}</Badge>
+                {d.name}: <ForgeStatusBadge status={d.status} />
               </li>
             ))}
           </ul>
@@ -130,14 +139,21 @@ function MigrationDetailInner() {
       <p style={{ marginTop: "1rem" }}>
         <Link href="/migrations">Back to migrations</Link>
       </p>
-    </div>
+    </ForgePageContainer>
   );
 }
 
 export default function MigrationDetailPage() {
   return (
-    <Suspense fallback={<LoadingIndicator label="Loading migration…" />}>
+    <Suspense
+      fallback={
+        <ForgePageContainer>
+          <LoadingIndicator label="Loading migration…" />
+        </ForgePageContainer>
+      }
+    >
       <MigrationDetailInner />
     </Suspense>
   );
 }
+

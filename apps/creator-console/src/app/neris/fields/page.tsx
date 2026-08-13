@@ -1,5 +1,7 @@
 "use client";
 
+import { ErrorState } from "@/components/creator-page";
+
 import { useCallback, useEffect, useState } from "react";
 import { ListControls } from "@/components/list-controls";
 import { NerisPageShell } from "@/components/neris-schema-gate";
@@ -46,7 +48,7 @@ export default function NerisFieldsPage() {
           : Math.max(result.length, page * pageSize),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load fields");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -62,7 +64,9 @@ export default function NerisFieldsPage() {
       subtitle="Official field keys are immutable after publish."
     >
       {loading ? <p>Loading…</p> : null}
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {error ? (
+        <ErrorState title="We couldn't load this information." description={error} />
+      ) : null}
       <ListControls
         search={search}
         onSearchChange={(value) => {

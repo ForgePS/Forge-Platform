@@ -19,6 +19,16 @@
   color: var(--bs-primary, #696cff);
 }
 
+/* Nested leaf (collapsible groups): same Sneat active pill as top-level items */
+.bg-menu-theme .menu-inner .menu-sub > .menu-item.active > .menu-link:not(.menu-toggle) {
+  color: var(--bs-primary, #696cff) !important;
+  background-color: rgba(105, 108, 255, 0.16) !important;
+}
+
+.bg-menu-theme .menu-inner .menu-sub > .menu-item.active > .menu-link .menu-icon {
+  color: var(--bs-primary, #696cff);
+}
+
 .bg-menu-theme .menu-header {
   color: #a1acb8;
 }
@@ -121,9 +131,22 @@
   color: var(--bs-menu-hover-color);
 }
 
-[data-bs-theme="dark"] .bg-menu-theme .menu-inner > .menu-item.active > .menu-link:not(.menu-toggle) {
-  color: var(--bs-menu-active-color);
-  background-color: rgba(var(--bs-primary-rgb, 105, 108, 255), 0.16);
+[data-bs-theme="dark"] .bg-menu-theme .menu-inner > .menu-item.active > .menu-link:not(.menu-toggle),
+[data-bs-theme="dark"] .bg-menu-theme .menu-inner > .menu-item.active > .menu-link.menu-toggle,
+[data-bs-theme="dark"] .bg-menu-theme .menu-inner .menu-sub > .menu-item.active > .menu-link:not(.menu-toggle) {
+  color: #a5a7ff !important;
+  background-color: rgba(105, 108, 255, 0.28) !important;
+}
+
+[data-bs-theme="dark"] .bg-menu-theme .menu-inner .menu-sub > .menu-item.active > .menu-link .menu-icon,
+[data-bs-theme="dark"] .bg-menu-theme .menu-inner > .menu-item.active > .menu-link .menu-icon {
+  color: #a5a7ff;
+}
+
+/* Nested active bullet from theme-default — keep readable on dark paper */
+[data-bs-theme="dark"] .bg-menu-theme .menu-sub > .menu-item.active > .menu-link:not(.menu-toggle):before {
+  background-color: #696cff !important;
+  border-color: rgba(105, 108, 255, 0.35) !important;
 }
 
 [data-bs-theme="dark"] .bg-menu-theme .menu-header,

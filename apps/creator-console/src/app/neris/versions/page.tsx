@@ -1,5 +1,7 @@
 "use client";
 
+import { ErrorState, ForgeStatusBadge } from "@/components/creator-page";
+
 import { useCallback, useEffect, useState } from "react";
 import { NerisPageShell } from "@/components/neris-schema-gate";
 import { apiGet } from "@/lib/api";
@@ -28,7 +30,7 @@ export default function NerisVersionsPage() {
     try {
       setItems(await apiGet<Version[]>("/api/v1/platform/neris/versions?pageSize=50"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load versions");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -41,7 +43,9 @@ export default function NerisVersionsPage() {
   return (
     <NerisPageShell title="NERIS versions" subtitle="Published and staged schema versions.">
       {loading ? <p>Loading…</p> : null}
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {error ? (
+        <ErrorState title="We couldn't load this information." description={error} />
+      ) : null}
       {!loading && !error && items.length === 0 ? <p>No versions found.</p> : null}
       <div className={styles.tableWrap}>
         <table className={styles.table}>
@@ -60,7 +64,7 @@ export default function NerisVersionsPage() {
             {items.map((row) => (
               <tr key={row.id}>
                 <td>{row.versionLabel}</td>
-                <td>{row.state}</td>
+                <td><ForgeStatusBadge status={row.state} /></td>
                 <td>{row.moduleCount}</td>
                 <td>{row.fieldCount}</td>
                 <td>{row.valueSetCount}</td>

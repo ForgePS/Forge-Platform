@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo } from "react";
 import { createImportApi, ImportCenterApp, type ImportWorkflowView } from "@forge/import-center";
+import { CreatorLoading, CreatorPage } from "@/components/creator-page";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { useTenantId } from "@/hooks/use-tenant-id";
+import { tenantDetailHref, useTenantId } from "@/hooks/use-tenant-id";
 import { apiGet, apiSend } from "@/lib/api";
-import styles from "../page.module.css";
 
 function ImportsInner() {
   const tenantId = useTenantId();
@@ -25,13 +25,23 @@ function ImportsInner() {
     [],
   );
 
-  if (!tenantId) return <TenantRequired />;
+  if (!tenantId) {
+    return (
+      <CreatorPage title="Imports">
+        <TenantRequired />
+      </CreatorPage>
+    );
+  }
 
   const jobId = searchParams.get("jobId");
   const view = searchParams.get("view") as ImportWorkflowView | null;
 
   return (
-    <div className={styles.page}>
+    <CreatorPage
+      title="Imports"
+      subtitle={<Link href={tenantDetailHref(tenantId)}>Back to Customer</Link>}
+      width="wide"
+    >
       <ImportCenterApp
         api={api}
         tenantId={tenantId}
@@ -48,13 +58,13 @@ function ImportsInner() {
           router.push(`${url.pathname}?${next.toString()}`);
         }}
       />
-    </div>
+    </CreatorPage>
   );
 }
 
 export default function ImportsPage() {
   return (
-    <Suspense fallback={<p>Loading Import Center…</p>}>
+    <Suspense fallback={<CreatorLoading label="Loading Import Center…" />}>
       <ImportsInner />
     </Suspense>
   );

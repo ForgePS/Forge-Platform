@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  CreatorLoading,
+  CreatorPage,
+  ErrorState,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
 import { tenantDetailHref, useTenantId } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
 import { apiGet, apiSend } from "@/lib/api";
@@ -42,7 +49,7 @@ function UsersInner() {
     try {
       setItems(await apiGet<User[]>(`/api/v1/tenants/${tenantId}/users`));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load users");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -76,23 +83,30 @@ function UsersInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Users</h1>
+      <CreatorPage title="Users">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Users</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={tenantDetailHref(tenantId)}>Tenant detail</Link> ·{" "}
-        <Link href={`/roles?tenantId=${encodeURIComponent(tenantId)}`}>Roles</Link>
-      </p>
-
-      {error ? <p className={styles.error}>{error}</p> : null}
+    <CreatorPage
+      title="Users"
+      subtitle={
+        <>
+          <Link href={tenantDetailHref(tenantId)}>Back to Customer</Link>
+          {" · "}
+          <Link href={`/roles?tenantId=${encodeURIComponent(tenantId)}`}>Roles</Link>
+        </>
+      }
+    >
+      {error ? (
+        error.toLowerCase().includes("invite") || error.toLowerCase().includes("failed to invite") ? (
+          <p className={styles.error}>{error}</p>
+        ) : (
+          <ErrorState title="We couldn't load this information." description={error} />
+        )
+      ) : null}
       {inviteResult ? (
         <div className={styles.success}>
           Invited {inviteResult.email}. Invitation token (shown once):{" "}
@@ -100,8 +114,7 @@ function UsersInner() {
         </div>
       ) : null}
 
-      <div className={styles.panel}>
-        <h2>Invite user</h2>
+      <ForgePageSection title="Invite user">
         <form className={styles.form} onSubmit={onInvite}>
           <div className={styles.formRow}>
             <label htmlFor="email">Email</label>
@@ -119,10 +132,9 @@ function UsersInner() {
             </button>
           </div>
         </form>
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>Users</h2>
+      <ForgePageSection title="Users" flush>
         {loading ? <p className={styles.muted}>Loading…</p> : null}
         {!loading && items.length === 0 ? <p className={styles.muted}>No users yet.</p> : null}
         {items.length > 0 ? (
@@ -140,21 +152,23 @@ function UsersInner() {
                 <tr key={user.id}>
                   <td>{user.primaryEmail}</td>
                   <td>{user.username ?? "—"}</td>
-                  <td>{user.status}</td>
+                  <td>
+                    <ForgeStatusBadge status={user.status} />
+                  </td>
                   <td className={styles.mono}>{user.id}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : null}
-      </div>
-    </section>
+      </ForgePageSection>
+    </CreatorPage>
   );
 }
 
 export default function UsersPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense fallback={<CreatorLoading />}>
       <UsersInner />
     </Suspense>
   );

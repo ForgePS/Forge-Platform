@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  } from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { TenantRequired } from "@/components/tenant-required";
@@ -49,7 +55,7 @@ function Inner() {
       setItems(result.items);
       setSummary(result.summary);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load usage");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -61,26 +67,23 @@ function Inner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>AI Usage</h1>
+      <CreatorPage title="AI Usage">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>AI Usage</h1>
-      <p className={styles.lead}>
-        Tenant-isolated usage for <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link>
-      </p>
+    <CreatorPage
+      title="AI Usage"
+      subtitle={<>Tenant-isolated usage for <span className={styles.mono}>{tenantId}</span> ·{" "}
+        <Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link></>}
+      >
       {!canRead ? <p className={styles.error}>Missing usage view permission</p> : null}
       {error ? <p className={styles.error}>{error}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
       {summary ? (
-        <div className={styles.panel}>
-          <h2>This month</h2>
+        <ForgePageSection title="This month">
           <dl className={styles.dl}>
             <dt>Requests</dt>
             <dd>{summary.monthRequestCount}</dd>
@@ -89,10 +92,9 @@ function Inner() {
             <dt>Output tokens</dt>
             <dd>{summary.monthOutputTokens}</dd>
           </dl>
-        </div>
+        </ForgePageSection>
       ) : null}
-      <div className={styles.panel}>
-        <h2>Recent events</h2>
+      <ForgePageSection title="Recent events">
         {items.length === 0 && !loading ? (
           <p className={styles.muted}>No usage recorded.</p>
         ) : (
@@ -121,19 +123,15 @@ function Inner() {
             </tbody>
           </table>
         )}
-      </div>
-    </section>
+      </ForgePageSection>
+    </CreatorPage>
   );
 }
 
 export default function Page() {
   return (
     <Suspense
-      fallback={
-        <main className={styles.page}>
-          <p className={styles.muted}>Loading…</p>
-        </main>
-      }
+      fallback={<CreatorLoading />}
     >
       <Inner />
     </Suspense>

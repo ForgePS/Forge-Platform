@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState } from "react";
+import {
+  CreatorLoading,
+  CreatorPage,
+  ErrorState,
+  ForgePageSection,
+} from "@/components/creator-page";
 import { tenantDetailHref, useTenantId } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
 import { apiGet } from "@/lib/api";
@@ -48,7 +54,7 @@ function ConfigurationInner() {
       setSettings(config);
       setBranding(brand);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load configuration");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -60,26 +66,23 @@ function ConfigurationInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Configuration</h1>
+      <CreatorPage title="Configuration">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Configuration</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={tenantDetailHref(tenantId)}>Tenant detail</Link>
-      </p>
-
-      {error ? <p className={styles.error}>{error}</p> : null}
+    <CreatorPage
+      title="Configuration"
+      subtitle={<Link href={tenantDetailHref(tenantId)}>Back to Customer</Link>}
+    >
+      {error ? (
+        <ErrorState title="We couldn't load this information." description={error} />
+      ) : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
 
-      <div className={styles.panel}>
-        <h2>Branding</h2>
+      <ForgePageSection title="Branding">
         {!loading && !branding ? <p className={styles.muted}>No branding configured.</p> : null}
         {branding ? (
           <dl className={styles.dl}>
@@ -97,10 +100,9 @@ function ConfigurationInner() {
             <dd>{branding.customCssEnabled ? "enabled" : "disabled"}</dd>
           </dl>
         ) : null}
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>Settings</h2>
+      <ForgePageSection title="Settings" flush>
         {!loading && settings.length === 0 ? (
           <p className={styles.muted}>No configuration settings.</p>
         ) : null}
@@ -128,14 +130,14 @@ function ConfigurationInner() {
             </tbody>
           </table>
         ) : null}
-      </div>
-    </section>
+      </ForgePageSection>
+    </CreatorPage>
   );
 }
 
 export default function ConfigurationPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense fallback={<CreatorLoading />}>
       <ConfigurationInner />
     </Suspense>
   );

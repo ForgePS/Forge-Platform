@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  CreatorLoading,
+  CreatorPage,
+  ErrorState,
+  ForgePageSection,
+} from "@/components/creator-page";
 import { tenantDetailHref, useTenantId } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
 import { apiGet, apiSend } from "@/lib/api";
@@ -37,7 +43,7 @@ function FeaturesInner() {
       setFeatures(rows);
       setFeatureKey((current) => current || rows[0]?.key || "");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load features");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -77,25 +83,26 @@ function FeaturesInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Features</h1>
+      <CreatorPage title="Features">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Features</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={tenantDetailHref(tenantId)}>Tenant detail</Link>
-      </p>
+    <CreatorPage
+      title="Features"
+      subtitle={<Link href={tenantDetailHref(tenantId)}>Back to Customer</Link>}
+    >
+      {error ? (
+        error.toLowerCase().includes("override") || error.toLowerCase().includes("put") ? (
+          <p className={styles.error}>{error}</p>
+        ) : (
+          <ErrorState title="We couldn't load this information." description={error} />
+        )
+      ) : null}
 
-      {error ? <p className={styles.error}>{error}</p> : null}
-
-      <div className={styles.panel}>
-        <h2>Put tenant override</h2>
+      <ForgePageSection title="Put tenant override">
         <form className={styles.form} onSubmit={onOverride}>
           <div className={styles.formRow}>
             <label htmlFor="featureKey">Feature key</label>
@@ -131,10 +138,9 @@ function FeaturesInner() {
             </button>
           </div>
         </form>
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>Effective features</h2>
+      <ForgePageSection title="Effective features" flush>
         {loading ? <p className={styles.muted}>Loading…</p> : null}
         {!loading && features.length === 0 ? (
           <p className={styles.muted}>No feature definitions.</p>
@@ -161,14 +167,14 @@ function FeaturesInner() {
             </tbody>
           </table>
         ) : null}
-      </div>
-    </section>
+      </ForgePageSection>
+    </CreatorPage>
   );
 }
 
 export default function FeaturesPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense fallback={<CreatorLoading />}>
       <FeaturesInner />
     </Suspense>
   );

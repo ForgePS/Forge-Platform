@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { ApiError, apiGet, apiSend, useAuth } from "@forge/web-kit";
+import { PageHeader } from "@/components/layout/page-chrome";
 import {
-  SEASONAL_LIFECYCLE_FLAG,
   isSeasonalLifecycleEnabled,
   seasonalLifecycleBadge,
 } from "@/lib/personnel-seasonal";
@@ -658,55 +658,61 @@ export function SeasonalWorkforceWorkspace({ onGoToRoster }: { onGoToRoster?: ()
 
   if (!canView) {
     return (
-      <section className="ind-unavailable" role="alert">
-        <h1>Seasonal Workforce</h1>
-        <p>You do not have permission to view personnel.</p>
-        <p className="ind-muted">Missing industrial.personnel.view</p>
-      </section>
+      <div className="ind-ops">
+        <PageHeader title="Seasonal Workforce" />
+        <div className="alert alert-warning mb-0" role="alert">
+          You do not have permission to view personnel.
+        </div>
+      </div>
     );
   }
 
   if (bootError) {
     return (
-      <section className="ind-state" role="alert">
-        <h1>Seasonal Workforce</h1>
-        <p className="ind-error">{bootError}</p>
-      </section>
+      <div className="ind-ops">
+        <PageHeader title="Seasonal Workforce" />
+        <div className="alert alert-danger mb-0" role="alert">
+          {bootError}
+        </div>
+      </div>
     );
   }
 
   if (!bootstrap) {
     return (
-      <section className="ind-state" role="status" aria-live="polite">
-        <h1>Seasonal Workforce</h1>
-        <p>Checking feature availability…</p>
-      </section>
+      <div className="ind-ops">
+        <PageHeader title="Seasonal Workforce" />
+        <p className="text-muted mb-0" role="status" aria-live="polite">
+          Checking feature availability…
+        </p>
+      </div>
     );
   }
 
   if (!personnelModuleOn) {
     return (
-      <section className="ind-unavailable" role="alert">
-        <h1>Seasonal Workforce</h1>
-        <p>Personnel module is not enabled for this tenant on AWS.</p>
-      </section>
+      <div className="ind-ops">
+        <PageHeader title="Seasonal Workforce" />
+        <div className="alert alert-warning mb-0" role="alert">
+          Personnel is not available yet for this organization.
+        </div>
+      </div>
     );
   }
 
   if (!seasonalEnabled) {
     return (
-      <section className="ind-seasonal ind-unavailable" role="alert">
-        <h1>Seasonal Workforce</h1>
-        <p>
-          Seasonal pre-hire lifecycle is not enabled for this tenant. Flag{" "}
-          <code>{SEASONAL_LIFECYCLE_FLAG}</code> is off.
-        </p>
+      <div className="ind-ops ind-seasonal">
+        <PageHeader
+          title="Seasonal Workforce"
+          description="Seasonal pre-hire lifecycle is disabled for your organization."
+        />
         {onGoToRoster ? (
-          <button type="button" className="btn btn-outline-secondary" onClick={onGoToRoster}>
+          <button type="button" className="btn btn-outline-secondary btn-sm" onClick={onGoToRoster}>
             Open standard personnel roster
           </button>
         ) : null}
-      </section>
+      </div>
     );
   }
 
@@ -718,14 +724,11 @@ export function SeasonalWorkforceWorkspace({ onGoToRoster }: { onGoToRoster?: ()
     String(lifecycle?.personnel?.displayName ?? "Worker");
 
   return (
-    <section className="ind-ops ind-seasonal" aria-labelledby="seasonal-title">
-      <header className="ind-ops-header">
-        <h1 id="seasonal-title">Seasonal Workforce</h1>
-        <p className="ind-muted">
-          Pre-hire intake, orientation, activation, and full-time conversion · Flag{" "}
-          {SEASONAL_LIFECYCLE_FLAG}
-        </p>
-      </header>
+    <section className="ind-ops ind-seasonal" aria-label="Seasonal Workforce">
+      <PageHeader
+        title="Seasonal Workforce"
+        description="Pre-hire intake, orientation, activation, and full-time conversion."
+      />
 
       <div className="ind-seasonal-toolbar ind-ops-filters">
         <label>

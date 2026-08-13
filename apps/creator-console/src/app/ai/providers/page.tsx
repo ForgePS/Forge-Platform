@@ -1,10 +1,16 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
+import { tenantQuery, useTenantId, tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGet } from "@/lib/api";
 import styles from "../../page.module.css";
 
@@ -39,7 +45,7 @@ function Inner() {
       });
       setItems(result.items);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load providers");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -51,20 +57,17 @@ function Inner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>AI Providers</h1>
+      <CreatorPage title="AI Providers">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>AI Providers</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link>
-      </p>
+    <CreatorPage
+      title="AI Providers"
+      subtitle={<><Link href={tenantDetailHref(tenantId)}>Back to Customer</Link> ·{" "}<Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link></>}
+      >
       <p className={styles.muted}>
         Credential ARNs are never shown. Stub providers report &quot;no credentials&quot;.
       </p>
@@ -90,7 +93,7 @@ function Inner() {
                 <tr key={row.id}>
                   <td className={styles.mono}>{row.providerKey}</td>
                   <td>{row.product}</td>
-                  <td>{row.status}</td>
+                  <td><ForgeStatusBadge status={row.status} /></td>
                   <td>{row.region ?? "—"}</td>
                   <td>{row.credentialsLabel}</td>
                 </tr>
@@ -99,18 +102,14 @@ function Inner() {
           </table>
         )}
       </div>
-    </section>
+    </CreatorPage>
   );
 }
 
 export default function Page() {
   return (
     <Suspense
-      fallback={
-        <main className={styles.page}>
-          <p className={styles.muted}>Loading…</p>
-        </main>
-      }
+      fallback={<CreatorLoading />}
     >
       <Inner />
     </Suspense>

@@ -1,11 +1,18 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
+import { tenantQuery, useTenantId, tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGet, apiSend } from "@/lib/api";
 import styles from "../app/page.module.css";
 
@@ -127,7 +134,7 @@ export function ConfigStudioWorkspace({
         setCompareTo(history.versions[0]!.id);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load configuration studio");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -229,25 +236,33 @@ export function ConfigStudioWorkspace({
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>{title ?? NAMESPACE_LABELS[namespace] ?? "Configuration Studio"}</h1>
+      <CreatorPage title={title ?? NAMESPACE_LABELS[namespace] ?? "Configuration Studio"}>
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>{title ?? NAMESPACE_LABELS[namespace] ?? namespace}</h1>
-      <p className={styles.lead}>
-        Namespace <span className={styles.mono}>{namespace}</span> · Tenant{" "}
-        <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={`/studio${tenantQuery(tenantId)}`}>Studio home</Link>
-      </p>
+    <CreatorPage
+      title={title ?? NAMESPACE_LABELS[namespace] ?? namespace}
+      subtitle={
+        <>
+          <Link href={tenantDetailHref(tenantId)}>Back to Customer</Link>
+          {" · "}
+          <Link href={`/studio${tenantQuery(tenantId)}`}>Studio home</Link>
+        </>
+      }
+    >
       <p className={styles.muted}>
         Draft → Scheduled/Published → Superseded/Archived. Rollback clones an older version into a
         new published revision.
       </p>
+      <details className="forge-advanced-details">
+        <summary>Advanced Details</summary>
+        <p className={styles.muted}>
+          Namespace: <span className={styles.mono}>{namespace}</span>
+        </p>
+      </details>
 
       {!canUpdate ? <p className={styles.error}>Missing configuration update permission</p> : null}
       {error ? (
@@ -258,8 +273,7 @@ export function ConfigStudioWorkspace({
       {message ? <p className={styles.success}>{message}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
 
-      <div className={styles.panel}>
-        <h2>Version history</h2>
+      <ForgePageSection title="Version history">
         {versions.length === 0 ? (
           <p className={styles.muted}>No versions yet.</p>
         ) : (
@@ -277,7 +291,7 @@ export function ConfigStudioWorkspace({
               {versions.map((row) => (
                 <tr key={row.id}>
                   <td>v{row.version}</td>
-                  <td>{row.state}</td>
+                  <td><ForgeStatusBadge status={row.state} /></td>
                   <td>{row.changeSummary ?? "—"}</td>
                   <td>{new Date(row.createdAt).toLocaleString()}</td>
                   <td>
@@ -294,10 +308,13 @@ export function ConfigStudioWorkspace({
             </tbody>
           </table>
         )}
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>Editor {selected ? `(v${selected.version} · ${selected.state})` : ""}</h2>
+      <ForgePageSection
+        title={
+          selected ? `Editor (v${selected.version} · ${selected.state})` : "Editor"
+        }
+      >
         <div className={styles.formRow}>
           <label htmlFor="change-summary">Change summary</label>
           <input
@@ -389,10 +406,9 @@ export function ConfigStudioWorkspace({
             </button>
           </div>
         ) : null}
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>Compare versions</h2>
+      <ForgePageSection title="Compare versions">
         <div className={styles.actions}>
           <select
             value={compareFrom}
@@ -439,19 +455,15 @@ export function ConfigStudioWorkspace({
             ))}
           </ul>
         )}
-      </div>
-    </section>
+      </ForgePageSection>
+    </CreatorPage>
   );
 }
 
 export function ConfigStudioPage({ namespace, title }: { namespace?: string; title?: string }) {
   return (
     <Suspense
-      fallback={
-        <main className={styles.page}>
-          <p className={styles.muted}>Loading…</p>
-        </main>
-      }
+      fallback={<CreatorLoading />}
     >
       <ConfigStudioWorkspace
         {...(namespace !== undefined ? { namespace } : {})}

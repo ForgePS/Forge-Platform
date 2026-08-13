@@ -73,10 +73,14 @@ describe("industrial navigation foundation", () => {
     expect(nav.some((n) => n.code === "QR_LINKS")).toBe(true);
   });
 
-  it("uses explicit unavailable messaging", () => {
+  it("uses friendly unavailable messaging without raw status enums", () => {
     expect(moduleUnavailableMessage("Personnel", "MIGRATION_IN_PROGRESS")).toContain(
-      "Ask a platform admin to enable it",
+      "disabled for your organization",
     );
-    expect(moduleUnavailableMessage("Personnel")).toContain("not available in this environment");
+    expect(moduleUnavailableMessage("Personnel", "LEGACY_FIREBASE")).toContain("coming soon");
+    expect(moduleUnavailableMessage("Personnel")).toContain("not available yet");
+    expect(moduleUnavailableMessage("Personnel", "MIGRATION_IN_PROGRESS")).not.toMatch(
+      /MIGRATION_IN_PROGRESS|feature flag|LEGACY_FIREBASE/i,
+    );
   });
 });

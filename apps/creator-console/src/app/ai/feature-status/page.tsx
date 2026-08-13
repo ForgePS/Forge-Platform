@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  } from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { TenantRequired } from "@/components/tenant-required";
@@ -47,7 +52,7 @@ function Inner() {
       });
       setFlags(overview.flags);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load feature status");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -85,21 +90,19 @@ function Inner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>AI Feature Status</h1>
+      <CreatorPage title="AI Feature Status">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>AI Feature Status</h1>
-      <p className={styles.lead}>
-        Effective tenant overrides for <span className={styles.mono}>{tenantId}</span>. Defaults
+    <CreatorPage
+      title="AI Feature Status"
+      subtitle={<>Effective tenant overrides for <span className={styles.mono}>{tenantId}</span>. Defaults
         remain false elsewhere. Do not enable AI on Phase 4 synthetic CAD tenants.{" "}
-        <Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link>
-      </p>
+        <Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link></>}
+      >
       {!canRead ? <p className={styles.error}>Missing platform AI permission</p> : null}
       {error ? <p className={styles.error}>{error}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
@@ -142,18 +145,14 @@ function Inner() {
           </tbody>
         </table>
       </div>
-    </section>
+    </CreatorPage>
   );
 }
 
 export default function Page() {
   return (
     <Suspense
-      fallback={
-        <main className={styles.page}>
-          <p className={styles.muted}>Loading…</p>
-        </main>
-      }
+      fallback={<CreatorLoading />}
     >
       <Inner />
     </Suspense>

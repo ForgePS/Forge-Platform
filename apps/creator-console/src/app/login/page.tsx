@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  CreatorPage,
+  ForgePageSection,
+  } from "@/components/creator-page";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
@@ -73,12 +78,11 @@ export default function LoginPage() {
   const parsedEnv = envPrincipal ? parseDevPrincipal(envPrincipal) : null;
 
   return (
-    <section className={styles.page}>
-      <h1>Forge Creator Console</h1>
-      <p className={styles.lead}>
-        Sign in with your Forge account. Deployed environments use Cognito Hosted UI (email and
-        password on Cognito).
-      </p>
+    <CreatorPage
+      title="Forge Creator Console"
+      subtitle={<>Sign in with your Forge account. Deployed environments use Cognito Hosted UI (email and
+        password on Cognito).</>}
+      >
 
       {authError ? <p className={styles.error}>{authError}</p> : null}
       {error ? <p className={styles.error}>{error}</p> : null}
@@ -90,8 +94,7 @@ export default function LoginPage() {
         </div>
       ) : null}
 
-      <div className={styles.panel}>
-        <h2>Sign in</h2>
+      <ForgePageSection title="Sign in">
         <p className={styles.muted}>
           You will be redirected to Cognito to enter your email and password. The console stores
           only the Cognito <code>access_token</code> JWT — never JWKS public keys.
@@ -104,11 +107,10 @@ export default function LoginPage() {
         >
           {submitting ? "Redirecting…" : "Sign In"}
         </button>
-      </div>
+      </ForgePageSection>
 
       {allowDevPrincipal ? (
-        <div className={styles.panel}>
-          <h2>Dev principal (local / emulator only)</h2>
+        <ForgePageSection title="Dev principal (local / emulator only)">
           <p className={styles.muted}>
             Sends <code>x-forge-dev-principal</code>. Unavailable in deployed Creator Console
             builds.
@@ -146,7 +148,7 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
-        </div>
+        </ForgePageSection>
       ) : null}
 
       {allowDevPrincipal ? (
@@ -179,6 +181,6 @@ export default function LoginPage() {
           ) : null}
         </div>
       ) : null}
-    </section>
+    </CreatorPage>
   );
 }

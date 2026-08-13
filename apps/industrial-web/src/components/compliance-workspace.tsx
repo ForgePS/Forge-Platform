@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { ApiError, apiGet, apiSend, useAuth } from "@forge/web-kit";
+import { EmptyState, PageHeader, PageSection } from "@/components/layout/page-chrome";
 import { ModuleUnavailable } from "@/components/module-unavailable";
 import { COMPLIANCE_MODULE_CONFIG, type Ind6ComplianceModule } from "@/lib/compliance-modules";
 
@@ -119,11 +120,12 @@ export function ComplianceWorkspace({
 
   if (!canView) {
     return (
-      <section className="ind-unavailable" role="alert">
-        <h1>{moduleName}</h1>
-        <p>You do not have permission to view this module.</p>
-        <p className="ind-muted">Missing {cfg.viewPerm}</p>
-      </section>
+      <div className="ind-ops">
+        <PageHeader title={moduleName} />
+        <div className="alert alert-warning mb-0" role="alert">
+          You do not have permission to view this module.
+        </div>
+      </div>
     );
   }
 
@@ -138,10 +140,12 @@ export function ComplianceWorkspace({
 
   if (!bootstrap) {
     return (
-      <section className="ind-state" role="status" aria-live="polite">
-        <h1>{moduleName}</h1>
-        <p>Checking module availability…</p>
-      </section>
+      <div className="ind-ops">
+        <PageHeader title={moduleName} />
+        <p className="text-muted mb-0" role="status" aria-live="polite">
+          Checking module availability…
+        </p>
+      </div>
     );
   }
 
@@ -215,117 +219,142 @@ export function ComplianceWorkspace({
   const sensitiveRedacted = Boolean(sensitiveJson && sensitiveJson.redacted === true);
 
   return (
-    <section className="ind-ops ind-compliance" aria-labelledby="cmp-module-title">
-      <header className="ind-ops-header">
-        <h1 id="cmp-module-title">{moduleName}</h1>
-        <p className="ind-muted">
-          Compliance / facility safety candidate · Firebase remains production authority · Flag{" "}
-          {cfg.flagKey}
-        </p>
-      </header>
+    <div className="ind-ops ind-compliance">
+      <PageHeader
+        title={moduleName}
+        description="Compliance and facility safety records for this tenant."
+      />
 
-      <form
-        className="ind-ops-filters"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void loadList();
-        }}
-        aria-label={`${moduleName} filters`}
-      >
-        <label>
-          Search
-          <input
-            type="search"
-            value={q}
-            onChange={(ev) => setQ(ev.target.value)}
-            autoComplete="off"
-          />
-        </label>
-        {module !== "osha" && module !== "risk" ? (
-          <label>
-            Category
+      <PageSection title="Filters" bodyClassName="pt-3">
+        <form
+          className="row g-3 align-items-end"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void loadList();
+          }}
+          aria-label={`${moduleName} filters`}
+        >
+          <div className="col-md-4">
+            <label className="form-label" htmlFor={`cmp-search-${module}`}>
+              Search
+            </label>
             <input
-              type="text"
-              value={category}
-              onChange={(ev) => setCategory(ev.target.value)}
+              id={`cmp-search-${module}`}
+              className="form-control form-control-sm"
+              type="search"
+              value={q}
+              onChange={(ev) => setQ(ev.target.value)}
               autoComplete="off"
             />
-          </label>
-        ) : null}
-        <label>
-          Status
-          <input
-            type="text"
-            value={status}
-            onChange={(ev) => setStatus(ev.target.value)}
-            placeholder="DRAFT / OPEN / …"
-            autoComplete="off"
-          />
-        </label>
-        <button type="submit">Apply filters</button>
-      </form>
+          </div>
+          {module !== "osha" && module !== "risk" ? (
+            <div className="col-md-3">
+              <label className="form-label" htmlFor={`cmp-category-${module}`}>
+                Category
+              </label>
+              <input
+                id={`cmp-category-${module}`}
+                className="form-control form-control-sm"
+                type="text"
+                value={category}
+                onChange={(ev) => setCategory(ev.target.value)}
+                autoComplete="off"
+              />
+            </div>
+          ) : null}
+          <div className="col-md-3">
+            <label className="form-label" htmlFor={`cmp-status-${module}`}>
+              Status
+            </label>
+            <input
+              id={`cmp-status-${module}`}
+              className="form-control form-control-sm"
+              type="text"
+              value={status}
+              onChange={(ev) => setStatus(ev.target.value)}
+              placeholder="Optional"
+              autoComplete="off"
+            />
+          </div>
+          <div className="col-md-2">
+            <button type="submit" className="btn btn-primary btn-sm">
+              Apply filters
+            </button>
+          </div>
+        </form>
+      </PageSection>
 
       {error ? (
-        <p className="ind-error" role="alert">
+        <div className="alert alert-danger" role="alert">
           {error}
-        </p>
+        </div>
       ) : null}
 
       {loading ? (
-        <p role="status" aria-live="polite">
+        <p className="text-muted" role="status" aria-live="polite">
           Loading…
         </p>
       ) : items.length === 0 ? (
-        <p className="ind-muted">No records yet for this tenant.</p>
+        <div className="card mb-4">
+          <EmptyState
+            title="No records yet"
+            description="When records are created for this module, they will appear here."
+          />
+        </div>
       ) : (
-        <div className="ind-ops-table-wrap" role="region" aria-label={`${moduleName} list`}>
-          <table className="ind-ops-table">
-            <thead>
-              <tr>
-                <th scope="col">Title</th>
-                <th scope="col">Category / Type</th>
-                <th scope="col">Status</th>
-                <th scope="col">Updated</th>
-                <th scope="col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((row) => (
-                <tr key={String(row.id)}>
-                  <td>{String(row.title ?? "—")}</td>
-                  <td>
-                    {String(
-                      row.category ??
-                        row.recordabilityStatus ??
-                        row.sourceType ??
-                        cfg.defaultCategory,
-                    )}
-                  </td>
-                  <td>
-                    <span data-status={String(row.status ?? "")}>{String(row.status ?? "—")}</span>
-                  </td>
-                  <td>{row.updatedAt ? new Date(String(row.updatedAt)).toLocaleString() : "—"}</td>
-                  <td>
-                    <button type="button" onClick={() => void loadDetail(String(row.id))}>
-                      Open
-                    </button>
-                  </td>
+        <div className="card mb-4">
+          <div className="table-responsive text-nowrap">
+            <table className="table table-hover table-sm mb-0" aria-label={`${moduleName} list`}>
+              <thead>
+                <tr>
+                  <th scope="col">Title</th>
+                  <th scope="col">Category / Type</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Updated</th>
+                  <th scope="col">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="table-border-bottom-0">
+                {items.map((row) => (
+                  <tr key={String(row.id)}>
+                    <td>{String(row.title ?? "—")}</td>
+                    <td>
+                      {String(
+                        row.category ??
+                          row.recordabilityStatus ??
+                          row.sourceType ??
+                          cfg.defaultCategory,
+                      )}
+                    </td>
+                    <td>
+                      <span className="badge bg-label-secondary">{String(row.status ?? "—")}</span>
+                    </td>
+                    <td>{row.updatedAt ? new Date(String(row.updatedAt)).toLocaleString() : "—"}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => void loadDetail(String(row.id))}
+                      >
+                        Open
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {detail ? (
-        <section className="ind-ops-detail" aria-label="Record detail">
-          <h2>{String(detail.title ?? "Record")}</h2>
-          <p>
+        <PageSection title={String(detail.title ?? "Record")}>
+          <p className="mb-2">
             Status: <strong>{String(detail.status ?? "—")}</strong>
           </p>
-          <p className="ind-muted">Location: {String(detail.locationText ?? "—")}</p>
+          <p className="text-muted small">Location: {String(detail.locationText ?? "—")}</p>
           {cfg.sensitivePerm ? (
-            <p className="ind-muted" aria-label="Sensitive data access">
+            <p className="text-muted small" aria-label="Sensitive data access">
               Sensitive fields:{" "}
               {canViewSensitive
                 ? sensitiveRedacted
@@ -334,74 +363,109 @@ export function ComplianceWorkspace({
                 : "restricted — requires sensitive permission"}
             </p>
           ) : null}
-          <div className="ind-ops-actions">
+          <div className="d-flex flex-wrap gap-2">
             {canManage ? (
-              <button type="button" onClick={() => void archiveSelected()}>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-danger"
+                onClick={() => void archiveSelected()}
+              >
                 Archive
               </button>
             ) : null}
           </div>
-        </section>
+        </PageSection>
       ) : null}
 
       {canManage ? (
-        <form className="ind-ops-create" onSubmit={onCreate} aria-label={`Create ${moduleName}`}>
-          <h2>Create record</h2>
-          <label>
-            Title
-            <input
-              required
-              value={title}
-              onChange={(ev) => setTitle(ev.target.value)}
-              autoComplete="off"
-            />
-          </label>
-          {module !== "osha" && module !== "risk" ? (
-            <>
-              <label>
-                Worker / contact
+        <PageSection title="Create record">
+          <form
+            className="row g-3"
+            onSubmit={onCreate}
+            aria-label={`Create ${moduleName}`}
+          >
+            <div className="col-md-6">
+              <label className="form-label" htmlFor={`cmp-create-title-${module}`}>
+                Title
+              </label>
+              <input
+                id={`cmp-create-title-${module}`}
+                className="form-control form-control-sm"
+                required
+                value={title}
+                onChange={(ev) => setTitle(ev.target.value)}
+                autoComplete="off"
+              />
+            </div>
+            {module !== "osha" && module !== "risk" ? (
+              <>
+                <div className="col-md-6">
+                  <label className="form-label" htmlFor={`cmp-create-worker-${module}`}>
+                    Worker / contact
+                  </label>
+                  <input
+                    id={`cmp-create-worker-${module}`}
+                    className="form-control form-control-sm"
+                    value={workerName}
+                    onChange={(ev) => setWorkerName(ev.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label" htmlFor={`cmp-create-location-${module}`}>
+                    Location
+                  </label>
+                  <input
+                    id={`cmp-create-location-${module}`}
+                    className="form-control form-control-sm"
+                    value={locationText}
+                    onChange={(ev) => setLocationText(ev.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+              </>
+            ) : null}
+            {module === "risk" ? (
+              <div className="col-md-6">
+                <label className="form-label" htmlFor={`cmp-create-owner-${module}`}>
+                  Owner
+                </label>
                 <input
+                  id={`cmp-create-owner-${module}`}
+                  className="form-control form-control-sm"
                   value={workerName}
                   onChange={(ev) => setWorkerName(ev.target.value)}
                   autoComplete="off"
                 />
-              </label>
-              <label>
-                Location
+              </div>
+            ) : null}
+            {cfg.requiresIncident || module === "osha" ? (
+              <div className="col-md-6">
+                <label className="form-label" htmlFor={`cmp-create-incident-${module}`}>
+                  Incident ID {module === "osha" ? "(required)" : "(optional)"}
+                </label>
                 <input
-                  value={locationText}
-                  onChange={(ev) => setLocationText(ev.target.value)}
+                  id={`cmp-create-incident-${module}`}
+                  className="form-control form-control-sm"
+                  value={incidentId}
+                  onChange={(ev) => setIncidentId(ev.target.value)}
                   autoComplete="off"
+                  required={module === "osha"}
                 />
-              </label>
-            </>
-          ) : null}
-          {module === "risk" ? (
-            <label>
-              Owner
-              <input
-                value={workerName}
-                onChange={(ev) => setWorkerName(ev.target.value)}
-                autoComplete="off"
-              />
-            </label>
-          ) : null}
-          {cfg.requiresIncident || module === "osha" ? (
-            <label>
-              Incident ID {module === "osha" ? "(required)" : "(optional)"}
-              <input
-                value={incidentId}
-                onChange={(ev) => setIncidentId(ev.target.value)}
-                autoComplete="off"
-                required={module === "osha"}
-              />
-            </label>
-          ) : null}
-          <button type="submit" disabled={creating || !title.trim()}>
-            {creating ? "Creating…" : "Create"}
-          </button>
-        </form>
+              </div>
+            ) : null}
+            <div className="col-12">
+              <button
+                type="submit"
+                className="btn btn-primary btn-sm"
+                disabled={creating || !title.trim()}
+              >
+                {creating ? "Creating…" : "Create"}
+              </button>
+            </div>
+          </form>
+        </PageSection>
       ) : null}
-    </section>
+    </div>
   );
 }

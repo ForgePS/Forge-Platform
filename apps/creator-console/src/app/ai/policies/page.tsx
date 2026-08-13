@@ -1,10 +1,17 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
+import { tenantQuery, useTenantId, tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGet, apiSend } from "@/lib/api";
 import styles from "../../page.module.css";
 
@@ -56,7 +63,7 @@ function Inner() {
         setPerRecord(String(first.perRecordLimit));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load policies");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -102,20 +109,17 @@ function Inner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>AI Policies</h1>
+      <CreatorPage title="AI Policies">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>AI Policies</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link>
-      </p>
+    <CreatorPage
+      title="AI Policies"
+      subtitle={<><Link href={tenantDetailHref(tenantId)}>Back to Customer</Link> ·{" "}<Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link></>}
+      >
       {!canRead ? <p className={styles.error}>Missing policy permission</p> : null}
       {error ? <p className={styles.error}>{error}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
@@ -146,7 +150,7 @@ function Inner() {
                       {row.product}
                     </button>
                   </td>
-                  <td>{row.status}</td>
+                  <td><ForgeStatusBadge status={row.status} /></td>
                   <td>{row.monthlyRequestQuota}</td>
                   <td>{row.dailyUserQuota}</td>
                   <td>{row.perRecordLimit}</td>
@@ -165,8 +169,7 @@ function Inner() {
       </div>
 
       {canWrite && selectedId ? (
-        <div className={styles.panel}>
-          <h2>Edit policy</h2>
+        <ForgePageSection title="Edit policy">
           <form className={styles.form} onSubmit={(event) => void onSave(event)}>
             <div className={styles.formRow}>
               <label htmlFor="policy-status">Status</label>
@@ -217,20 +220,16 @@ function Inner() {
               Save policy
             </button>
           </form>
-        </div>
+        </ForgePageSection>
       ) : null}
-    </section>
+    </CreatorPage>
   );
 }
 
 export default function Page() {
   return (
     <Suspense
-      fallback={
-        <main className={styles.page}>
-          <p className={styles.muted}>Loading…</p>
-        </main>
-      }
+      fallback={<CreatorLoading />}
     >
       <Inner />
     </Suspense>

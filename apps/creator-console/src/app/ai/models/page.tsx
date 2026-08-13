@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
 import { TenantRequired } from "@/components/tenant-required";
@@ -61,7 +68,7 @@ function Inner() {
       setItems(result.items);
       setCatalog(result.catalog ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load model policies");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -110,27 +117,24 @@ function Inner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>AI Models</h1>
+      <CreatorPage title="AI Models">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>AI Models</h1>
-      <p className={styles.lead}>
-        Approved model policies for <span className={styles.mono}>{tenantId}</span>. Commercial
+    <CreatorPage
+      title="AI Models"
+      subtitle={<>Approved model policies for <span className={styles.mono}>{tenantId}</span>. Commercial
         providers stay blocked until product-owner authorization.{" "}
-        <Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link>
-      </p>
+        <Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link></>}
+      >
       {!canRead ? <p className={styles.error}>Missing platform AI permission</p> : null}
       {error ? <p className={styles.error}>{error}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
 
-      <div className={styles.panel}>
-        <h2>Catalog</h2>
+      <ForgePageSection title="Catalog">
         {catalog.length === 0 ? (
           <p className={styles.muted}>No catalog entries.</p>
         ) : (
@@ -146,10 +150,9 @@ function Inner() {
             ))}
           </ul>
         )}
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>Tenant model policies</h2>
+      <ForgePageSection title="Tenant model policies">
         {items.length === 0 && !loading ? (
           <p className={styles.muted}>No model policies yet.</p>
         ) : (
@@ -170,7 +173,7 @@ function Inner() {
                   <td className={styles.mono}>
                     {row.providerKey}/{row.modelId}
                   </td>
-                  <td>{row.status}</td>
+                  <td><ForgeStatusBadge status={row.status} /></td>
                   <td>
                     {row.maxInputTokens}/{row.maxOutputTokens}
                   </td>
@@ -203,11 +206,10 @@ function Inner() {
             </tbody>
           </table>
         )}
-      </div>
+      </ForgePageSection>
 
       {canManage ? (
-        <div className={styles.panel}>
-          <h2>Add stub model policy</h2>
+        <ForgePageSection title="Add stub model policy">
           <form className={styles.form} onSubmit={(event) => void onCreate(event)}>
             <div className={styles.formRow}>
               <label htmlFor="model-name">Name</label>
@@ -231,20 +233,16 @@ function Inner() {
               Create approved stub policy
             </button>
           </form>
-        </div>
+        </ForgePageSection>
       ) : null}
-    </section>
+    </CreatorPage>
   );
 }
 
 export default function Page() {
   return (
     <Suspense
-      fallback={
-        <main className={styles.page}>
-          <p className={styles.muted}>Loading…</p>
-        </main>
-      }
+      fallback={<CreatorLoading />}
     >
       <Inner />
     </Suspense>

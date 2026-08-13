@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  CreatorPage,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -26,37 +32,30 @@ export default function SelectTenantPage() {
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Select tenant</h1>
-      <p className={styles.lead}>
-        Calls <code>POST /api/v1/auth/select-tenant</code> and refreshes{" "}
-        <code>GET /api/v1/auth/me</code>.
-      </p>
-
+    <CreatorPage title="Select customer" subtitle="Choose which customer to work in for this session.">
       {error ? <p className={styles.error}>{error}</p> : null}
       {actionError ? <p className={styles.error}>{actionError}</p> : null}
       {loading ? <p className={styles.muted}>Loading tenants…</p> : null}
 
       {!loading && !me ? (
-        <div className={styles.panel}>
+        <ForgePageSection title="Sign in required">
           <p className={styles.muted}>
             Not authenticated. <Link href="/login">Sign in</Link> first.
           </p>
-        </div>
+        </ForgePageSection>
       ) : null}
 
       {me ? (
-        <div className={styles.panel}>
-          <h2>Available tenants</h2>
+        <ForgePageSection title="Available customers" flush>
           {me.tenants.length === 0 ? (
-            <p className={styles.muted}>No tenants available for this user.</p>
+            <p className={styles.muted}>No customers available for this user.</p>
           ) : (
             <table className={styles.table}>
               <thead>
                 <tr>
                   <th>Display name</th>
                   <th>Slug</th>
-                  <th>Tenant status</th>
+                  <th>Status</th>
                   <th>Membership</th>
                   <th>Current</th>
                   <th>Action</th>
@@ -67,8 +66,12 @@ export default function SelectTenantPage() {
                   <tr key={tenant.tenantId}>
                     <td>{tenant.displayName}</td>
                     <td className={styles.mono}>{tenant.slug}</td>
-                    <td>{tenant.tenantStatus}</td>
-                    <td>{tenant.membershipStatus}</td>
+                    <td>
+                      <ForgeStatusBadge status={tenant.tenantStatus} />
+                    </td>
+                    <td>
+                      <ForgeStatusBadge status={tenant.membershipStatus} />
+                    </td>
                     <td>{tenant.tenantId === me.tenantId ? "Yes" : "—"}</td>
                     <td>
                       <button
@@ -85,8 +88,16 @@ export default function SelectTenantPage() {
               </tbody>
             </table>
           )}
-        </div>
+        </ForgePageSection>
       ) : null}
-    </section>
+
+      <details className="forge-advanced-details">
+        <summary>Advanced Details</summary>
+        <p className={styles.muted}>
+          Calls <code>POST /api/v1/auth/select-tenant</code> and refreshes{" "}
+          <code>GET /api/v1/auth/me</code>.
+        </p>
+      </details>
+    </CreatorPage>
   );
 }

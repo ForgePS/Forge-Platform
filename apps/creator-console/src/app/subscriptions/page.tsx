@@ -1,11 +1,18 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { filterBySearch, ListControls, paginate, sortByField } from "@/components/list-controls";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
+import { tenantQuery, useTenantId, tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGet } from "@/lib/api";
 import styles from "../page.module.css";
 
@@ -46,7 +53,7 @@ function SubscriptionsInner() {
       setItems(rows);
       setCurrent(currentRow);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load subscriptions");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -77,28 +84,24 @@ function SubscriptionsInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Subscriptions</h1>
+      <CreatorPage title="Subscriptions">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Subscriptions</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={`/entitlements${tenantQuery(tenantId)}`}>Entitlements</Link>
-      </p>
+    <CreatorPage
+      title="Subscriptions"
+      subtitle={<><Link href={tenantDetailHref(tenantId)}>Back to Customer</Link> ·{" "}<Link href={`/entitlements${tenantQuery(tenantId)}`}>Entitlements</Link></>}
+      >
 
       {!canRead ? (
         <p className={styles.error}>Missing permission: platform.entitlement.manage</p>
       ) : null}
       {error ? <p className={styles.error}>{error}</p> : null}
 
-      <div className={styles.panel}>
-        <h2>Current subscription</h2>
+      <ForgePageSection title="Current subscription">
         {loading ? <p className={styles.muted}>Loading…</p> : null}
         {!loading && !current ? <p className={styles.muted}>No current subscription.</p> : null}
         {current ? (
@@ -106,17 +109,16 @@ function SubscriptionsInner() {
             <dt>ID</dt>
             <dd className={styles.mono}>{current.id}</dd>
             <dt>Status</dt>
-            <dd>{current.status}</dd>
+            <dd><ForgeStatusBadge status={current.status} /></dd>
             <dt>Plan</dt>
             <dd>{current.planCode ?? "—"}</dd>
             <dt>Billing cycle</dt>
             <dd>{current.billingCycle ?? "—"}</dd>
           </dl>
         ) : null}
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>All subscriptions</h2>
+      <ForgePageSection title="All subscriptions">
         {canRead ? (
           <ListControls
             search={search}
@@ -152,7 +154,7 @@ function SubscriptionsInner() {
             <tbody>
               {pageItems.map((row) => (
                 <tr key={row.id}>
-                  <td>{row.status}</td>
+                  <td><ForgeStatusBadge status={row.status} /></td>
                   <td>{row.planCode ?? "—"}</td>
                   <td>{row.billingCycle ?? "—"}</td>
                   <td className={styles.mono}>{row.startedAt ?? "—"}</td>
@@ -163,14 +165,14 @@ function SubscriptionsInner() {
             </tbody>
           </table>
         ) : null}
-      </div>
-    </section>
+      </ForgePageSection>
+    </CreatorPage>
   );
 }
 
 export default function SubscriptionsPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense fallback={<CreatorLoading />}>
       <SubscriptionsInner />
     </Suspense>
   );

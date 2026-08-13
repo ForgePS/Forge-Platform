@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  CreatorLoading,
+  CreatorPage,
+  ErrorState,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
 import { tenantDetailHref, useTenantId } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
 import { apiGet, apiSend } from "@/lib/api";
@@ -47,7 +54,7 @@ function OrganizationsInner() {
     try {
       setItems(await apiGet<Organization[]>(`/api/v1/tenants/${tenantId}/organizations`));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load organizations");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -82,25 +89,26 @@ function OrganizationsInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Organizations</h1>
+      <CreatorPage title="Organizations">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Organizations</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={tenantDetailHref(tenantId)}>Tenant detail</Link>
-      </p>
+    <CreatorPage
+      title="Organizations"
+      subtitle={<Link href={tenantDetailHref(tenantId)}>Back to Customer</Link>}
+    >
+      {error ? (
+        error.startsWith("Failed to create") || error.includes("must") ? (
+          <p className={styles.error}>{error}</p>
+        ) : (
+          <ErrorState title="We couldn't load this information." description={error} />
+        )
+      ) : null}
 
-      {error ? <p className={styles.error}>{error}</p> : null}
-
-      <div className={styles.panel}>
-        <h2>Create organization</h2>
+      <ForgePageSection title="Create organization">
         <form className={styles.form} onSubmit={onCreate}>
           <div className={styles.formRow}>
             <label htmlFor="organizationTypeCode">Type</label>
@@ -150,10 +158,9 @@ function OrganizationsInner() {
             </button>
           </div>
         </form>
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>Organizations</h2>
+      <ForgePageSection title="Organizations" flush>
         {loading ? <p className={styles.muted}>Loading…</p> : null}
         {!loading && items.length === 0 ? (
           <p className={styles.muted}>No organizations yet.</p>
@@ -173,21 +180,23 @@ function OrganizationsInner() {
                 <tr key={org.id}>
                   <td>{org.displayName}</td>
                   <td className={styles.mono}>{org.slug}</td>
-                  <td>{org.status}</td>
+                  <td>
+                    <ForgeStatusBadge status={org.status} />
+                  </td>
                   <td>{org.email ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : null}
-      </div>
-    </section>
+      </ForgePageSection>
+    </CreatorPage>
   );
 }
 
 export default function OrganizationsPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense fallback={<CreatorLoading />}>
       <OrganizationsInner />
     </Suspense>
   );

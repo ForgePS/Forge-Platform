@@ -1,5 +1,7 @@
 "use client";
 
+import { ErrorState, ForgeStatusBadge } from "@/components/creator-page";
+
 import { useCallback, useEffect, useState } from "react";
 import { NerisPageShell } from "@/components/neris-schema-gate";
 import { apiGet } from "@/lib/api";
@@ -35,7 +37,7 @@ export default function NerisPackagesPage() {
       setPackages(pkgs);
       setImports(history);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load packages");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -51,7 +53,9 @@ export default function NerisPackagesPage() {
       subtitle="Schema package identity and import history (read-only)."
     >
       {loading ? <p>Loading…</p> : null}
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {error ? (
+        <ErrorState title="We couldn't load this information." description={error} />
+      ) : null}
       {!loading && !error && packages.length === 0 ? <p>No packages imported yet.</p> : null}
       <div className={styles.tableWrap}>
         <table className={styles.table}>
@@ -67,7 +71,7 @@ export default function NerisPackagesPage() {
               <tr key={row.id}>
                 <td>{row.code}</td>
                 <td>{row.name}</td>
-                <td>{row.status}</td>
+                <td><ForgeStatusBadge status={row.status} /></td>
               </tr>
             ))}
           </tbody>

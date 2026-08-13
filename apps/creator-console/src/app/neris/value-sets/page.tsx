@@ -1,5 +1,7 @@
 "use client";
 
+import { ErrorState } from "@/components/creator-page";
+
 import { useCallback, useEffect, useState } from "react";
 import { ListControls } from "@/components/list-controls";
 import { NerisPageShell } from "@/components/neris-schema-gate";
@@ -33,7 +35,7 @@ export default function NerisValueSetsPage() {
       if (search) params.set("search", search);
       setItems(await apiGet<ValueSet[]>(`/api/v1/platform/neris/value-sets?${params}`));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load value sets");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -58,7 +60,9 @@ export default function NerisValueSetsPage() {
       subtitle="Namespaced by source_key so similarly named tables stay separate."
     >
       {loading ? <p>Loading…</p> : null}
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {error ? (
+        <ErrorState title="We couldn't load this information." description={error} />
+      ) : null}
       <ListControls
         search={search}
         onSearchChange={(value) => {

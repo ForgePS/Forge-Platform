@@ -1,10 +1,16 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  } from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
+import { tenantQuery, useTenantId, tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGet, apiSend } from "@/lib/api";
 import styles from "../page.module.css";
 
@@ -51,7 +57,7 @@ function BrandingInner() {
       setEmailSenderName(row?.emailSenderName ?? "");
       setSupportEmail(row?.supportEmail ?? "");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load branding");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -89,21 +95,18 @@ function BrandingInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Branding</h1>
+      <CreatorPage title="Branding">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Branding</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={`/configuration${tenantQuery(tenantId)}`}>Configuration</Link> ·{" "}
-        <Link href={`/audit${tenantQuery(tenantId)}`}>Audit history</Link>
-      </p>
+    <CreatorPage
+      title="Branding"
+      subtitle={<><Link href={tenantDetailHref(tenantId)}>Back to Customer</Link> ·{" "}<Link href={`/configuration${tenantQuery(tenantId)}`}>Configuration</Link> ·{" "}
+        <Link href={`/audit${tenantQuery(tenantId)}`}>Audit history</Link></>}
+      >
       <p className={styles.success}>
         Prefer{" "}
         <Link href={`/studio/branding${tenantQuery(tenantId)}`}>
@@ -124,8 +127,7 @@ function BrandingInner() {
       ) : null}
 
       {canRead ? (
-        <div className={styles.panel}>
-          <h2>Branding settings</h2>
+        <ForgePageSection title="Branding settings">
           <form className={styles.form} onSubmit={onSave}>
             <div className={styles.formRow}>
               <label htmlFor="primaryColor">Primary color</label>
@@ -175,15 +177,15 @@ function BrandingInner() {
               </button>
             </div>
           </form>
-        </div>
+        </ForgePageSection>
       ) : null}
-    </section>
+    </CreatorPage>
   );
 }
 
 export default function BrandingPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense fallback={<CreatorLoading />}>
       <BrandingInner />
     </Suspense>
   );

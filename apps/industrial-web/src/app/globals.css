@@ -1,56 +1,22 @@
 /*
  * Industrial content styles on top of vendored Sneat Free (core/theme-default).
- * Shell layout/menu/navbar come from /public/sneat CSS — do not redefine them here.
+ * Shell layout/menu/navbar come from /public/sneat CSS — do not redefine them here
+ * except FORGE-UI-S5 hardening helpers that complement Sneat breakpoints.
  */
 
-.ind-content h1 {
-  font-size: 1.375rem;
-  font-weight: 600;
-  margin: 0 0 0.75rem;
-}
-
-.ind-content h2 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin: 1.25rem 0 0.5rem;
-}
-
-.ind-content p {
-  margin: 0 0 0.75rem;
-}
-
-.ind-muted {
-  color: var(--bs-secondary-color, #a1acb8);
-}
-
-.ind-error {
-  color: var(--bs-danger, #ff3e1d);
-}
-
-[data-bs-theme="dark"] .ind-panel,
-[data-bs-theme="dark"] .ind-card {
-  background: var(--bs-card-bg, var(--bs-paper-bg));
-  border-color: var(--bs-border-color);
-  box-shadow: var(--bs-box-shadow);
-}
-
-[data-bs-theme="dark"] .ind-banner {
-  background: rgba(255, 171, 0, 0.12);
-  border-bottom-color: rgba(255, 171, 0, 0.35);
-  color: #ffcd66;
-}
-
-[data-bs-theme="dark"] .ind-launcher-card--disabled {
-  opacity: 0.55;
-}
-
-[data-bs-theme="dark"] .forge-alert {
-  border-color: var(--bs-border-color);
-}
-
-[data-bs-theme="dark"] .forge-alert--danger {
-  background: rgba(255, 62, 29, 0.14);
-  color: #ffb4a8;
+:root {
+  --ind-border: #d9dee3;
+  --ind-muted: #a1acb8;
+  --ind-text: #566a7f;
+  --ind-heading: #384551;
+  --ind-surface: #fff;
+  --ind-danger: #ea5455;
+  --ind-warning-bg: #fff2e2;
+  --ind-warning-border: #ffd9a8;
+  --ind-warning-text: #8a5a00;
+  --ind-primary: #696cff;
+  --ind-radius: 0.5rem;
+  --ind-shadow: 0 0.25rem 1rem rgba(161, 172, 184, 0.45);
 }
 
 /* Full logo replaces mark + short name when branding.logoUrl is set */
@@ -87,6 +53,11 @@
   object-position: center;
 }
 
+.authentication-wrapper .app-brand-full-logo-img {
+  max-height: 5.5rem;
+  max-width: 18rem;
+}
+
 .layout-menu-collapsed:not(.layout-menu-hover) .layout-menu .app-brand-full-logo,
 .menu-collapsed:not(:hover) .app-brand .app-brand-full-logo {
   max-width: 2.25rem;
@@ -110,198 +81,7 @@
   padding: 0;
 }
 
-.avatar .avatar-initial {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-/* Dashboard launcher — Sneat card hover without fighting core card chrome */
-.ind-launcher-card {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.ind-launcher-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0.5rem 1.25rem rgba(161, 172, 184, 0.35);
-}
-
-.ind-launcher-card--disabled {
-  opacity: 0.72;
-}
-
-.ind-launcher-card--disabled:hover {
-  transform: none;
-  box-shadow: var(--bs-card-box-shadow, none);
-}
-
-[data-bs-theme="dark"] .ind-launcher-card:hover {
-  box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.35);
-}
-
-/* Keep outline / primary buttons crisp next to Link stylesheets */
-.ind-dashboard .btn i,
-.ind-ops .btn i {
-  vertical-align: -0.125em;
-}
-
-/*
- * Module workspaces still have many bare <button> tags.
- * Style them like Sneat outline-secondary so dark mode is not browser-default gray/white.
- */
-.content-wrapper button:not(.btn):not(.layout-menu-toggle):not(.dropdown-item):not(.btn-close):not(
-    [class*="bx"]
-  ),
-.ind-content button:not(.btn),
-.ind-seasonal button:not(.btn),
-.ind-unavailable button:not(.btn),
-.ind-panel button:not(.btn),
-.ind-card button:not(.btn) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.4375rem 1.25rem;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  line-height: 1.5;
-  border-radius: 0.375rem;
-  border: 1px solid var(--bs-secondary, #8592a3);
-  color: var(--bs-secondary, #8592a3);
-  background-color: transparent;
-  cursor: pointer;
-  transition:
-    color 0.15s ease,
-    background-color 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.content-wrapper button:not(.btn):not(.layout-menu-toggle):not(.dropdown-item):not(.btn-close):hover,
-.ind-content button:not(.btn):hover,
-.ind-seasonal button:not(.btn):hover,
-.ind-unavailable button:not(.btn):hover,
-.ind-panel button:not(.btn):hover,
-.ind-card button:not(.btn):hover {
-  color: #fff;
-  background-color: var(--bs-secondary, #8592a3);
-  border-color: var(--bs-secondary, #8592a3);
-}
-
-.content-wrapper button:not(.btn):disabled,
-.ind-content button:not(.btn):disabled,
-.ind-seasonal button:not(.btn):disabled,
-.ind-unavailable button:not(.btn):disabled,
-.ind-panel button:not(.btn):disabled,
-.ind-card button:not(.btn):disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-[data-bs-theme="dark"] .content-wrapper button:not(.btn):not(.layout-menu-toggle):not(.dropdown-item):not(
-    .btn-close
-  ),
-[data-bs-theme="dark"] .ind-content button:not(.btn),
-[data-bs-theme="dark"] .ind-seasonal button:not(.btn),
-[data-bs-theme="dark"] .ind-unavailable button:not(.btn),
-[data-bs-theme="dark"] .ind-panel button:not(.btn),
-[data-bs-theme="dark"] .ind-card button:not(.btn) {
-  color: #b2b3ca;
-  border-color: #555977;
-  background-color: transparent;
-}
-
-[data-bs-theme="dark"] .content-wrapper button:not(.btn):not(.layout-menu-toggle):not(.dropdown-item):not(
-    .btn-close
-  ):hover,
-[data-bs-theme="dark"] .ind-content button:not(.btn):hover,
-[data-bs-theme="dark"] .ind-seasonal button:not(.btn):hover,
-[data-bs-theme="dark"] .ind-unavailable button:not(.btn):hover,
-[data-bs-theme="dark"] .ind-panel button:not(.btn):hover,
-[data-bs-theme="dark"] .ind-card button:not(.btn):hover {
-  color: #fff;
-  background-color: #555977;
-  border-color: #555977;
-}
-
-/* Tighten outline-secondary so themed buttons never fall back to browser chrome */
-[data-bs-theme="dark"] .btn-outline-secondary {
-  color: #b2b3ca !important;
-  border-color: #555977 !important;
-  background-color: transparent !important;
-}
-
-[data-bs-theme="dark"] .btn-outline-secondary:hover,
-[data-bs-theme="dark"] .btn-outline-secondary:focus,
-[data-bs-theme="dark"] .btn-check:checked + .btn-outline-secondary {
-  color: #fff !important;
-  background-color: #555977 !important;
-  border-color: #555977 !important;
-}
-
-[data-bs-theme="dark"] .btn-outline-primary {
-  color: #a5a7ff !important;
-  border-color: #696cff !important;
-  background-color: transparent !important;
-}
-
-[data-bs-theme="dark"] .btn-outline-primary:hover,
-[data-bs-theme="dark"] .btn-outline-primary:focus {
-  color: #fff !important;
-  background-color: #696cff !important;
-  border-color: #696cff !important;
-}
-
-/* Module workspace cards keep legacy .ind-* hooks used across components */
-.ind-panel,
-.ind-card {
-  background: var(--bs-paper-bg, #fff);
-  border: 1px solid var(--bs-border-color, #d9dee3);
-  border-radius: 0.5rem;
-  box-shadow: 0 0.25rem 1rem rgba(161, 172, 184, 0.45);
-  padding: 1.25rem;
-  margin-bottom: 1rem;
-}
-
-.ind-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.ind-table th,
-.ind-table td {
-  border-bottom: 1px solid var(--bs-border-color, #ebeef0);
-  padding: 0.65rem 0.5rem;
-  text-align: left;
-  vertical-align: top;
-}
-
-.ind-table th {
-  color: var(--bs-secondary-color, #566a7f);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.ind-state {
-  /* Fallback if used outside GateCard */
-  max-width: 32rem;
-  margin: 3rem auto;
-  padding: 1.5rem;
-}
-
-.ind-banner {
-  padding: 0.5rem 1rem;
-  background: #fff2e2;
-  border-bottom: 1px solid #ffd9a8;
-  color: #8a5a00;
-  font-size: 0.875rem;
-}
-
-/* Sneat Free omits PerfectScrollbar; keep the long Bridge menu scrollable.
+/* Sneat Free omits PerfectScrollbar; keep the long Industrial menu scrollable.
    Apply both with and without html.layout-menu-fixed so a missing class can't kill scroll. */
 .layout-menu.menu-vertical,
 html.layout-menu-fixed .layout-menu {
@@ -324,3 +104,726 @@ html.layout-menu-fixed .layout-menu .menu-inner {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
+
+/* Collapsible group toggles — match Sneat menu-link sizing */
+.layout-menu .menu-inner > .menu-item > a.menu-link.menu-toggle {
+  width: calc(100% - 2rem);
+  cursor: pointer;
+}
+
+.layout-menu .menu-inner > .menu-item:not(.open) > .menu-sub {
+  display: none !important;
+}
+
+.layout-menu .menu-inner > .menu-item.open > .menu-sub {
+  display: flex !important;
+}
+
+.ind-content h1 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: var(--ind-heading);
+}
+
+.ind-content h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--ind-heading);
+}
+
+.ind-content p {
+  margin: 0 0 0.75rem;
+}
+
+.ind-muted {
+  color: var(--ind-muted);
+}
+
+.ind-error {
+  color: var(--ind-danger);
+  margin: 0.75rem 0;
+}
+
+/* Module workspace cards keep legacy .ind-* hooks used across components */
+.ind-panel,
+.ind-card {
+  background: var(--ind-surface);
+  border: 1px solid var(--ind-border);
+  border-radius: var(--ind-radius);
+  box-shadow: var(--ind-shadow);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.ind-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ind-table th,
+.ind-table td {
+  border-bottom: 1px solid #ebeef0;
+  padding: 0.65rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ind-table th {
+  color: var(--ind-text);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ind-table-wrap,
+.ind-ops-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--ind-border);
+  border-radius: var(--ind-radius);
+  background: var(--ind-surface);
+  margin-bottom: 1rem;
+}
+
+.ind-state {
+  max-width: 32rem;
+  margin: 3rem auto;
+  padding: 1.5rem;
+  background: var(--ind-surface);
+  border: 1px solid var(--ind-border);
+  border-radius: var(--ind-radius);
+  box-shadow: var(--ind-shadow);
+}
+
+.ind-banner,
+.ind-network-banner {
+  padding: 0.5rem 1rem;
+  background: var(--ind-warning-bg);
+  border-bottom: 1px solid var(--ind-warning-border);
+  color: var(--ind-warning-text);
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ind-network-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #ff9f43;
+  flex-shrink: 0;
+}
+
+.ind-unavailable {
+  background: var(--ind-surface);
+  border: 1px solid var(--ind-border);
+  border-radius: var(--ind-radius);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Ops / module workspace layout (FORGE-UI-S5)                                */
+/* -------------------------------------------------------------------------- */
+
+.ind-ops,
+.ops-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ind-ops-header,
+.ops-workspace__header {
+  margin-bottom: 0.25rem;
+}
+
+.ind-ops-header h1,
+.ops-workspace__header h1 {
+  margin-bottom: 0.35rem;
+}
+
+.ind-ops-filters,
+.ind-toolbar,
+.ops-workspace__toolbar,
+.ind-form,
+.ind-ops-create,
+.ops-workspace__create {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+  padding: 1rem;
+  background: var(--ind-surface);
+  border: 1px solid var(--ind-border);
+  border-radius: var(--ind-radius);
+  box-shadow: var(--ind-shadow);
+}
+
+.ind-ops-filters label,
+.ind-form label,
+.ind-ops-create label,
+.ops-workspace__create label,
+.loto-step label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: min(100%, 12rem);
+  flex: 1 1 12rem;
+  font-size: 0.8125rem;
+  color: var(--ind-text);
+  font-weight: 500;
+}
+
+.ind-ops-filters input,
+.ind-ops-filters select,
+.ind-form input,
+.ind-form select,
+.ind-form textarea,
+.ind-ops-create input,
+.ind-ops-create select,
+.ind-ops-create textarea,
+.ops-workspace__create input,
+.ops-workspace__create select,
+.ops-workspace__create textarea,
+.loto-step input,
+.loto-step select,
+.loto-step textarea {
+  border: 1px solid var(--ind-border);
+  border-radius: 0.375rem;
+  padding: 0.45rem 0.65rem;
+  font: inherit;
+  color: var(--ind-heading);
+  background: #fff;
+  min-width: 0;
+  width: 100%;
+}
+
+.ind-ops-filters button,
+.ind-toolbar button,
+.ind-form button,
+.ind-ops-create button,
+.ops-workspace__toolbar button,
+.ops-workspace__create button,
+.ind-ops-actions button,
+.loto-actions button,
+.ops-workspace__list button {
+  border: 1px solid var(--ind-border);
+  border-radius: 0.375rem;
+  padding: 0.45rem 0.85rem;
+  background: #fff;
+  color: var(--ind-heading);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ind-ops-filters button[type="submit"],
+.ind-form button[type="submit"],
+.ind-ops-create button[type="submit"],
+.ops-workspace__create button[type="submit"],
+.ind-ops-actions button:not([disabled]),
+.loto-actions button {
+  border-color: var(--ind-primary);
+  background: var(--ind-primary);
+  color: #fff;
+}
+
+.ind-ops-filters button:disabled,
+.ind-form button:disabled,
+.ind-ops-create button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ind-ops-table,
+.ind-table {
+  min-width: 36rem;
+  margin: 0;
+}
+
+.ind-ops-table th,
+.ind-ops-table td {
+  border-bottom: 1px solid #ebeef0;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.ind-ops-table th {
+  color: var(--ind-text);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #f8f8f9;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.ind-ops-table tbody tr:hover {
+  background: #f5f5f9;
+}
+
+.ind-ops-detail {
+  padding: 1.25rem;
+  background: var(--ind-surface);
+  border: 1px solid var(--ind-border);
+  border-radius: var(--ind-radius);
+  box-shadow: var(--ind-shadow);
+}
+
+.ind-ops-actions,
+.loto-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.ind-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+}
+
+.ops-workspace__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ops-workspace__list li button {
+  width: 100%;
+  text-align: left;
+  background: var(--ind-surface);
+  border: 1px solid var(--ind-border);
+  border-radius: var(--ind-radius);
+  padding: 0.85rem 1rem;
+  box-shadow: var(--ind-shadow);
+}
+
+.ops-workspace__list li button:hover {
+  border-color: var(--ind-primary);
+}
+
+.loto-builder {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.loto-step {
+  border: 1px dashed var(--ind-border);
+  border-radius: var(--ind-radius);
+  padding: 0.85rem;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.loto-detail {
+  padding: 1.25rem;
+  background: var(--ind-surface);
+  border: 1px solid var(--ind-border);
+  border-radius: var(--ind-radius);
+  box-shadow: var(--ind-shadow);
+}
+
+.loto-print-frame {
+  width: 100%;
+  min-height: 24rem;
+  border: 1px solid var(--ind-border);
+  border-radius: var(--ind-radius);
+  margin-top: 1rem;
+  background: #fff;
+}
+
+.loto-qr-note {
+  font-size: 0.8125rem;
+  color: var(--ind-muted);
+  margin-top: 0.75rem;
+}
+
+/* Personnel switcher */
+.ind-personnel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ind-personnel-switcher {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: #eef0f3;
+  border-radius: 0.5rem;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.ind-personnel-switcher button {
+  border: 0;
+  background: transparent;
+  border-radius: 0.375rem;
+  padding: 0.45rem 0.85rem;
+  color: var(--ind-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ind-personnel-switcher button.is-active,
+.ind-personnel-switcher button[aria-selected="true"] {
+  background: #fff;
+  color: var(--ind-heading);
+  box-shadow: 0 0.125rem 0.25rem rgba(161, 172, 184, 0.4);
+  font-weight: 600;
+}
+
+/* Seasonal workforce */
+.ind-seasonal-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ind-seasonal-tabs button {
+  border: 1px solid var(--ind-border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font: inherit;
+  color: var(--ind-text);
+  cursor: pointer;
+}
+
+.ind-seasonal-tabs button[aria-selected="true"],
+.ind-seasonal-tabs button.is-active {
+  border-color: var(--ind-primary);
+  background: rgba(105, 108, 255, 0.08);
+  color: var(--ind-primary);
+  font-weight: 600;
+}
+
+.ind-seasonal-metrics {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+}
+
+.ind-seasonal-metric-group {
+  background: var(--ind-surface);
+  border: 1px solid var(--ind-border);
+  border-radius: var(--ind-radius);
+  padding: 1rem;
+  box-shadow: var(--ind-shadow);
+}
+
+.ind-seasonal-metric-group ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.ind-seasonal-fieldset {
+  border: 1px solid var(--ind-border);
+  border-radius: var(--ind-radius);
+  padding: 0.75rem 1rem;
+  min-width: min(100%, 16rem);
+  flex: 1 1 16rem;
+}
+
+.ind-seasonal-search-hits,
+.ind-seasonal-attendees {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ind-seasonal-search-hits li,
+.ind-seasonal-attendees li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #ebeef0;
+  border-radius: 0.375rem;
+  background: #fafafa;
+}
+
+.ind-seasonal-attendee-actions,
+.ind-seasonal-inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.ind-seasonal-session-panel,
+.ind-seasonal-workforce,
+.ind-seasonal-orientation {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ind-seasonal-drawer {
+  position: sticky;
+  top: 1rem;
+  padding: 1.25rem;
+  background: var(--ind-surface);
+  border: 1px solid var(--ind-border);
+  border-radius: var(--ind-radius);
+  box-shadow: var(--ind-shadow);
+}
+
+.ind-seasonal-drawer-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ind-seasonal-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e7e7ff;
+  color: #696cff;
+}
+
+.ind-seasonal-badge--ok,
+.ind-seasonal-badge--active {
+  background: #e8fadf;
+  color: #28c76f;
+}
+
+.ind-seasonal-badge--warn,
+.ind-seasonal-badge--pending {
+  background: #fff3e0;
+  color: #ff9f43;
+}
+
+.ind-seasonal-badge--danger,
+.ind-seasonal-badge--blocked {
+  background: #fce4e4;
+  color: #ea5455;
+}
+
+.ind-seasonal-history {
+  margin-top: 1rem;
+}
+
+.ind-seasonal-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(47, 43, 61, 0.45);
+}
+
+.ind-seasonal-confirm-panel {
+  width: min(28rem, 100%);
+  background: #fff;
+  border-radius: var(--ind-radius);
+  padding: 1.25rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(47, 43, 61, 0.28);
+}
+
+.ind-seasonal-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.ind-dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ind-tenant-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  color: var(--ind-text);
+  font-size: 0.8125rem;
+}
+
+.ind-tenant-switcher__label {
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.ind-tenant-switcher .form-select {
+  min-width: min(100%, 12rem);
+  max-width: min(100%, 18rem);
+  width: auto;
+}
+
+.ind-profile-dl {
+  display: grid;
+  gap: 0.75rem 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  margin: 0;
+}
+
+.ind-profile-dl dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ind-muted);
+  margin: 0 0 0.15rem;
+}
+
+.ind-profile-dl dd {
+  margin: 0;
+  color: var(--ind-heading);
+}
+
+/* -------------------------------------------------------------------------- */
+/* FORGE-UI-S5 responsive hardening                                           */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 1199.98px) {
+  .layout-navbar.navbar-detached {
+    margin-inline: 0.75rem !important;
+  }
+
+  .content-wrapper .container-xxl.container-p-y {
+    padding-inline: 0.75rem !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .ind-content h1 {
+    font-size: 1.2rem;
+  }
+
+  .ind-ops-filters,
+  .ind-toolbar,
+  .ops-workspace__toolbar,
+  .ind-form,
+  .ind-ops-create,
+  .ops-workspace__create {
+    padding: 0.85rem;
+  }
+
+  .ind-ops-filters label,
+  .ind-form label,
+  .ind-ops-create label,
+  .ops-workspace__create label {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+
+  .ind-ops-filters button,
+  .ind-form button,
+  .ind-ops-create button,
+  .ops-workspace__toolbar button {
+    flex: 1 1 auto;
+  }
+
+  .ind-ops-table th,
+  .ind-ops-table td,
+  .ind-table th,
+  .ind-table td {
+    padding: 0.55rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .ind-seasonal-drawer {
+    position: static;
+  }
+
+  .loto-print-frame {
+    min-height: 16rem;
+  }
+
+  .content-footer .container-xxl {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .ind-panel,
+  .ind-card,
+  .ind-ops-detail,
+  .loto-detail {
+    padding: 1rem;
+  }
+
+  .ind-state {
+    margin: 1.5rem 0.75rem;
+    padding: 1rem;
+  }
+
+  .ind-tenant-switcher {
+    width: 100%;
+  }
+
+  .ind-tenant-switcher .form-select {
+    flex: 1 1 auto;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .ind-tenant-switcher__label {
+    display: none;
+  }
+}
+
+/* Analytics interim PDF path: browser print → Save as PDF (GAP-RPT-01 still deferred). */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .ind-dashboard-analytics,
+  .ind-dashboard-analytics * {
+    visibility: visible !important;
+  }
+
+  .ind-dashboard-analytics {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0.5rem;
+  }
+
+  .ind-dashboard-analytics .btn,
+  .ind-dashboard-analytics form,
+  .ind-dashboard-analytics .btn-group {
+    display: none !important;
+  }
+
+  .ind-dashboard-analytics .card {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}
+

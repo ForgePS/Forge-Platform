@@ -1,5 +1,7 @@
 "use client";
 
+import { ErrorState } from "@/components/creator-page";
+
 import { useCallback, useEffect, useState } from "react";
 import { NerisPageShell } from "@/components/neris-schema-gate";
 import { apiGet } from "@/lib/api";
@@ -40,7 +42,7 @@ export default function NerisValidationPage() {
       setIntegrity(live);
       setResults(stored);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load validation");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -56,7 +58,9 @@ export default function NerisValidationPage() {
       subtitle="Import validation results and live integrity counts."
     >
       {loading ? <p>Loading…</p> : null}
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {error ? (
+        <ErrorState title="We couldn't load this information." description={error} />
+      ) : null}
       {integrity ? (
         <div className={styles.panel}>
           <h2>Live integrity {integrity.ok ? "OK" : "ISSUES"}</h2>

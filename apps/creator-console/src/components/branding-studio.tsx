@@ -1,10 +1,17 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
+import { tenantQuery, useTenantId, tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGet, apiSend } from "@/lib/api";
 import { ImageUpload } from "@/components/image-upload";
 import styles from "../app/page.module.css";
@@ -211,7 +218,7 @@ function BrandingStudioInner() {
       setForm(payload);
       setPayloadText(JSON.stringify(payload, null, 2));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load branding studio");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -358,21 +365,25 @@ function BrandingStudioInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Branding</h1>
+      <CreatorPage title="Branding">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Branding</h1>
-      <p className={styles.lead}>
-        Edit logos and product wording for this tenant, then publish. Apps load the published
-        version automatically.{" "}
-        <Link href={`/studio${tenantQuery(tenantId)}`}>Studio home</Link>
-      </p>
+    <CreatorPage
+      title="Branding"
+      subtitle={
+        <>
+          <Link href={tenantDetailHref(tenantId)}>Back to Customer</Link>
+          {" · "}
+          Edit logos and product wording for this tenant, then publish. Apps load the published
+          version automatically.{" "}
+          <Link href={`/studio${tenantQuery(tenantId)}`}>Studio home</Link>
+        </>
+      }
+    >
 
       {!canUpdate ? <p className={styles.error}>Missing configuration update permission</p> : null}
       {error ? (
@@ -383,8 +394,7 @@ function BrandingStudioInner() {
       {message ? <p className={styles.success}>{message}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
 
-      <div className={styles.panel}>
-        <h2>Preview</h2>
+      <ForgePageSection title="Preview">
         <div
           style={{
             display: "flex",
@@ -434,10 +444,9 @@ function BrandingStudioInner() {
             </>
           )}
         </div>
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>Login screen</h2>
+      <ForgePageSection title="Login screen">
         <p className={styles.muted} style={{ marginBottom: "1rem" }}>
           Copy and lockup for the Sign-in gate before authentication.
         </p>
@@ -580,7 +589,7 @@ function BrandingStudioInner() {
             />
           </div>
         </div>
-      </div>
+      </ForgePageSection>
 
       <div className={styles.panel}>
         <h2>
@@ -751,8 +760,7 @@ function BrandingStudioInner() {
         ) : null}
       </div>
 
-      <div className={styles.panel}>
-        <h2>Version history</h2>
+      <ForgePageSection title="Version history">
         {versions.length === 0 ? (
           <p className={styles.muted}>No versions yet.</p>
         ) : (
@@ -770,7 +778,7 @@ function BrandingStudioInner() {
               {versions.map((row) => (
                 <tr key={row.id}>
                   <td>v{row.version}</td>
-                  <td>{row.state}</td>
+                  <td><ForgeStatusBadge status={row.state} /></td>
                   <td>{row.changeSummary ?? "—"}</td>
                   <td>{new Date(row.createdAt).toLocaleString()}</td>
                   <td>
@@ -787,19 +795,15 @@ function BrandingStudioInner() {
             </tbody>
           </table>
         )}
-      </div>
-    </section>
+      </ForgePageSection>
+    </CreatorPage>
   );
 }
 
 export function BrandingStudioPage() {
   return (
     <Suspense
-      fallback={
-        <main className={styles.page}>
-          <p className={styles.muted}>Loading…</p>
-        </main>
-      }
+      fallback={<CreatorLoading />}
     >
       <BrandingStudioInner />
     </Suspense>

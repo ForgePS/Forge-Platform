@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { exchangeCodeForTokens, useAuth, validateOAuthState } from "@forge/web-kit";
+import { CreatorLoading, CreatorPage } from "@/components/creator-page";
 import styles from "../../page.module.css";
 
 function AuthCallbackInner() {
@@ -51,33 +52,25 @@ function AuthCallbackInner() {
 
   if (error) {
     return (
-      <section className={styles.page}>
-        <h1>Sign-in failed</h1>
+      <CreatorPage title="Sign-in failed">
         <p className={styles.error}>{error}</p>
         <p className={styles.muted}>
           <a href="/login/">Return to login</a>
         </p>
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Completing sign-in</h1>
+    <CreatorPage title="Completing sign-in">
       <p className={styles.muted}>Exchanging authorization code…</p>
-    </section>
+    </CreatorPage>
   );
 }
 
 export default function AuthCallbackPage() {
   return (
-    <Suspense
-      fallback={
-        <section className={styles.page}>
-          <p className={styles.muted}>Loading…</p>
-        </section>
-      }
-    >
+    <Suspense fallback={<CreatorLoading />}>
       <AuthCallbackInner />
     </Suspense>
   );

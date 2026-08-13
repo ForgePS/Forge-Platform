@@ -1,10 +1,16 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  } from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
+import { tenantQuery, useTenantId, tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGet, apiSend } from "@/lib/api";
 import styles from "../page.module.css";
 
@@ -59,7 +65,7 @@ function OverviewInner() {
       });
       setData(overview);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load AI overview");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -101,22 +107,19 @@ function OverviewInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>AI Management</h1>
+      <CreatorPage title="AI Management">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>AI Management</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={`/ai/feature-status${tenantQuery(tenantId)}`}>Feature Status</Link> ·{" "}
+    <CreatorPage
+      title="AI Management"
+      subtitle={<><Link href={tenantDetailHref(tenantId)}>Back to Customer</Link> ·{" "}<Link href={`/ai/feature-status${tenantQuery(tenantId)}`}>Feature Status</Link> ·{" "}
         <Link href={`/ai/providers${tenantQuery(tenantId)}`}>Providers</Link> ·{" "}
-        <Link href={`/ai/tenant-access${tenantQuery(tenantId)}`}>Tenant Access</Link>
-      </p>
+        <Link href={`/ai/tenant-access${tenantQuery(tenantId)}`}>Tenant Access</Link></>}
+      >
       <p className={styles.muted}>
         Flags default off platform-wide. Do not enable for Phase 4 synthetic tenants without
         product-owner authorization.
@@ -132,8 +135,7 @@ function OverviewInner() {
 
       {data ? (
         <>
-          <div className={styles.panel}>
-            <h2>Status</h2>
+          <ForgePageSection title="Status">
             <dl className={styles.dl}>
               <dt>Suspended</dt>
               <dd>{data.suspended ? "Yes" : "No"}</dd>
@@ -166,10 +168,9 @@ function OverviewInner() {
                 Unsuspend tenant AI
               </button>
             ) : null}
-          </div>
+          </ForgePageSection>
 
-          <div className={styles.panel}>
-            <h2>Policy quotas</h2>
+          <ForgePageSection title="Policy quotas">
             {data.policy ? (
               <dl className={styles.dl}>
                 <dt>Status</dt>
@@ -186,20 +187,18 @@ function OverviewInner() {
             ) : (
               <p className={styles.muted}>No policy configured.</p>
             )}
-          </div>
+          </ForgePageSection>
 
-          <div className={styles.panel}>
-            <h2>Usage</h2>
+          <ForgePageSection title="Usage">
             <dl className={styles.dl}>
               <dt>This month</dt>
               <dd>{data.usage.monthRequestCount}</dd>
               <dt>All time requests</dt>
               <dd>{data.usage.totalRequestCount}</dd>
             </dl>
-          </div>
+          </ForgePageSection>
 
-          <div className={styles.panel}>
-            <h2>Providers</h2>
+          <ForgePageSection title="Providers">
             {data.providers.length === 0 ? (
               <p className={styles.muted}>No provider configurations.</p>
             ) : (
@@ -212,21 +211,17 @@ function OverviewInner() {
                 ))}
               </ul>
             )}
-          </div>
+          </ForgePageSection>
         </>
       ) : null}
-    </section>
+    </CreatorPage>
   );
 }
 
 export default function AiManagementOverviewPage() {
   return (
     <Suspense
-      fallback={
-        <main className={styles.page}>
-          <p className={styles.muted}>Loading…</p>
-        </main>
-      }
+      fallback={<CreatorLoading />}
     >
       <OverviewInner />
     </Suspense>

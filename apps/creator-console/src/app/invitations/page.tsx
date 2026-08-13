@@ -1,12 +1,19 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { filterBySearch, ListControls, paginate, sortByField } from "@/components/list-controls";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
+import { tenantQuery, useTenantId, tenantDetailHref } from "@/hooks/use-tenant-id";
 import {
   createInvitation,
   listInvitations,
@@ -49,7 +56,7 @@ function InvitationsInner() {
       const query = filter ? { tenantId, status: filter } : { tenantId };
       setItems(await listInvitations(query));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load invitations");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -139,22 +146,19 @@ function InvitationsInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Invitations</h1>
+      <CreatorPage title="Invitations">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   const q = tenantQuery(tenantId);
 
   return (
-    <section className={styles.page}>
-      <h1>Invitations</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={`/audit${q}`}>Audit history</Link>
-      </p>
+    <CreatorPage
+      title="Invitations"
+      subtitle={<><Link href={tenantDetailHref(tenantId)}>Back to Customer</Link> ·{" "}<Link href={`/audit${q}`}>Audit history</Link></>}
+      >
 
       {!canRead ? (
         <p className={styles.error}>Missing permission: platform.invitation.read</p>
@@ -163,8 +167,7 @@ function InvitationsInner() {
       {error ? <p className={styles.error}>{error}</p> : null}
 
       {canManage ? (
-        <div className={styles.panel}>
-          <h2>Create invitation</h2>
+        <ForgePageSection title="Create invitation">
           <form className={styles.form} onSubmit={onCreate}>
             <div className={styles.formRow}>
               <label htmlFor="email">Email</label>
@@ -198,11 +201,10 @@ function InvitationsInner() {
               </button>
             </div>
           </form>
-        </div>
+        </ForgePageSection>
       ) : null}
 
-      <div className={styles.panel}>
-        <h2>Invitations</h2>
+      <ForgePageSection title="Invitations">
         {canRead ? (
           <ListControls
             search={search}
@@ -254,7 +256,7 @@ function InvitationsInner() {
               {pageItems.map((row) => (
                 <tr key={row.id}>
                   <td>{row.email}</td>
-                  <td>{row.status}</td>
+                  <td><ForgeStatusBadge status={row.status} /></td>
                   <td className={styles.mono}>{row.expiresAt ?? "—"}</td>
                   <td className={styles.mono}>{row.createdAt}</td>
                   <td>
@@ -286,7 +288,7 @@ function InvitationsInner() {
             </tbody>
           </table>
         ) : null}
-      </div>
+      </ForgePageSection>
 
       <ConfirmDialog
         open={Boolean(revokeTarget)}
@@ -316,13 +318,13 @@ function InvitationsInner() {
           setRevokeReason("");
         }}
       />
-    </section>
+    </CreatorPage>
   );
 }
 
 export default function InvitationsPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense fallback={<CreatorLoading />}>
       <InvitationsInner />
     </Suspense>
   );

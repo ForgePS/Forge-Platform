@@ -1,10 +1,17 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
+import { tenantQuery, useTenantId, tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGet, apiSend } from "@/lib/api";
 import styles from "../../page.module.css";
 
@@ -55,7 +62,7 @@ function Inner() {
       setItems(result.items);
       setNote(result.note);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load templates");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -107,20 +114,17 @@ function Inner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>AI Templates</h1>
+      <CreatorPage title="AI Templates">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>AI Templates</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link>
-      </p>
+    <CreatorPage
+      title="AI Templates"
+      subtitle={<><Link href={tenantDetailHref(tenantId)}>Back to Customer</Link> ·{" "}<Link href={`/ai${tenantQuery(tenantId)}`}>Overview</Link></>}
+      >
       {!canRead ? <p className={styles.error}>Missing template permission</p> : null}
       {error ? <p className={styles.error}>{error}</p> : null}
       {loading ? <p className={styles.muted}>Loading…</p> : null}
@@ -149,7 +153,7 @@ function Inner() {
                   </td>
                   <td className={styles.mono}>{row.key}</td>
                   <td>{row.product}</td>
-                  <td>{row.status}</td>
+                  <td><ForgeStatusBadge status={row.status} /></td>
                   <td>{row.currentVersion}</td>
                   <td>
                     {canManage && row.status !== "PUBLISHED" ? (
@@ -173,8 +177,7 @@ function Inner() {
       </div>
 
       {canManage ? (
-        <div className={styles.panel}>
-          <h2>Create template</h2>
+        <ForgePageSection title="Create template">
           <form className={styles.form} onSubmit={(event) => void onCreate(event)}>
             <div className={styles.formRow}>
               <label htmlFor="tpl-key">Key</label>
@@ -213,20 +216,16 @@ function Inner() {
               Create draft
             </button>
           </form>
-        </div>
+        </ForgePageSection>
       ) : null}
-    </section>
+    </CreatorPage>
   );
 }
 
 export default function Page() {
   return (
     <Suspense
-      fallback={
-        <main className={styles.page}>
-          <p className={styles.muted}>Loading…</p>
-        </main>
-      }
+      fallback={<CreatorLoading />}
     >
       <Inner />
     </Suspense>

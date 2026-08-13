@@ -1,5 +1,7 @@
 "use client";
 
+import { ErrorState } from "@/components/creator-page";
+
 import { useCallback, useEffect, useState } from "react";
 import { filterBySearch, ListControls, paginate, sortByField } from "@/components/list-controls";
 import { NerisPageShell } from "@/components/neris-schema-gate";
@@ -28,7 +30,7 @@ export default function NerisModulesPage() {
     try {
       setItems(await apiGet<ModuleRow[]>("/api/v1/platform/neris/modules?pageSize=100"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load modules");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -48,7 +50,9 @@ export default function NerisModulesPage() {
   return (
     <NerisPageShell title="NERIS modules" subtitle="Browse the 39 official schema modules.">
       {loading ? <p>Loading…</p> : null}
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {error ? (
+        <ErrorState title="We couldn't load this information." description={error} />
+      ) : null}
       <ListControls
         search={search}
         onSearchChange={(value) => {

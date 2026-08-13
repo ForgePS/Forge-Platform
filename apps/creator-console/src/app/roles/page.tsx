@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { TenantRequired } from "@/components/tenant-required";
@@ -80,7 +87,7 @@ function RolesInner() {
       setUserId((current) => current || userRows[0]?.id || "");
       setEditRoleId((current) => current || roleRows[0]?.id || "");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load roles");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -101,7 +108,7 @@ function RolesInner() {
         setEditEtag(result.etag ?? toIfMatch(result.data.recordVersion));
         setSelectedCodes(new Set(result.data.permissions.map((p) => p.code)));
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load role permissions");
+        setError(err instanceof Error ? err.message : "We couldn't load this information.");
       }
     },
     [tenantId],
@@ -209,22 +216,25 @@ function RolesInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Roles</h1>
+      <CreatorPage title="Roles">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Roles</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={tenantDetailHref(tenantId)}>Tenant detail</Link> ·{" "}
-        <Link href={`/users?tenantId=${encodeURIComponent(tenantId)}`}>Users</Link> ·{" "}
-        <Link href={`/permissions?tenantId=${encodeURIComponent(tenantId)}`}>Permissions</Link>
-      </p>
+    <CreatorPage
+      title="Roles"
+      subtitle={
+        <>
+          <Link href={tenantDetailHref(tenantId)}>Back to Customer</Link>
+          {" · "}
+          <Link href={`/users?tenantId=${encodeURIComponent(tenantId)}`}>Users</Link>
+          {" · "}
+          <Link href={`/permissions?tenantId=${encodeURIComponent(tenantId)}`}>Permissions</Link>
+        </>
+      }
+    >
 
       {!canAssign ? (
         <p className={styles.error}>Missing permission: platform.role.assign (needed to create/edit)</p>
@@ -232,8 +242,7 @@ function RolesInner() {
       {error ? <p className={styles.error}>{error}</p> : null}
       {message ? <p className={styles.success}>{message}</p> : null}
 
-      <div className={styles.panel}>
-        <h2>Create role</h2>
+      <ForgePageSection title="Create role">
         <form className={styles.form} onSubmit={onCreate}>
           <div className={styles.formRow}>
             <label htmlFor="newCode">Code</label>
@@ -272,10 +281,9 @@ function RolesInner() {
             </button>
           </div>
         </form>
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>Role permissions</h2>
+      <ForgePageSection title="Role permissions">
         <p className={styles.muted}>
           Sets live <code>role_permissions</code> for the selected role (If-Match concurrency).
         </p>
@@ -344,10 +352,9 @@ function RolesInner() {
             </button>
           </div>
         </form>
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>Assign role to user</h2>
+      <ForgePageSection title="Assign role to user">
         <form className={styles.form} onSubmit={onAssign}>
           <div className={styles.formRow}>
             <label htmlFor="userId">User</label>
@@ -400,10 +407,9 @@ function RolesInner() {
             </button>
           </div>
         </form>
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>Roles</h2>
+      <ForgePageSection title="Roles">
         {loading ? <p className={styles.muted}>Loading…</p> : null}
         {!loading && roles.length === 0 ? (
           <p className={styles.muted}>No roles for this tenant.</p>
@@ -423,21 +429,21 @@ function RolesInner() {
                 <tr key={role.id}>
                   <td className={styles.mono}>{role.code}</td>
                   <td>{role.name}</td>
-                  <td>{role.status}</td>
+                  <td><ForgeStatusBadge status={role.status} /></td>
                   <td>{role.description ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : null}
-      </div>
-    </section>
+      </ForgePageSection>
+    </CreatorPage>
   );
 }
 
 export default function RolesPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense fallback={<CreatorLoading />}>
       <RolesInner />
     </Suspense>
   );

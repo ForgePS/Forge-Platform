@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useMemo, useState, type FormEvent } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -233,12 +240,10 @@ function OnboardingInner() {
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Onboarding wizard</h1>
-      <p className={styles.lead}>
-        Create a customer tenant through{" "}
-        <code>/api/v1/platform/onboarding/sessions</code> (start → steps → activate).
-      </p>
+    <CreatorPage
+      title="Onboarding wizard"
+      subtitle="Create a customer tenant through the guided onboarding flow (start → steps → activate)."
+    >
 
       {!canManage ? (
         <p className={styles.error}>Missing permission: platform.onboarding.manage</p>
@@ -246,8 +251,7 @@ function OnboardingInner() {
       {error ? <p className={styles.error}>{error}</p> : null}
       {message ? <p className={styles.success}>{message}</p> : null}
 
-      <div className={styles.panel}>
-        <h2>1. Start session</h2>
+      <ForgePageSection title="1. Start session">
         <p className={styles.muted}>
           Creates the tenant and an in-progress onboarding session. Steps 1–2 complete automatically.
         </p>
@@ -342,32 +346,37 @@ function OnboardingInner() {
             </button>
           </div>
         </form>
-      </div>
+      </ForgePageSection>
 
       {session ? (
         <>
-          <div className={styles.panel}>
-            <h2>Current session</h2>
+          <ForgePageSection title="Current session">
             <dl className={styles.dl}>
-              <dt>Session ID</dt>
-              <dd className={styles.mono}>{session.id}</dd>
-              <dt>Tenant ID</dt>
-              <dd className={styles.mono}>{session.tenantId}</dd>
               <dt>Status</dt>
-              <dd>{session.status}</dd>
+              <dd>
+                <ForgeStatusBadge status={session.status} />
+              </dd>
               <dt>Current step #</dt>
               <dd>{session.currentStep}</dd>
               <dt>Customer type</dt>
               <dd>{session.customerType}</dd>
               <dt>Template</dt>
               <dd>{session.templateCode ?? view?.template?.code ?? "—"}</dd>
-              <dt>Record version</dt>
-              <dd className={styles.mono}>{session.recordVersion}</dd>
             </dl>
-          </div>
+            <details className="forge-advanced-details">
+              <summary>Advanced Details</summary>
+              <dl className={styles.dl}>
+                <dt>Session ID</dt>
+                <dd className={styles.mono}>{session.id}</dd>
+                <dt>Customer ID</dt>
+                <dd className={styles.mono}>{session.tenantId}</dd>
+                <dt>Record version</dt>
+                <dd className={styles.mono}>{session.recordVersion}</dd>
+              </dl>
+            </details>
+          </ForgePageSection>
 
-          <div className={styles.panel}>
-            <h2>Step progress</h2>
+          <ForgePageSection title="Step progress">
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -387,19 +396,18 @@ function OnboardingInner() {
                         {STEP_LABELS[step.stepKey] ?? step.stepKey}
                         {nextStep?.id === step.id ? " ← next" : ""}
                       </td>
-                      <td>{step.status}</td>
+                      <td><ForgeStatusBadge status={step.status} /></td>
                     </tr>
                   ))}
               </tbody>
             </table>
-          </div>
+          </ForgePageSection>
 
           {nextStep && nextStep.stepKey !== "ACTIVATE_TENANT" ? (
-            <div className={styles.panel}>
-              <h2>
+            <ForgePageSection title="
                 2. Complete {STEP_LABELS[nextStep.stepKey] ?? nextStep.stepKey} (
                 {nextStep.stepKey})
-              </h2>
+              ">
               <form className={styles.form} onSubmit={onCompleteStep}>
                 <div className={styles.formRow}>
                   <label htmlFor="stepPayload">Step payload (JSON)</label>
@@ -420,11 +428,10 @@ function OnboardingInner() {
                   </button>
                 </div>
               </form>
-            </div>
+            </ForgePageSection>
           ) : null}
 
-          <div className={styles.panel}>
-            <h2>3. Activate</h2>
+          <ForgePageSection title="3. Activate">
             <p className={styles.muted}>
               Requires all prior steps completed. Uses optimistic concurrency (If-Match).
             </p>
@@ -437,18 +444,18 @@ function OnboardingInner() {
               >
                 {loading ? "Activating…" : "Activate tenant"}
               </button>
-              <Link href={tenantDetailHref(session.tenantId)}>Open tenant detail</Link>
+              <Link href={tenantDetailHref(session.tenantId)}>Back to Customer</Link>
             </div>
-          </div>
+          </ForgePageSection>
         </>
       ) : null}
-    </section>
+    </CreatorPage>
   );
 }
 
 export default function OnboardingPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense fallback={<CreatorLoading />}>
       <OnboardingInner />
     </Suspense>
   );

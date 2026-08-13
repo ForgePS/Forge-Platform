@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  } from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { TenantRequired } from "@/components/tenant-required";
@@ -116,20 +122,18 @@ function Inner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Configuration Studio</h1>
+      <CreatorPage title="Configuration Studio">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Configuration Studio</h1>
-      <p className={styles.lead}>
-        Versioned tenant configuration for <span className={styles.mono}>{tenantId}</span>. Every
-        module supports Draft, Published, Scheduled, Archived, compare, rollback, and audit.
-      </p>
+    <CreatorPage
+      title="Configuration Studio"
+      subtitle={<>Versioned tenant configuration for <span className={styles.mono}>{tenantId}</span>. Every
+        module supports Draft, Published, Scheduled, Archived, compare, rollback, and audit.</>}
+      >
       {error ? (
         <p role="alert" className={styles.error}>
           {error}
@@ -137,8 +141,7 @@ function Inner() {
       ) : null}
       {message ? <p className={styles.success}>{message}</p> : null}
 
-      <div className={styles.panel}>
-        <h2>Bundle import / export</h2>
+      <ForgePageSection title="Bundle import / export">
         <div className={styles.actions}>
           <button
             type="button"
@@ -169,10 +172,9 @@ function Inner() {
             Ensure defaults
           </button>
         </div>
-      </div>
+      </ForgePageSection>
 
-      <div className={styles.panel}>
-        <h2>Modules</h2>
+      <ForgePageSection title="Modules">
         <ul>
           {STUDIO_NAMESPACES.map((namespace) => (
             <li key={namespace}>
@@ -183,19 +185,15 @@ function Inner() {
             </li>
           ))}
         </ul>
-      </div>
-    </section>
+      </ForgePageSection>
+    </CreatorPage>
   );
 }
 
 export default function Page() {
   return (
     <Suspense
-      fallback={
-        <main className={styles.page}>
-          <p className={styles.muted}>Loading…</p>
-        </main>
-      }
+      fallback={<CreatorLoading />}
     >
       <Inner />
     </Suspense>

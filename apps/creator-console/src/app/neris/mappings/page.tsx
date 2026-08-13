@@ -1,5 +1,7 @@
 "use client";
 
+import { ErrorState } from "@/components/creator-page";
+
 import { useCallback, useEffect, useState } from "react";
 import { ListControls } from "@/components/list-controls";
 import { NerisPageShell } from "@/components/neris-schema-gate";
@@ -32,7 +34,7 @@ export default function NerisMappingsPage() {
       if (search) params.set("search", search);
       setItems(await apiGet<MappingRow[]>(`/api/v1/platform/neris/mappings?${params}`));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load mappings");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -48,7 +50,9 @@ export default function NerisMappingsPage() {
       subtitle="Official payload / ORM mappings are read-only after publish."
     >
       {loading ? <p>Loading…</p> : null}
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {error ? (
+        <ErrorState title="We couldn't load this information." description={error} />
+      ) : null}
       <ListControls
         search={search}
         onSearchChange={(value) => {

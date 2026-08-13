@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState } from "react";
+import {
+  CreatorLoading,
+  CreatorPage,
+  ErrorState,
+  ForgePageSection,
+  ForgeStatusBadge,
+} from "@/components/creator-page";
 import { tenantDetailHref, useTenantId } from "@/hooks/use-tenant-id";
 import { TenantRequired } from "@/components/tenant-required";
 import { apiGet } from "@/lib/api";
@@ -35,7 +42,7 @@ function AuditInner() {
         await apiGet<AuditEvent[]>(`/api/v1/tenants/${tenantId}/audit-events?page=1&pageSize=50`),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load audit events");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -47,25 +54,26 @@ function AuditInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Audit</h1>
+      <CreatorPage title="Audit">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Audit</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={tenantDetailHref(tenantId)}>Tenant detail</Link>
-      </p>
+    <CreatorPage
+      title="Audit"
+      subtitle={
+        <>
+          <Link href={tenantDetailHref(tenantId)}>Back to Customer</Link>
+        </>
+      }
+    >
+      {error ? (
+        <ErrorState title="We couldn't load this information." description={error} />
+      ) : null}
 
-      {error ? <p className={styles.error}>{error}</p> : null}
-
-      <div className={styles.panel}>
-        <h2>Recent events</h2>
+      <ForgePageSection title="Recent events" flush>
         {loading ? <p className={styles.muted}>Loading…</p> : null}
         {!loading && events.length === 0 ? <p className={styles.muted}>No audit events.</p> : null}
         {events.length > 0 ? (
@@ -98,7 +106,9 @@ function AuditInner() {
                       </>
                     ) : null}
                   </td>
-                  <td>{event.result}</td>
+                  <td>
+                    <ForgeStatusBadge status={event.result} />
+                  </td>
                   <td>{event.riskLevel}</td>
                   <td className={styles.mono}>{event.actorUserId ?? "—"}</td>
                 </tr>
@@ -106,14 +116,21 @@ function AuditInner() {
             </tbody>
           </table>
         ) : null}
-      </div>
-    </section>
+      </ForgePageSection>
+
+      <details className="forge-advanced-details">
+        <summary>Advanced Details</summary>
+        <p className={styles.muted}>
+          Customer ID: <span className={styles.mono}>{tenantId}</span>
+        </p>
+      </details>
+    </CreatorPage>
   );
 }
 
 export default function AuditPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense fallback={<CreatorLoading />}>
       <AuditInner />
     </Suspense>
   );

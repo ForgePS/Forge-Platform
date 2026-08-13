@@ -1,11 +1,17 @@
 "use client";
 
+import {
+  CreatorLoading,
+  CreatorPage,
+  ForgePageSection,
+  } from "@/components/creator-page";
+
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { filterBySearch, ListControls, paginate, sortByField } from "@/components/list-controls";
 import { TenantRequired } from "@/components/tenant-required";
 import { useAuth } from "@/hooks/use-auth";
-import { tenantQuery, useTenantId } from "@/hooks/use-tenant-id";
+import { tenantQuery, useTenantId, tenantDetailHref } from "@/hooks/use-tenant-id";
 import { apiGet } from "@/lib/api";
 import styles from "../page.module.css";
 
@@ -38,7 +44,7 @@ function PermissionsInner() {
     try {
       setItems(await apiGet<Permission[]>(`/api/v1/tenants/${tenantId}/permissions`));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load permissions");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
     } finally {
       setLoading(false);
     }
@@ -69,28 +75,24 @@ function PermissionsInner() {
 
   if (!tenantId) {
     return (
-      <section className={styles.page}>
-        <h1>Permissions</h1>
+      <CreatorPage title="Permissions">
         <TenantRequired />
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>Permissions</h1>
-      <p className={styles.lead}>
-        Tenant <span className={styles.mono}>{tenantId}</span> ·{" "}
-        <Link href={`/roles${tenantQuery(tenantId)}`}>Roles</Link>
-      </p>
+    <CreatorPage
+      title="Permissions"
+      subtitle={<><Link href={tenantDetailHref(tenantId)}>Back to Customer</Link> ·{" "}<Link href={`/roles${tenantQuery(tenantId)}`}>Roles</Link></>}
+      >
 
       {!canRead ? (
         <p className={styles.error}>Missing permission: platform.permission.read</p>
       ) : null}
       {error ? <p className={styles.error}>{error}</p> : null}
 
-      <div className={styles.panel}>
-        <h2>Permission catalog</h2>
+      <ForgePageSection title="Permission catalog">
         {canRead ? (
           <ListControls
             search={search}
@@ -134,14 +136,14 @@ function PermissionsInner() {
             </tbody>
           </table>
         ) : null}
-      </div>
-    </section>
+      </ForgePageSection>
+    </CreatorPage>
   );
 }
 
 export default function PermissionsPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
+    <Suspense fallback={<CreatorLoading />}>
       <PermissionsInner />
     </Suspense>
   );

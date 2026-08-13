@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useAuth } from "@forge/web-kit";
+import {
+  CreatorPage,
+  ErrorState,
+  ForgePageSection,
+} from "@/components/creator-page";
 import { apiGetResult, apiSend, toIfMatch } from "@/lib/api";
 import { personDetailHref } from "@/hooks/use-tenant-id";
 import styles from "../page.module.css";
@@ -88,7 +93,7 @@ export default function MyProfilePage() {
       setForm(formFromPerson(result.data));
       setEtag(result.etag ?? toIfMatch(result.data.recordVersion));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load profile");
+      setError(err instanceof Error ? err.message : "We couldn't load this information.");
       setPerson(null);
     } finally {
       setLoading(false);
@@ -140,62 +145,65 @@ export default function MyProfilePage() {
 
   if (authLoading) {
     return (
-      <section className={styles.page}>
-        <h1>My profile</h1>
+      <CreatorPage title="My profile">
         <p className={styles.muted}>Loading session…</p>
-      </section>
+      </CreatorPage>
     );
   }
 
   if (!me) {
     return (
-      <section className={styles.page}>
-        <h1>My profile</h1>
+      <CreatorPage title="My profile">
         <p className={styles.error}>Sign in to view your profile.</p>
         <Link href="/login/">Sign in</Link>
-      </section>
+      </CreatorPage>
     );
   }
 
   return (
-    <section className={styles.page}>
-      <h1>My profile</h1>
-      <p className={styles.lead}>
-        Account for the signed-in Creator user. Person demographics can be edited when a linked
-        person record exists on the active tenant.
-      </p>
-
-      {error ? <p className={styles.error}>{error}</p> : null}
+    <CreatorPage
+      title="My profile"
+      subtitle="Account for the signed-in Creator user. Person demographics can be edited when a linked person record exists on the active tenant."
+    >
+      {error ? (
+        error.toLowerCase().includes("save") ? (
+          <p className={styles.error}>{error}</p>
+        ) : (
+          <ErrorState title="We couldn't load this information." description={error} />
+        )
+      ) : null}
       {saved ? <p className={styles.success}>Profile saved.</p> : null}
 
-      <div className={styles.panel}>
-        <h2>Session</h2>
+      <ForgePageSection title="Session">
         <dl className={styles.dl}>
-          <dt>User ID</dt>
-          <dd className={styles.mono}>{me.userId}</dd>
-          <dt>Active tenant</dt>
-          <dd className={styles.mono}>{me.tenantId ?? "—"}</dd>
-          <dt>Person ID</dt>
-          <dd className={styles.mono}>{me.personId ?? "—"}</dd>
           <dt>Role</dt>
           <dd>{me.isPlatformAdmin ? "Platform admin" : "Tenant member"}</dd>
         </dl>
-      </div>
+        <details className="forge-advanced-details">
+          <summary>Advanced Details</summary>
+          <dl className={styles.dl}>
+            <dt>User ID</dt>
+            <dd className={styles.mono}>{me.userId}</dd>
+            <dt>Active tenant</dt>
+            <dd className={styles.mono}>{me.tenantId ?? "—"}</dd>
+            <dt>Person ID</dt>
+            <dd className={styles.mono}>{me.personId ?? "—"}</dd>
+          </dl>
+        </details>
+      </ForgePageSection>
 
       {!personId || !tenantId ? (
-        <div className={styles.panel}>
-          <h2>Editable person profile unavailable</h2>
+        <ForgePageSection title="Editable person profile unavailable">
           <p className={styles.muted}>
             This Cognito user has no linked person on the active tenant, so name/email/phone cannot
             be edited here yet. Link or create a person under{" "}
             <Link href="/persons/">Persons</Link>, then reopen this page.
           </p>
-        </div>
+        </ForgePageSection>
       ) : loading ? (
         <p className={styles.muted}>Loading person…</p>
       ) : person ? (
-        <div className={styles.panel}>
-          <h2>{person.displayName || "Person profile"}</h2>
+        <ForgePageSection title={person.displayName || "Person profile"}>
           <p className={styles.muted}>
             Forge # <span className={styles.mono}>{person.forgePersonNumber}</span> ·{" "}
             <Link href={personDetailHref(person.id, tenantId)}>Open person detail</Link>
@@ -239,8 +247,8 @@ export default function MyProfilePage() {
               </button>
             </div>
           </form>
-        </div>
+        </ForgePageSection>
       ) : null}
-    </section>
+    </CreatorPage>
   );
 }
