@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { alterRolePassword, redactCredentialError } from "./safe-admin.js";
+import { redactCredentialError } from "./safe-admin.js";
 
 describe("redactCredentialError", () => {
   it("strips password values and connection strings from error text", () => {
