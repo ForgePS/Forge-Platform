@@ -30,7 +30,15 @@ export function awsText(args) {
 }
 
 export function runPlatformApiOneOff(command, label, options = {}) {
-  const envName = process.env.FORGE_ENV?.trim() || "development";
+  // Prefer explicit option (scripts that pass --env), then FORGE_ENV, then development.
+  const envName =
+    (typeof options.forgeEnvironment === "string" && options.forgeEnvironment.trim()) ||
+    process.env.FORGE_ENV?.trim() ||
+    "development";
+  if (envName !== "development" && envName !== "production") {
+    throw new Error(`Unsupported forge environment: ${envName}`);
+  }
+  process.env.FORGE_ENV = envName;
   const isProduction = envName === "production";
   const stackName = isProduction ? "Forge-Production-Compute" : "Forge-Development-Compute";
   const service = isProduction

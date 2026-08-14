@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { ApiError, apiGet, apiSend, useAuth } from "@forge/web-kit";
+import { FilterPanel } from "@/components/filter-panel";
 import { ModuleUnavailable } from "@/components/module-unavailable";
 import { OPS_MODULE_CONFIG, type Ind3OpsModule } from "@/lib/ops-modules";
 
@@ -174,45 +175,26 @@ export function OpsModuleWorkspace({
         </p>
       </header>
 
-      <form
-        className="ind-ops-filters"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void loadList();
+      <FilterPanel
+        searchId={`ops-search-${module}`}
+        searchValue={q}
+        onSearchChange={setQ}
+        statusId={`ops-status-${module}`}
+        statusValue={status}
+        onStatusChange={setStatus}
+        chips={[
+          ...(q ? [{ id: "q", label: `Search: ${q}`, onRemove: () => setQ("") }] : []),
+          ...(status
+            ? [{ id: "status", label: `Status: ${status}`, onRemove: () => setStatus("") }]
+            : []),
+        ]}
+        onClearAll={() => {
+          setQ("");
+          setStatus("");
+          void loadList("", "");
         }}
-        aria-label={`${moduleName} filters`}
-      >
-        <label>
-          Search
-          <input
-            type="search"
-            value={q}
-            onChange={(ev) => setQ(ev.target.value)}
-            autoComplete="off"
-          />
-        </label>
-        <label>
-          Status
-          <input
-            type="text"
-            value={status}
-            onChange={(ev) => setStatus(ev.target.value)}
-            placeholder="Optional"
-            autoComplete="off"
-          />
-        </label>
-        <button type="submit">Apply filters</button>
-        <button
-          type="button"
-          onClick={() => {
-            setQ("");
-            setStatus("");
-            void loadList("", "");
-          }}
-        >
-          Clear
-        </button>
-      </form>
+        onSubmit={() => void loadList()}
+      />
 
       {error ? (
         <p className="ind-error" role="alert">

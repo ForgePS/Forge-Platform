@@ -11,6 +11,7 @@ import { clearAllOfflineData } from "@/lib/offline/cache";
 import { NetworkStatusBanner } from "@/lib/offline/network-status";
 import { ThemeModeToggle, useIndustrialThemeMode } from "@/components/theme-mode-toggle";
 import { ForgeIndustrialMark } from "@/components/forge-industrial-mark";
+import { FieldQuickBar } from "@/components/field-quick-bar";
 import { useLoginBranding } from "@/hooks/use-login-branding";
 import { useTenantBranding } from "@/hooks/use-tenant-branding";
 
@@ -815,7 +816,7 @@ function ShellBody({ children }: { children: ReactNode }) {
 
           <div className="content-wrapper">
             <NetworkStatusBanner />
-            <div className="container-xxl flex-grow-1 container-p-y">
+            <div className="container-xxl flex-grow-1 container-p-y ind-content-pad">
               <div className="ind-content">{children}</div>
             </div>
             <footer className="content-footer footer bg-footer-theme">
@@ -823,13 +824,10 @@ function ShellBody({ children }: { children: ReactNode }) {
                 <div className="mb-2 mb-md-0 small text-muted">
                   © {new Date().getFullYear()} {productDisplayName} · {INDUSTRIAL_MODULE_REGISTRY.length}{" "}
                   modules
-                  <span className="d-none d-md-inline">
-                    {" "}
-                    · Sneat Free theme · Firebase remains production SoT
-                  </span>
                 </div>
               </div>
             </footer>
+            <FieldQuickBar />
           </div>
         </div>
       </div>
