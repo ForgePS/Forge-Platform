@@ -538,10 +538,15 @@ function buildRow(
     }
   }
 
-  // Required NOT NULL columns without defaults
+  // Required / defaulted columns — always materialize status when absent so
+  // batched inserts cannot borrow a sibling row's column list and NULL it out.
   for (const col of columns) {
-    if (col.isNullable || col.columnDefault != null) continue;
     if (row[col.name] !== undefined && row[col.name] !== null) continue;
+    if (col.name === "status") {
+      row.status = normalizeStatus(data.status) ?? "ACTIVE";
+      continue;
+    }
+    if (col.isNullable || col.columnDefault != null) continue;
     if (col.name === "id") continue;
     if (col.name === "name" || col.name === "display_name" || col.name === "title") {
       row[col.name] =
@@ -551,10 +556,6 @@ function buildRow(
         unwrapValue(data.displayTitle) ??
         unwrapValue(data.label) ??
         `imported-${String(record.targetId).slice(0, 8)}`;
-      continue;
-    }
-    if (col.name === "status") {
-      row.status = normalizeStatus(data.status) ?? "ACTIVE";
       continue;
     }
     if (col.name === "parent_entity_type") {
@@ -626,9 +627,6 @@ async function upsertBatch(
   const errors: Array<{ id: string; error: string }> = [];
   if (!rows.length) return { inserted: 0, updated: 0, errors };
 
-  const colNames = Object.keys(rows[0]!).filter((c) => columns.some((col) => col.name === c));
-  const hasUpdatedAt = colNames.includes("updated_at");
-
   for (const row of rows) {
     const id = String(row.id);
     try {
@@ -642,6 +640,9 @@ async function upsertBatch(
         continue;
       }
 
+      // Per-row columns — do not borrow keys from rows[0] (would NULL out missing defaults).
+      const colNames = Object.keys(row).filter((c) => columns.some((col) => col.name === c));
+      const hasUpdatedAt = colNames.includes("updated_at");
       const values = colNames.map((c) => row[c] ?? null) as Array<
         string | number | boolean | null
       >;
