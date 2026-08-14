@@ -9,6 +9,7 @@ import {
   resolveLiveTenantId,
   resolveMappedId,
   storageKeyFromAttachmentData,
+  promoteStorageKeyForLiveTenant,
   type IdMapIndex,
 } from "./industrial-import-helpers.js";
 
@@ -56,6 +57,23 @@ describe("industrial-import-helpers", () => {
       "11111111-2222-4333-8444-555555555555",
     );
     expect(key).toBe("certificates/business-1/logo.png");
+  });
+
+  it("promotes Firebase-relative storage keys to live tenant prefix", () => {
+    expect(
+      promoteStorageKeyForLiveTenant(
+        "module-attachments/business-1782553339499/loto/procedures/x.pdf",
+        PRODUCTION_TENANT_ID,
+      ),
+    ).toBe(
+      `tenants/${PRODUCTION_TENANT_ID}/module-attachments/${PRODUCTION_TENANT_ID}/loto/procedures/x.pdf`,
+    );
+    expect(
+      promoteStorageKeyForLiveTenant(
+        `tenants/${PRODUCTION_TENANT_ID}/already/promoted.pdf`,
+        PRODUCTION_TENANT_ID,
+      ),
+    ).toBe(`tenants/${PRODUCTION_TENANT_ID}/already/promoted.pdf`);
   });
 
   it("classifies missing parent FK as explained skip", () => {

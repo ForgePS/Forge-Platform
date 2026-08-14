@@ -36,6 +36,7 @@ import {
   resolveLiveTenantId,
   resolveMappedId,
   storageKeyFromAttachmentData,
+  promoteStorageKeyForLiveTenant,
   unwrapValue,
   type IdMapIndex,
 } from "./industrial-import-helpers.js";
@@ -499,7 +500,10 @@ function buildRow(
   }
 
   if (colSet.has("storage_key") && row.storage_key == null) {
-    row.storage_key = storageKeyFromAttachmentData(data, record.targetId);
+    row.storage_key = promoteStorageKeyForLiveTenant(
+      storageKeyFromAttachmentData(data, record.targetId),
+      authorizedTenantId,
+    );
   }
 
   let ensureDocument: Record<string, unknown> | undefined;
@@ -594,7 +598,10 @@ function buildRow(
       continue;
     }
     if (col.name === "storage_key") {
-      row.storage_key = storageKeyFromAttachmentData(data, record.targetId);
+      row.storage_key = promoteStorageKeyForLiveTenant(
+        storageKeyFromAttachmentData(data, record.targetId),
+        authorizedTenantId,
+      );
       continue;
     }
     if (col.udtName === "jsonb") {

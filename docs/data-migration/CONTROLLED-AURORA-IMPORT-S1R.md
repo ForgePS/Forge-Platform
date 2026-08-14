@@ -103,6 +103,9 @@ Mission brief 9292/12 treated as approximate; corrected classification above is 
 
 Firebase remains live SoR. **Delta sync / write freeze / DNS / Cognito customer migration / cutover: NOT RUN.**
 
-## Verdict (in progress while files/UAT finish)
+## Verdict (after CAI-S1R-UAT-CLOSEOUT)
 
-DB remediation gates: **PASS**. File promotion: **PASS** (9290 customer objects). Interactive module UAT / WC authz / cross-tenant matrix: **PARTIAL** — see `PRODUCERS-AWS-UAT.md`. Overall sprint verdict: **NEEDS REVIEW** (ready for delta planning after interactive UAT sign-off).
+DB remediation gates: **PASS**. File promotion: **PASS** (9290 customer objects). Interactive module UAT / WC authz / cross-tenant matrix: **PASS** — see `PRODUCERS-AWS-UAT.md`, `PRODUCERS-WC-SECURITY-UAT.md`, `PRODUCERS-CROSS-TENANT-UAT.md`, `PRODUCERS-WARNING-RECONCILIATION.md`.
+
+**INITIAL_IMPORT_STATUS: COMPLETE**  
+**Next phase authorized only: READY FOR DELTA SYNC** (delta itself **NOT RUN**).

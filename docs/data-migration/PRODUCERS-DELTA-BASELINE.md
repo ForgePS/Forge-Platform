@@ -28,9 +28,17 @@
 | Storage | Compare object etag/size under staging vs Firebase bucket listing after freeze |
 | Operational Aurora | Prefer migration id-map + source_document_id idempotency |
 
+## Readiness gates (CAI-S1R-UAT-CLOSEOUT)
+
+| Gate | Result |
+| --- | --- |
+| DELTA_BASELINE | **PASS** |
+| DELTA_STRATEGY_DOCUMENTED | **PASS** |
+| DELTA_UNSAFE_COLLECTION_STRATEGY | **PASS** |
+
 ## Current source drift (measure only — do not apply)
 
-Firebase remained live during import. Exact NEW/UPDATED/DELETED counts require a fresh Firebase extract vs immutable package — **not executed in this sprint**. Record placeholders for the next authorized delta sprint:
+Firebase remained live during import. Exact NEW/UPDATED/DELETED counts require a fresh Firebase extract vs immutable package — **not executed in this sprint** (informational only).
 
 | Metric | Value |
 | --- | --- |
@@ -40,6 +48,8 @@ Firebase remained live during import. Exact NEW/UPDATED/DELETED counts require a
 | NEW_STORAGE_OBJECTS | NOT MEASURED |
 | UPDATED_STORAGE_OBJECTS | NOT MEASURED |
 | DELETED_STORAGE_OBJECTS | NOT MEASURED |
+| DELTA_UNSAFE_COLLECTION_CHANGES | NOT MEASURED |
+| CURRENT_SOURCE_DRIFT | **PRESENT (expected)** — Firebase remained authoritative; quantify in next authorized delta sprint |
 
 ## Delta-unsafe collections (from DM-S2)
 
@@ -51,5 +61,6 @@ Firebase remained live during import. Exact NEW/UPDATED/DELETED counts require a
 | platformBillingNotifications | PLATFORM / exclude from customer delta |
 | qr_link_scan_events | APPEND-only with care; do not rewrite history blindly |
 
-DELTA_SYNC: **NOT RUN**  
-FIREBASE_WRITE_FREEZE: **NOT RUN**
+DELTA_SYNC: **COMPLETE (CAI-S2)** — see `PRODUCERS-DELTA-READINESS-CAI-S2.md`  
+FIREBASE_WRITE_FREEZE: **NOT RUN**  
+Next authorized phase only: **WRITE FREEZE + MICRO-DELTA** (not started).

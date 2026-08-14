@@ -91,6 +91,23 @@ export function storageKeyFromAttachmentData(
   return `import/attachments/${targetId}/${String(fileName ?? "file")}`;
 }
 
+/**
+ * Canonical documents-bucket key for Producers imports.
+ * Never persist Firebase-relative `business-*` paths after promotion.
+ */
+export function promoteStorageKeyForLiveTenant(
+  raw: string,
+  liveTenantId: string = PRODUCTION_TENANT_ID,
+  firebaseBusinessId = "business-1782553339499",
+): string {
+  let key = String(raw || "").trim();
+  if (!key) return key;
+  if (key.startsWith(`tenants/${liveTenantId}/`)) return key;
+  key = key.split(firebaseBusinessId).join(liveTenantId);
+  if (!key.startsWith("tenants/")) key = `tenants/${liveTenantId}/${key}`;
+  return key;
+}
+
 export function indexLogicalId(
   index: IdMapIndex,
   entity: string,
