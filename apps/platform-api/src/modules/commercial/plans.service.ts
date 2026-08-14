@@ -17,6 +17,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { DATABASE } from "../../tokens.js";
 import { AuditService } from "../audit/audit.service.js";
+import { withPlatformTransaction } from "./commercial-platform.js";
 
 const patchPlanSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -87,7 +88,7 @@ export class PlansService {
     const planId = createId();
     const versionId = createId();
 
-    return this.db.transaction(async (tx) => {
+    return withPlatformTransaction(this.db, async (tx) => {
       const [plan] = await tx
         .insert(subscriptionPlans)
         .values({
@@ -151,7 +152,7 @@ export class PlansService {
     if (!before) throw new ForgeError("NOT_FOUND", "Plan not found");
 
     const now = new Date();
-    return this.db.transaction(async (tx) => {
+    return withPlatformTransaction(this.db, async (tx) => {
       const [updated] = await tx
         .update(subscriptionPlans)
         .set({
@@ -210,7 +211,7 @@ export class PlansService {
     if (!plan) throw new ForgeError("NOT_FOUND", "Plan not found");
 
     const now = new Date();
-    return this.db.transaction(async (tx) => {
+    return withPlatformTransaction(this.db, async (tx) => {
       const [{ max } = { max: 0 }] = await tx
         .select({
           max: sql<number>`coalesce(max(${subscriptionPlanVersions.versionNumber}), 0)`,

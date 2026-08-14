@@ -100,6 +100,10 @@ const cancelSchema = z.object({
 const renewSchema = z.object({
   periodDays: z.number().int().positive().optional(),
   autoRenew: z.boolean().optional(),
+  /** Optional renewal price change (cents). Requires reason when set. */
+  effectivePriceCents: z.number().int().nonnegative().optional(),
+  catalogPriceCents: z.number().int().nonnegative().optional(),
+  reason: z.string().min(1).max(2000).optional(),
 });
 
 const addItemSchema = z.object({
@@ -239,8 +243,9 @@ export class CommercialSubscriptionsService {
         const impl =
           data.implementationFeeCents ?? planVersion?.implementationFeeCents ?? 0;
         const discount = data.discountCents ?? 0;
+        // Recurring effective price excludes one-time implementation fees (ARR/MRR).
         const effective =
-          data.effectivePriceCents ?? Math.max(0, catalog + impl - discount);
+          data.effectivePriceCents ?? Math.max(0, catalog - discount);
 
         const id = createId();
         const subscriptionNumber = await this.sequences.nextNumber(tx, "SUBSCRIPTION");
@@ -508,6 +513,12 @@ export class CommercialSubscriptionsService {
     principal: ForgePrincipal,
   ) {
     const data = renewSchema.parse(input ?? {});
+    if (
+      (data.effectivePriceCents !== undefined || data.catalogPriceCents !== undefined) &&
+      !data.reason
+    ) {
+      throw new ForgeError("VALIDATION_FAILED", "reason required when changing renewal price");
+    }
     return withTenantTransaction(
       this.db,
       tenantId,
@@ -537,6 +548,9 @@ export class CommercialSubscriptionsService {
           "ACTIVE",
         );
 
+        const nextEffective = data.effectivePriceCents ?? before.effectivePriceCents;
+        const nextCatalog = data.catalogPriceCents ?? before.catalogPriceCents;
+
         const [updated] = await tx
           .update(subscriptions)
           .set({
@@ -548,6 +562,12 @@ export class CommercialSubscriptionsService {
             autoRenew: data.autoRenew ?? before.autoRenew,
             cancelAtPeriodEnd: false,
             canceledAt: null,
+            ...(data.effectivePriceCents !== undefined
+              ? { effectivePriceCents: data.effectivePriceCents }
+              : {}),
+            ...(data.catalogPriceCents !== undefined
+              ? { catalogPriceCents: data.catalogPriceCents }
+              : {}),
             recordVersion: before.recordVersion + 1,
             updatedAt: now,
           })
@@ -560,13 +580,44 @@ export class CommercialSubscriptionsService {
           .returning();
         if (!updated) throw new ForgeError("CONFLICT", "Subscription was updated concurrently");
 
+        if (data.effectivePriceCents !== undefined) {
+          const baseItem = await tx.query.subscriptionItems.findFirst({
+            where: and(
+              eq(subscriptionItems.subscriptionId, subscriptionId),
+              eq(subscriptionItems.tenantId, tenantId),
+              eq(subscriptionItems.itemType, "PRODUCT"),
+              eq(subscriptionItems.status, "ACTIVE"),
+            ),
+            orderBy: [desc(subscriptionItems.createdAt)],
+          });
+          if (baseItem) {
+            await tx
+              .update(subscriptionItems)
+              .set({
+                unitPriceCents: data.effectivePriceCents,
+                amountCents: data.effectivePriceCents * baseItem.quantity,
+                updatedAt: now,
+              })
+              .where(eq(subscriptionItems.id, baseItem.id));
+          }
+        }
+
         await this.recordChange(tx, {
           tenantId,
           subscriptionId,
           changeType: "RENEWED",
-          summary: "Subscription renewed",
+          summary: data.reason
+            ? `Subscription renewed: ${data.reason}`
+            : "Subscription renewed",
           before,
-          after: updated,
+          after: {
+            ...updated,
+            priorEffectivePriceCents: before.effectivePriceCents,
+            nextEffectivePriceCents: nextEffective,
+            priorCatalogPriceCents: before.catalogPriceCents,
+            nextCatalogPriceCents: nextCatalog,
+            reason: data.reason ?? null,
+          },
           actorUserId: principal.userId,
           effectiveAt: now,
         });
