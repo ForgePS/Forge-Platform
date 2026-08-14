@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 export type TimelineItem = {
   id: string;
@@ -153,6 +153,153 @@ export function FileUploader({
         disabled={disabled}
         onChange={(e) => onSelect(e.target.files?.[0] ?? null)}
       />
+      {hint ? <p className="forge-form-field__hint">{hint}</p> : null}
+    </div>
+  );
+}
+
+export type ForgeAssetUploaderProps = {
+  id: string;
+  label: string;
+  accept?: string;
+  disabled?: boolean;
+  hint?: string;
+  maxBytes?: number;
+  previewUrl?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  uploading?: boolean;
+  progress?: number | null;
+  error?: string | null;
+  onSelect: (file: File | null) => void;
+  onRemove?: () => void;
+};
+
+function formatBytes(size: number): string {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/**
+ * Business-friendly drag/drop asset uploader. Callers upload via Forge APIs —
+ * this component never asks for S3/CloudFront URLs.
+ */
+export function ForgeAssetUploader({
+  id,
+  label,
+  accept = "image/png,image/jpeg,image/webp,image/svg+xml",
+  disabled,
+  hint = "PNG, JPG, or WEBP up to 5 MB. Drag a file here or browse.",
+  maxBytes = 5_000_000,
+  previewUrl,
+  fileName,
+  fileSize,
+  uploading,
+  progress,
+  error,
+  onSelect,
+  onRemove,
+}: ForgeAssetUploaderProps) {
+  const [dragOver, setDragOver] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  function acceptFile(file: File | null) {
+    setLocalError(null);
+    if (!file) {
+      onSelect(null);
+      return;
+    }
+    if (maxBytes && file.size > maxBytes) {
+      setLocalError(`This file exceeds the allowed upload size (${formatBytes(maxBytes)}).`);
+      onSelect(null);
+      return;
+    }
+    onSelect(file);
+  }
+
+  return (
+    <div className="forge-asset-uploader">
+      <label htmlFor={id} className="forge-form-field__label">
+        {label}
+      </label>
+      <div
+        className={`forge-asset-uploader__drop${dragOver ? " forge-asset-uploader__drop--active" : ""}`}
+        onDragOver={(event) => {
+          event.preventDefault();
+          if (!disabled) setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setDragOver(false);
+          if (disabled) return;
+          acceptFile(event.dataTransfer.files?.[0] ?? null);
+        }}
+        style={{
+          border: "1px dashed var(--forge-color-border, #cbd5e0)",
+          borderRadius: "0.75rem",
+          padding: "1rem",
+          background: dragOver ? "rgba(49, 130, 206, 0.08)" : "transparent",
+        }}
+      >
+        {previewUrl ? (
+          <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={previewUrl}
+              alt="Upload preview"
+              style={{ width: 72, height: 72, objectFit: "contain", borderRadius: 8 }}
+            />
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <p style={{ margin: 0, fontWeight: 600 }}>{fileName ?? "Uploaded file"}</p>
+              {typeof fileSize === "number" ? (
+                <p className="forge-muted" style={{ margin: "0.25rem 0 0" }}>
+                  {formatBytes(fileSize)}
+                </p>
+              ) : null}
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <label className="forge-button forge-button--secondary" htmlFor={id} style={{ cursor: "pointer" }}>
+                Replace
+              </label>
+              {onRemove ? (
+                <button type="button" className="forge-button forge-button--secondary" onClick={onRemove} disabled={disabled}>
+                  Remove
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : (
+          <div style={{ textAlign: "center" }}>
+            <p style={{ margin: 0, fontWeight: 600 }}>Drag and drop a file here</p>
+            <p className="forge-muted" style={{ margin: "0.35rem 0 0.75rem" }}>
+              or
+            </p>
+            <label className="forge-button" htmlFor={id} style={{ cursor: disabled ? "not-allowed" : "pointer" }}>
+              Browse files
+            </label>
+          </div>
+        )}
+        <input
+          id={id}
+          type="file"
+          accept={accept}
+          disabled={disabled || uploading}
+          style={{ display: "none" }}
+          onChange={(event) => acceptFile(event.target.files?.[0] ?? null)}
+        />
+      </div>
+      {uploading ? (
+        <p className="forge-muted" style={{ marginTop: "0.5rem" }}>
+          Uploading{typeof progress === "number" ? `… ${Math.round(progress)}%` : "…"}
+        </p>
+      ) : null}
+      {localError || error ? (
+        <p className="forge-form-field__error" role="alert" style={{ color: "var(--forge-color-danger, #c53030)" }}>
+          {localError ?? error}
+        </p>
+      ) : null}
       {hint ? <p className="forge-form-field__hint">{hint}</p> : null}
     </div>
   );

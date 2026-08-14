@@ -79,12 +79,12 @@ function CustomersInner() {
   return (
     <section className={styles.page}>
       <ForgePageHeader
-        title="Customers"
+        title="Companies"
         subtitle="Manage every organization using Forge."
         actions={
           <ForgePageActions>
-            <Link className="forge-btn" href="/customers/new/">
-              + Add Customer
+            <Link className="forge-btn" href="/onboarding/new/">
+              + Add Company
             </Link>
           </ForgePageActions>
         }
@@ -92,7 +92,7 @@ function CustomersInner() {
 
       {error ? (
         <ErrorState
-          title="We couldn't load your customers"
+          title="We couldn't load your companies"
           description={error}
           action={
             <button type="button" className="forge-btn" onClick={() => void load()}>
@@ -103,7 +103,7 @@ function CustomersInner() {
       ) : null}
 
       <FilterBar>
-        <SearchInput value={search} onChange={setSearch} placeholder="Search customers…" />
+        <SearchInput value={search} onChange={setSearch} placeholder="Search companies…" />
         <label className="forge-search-input" htmlFor="status-filter">
           <span className="forge-search-input__label">Status</span>
           <select
@@ -121,18 +121,18 @@ function CustomersInner() {
         </label>
       </FilterBar>
 
-      {loading ? <LoadingState label="Loading customers…" /> : null}
+      {loading ? <LoadingState label="Loading companies…" /> : null}
       {!loading && filtered.length === 0 ? (
         <EmptyState
-          title={tenants.length === 0 ? "No customers yet" : "No customers match"}
+          title={tenants.length === 0 ? "No companies yet" : "No companies match"}
           description={
             tenants.length === 0
-              ? "Add your first customer to begin using Forge."
-              : "Adjust filters or add a new customer."
+              ? "Add a company to begin guided onboarding."
+              : "Adjust filters or add a new company."
           }
           action={
-            <Link className="forge-btn" href="/customers/new/">
-              Add Customer
+            <Link className="forge-btn" href="/onboarding/new/">
+              Add Company
             </Link>
           }
         />
@@ -144,7 +144,7 @@ function CustomersInner() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Customer</th>
+                  <th>Company</th>
                   <th>Status</th>
                   <th>Web address</th>
                   <th>Last activity</th>

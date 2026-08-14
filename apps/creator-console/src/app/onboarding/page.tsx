@@ -1,188 +1,112 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useState, type FormEvent } from "react";
-import { TenantRequired } from "@/components/tenant-required";
-import { useAuth } from "@/hooks/use-auth";
-import { tenantDetailHref, useTenantId } from "@/hooks/use-tenant-id";
-import {
-  onboardingActivate,
-  onboardingCompleteStep,
-  onboardingStart,
-  type OnboardingSession,
-} from "@/lib/api";
+import { useCallback, useEffect, useState } from "react";
+import { EmptyState, ErrorState, ForgePageActions, ForgePageHeader, LoadingState, StatusBadge } from "@forge/ui";
+import { PlatformPageGate } from "@/components/platform-page-gate";
+import { humanizeForgeError, onboardingListSessions, type OnboardingSessionView } from "@/lib/api";
+import { tenantDetailHref } from "@/hooks/use-tenant-id";
 import styles from "../page.module.css";
 
-function OnboardingInner() {
-  const tenantId = useTenantId();
-  const { hasPermission } = useAuth();
-  const canManage = hasPermission("platform.onboarding.manage");
-
-  const [session, setSession] = useState<OnboardingSession | null>(null);
-  const [customerType, setCustomerType] = useState("FIRE_DEPARTMENT");
-  const [templateCode, setTemplateCode] = useState("starter-fire");
-  const [stepPayload, setStepPayload] = useState('{"displayName":"Acme Fire"}');
-  const [loading, setLoading] = useState(false);
+function OnboardingHomeInner() {
+  const [sessions, setSessions] = useState<OnboardingSessionView[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [apiMissing, setApiMissing] = useState(false);
 
-  async function runStep(action: () => Promise<OnboardingSession>) {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    setApiMissing(false);
     try {
-      setSession(await action());
+      setSessions(await onboardingListSessions());
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Onboarding request failed";
-      if (message.includes("404") || message.toLowerCase().includes("not found")) {
-        setApiMissing(true);
-        setError(
-          "Onboarding API is not available yet (Wave 5). Expected endpoints under /api/v1/onboarding.",
-        );
-      } else {
-        setError(message);
-      }
+      setError(humanizeForgeError(err instanceof Error ? err.message : "Could not load onboarding."));
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function onStart(event: FormEvent) {
-    event.preventDefault();
-    if (!canManage) return;
-    await runStep(() => {
-      const payload: { customerType: string; templateCode?: string } = { customerType };
-      if (templateCode.trim()) payload.templateCode = templateCode.trim();
-      return onboardingStart(payload);
-    });
-  }
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-  async function onCompleteStep(event: FormEvent) {
-    event.preventDefault();
-    if (!session || !canManage) return;
-    let payload: Record<string, unknown>;
-    try {
-      payload = JSON.parse(stepPayload) as Record<string, unknown>;
-    } catch {
-      setError("Step payload must be valid JSON");
-      return;
-    }
-    await runStep(() => onboardingCompleteStep(session.id, session.currentStep, payload));
-  }
-
-  async function onActivate() {
-    if (!session || !canManage) return;
-    await runStep(() => onboardingActivate(session.id));
-  }
-
-  if (!tenantId) {
-    return (
-      <section className={styles.page}>
-        <h1>Onboarding</h1>
-        <TenantRequired />
-      </section>
-    );
-  }
+  const inProgress = sessions.filter((s) => s.session.status === "IN_PROGRESS");
+  const completed = sessions.filter((s) => s.session.status === "COMPLETED");
 
   return (
     <section className={styles.page}>
-      <h1>Onboarding wizard</h1>
-      <p className={styles.lead}>
-        Scaffold for <code>/api/v1/onboarding</code> start, step completion, and activation.
-      </p>
+      <ForgePageHeader
+        title="Onboarding"
+        subtitle="Add a company and finish setup in guided steps. Leave anytime — progress is saved."
+        actions={
+          <ForgePageActions>
+            <Link className={styles.button} href="/onboarding/new/">
+              + Add company
+            </Link>
+          </ForgePageActions>
+        }
+      />
 
-      {!canManage ? (
-        <p className={styles.error}>Missing permission: platform.onboarding.manage</p>
+      {loading ? <LoadingState label="Loading onboarding…" /> : null}
+      {error ? (
+        <ErrorState
+          title="Unable to load onboarding"
+          description={error}
+          action={
+            <button type="button" className={styles.buttonSecondary} onClick={() => void load()}>
+              Retry
+            </button>
+          }
+        />
       ) : null}
-      {apiMissing ? (
-        <div className={styles.error}>
-          Onboarding API has not landed in platform-api yet. UI is wired and will work once Wave 5
-          endpoints are deployed.
+
+      {!loading && !error && inProgress.length === 0 && completed.length === 0 ? (
+        <EmptyState
+          title="No companies in onboarding"
+          description="Create a company to start the guided setup wizard."
+          action={
+            <Link className={styles.button} href="/onboarding/new/">
+              + Add company
+            </Link>
+          }
+        />
+      ) : null}
+
+      {!loading && inProgress.length > 0 ? (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <h2>In progress</h2>
+          <ul className={styles.list}>
+            {inProgress.map((row) => {
+              const done = row.steps.filter((s) => s.status === "COMPLETED" || s.status === "SKIPPED").length;
+              const total = row.steps.length || 1;
+              return (
+                <li key={row.session.id}>
+                  <Link href={`/onboarding/session/${row.session.id}/`}>Continue setup</Link>
+                  {" · "}
+                  <StatusBadge tone="warning">Step {row.session.currentStep}</StatusBadge>
+                  {" · "}
+                  {Math.round((done / total) * 100)}% complete
+                  {" · "}
+                  <Link href={tenantDetailHref(row.session.tenantId)}>Open company</Link>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       ) : null}
-      {error ? <p className={styles.error}>{error}</p> : null}
 
-      <div className={styles.panel}>
-        <h2>1. Start session</h2>
-        <form className={styles.form} onSubmit={onStart}>
-          <div className={styles.formRow}>
-            <label htmlFor="customerType">Customer type</label>
-            <input
-              id="customerType"
-              value={customerType}
-              onChange={(event) => setCustomerType(event.target.value)}
-              required
-            />
-          </div>
-          <div className={styles.formRow}>
-            <label htmlFor="templateCode">Template code</label>
-            <input
-              id="templateCode"
-              value={templateCode}
-              onChange={(event) => setTemplateCode(event.target.value)}
-            />
-          </div>
-          <div className={styles.actions}>
-            <button className={styles.button} type="submit" disabled={loading || !canManage}>
-              {loading ? "Starting…" : "Start onboarding"}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {session ? (
-        <>
-          <div className={styles.panel}>
-            <h2>Current session</h2>
-            <dl className={styles.dl}>
-              <dt>Session ID</dt>
-              <dd className={styles.mono}>{session.id}</dd>
-              <dt>Tenant ID</dt>
-              <dd className={styles.mono}>{session.tenantId}</dd>
-              <dt>Status</dt>
-              <dd>{session.status}</dd>
-              <dt>Current step</dt>
-              <dd>{session.currentStep}</dd>
-              <dt>Template</dt>
-              <dd>{session.templateCode ?? "—"}</dd>
-            </dl>
-          </div>
-
-          <div className={styles.panel}>
-            <h2>2. Complete step {session.currentStep}</h2>
-            <form className={styles.form} onSubmit={onCompleteStep}>
-              <div className={styles.formRow}>
-                <label htmlFor="stepPayload">Step payload (JSON)</label>
-                <textarea
-                  id="stepPayload"
-                  rows={4}
-                  value={stepPayload}
-                  onChange={(event) => setStepPayload(event.target.value)}
-                />
-              </div>
-              <div className={styles.actions}>
-                <button className={styles.buttonSecondary} type="submit" disabled={loading || !canManage}>
-                  {loading ? "Saving…" : "Complete step"}
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <div className={styles.panel}>
-            <h2>3. Activate</h2>
-            <div className={styles.actions}>
-              <button
-                type="button"
-                className={styles.button}
-                disabled={loading || !canManage}
-                onClick={() => void onActivate()}
-              >
-                {loading ? "Activating…" : "Activate tenant"}
-              </button>
-              <Link href={tenantDetailHref(session.tenantId)}>Open tenant detail</Link>
-            </div>
-          </div>
-        </>
+      {!loading && completed.length > 0 ? (
+        <div>
+          <h2>Recently activated</h2>
+          <ul className={styles.list}>
+            {completed.slice(0, 10).map((row) => (
+              <li key={row.session.id}>
+                <Link href={tenantDetailHref(row.session.tenantId)}>Open company</Link>
+                {" · "}
+                <StatusBadge tone="success">Active</StatusBadge>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
     </section>
   );
@@ -190,8 +114,8 @@ function OnboardingInner() {
 
 export default function OnboardingPage() {
   return (
-    <Suspense fallback={<p className={styles.muted}>Loading…</p>}>
-      <OnboardingInner />
-    </Suspense>
+    <PlatformPageGate title="Onboarding" permission="platform.onboarding.manage">
+      <OnboardingHomeInner />
+    </PlatformPageGate>
   );
 }

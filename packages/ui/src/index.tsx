@@ -41,10 +41,11 @@ export {
   DatePicker,
   MultiSelect,
   FileUploader,
+  ForgeAssetUploader,
   PermissionMatrix,
   ComingLater,
 } from "./mission.js";
-export type { TimelineItem, PermissionMatrixCell } from "./mission.js";
+export type { TimelineItem, PermissionMatrixCell, ForgeAssetUploaderProps } from "./mission.js";
 
 export { ForgeAppShell } from "./shell/ForgeAppShell.js";
 export { ForgeSidebar } from "./shell/ForgeSidebar.js";

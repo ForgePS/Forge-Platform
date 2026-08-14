@@ -409,39 +409,140 @@ export function membershipHistory(tenantId: string, membershipId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Onboarding (Wave 5 scaffold)
+// Platform onboarding (ADR-027 / MK-S7)
 // ---------------------------------------------------------------------------
 
-export type OnboardingSession = {
+export type OnboardingStepRow = {
+  id: string;
+  stepNumber: number;
+  stepKey: string;
+  status: "PENDING" | "COMPLETED" | "SKIPPED" | "FAILED" | string;
+  payloadJson?: Record<string, unknown>;
+  validationErrorsJson?: Array<{ code?: string; message?: string }>;
+};
+
+export type OnboardingSessionRecord = {
   id: string;
   tenantId: string;
   status: string;
   currentStep: number;
   templateCode: string | null;
   customerType: string;
+  recordVersion: number;
+  sessionDataJson?: Record<string, unknown>;
+  activationErrorsJson?: Array<{ code?: string; message?: string }>;
 };
+
+export type OnboardingSessionView = {
+  session: OnboardingSessionRecord;
+  steps: OnboardingStepRow[];
+  template?: {
+    code: string;
+    name: string;
+    productCode: string;
+    modules: Array<{ code: string; name: string; isCore: boolean }>;
+    roles: Array<{ code: string; name: string }>;
+  } | null;
+};
+
+/** @deprecated Use OnboardingSessionView — kept for older scaffold imports. */
+export type OnboardingSession = OnboardingSessionRecord;
+
+export async function onboardingListSessions(): Promise<OnboardingSessionView[]> {
+  return apiGet<OnboardingSessionView[]>("/api/v1/platform/onboarding/sessions");
+}
+
+export async function onboardingGetSession(
+  sessionId: string,
+  tenantId?: string,
+): Promise<ApiResult<OnboardingSessionView>> {
+  const options: ApiRequestOptions = {};
+  if (tenantId) options.query = { tenantId };
+  return apiGetResult<OnboardingSessionView>(
+    `/api/v1/platform/onboarding/sessions/${sessionId}`,
+    options,
+  );
+}
 
 export async function onboardingStart(payload: {
   customerType: string;
   templateCode?: string;
-}): Promise<OnboardingSession> {
-  return apiSend<OnboardingSession>("/api/v1/onboarding/start", "POST", payload);
+  tenantKey: string;
+  slug: string;
+  legalName: string;
+  displayName: string;
+  timezone?: string;
+}): Promise<ApiResult<OnboardingSessionView>> {
+  return apiSendResult<OnboardingSessionView>(
+    "/api/v1/platform/onboarding/sessions",
+    "POST",
+    payload,
+    { idempotencyKey: `onboard-start-${payload.tenantKey}-${Date.now()}` },
+  );
 }
 
 export async function onboardingCompleteStep(
   sessionId: string,
-  stepNumber: number,
+  stepKey: string,
   payload: Record<string, unknown>,
-): Promise<OnboardingSession> {
-  return apiSend<OnboardingSession>(
-    `/api/v1/onboarding/${sessionId}/steps/${stepNumber}/complete`,
+  options: { ifMatch: string; tenantId?: string },
+): Promise<ApiResult<OnboardingSessionView>> {
+  const request: ApiRequestOptions = { ifMatch: options.ifMatch };
+  if (options.tenantId) request.query = { tenantId: options.tenantId };
+  return apiSendResult<OnboardingSessionView>(
+    `/api/v1/platform/onboarding/sessions/${sessionId}/steps/${stepKey}/complete`,
     "POST",
     payload,
+    request,
   );
 }
 
-export async function onboardingActivate(sessionId: string): Promise<OnboardingSession> {
-  return apiSend<OnboardingSession>(`/api/v1/onboarding/${sessionId}/activate`, "POST");
+export async function onboardingActivate(
+  sessionId: string,
+  options: { ifMatch: string; tenantId?: string },
+): Promise<ApiResult<OnboardingSessionView & { tenant?: { id: string; displayName: string; status: string } }>> {
+  const request: ApiRequestOptions = { ifMatch: options.ifMatch };
+  if (options.tenantId) request.query = { tenantId: options.tenantId };
+  return apiSendResult(
+    `/api/v1/platform/onboarding/sessions/${sessionId}/activate`,
+    "POST",
+    undefined,
+    request,
+  );
+}
+
+export async function onboardingListTemplates(): Promise<
+  Array<{
+    code: string;
+    name: string;
+    customerType: string;
+    productCode: string;
+    modules: Array<{ code: string; name: string; isCore: boolean }>;
+    roles: Array<{ code: string; name: string }>;
+  }>
+> {
+  return apiGet("/api/v1/platform/onboarding/templates");
+}
+
+export function humanizeForgeError(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes("email")) return "Please enter a valid email address.";
+  if (lower.includes("permission") || lower.includes("403")) {
+    return "You don't have permission to perform this action.";
+  }
+  if (lower.includes("payload too large") || lower.includes("413")) {
+    return "This file exceeds the allowed upload size.";
+  }
+  if (lower.includes("foreign key") || lower.includes("department")) {
+    return "Please select a department.";
+  }
+  if (lower.includes("cognito")) {
+    return "Administrator invitation could not be created. Verify the email address and try again.";
+  }
+  if (lower.includes("if-match") || lower.includes("precondition")) {
+    return "This page was updated elsewhere. Refresh and try again.";
+  }
+  return message.replace(/ValidationError\s*/gi, "").replace(/invalid_string/gi, "invalid value");
 }
 
 // ---------------------------------------------------------------------------

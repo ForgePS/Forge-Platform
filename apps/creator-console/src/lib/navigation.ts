@@ -26,9 +26,9 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
   },
   {
     id: "customers",
-    label: "Customers",
+    label: "Companies",
     items: [
-      { id: "customers-list", label: "Customers", route: "/customers", permission: "platform.tenant.read" },
+      { id: "customers-list", label: "Companies", route: "/customers", permission: "platform.tenant.read" },
       {
         id: "onboarding",
         label: "Onboarding",
@@ -37,7 +37,7 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
       },
       {
         id: "facilities",
-        label: "Facilities",
+        label: "Locations",
         route: "/facilities",
         permission: "platform.configuration.update",
       },
@@ -52,7 +52,7 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
   },
   {
     id: "products",
-    label: "Products",
+    label: "Products & Modules",
     items: [
       {
         id: "products-list",
@@ -68,7 +68,7 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
       },
       {
         id: "customer-modules",
-        label: "Customer Modules",
+        label: "Company Modules",
         route: "/customer-modules",
         permission: "platform.entitlement.manage",
       },

@@ -278,8 +278,8 @@ function DashboardInner() {
         actions={
           <ForgePageActions>
             {canTenants ? (
-              <Link className="forge-btn" href="/customers/new/">
-                + Add Customer
+              <Link className="forge-btn" href="/onboarding/new/">
+                + Add Company
               </Link>
             ) : null}
             <Link className="forge-btn forge-btn--outline" href="/migrations/">
@@ -378,8 +378,8 @@ function DashboardInner() {
         <h2>Quick actions</h2>
         <div className={styles.actions}>
           {canTenants ? (
-            <Link className="forge-btn" href="/customers/new/">
-              Add Customer
+            <Link className="forge-btn" href="/onboarding/new/">
+              Add Company
             </Link>
           ) : null}
           {canInvites ? (
@@ -415,11 +415,11 @@ function DashboardInner() {
           <p className={styles.muted}>Customer list unavailable.</p>
         ) : recentCustomers.length === 0 ? (
           <EmptyState
-            title="No customers yet"
-            description="Add your first customer to begin using Forge."
+            title="No companies yet"
+            description="Add a company to begin guided onboarding."
             action={
-              <Link className="forge-btn" href="/customers/new/">
-                Add Customer
+              <Link className="forge-btn" href="/onboarding/new/">
+                Add Company
               </Link>
             }
           />

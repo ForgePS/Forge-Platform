@@ -4,17 +4,19 @@
  */
 
 export const DEFAULT_ONBOARDING_STEPS = [
-  { number: 1, key: "CREATE_TENANT", label: "Create tenant" },
-  { number: 2, key: "SELECT_CUSTOMER_TYPE", label: "Select customer type" },
+  { number: 1, key: "CREATE_TENANT", label: "Create company" },
+  { number: 2, key: "SELECT_CUSTOMER_TYPE", label: "Select company type" },
   { number: 3, key: "CREATE_PRIMARY_ORGANIZATION", label: "Create primary organization" },
   { number: 4, key: "SELECT_PRODUCTS", label: "Select products" },
   { number: 5, key: "SELECT_MODULES", label: "Select modules" },
   { number: 6, key: "CONFIGURE_SUBSCRIPTION", label: "Configure subscription" },
-  { number: 7, key: "CONFIGURE_BRANDING", label: "Configure branding" },
-  { number: 8, key: "CREATE_PRIMARY_ADMINISTRATOR", label: "Create primary administrator" },
-  { number: 9, key: "SEND_INVITATION", label: "Send invitation" },
-  { number: 10, key: "REVIEW_CONFIGURATION", label: "Review configuration" },
-  { number: 11, key: "ACTIVATE_TENANT", label: "Activate tenant" },
+  { number: 7, key: "CONFIGURE_LOCATIONS", label: "Configure locations" },
+  { number: 8, key: "CONFIGURE_ORG_LOOKUPS", label: "Configure organization setup" },
+  { number: 9, key: "CONFIGURE_BRANDING", label: "Configure branding" },
+  { number: 10, key: "CREATE_PRIMARY_ADMINISTRATOR", label: "Create primary administrator" },
+  { number: 11, key: "SEND_INVITATION", label: "Send invitation" },
+  { number: 12, key: "REVIEW_CONFIGURATION", label: "Review configuration" },
+  { number: 13, key: "ACTIVATE_TENANT", label: "Activate company" },
 ] as const;
 
 export type DefaultOnboardingStepKey = (typeof DEFAULT_ONBOARDING_STEPS)[number]["key"];

@@ -4,6 +4,7 @@ import {
   customerOnboardingSessions,
   customerOnboardingSteps,
   facilities,
+  industrialDepartments,
   organizations,
   permissions,
   rolePermissions,
@@ -65,6 +66,10 @@ interface OnboardingSessionData {
   securityConfigured?: boolean;
   brandingConfigured?: boolean;
   reviewed?: boolean;
+  locationIds?: string[];
+  departments?: Array<{ name: string; description?: string | undefined }>;
+  positions?: Array<{ name: string }>;
+  employmentTypes?: Array<{ name: string }>;
 }
 
 export interface ActivationError {
@@ -105,6 +110,44 @@ const subscriptionStepSchema = z.object({
   waiveSubscription: z.boolean().optional(),
   status: z.enum(["TRIAL", "ACTIVE", "GRACE"]).default("TRIAL"),
   periodDays: z.number().int().positive().default(30),
+});
+
+const locationsStepSchema = z.object({
+  locations: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(200),
+        facilityType: z.string().min(1).max(64).optional().default("SITE"),
+        addressLine1: z.string().max(300).optional(),
+        city: z.string().max(120).optional(),
+        stateProvince: z.string().max(120).optional(),
+        postalCode: z.string().max(32).optional(),
+        countryCode: z.string().length(2).optional(),
+        timezone: z.string().max(64).optional(),
+      }),
+    )
+    .max(50)
+    .default([]),
+});
+
+const orgLookupsStepSchema = z.object({
+  departments: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(300),
+        description: z.string().max(1000).optional(),
+      }),
+    )
+    .max(100)
+    .default([]),
+  positions: z
+    .array(z.object({ name: z.string().min(1).max(200) }))
+    .max(100)
+    .default([]),
+  employmentTypes: z
+    .array(z.object({ name: z.string().min(1).max(120) }))
+    .max(50)
+    .default([]),
 });
 
 const brandingStepSchema = z.object({
@@ -429,6 +472,147 @@ export class OnboardingService {
               status: subInput.status,
             };
           }
+          break;
+        }
+        case "CONFIGURE_LOCATIONS": {
+          const locInput = locationsStepSchema.parse(parsed.payload);
+          const createdIds: string[] = [...(sessionData.locationIds ?? [])];
+          for (const [index, location] of locInput.locations.entries()) {
+            const facilityKey = `loc-${index + 1}-${location.name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-|-$/g, "")
+              .slice(0, 40)}`;
+            const facility = await withTenantTransaction(
+              this.db,
+              tenantId,
+              async (tx) => {
+                const existing = await tx.query.facilities.findFirst({
+                  where: and(
+                    eq(facilities.tenantId, tenantId),
+                    eq(facilities.facilityKey, facilityKey),
+                  ),
+                });
+                if (existing) {
+                  return existing;
+                }
+                const now = new Date();
+                const id = createId();
+                const [row] = await tx
+                  .insert(facilities)
+                  .values({
+                    id,
+                    tenantId,
+                    organizationId: nextSessionData.primaryOrganizationId ?? null,
+                    facilityKey,
+                    name: location.name,
+                    facilityType: location.facilityType ?? "SITE",
+                    status: "ACTIVE",
+                    addressLine1: location.addressLine1,
+                    city: location.city,
+                    stateProvince: location.stateProvince,
+                    postalCode: location.postalCode,
+                    countryCode: location.countryCode ?? "US",
+                    timezone: location.timezone,
+                    createdAt: now,
+                    updatedAt: now,
+                    createdByUserId: principal.userId,
+                    updatedByUserId: principal.userId,
+                  })
+                  .returning();
+                if (!row) {
+                  throw new ForgeError("BAD_REQUEST", "Failed to create location");
+                }
+                await this.audit.writeInTransaction(tx, {
+                  tenantId,
+                  actorUserId: principal.userId,
+                  actorPersonId: principal.personId,
+                  actorType: "USER",
+                  action: "facility.create",
+                  resourceType: "facility",
+                  resourceId: row.id,
+                  result: "SUCCESS",
+                  riskLevel: "LOW",
+                  correlationId: principal.correlationId,
+                  requestId: principal.requestId,
+                  after: { name: row.name, source: "onboarding" },
+                });
+                return row;
+              },
+              principal.userId,
+            );
+            if (!createdIds.includes(facility.id)) {
+              createdIds.push(facility.id);
+            }
+          }
+          nextSessionData.locationIds = createdIds;
+          stepPayload = { locationIds: createdIds, count: createdIds.length };
+          break;
+        }
+        case "CONFIGURE_ORG_LOOKUPS": {
+          const lookupInput = orgLookupsStepSchema.parse(parsed.payload);
+          nextSessionData.departments = lookupInput.departments;
+          nextSessionData.positions = lookupInput.positions;
+          nextSessionData.employmentTypes = lookupInput.employmentTypes;
+          // Persist industrial departments when Industrial Safety is entitled.
+          if (
+            (nextSessionData.productCodes ?? []).includes("FORGE_INDUSTRIAL") &&
+            lookupInput.departments.length > 0
+          ) {
+            await withTenantTransaction(
+              this.db,
+              tenantId,
+              async (tx) => {
+                for (const dept of lookupInput.departments) {
+                  const existing = await tx
+                    .select()
+                    .from(industrialDepartments)
+                    .where(
+                      and(
+                        eq(industrialDepartments.tenantId, tenantId),
+                        eq(industrialDepartments.name, dept.name),
+                      ),
+                    )
+                    .limit(1);
+                  if (existing[0]) continue;
+                  const now = new Date();
+                  await tx.insert(industrialDepartments).values({
+                    id: createId(),
+                    tenantId,
+                    name: dept.name,
+                    status: "ACTIVE",
+                    sourceSystem: "FORGE",
+                    sourcePayload: { description: dept.description ?? null, source: "onboarding" },
+                    createdAt: now,
+                    updatedAt: now,
+                  });
+                }
+                await this.audit.writeInTransaction(tx, {
+                  tenantId,
+                  actorUserId: principal.userId,
+                  actorPersonId: principal.personId,
+                  actorType: "USER",
+                  action: "onboarding.org_lookups",
+                  resourceType: "customer_onboarding_session",
+                  resourceId: sessionId,
+                  result: "SUCCESS",
+                  riskLevel: "LOW",
+                  correlationId: principal.correlationId,
+                  requestId: principal.requestId,
+                  after: {
+                    departments: lookupInput.departments.length,
+                    positions: lookupInput.positions.length,
+                  },
+                });
+              },
+              principal.userId,
+            );
+          }
+          stepPayload = {
+            departments: lookupInput.departments,
+            positions: lookupInput.positions,
+            employmentTypes: lookupInput.employmentTypes,
+          };
           break;
         }
         case "CONFIGURE_BRANDING": {
