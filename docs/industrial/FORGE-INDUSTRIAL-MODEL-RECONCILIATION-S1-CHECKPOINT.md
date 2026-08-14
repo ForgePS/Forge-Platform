@@ -3,6 +3,7 @@
 | Field | Value |
 |-------|--------|
 | BASE_SHA | `32e3f8f1468b1299bc48c9a1709a7683e1fdd286` |
+| FINAL_SHA | `d25b10c` (checkpoint tip; content commit `f29f3ac`) |
 | BRANCH | `industrial/model-reconciliation-s1` |
 | PRODUCTION_MASTER_SHA | `32e3f8f` |
 | PRODUCTION_API_REVISION | 17 (`onboarding-closeout-20260814121500`) |
