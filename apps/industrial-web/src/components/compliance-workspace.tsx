@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { apiGet, apiSend, useAuth } from "@forge/web-kit";
 import { EmptyState, PageHeader, PageSection } from "@/components/layout/page-chrome";
 import { ModuleUnavailable } from "@/components/module-unavailable";
+import { FilterPanel } from "@/components/filter-panel";
+import { StatusBadge } from "@/components/status-badge";
 import { COMPLIANCE_MODULE_CONFIG, type Ind6ComplianceModule } from "@/lib/compliance-modules";
 import {
   friendlyActionError,
@@ -29,6 +31,20 @@ type Bootstrap = {
   modules: BootstrapModule[];
 };
 
+type WcDetailTab = "overview" | "claim" | "notes";
+
+const WC_STATUSES = [
+  { value: "DRAFT", label: "Draft" },
+  { value: "OPEN", label: "Open" },
+  { value: "PENDING", label: "Pending" },
+  { value: "CLOSED", label: "Closed" },
+  { value: "ARCHIVED", label: "Archived" },
+];
+
+/**
+ * IND-6 compliance workspaces (OSHA, Risk, Workers' Comp, etc.).
+ * Workers' Comp gets case-oriented polish while preserving sensitive permission gates.
+ */
 export function ComplianceWorkspace({
   module,
   moduleName,
@@ -44,13 +60,17 @@ export function ComplianceWorkspace({
   const canViewSensitive =
     !cfg.sensitivePerm || permissions.has(cfg.sensitivePerm) || permissions.has("industrial.admin");
 
+  const isWc = module === "workers-comp";
+
   const [bootstrap, setBootstrap] = useState<Bootstrap | null>(null);
   const [items, setItems] = useState<Array<Record<string, unknown>>>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
+  const [wcTab, setWcTab] = useState<WcDetailTab>("overview");
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
   const [category, setCategory] = useState(cfg.defaultCategory);
+  const [caseNotes, setCaseNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -63,6 +83,17 @@ export function ComplianceWorkspace({
   const modEntry = bootstrap?.modules.find((m) => m.code === cfg.code);
   const awsReady =
     Boolean(bootstrap?.industrialEnabled) && Boolean(modEntry?.awsEnabled) && canView;
+
+  const kpis = useMemo(() => {
+    if (!isWc) return null;
+    const open = items.filter((i) =>
+      ["OPEN", "PENDING", "DRAFT"].includes(String(i.status ?? "").toUpperCase()),
+    ).length;
+    const closed = items.filter((i) =>
+      ["CLOSED", "ARCHIVED"].includes(String(i.status ?? "").toUpperCase()),
+    ).length;
+    return { total: items.length, open, closed };
+  }, [items, isWc]);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,7 +129,7 @@ export function ComplianceWorkspace({
       setItems(data.items ?? []);
     } catch (e) {
       setItems([]);
-      if (module === "workers-comp" && isBackendUnavailableError(e)) {
+      if (isWc && isBackendUnavailableError(e)) {
         setWorkersCompBackendGap(true);
         setError(null);
       } else {
@@ -111,12 +142,15 @@ export function ComplianceWorkspace({
 
   async function loadDetail(id: string) {
     setError(null);
+    setWcTab("overview");
     try {
       const row = await apiGet<Record<string, unknown>>(`${cfg.listPath}/${id}`);
       setDetail(row);
       setSelectedId(id);
+      const details = (row.detailsJson ?? row.details ?? {}) as Record<string, unknown>;
+      setCaseNotes(String(details.caseNotes ?? details.notes ?? ""));
     } catch (e) {
-      if (module === "workers-comp" && isBackendUnavailableError(e)) {
+      if (isWc && isBackendUnavailableError(e)) {
         setWorkersCompBackendGap(true);
         setError(null);
       } else {
@@ -208,7 +242,7 @@ export function ComplianceWorkspace({
       setIncidentId("");
       await loadList();
     } catch (err) {
-      if (module === "workers-comp" && isBackendUnavailableError(err)) {
+      if (isWc && isBackendUnavailableError(err)) {
         setWorkersCompBackendGap(true);
         setError(null);
       } else {
@@ -227,7 +261,7 @@ export function ComplianceWorkspace({
       await loadList();
       await loadDetail(selectedId);
     } catch (err) {
-      if (module === "workers-comp" && isBackendUnavailableError(err)) {
+      if (isWc && isBackendUnavailableError(err)) {
         setWorkersCompBackendGap(true);
         setError(null);
       } else {
@@ -238,37 +272,75 @@ export function ComplianceWorkspace({
 
   const sensitiveJson = detail?.sensitiveJson as Record<string, unknown> | undefined;
   const sensitiveRedacted = Boolean(sensitiveJson && sensitiveJson.redacted === true);
+  const detailBlob = (detail?.detailsJson ?? detail?.details ?? {}) as Record<string, unknown>;
+
+  const chips = [
+    ...(q ? [{ id: "q", label: `Search: ${q}`, onRemove: () => setQ("") }] : []),
+    ...(status
+      ? [{ id: "status", label: `Status: ${status}`, onRemove: () => setStatus("") }]
+      : []),
+    ...(module !== "osha" && module !== "risk" && category
+      ? [
+          {
+            id: "category",
+            label: `Category: ${category}`,
+            onRemove: () => setCategory(cfg.defaultCategory),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="ind-ops ind-compliance">
       <PageHeader
         title={moduleName}
-        description="Compliance and facility safety records for this tenant."
+        description={
+          isWc
+            ? "Track claim cases by employee — medical and claim details stay role-gated."
+            : "Compliance and facility safety records for this company."
+        }
       />
 
-      <PageSection title="Filters" bodyClassName="pt-3">
-        <form
-          className="row g-3 align-items-end"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void loadList();
-          }}
-          aria-label={`${moduleName} filters`}
-        >
-          <div className="col-md-4">
-            <label className="form-label" htmlFor={`cmp-search-${module}`}>
-              Search
-            </label>
-            <input
-              id={`cmp-search-${module}`}
-              className="form-control form-control-sm"
-              type="search"
-              value={q}
-              onChange={(ev) => setQ(ev.target.value)}
-              autoComplete="off"
-            />
-          </div>
-          {module !== "osha" && module !== "risk" ? (
+      {isWc && kpis && !workersCompBackendGap ? (
+        <div className="row g-3 mb-4">
+          {(
+            [
+              ["Cases", kpis.total],
+              ["Open / in progress", kpis.open],
+              ["Closed", kpis.closed],
+            ] as const
+          ).map(([label, count]) => (
+            <div className="col-4" key={label}>
+              <div className="card mb-0">
+                <div className="card-body py-3">
+                  <div className="text-muted text-uppercase small">{label}</div>
+                  <div className="fw-semibold fs-4">{loading ? "—" : count}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <FilterPanel
+        searchId={`cmp-search-${module}`}
+        searchValue={q}
+        onSearchChange={setQ}
+        searchPlaceholder={isWc ? "Employee or case title…" : "Search records…"}
+        statusId={`cmp-status-${module}`}
+        statusValue={status}
+        onStatusChange={setStatus}
+        {...(isWc ? { statusOptions: WC_STATUSES.map((s) => ({ ...s })) } : {})}
+        chips={chips}
+        onClearAll={() => {
+          setQ("");
+          setStatus("");
+          setCategory(cfg.defaultCategory);
+          void loadList("", "", cfg.defaultCategory);
+        }}
+        onSubmit={() => void loadList()}
+        extraFields={
+          module !== "osha" && module !== "risk" ? (
             <div className="col-md-3">
               <label className="form-label" htmlFor={`cmp-category-${module}`}>
                 Category
@@ -282,28 +354,9 @@ export function ComplianceWorkspace({
                 autoComplete="off"
               />
             </div>
-          ) : null}
-          <div className="col-md-3">
-            <label className="form-label" htmlFor={`cmp-status-${module}`}>
-              Status
-            </label>
-            <input
-              id={`cmp-status-${module}`}
-              className="form-control form-control-sm"
-              type="text"
-              value={status}
-              onChange={(ev) => setStatus(ev.target.value)}
-              placeholder="Optional"
-              autoComplete="off"
-            />
-          </div>
-          <div className="col-md-2">
-            <button type="submit" className="btn btn-primary btn-sm">
-              Apply filters
-            </button>
-          </div>
-        </form>
-      </PageSection>
+          ) : undefined
+        }
+      />
 
       {error ? (
         <div className="alert alert-danger" role="alert">
@@ -311,11 +364,11 @@ export function ComplianceWorkspace({
         </div>
       ) : null}
 
-      {workersCompBackendGap && module === "workers-comp" ? (
+      {workersCompBackendGap && isWc ? (
         <div className="card mb-4">
           <EmptyState
-            title="Workers' compensation records require a backend that is not enabled for this environment."
-            description="Access to claim and medical details is role-gated. Sensitive fields stay restricted to authorized roles even when the API is available."
+            title="Workers' compensation records aren't available in this environment yet"
+            description="Claim and medical details are role-gated. When the API is enabled, only authorized roles can see sensitive fields."
           />
         </div>
       ) : null}
@@ -324,11 +377,15 @@ export function ComplianceWorkspace({
         <p className="text-muted" role="status" aria-live="polite">
           Loading…
         </p>
-      ) : workersCompBackendGap && module === "workers-comp" ? null : items.length === 0 ? (
+      ) : workersCompBackendGap && isWc ? null : items.length === 0 ? (
         <div className="card mb-4">
           <EmptyState
-            title="No records yet"
-            description="When records are created for this module, they will appear here."
+            title={isWc ? "No claim cases yet" : "No records yet"}
+            description={
+              isWc
+                ? "Create a case for an injured employee to start tracking claim status."
+                : "When records are created for this module, they will appear here."
+            }
           />
         </div>
       ) : (
@@ -337,8 +394,9 @@ export function ComplianceWorkspace({
             <table className="table table-hover table-sm mb-0" aria-label={`${moduleName} list`}>
               <thead>
                 <tr>
-                  <th scope="col">Title</th>
-                  <th scope="col">Category / Type</th>
+                  {isWc ? <th scope="col">Employee</th> : null}
+                  <th scope="col">{isWc ? "Case" : "Title"}</th>
+                  <th scope="col">{isWc ? "Type" : "Category / Type"}</th>
                   <th scope="col">Status</th>
                   <th scope="col">Updated</th>
                   <th scope="col">Actions</th>
@@ -346,7 +404,13 @@ export function ComplianceWorkspace({
               </thead>
               <tbody className="table-border-bottom-0">
                 {items.map((row) => (
-                  <tr key={String(row.id)}>
+                  <tr
+                    key={String(row.id)}
+                    className={selectedId === String(row.id) ? "table-active" : undefined}
+                  >
+                    {isWc ? (
+                      <td className="fw-medium">{String(row.workerName ?? "—")}</td>
+                    ) : null}
                     <td>{String(row.title ?? "—")}</td>
                     <td>
                       {String(
@@ -357,16 +421,18 @@ export function ComplianceWorkspace({
                       )}
                     </td>
                     <td>
-                      <span className="badge bg-label-secondary">{String(row.status ?? "—")}</span>
+                      <StatusBadge status={String(row.status ?? "")} />
                     </td>
-                    <td>{row.updatedAt ? new Date(String(row.updatedAt)).toLocaleString() : "—"}</td>
+                    <td>
+                      {row.updatedAt ? new Date(String(row.updatedAt)).toLocaleString() : "—"}
+                    </td>
                     <td>
                       <button
                         type="button"
                         className="btn btn-sm btn-outline-primary"
                         onClick={() => void loadDetail(String(row.id))}
                       >
-                        Open
+                        {isWc ? "Open case" : "Open"}
                       </button>
                     </td>
                   </tr>
@@ -378,12 +444,133 @@ export function ComplianceWorkspace({
       )}
 
       {detail ? (
-        <PageSection title={String(detail.title ?? "Record")}>
-          <p className="mb-2">
-            Status: <strong>{String(detail.status ?? "—")}</strong>
-          </p>
-          <p className="text-muted small">Location: {String(detail.locationText ?? "—")}</p>
-          {cfg.sensitivePerm ? (
+        <PageSection
+          title={
+            isWc
+              ? String(detail.workerName || detail.title || "Claim case")
+              : String(detail.title ?? "Record")
+          }
+          actions={
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => {
+                setDetail(null);
+                setSelectedId(null);
+              }}
+            >
+              Close
+            </button>
+          }
+        >
+          {isWc ? (
+            <div className="btn-group mb-3" role="tablist" aria-label="Case sections">
+              {(
+                [
+                  ["overview", "Overview"],
+                  ["claim", "Claim"],
+                  ["notes", "Notes"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={wcTab === id}
+                  className={`btn btn-sm ${wcTab === id ? "btn-primary" : "btn-outline-secondary"}`}
+                  onClick={() => setWcTab(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          {!isWc || wcTab === "overview" ? (
+            <dl className="row small mb-3">
+              {isWc ? (
+                <>
+                  <dt className="col-sm-3 text-muted">Employee</dt>
+                  <dd className="col-sm-9">{String(detail.workerName ?? "—")}</dd>
+                  <dt className="col-sm-3 text-muted">Case title</dt>
+                  <dd className="col-sm-9">{String(detail.title ?? "—")}</dd>
+                </>
+              ) : (
+                <>
+                  <dt className="col-sm-3 text-muted">Title</dt>
+                  <dd className="col-sm-9">{String(detail.title ?? "—")}</dd>
+                </>
+              )}
+              <dt className="col-sm-3 text-muted">Status</dt>
+              <dd className="col-sm-9">
+                <StatusBadge status={String(detail.status ?? "")} />
+              </dd>
+              <dt className="col-sm-3 text-muted">Location</dt>
+              <dd className="col-sm-9">{String(detail.locationText ?? "—")}</dd>
+              {detail.incidentId ? (
+                <>
+                  <dt className="col-sm-3 text-muted">Related incident</dt>
+                  <dd className="col-sm-9">
+                    <span className="font-monospace small">{String(detail.incidentId)}</span>
+                  </dd>
+                </>
+              ) : null}
+            </dl>
+          ) : null}
+
+          {isWc && wcTab === "claim" ? (
+            <div className="mb-3">
+              <p className="small text-muted mb-2">
+                Claim reference and medical details are restricted. Unauthorized roles never see
+                raw sensitive payloads.
+              </p>
+              <dl className="row small mb-0">
+                <dt className="col-sm-3 text-muted">Category</dt>
+                <dd className="col-sm-9">{String(detail.category ?? cfg.defaultCategory)}</dd>
+                <dt className="col-sm-3 text-muted">Sensitive access</dt>
+                <dd className="col-sm-9">
+                  {!canViewSensitive
+                    ? "Restricted — requires workers' comp sensitive permission"
+                    : sensitiveRedacted
+                      ? "Redacted by server for this role"
+                      : "Authorized — claim fields visible when present"}
+                </dd>
+                {canViewSensitive && !sensitiveRedacted && sensitiveJson ? (
+                  <>
+                    <dt className="col-sm-3 text-muted">Claim fields</dt>
+                    <dd className="col-sm-9">
+                      <pre className="small mb-0 p-2 bg-light rounded border">
+                        {JSON.stringify(sensitiveJson, null, 2)}
+                      </pre>
+                    </dd>
+                  </>
+                ) : null}
+              </dl>
+            </div>
+          ) : null}
+
+          {isWc && wcTab === "notes" ? (
+            <div className="mb-3">
+              <label className="form-label" htmlFor="wc-case-notes">
+                Case notes
+              </label>
+              <textarea
+                id="wc-case-notes"
+                className="form-control form-control-sm"
+                rows={4}
+                readOnly
+                value={
+                  caseNotes ||
+                  String(detailBlob.caseNotes ?? detailBlob.notes ?? "No notes recorded yet.")
+                }
+              />
+              <p className="text-muted small mt-2 mb-0">
+                Editable case notes land with the next fields API pass for compliance cases.
+              </p>
+            </div>
+          ) : null}
+
+          {!isWc && cfg.sensitivePerm ? (
             <p className="text-muted small" aria-label="Sensitive data access">
               Sensitive fields:{" "}
               {canViewSensitive
@@ -393,6 +580,7 @@ export function ComplianceWorkspace({
                 : "restricted — requires sensitive permission"}
             </p>
           ) : null}
+
           <div className="d-flex flex-wrap gap-2">
             {canManage ? (
               <button
@@ -407,16 +595,12 @@ export function ComplianceWorkspace({
         </PageSection>
       ) : null}
 
-      {canManage && !(workersCompBackendGap && module === "workers-comp") ? (
-        <PageSection title="Create record">
-          <form
-            className="row g-3"
-            onSubmit={onCreate}
-            aria-label={`Create ${moduleName}`}
-          >
+      {canManage && !(workersCompBackendGap && isWc) ? (
+        <PageSection title={isWc ? "New claim case" : "Create record"}>
+          <form className="row g-3" onSubmit={onCreate} aria-label={`Create ${moduleName}`}>
             <div className="col-md-6">
               <label className="form-label" htmlFor={`cmp-create-title-${module}`}>
-                Title
+                {isWc ? "Case title" : "Title"}
               </label>
               <input
                 id={`cmp-create-title-${module}`}
@@ -431,7 +615,7 @@ export function ComplianceWorkspace({
               <>
                 <div className="col-md-6">
                   <label className="form-label" htmlFor={`cmp-create-worker-${module}`}>
-                    Worker / contact
+                    {isWc ? "Employee name" : "Worker / contact"}
                   </label>
                   <input
                     id={`cmp-create-worker-${module}`}
@@ -439,6 +623,7 @@ export function ComplianceWorkspace({
                     value={workerName}
                     onChange={(ev) => setWorkerName(ev.target.value)}
                     autoComplete="off"
+                    required={isWc}
                   />
                 </div>
                 <div className="col-md-6">
@@ -472,7 +657,7 @@ export function ComplianceWorkspace({
             {cfg.requiresIncident || module === "osha" ? (
               <div className="col-md-6">
                 <label className="form-label" htmlFor={`cmp-create-incident-${module}`}>
-                  Incident ID {module === "osha" ? "(required)" : "(optional)"}
+                  {isWc ? "Related incident (optional)" : `Incident ID ${module === "osha" ? "(required)" : "(optional)"}`}
                 </label>
                 <input
                   id={`cmp-create-incident-${module}`}
@@ -488,9 +673,9 @@ export function ComplianceWorkspace({
               <button
                 type="submit"
                 className="btn btn-primary btn-sm"
-                disabled={creating || !title.trim()}
+                disabled={creating || !title.trim() || (isWc && !workerName.trim())}
               >
-                {creating ? "Creating…" : "Create"}
+                {creating ? "Creating…" : isWc ? "Create case" : "Create"}
               </button>
             </div>
           </form>

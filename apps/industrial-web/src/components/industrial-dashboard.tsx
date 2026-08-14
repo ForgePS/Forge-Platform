@@ -25,8 +25,9 @@ import {
 import { apiGet, useAuth } from "@forge/web-kit";
 import { useAnalyticsFilter } from "@/hooks/use-analytics-filter";
 import { buildAnalyticsCsv, downloadTextFile } from "@/lib/analytics-csv";
-import { buildIndustrialNavigation } from "@/lib/navigation";
+import { buildIndustrialNavigation, featureFlagForModule } from "@/lib/navigation";
 import { PageHeader } from "@/components/layout/page-chrome";
+import { DashboardAttention } from "@/components/dashboard-attention";
 
 function formatDelta(delta: number | null | undefined): string | null {
   if (delta === null || delta === undefined || Number.isNaN(delta)) return null;
@@ -164,28 +165,74 @@ function TrendTable({ title, points }: { title: string; points: AnalyticsSeriesP
  * Combined Industrial Dashboard: Core overview + Analytics (Phase C shared filters).
  */
 export function IndustrialDashboard() {
-  const { me, hasPermission } = useAuth();
+  const { me } = useAuth();
   const { filter, panel, hydrated, savedViews, setPanel, applyFilter, saveView, applySavedView, deleteSavedView, queryString } =
     useAnalyticsFilter();
   const entitled = Boolean(me?.activeProducts?.includes(INDUSTRIAL_PRODUCT_CODE));
+  const flags = useMemo(() => {
+    const next: Record<string, boolean> = { "industrial.enabled": entitled };
+    for (const code of me?.activeModules ?? []) {
+      next[featureFlagForModule(code)] = true;
+      next[`industrial.module.${code.toLowerCase()}.enabled`] = true;
+    }
+    return next;
+  }, [entitled, me?.activeModules]);
   const nav = buildIndustrialNavigation({
     entitled,
     permissions: me?.isPlatformAdmin
       ? ["industrial.access", ...(me?.permissions ?? [])]
       : (me?.permissions ?? []),
-    flags: Object.fromEntries(
-      (me?.activeModules ?? []).map((code) => [
-        `industrial.module.${code.toLowerCase()}.enabled`,
-        true,
-      ]),
-    ),
+    flags,
   });
 
   const available = nav.filter((n) => n.available && n.code !== "CORE");
+  const byCode = useMemo(() => new Map(available.map((n) => [n.code, n])), [available]);
   const featured =
     available.length > 0
       ? available.slice(0, 12)
       : INDUSTRIAL_MODULE_REGISTRY.filter((m) => m.code !== "CORE").slice(0, 12);
+
+  const quickActions = useMemo(
+    () => [
+      {
+        id: "incident",
+        label: "+ Report Incident",
+        href: "/modules/incidents",
+        available: Boolean(byCode.get("INCIDENTS")?.available),
+      },
+      {
+        id: "inspection",
+        label: "+ Start Inspection",
+        href: "/modules/inspections",
+        available: Boolean(byCode.get("INSPECTIONS")?.available),
+      },
+      {
+        id: "observation",
+        label: "+ Add Observation",
+        href: "/modules/observations",
+        available: Boolean(byCode.get("OBSERVATIONS")?.available),
+      },
+      {
+        id: "jsa",
+        label: "+ Create JSA",
+        href: "/modules/jsas",
+        available: Boolean(byCode.get("JSAS")?.available),
+      },
+      {
+        id: "employee",
+        label: "+ Add Employee",
+        href: "/modules/personnel",
+        available: Boolean(byCode.get("PERSONNEL")?.available),
+      },
+      {
+        id: "training",
+        label: "+ Record Training",
+        href: "/modules/training",
+        available: Boolean(byCode.get("TRAINING")?.available),
+      },
+    ],
+    [byCode],
+  );
 
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [incidents, setIncidents] = useState<AnalyticsIncidents | null>(null);
@@ -469,6 +516,58 @@ export function IndustrialDashboard() {
     downloadTextFile(`industrial-analytics-${panel}-${filter.from}_${filter.to}.csv`, csv);
   };
 
+  const attentionItems = useMemo(() => {
+    const openIncidents =
+      overview?.kpis?.find((k) => /open.*incident/i.test(k.label) || k.id.includes("open_incident"))
+        ?.value ??
+      incidents?.kpis?.find((k) => /open/i.test(k.label))?.value ??
+      null;
+    const overdueTraining =
+      personnel?.kpis?.find((k) => /overdue/i.test(k.label))?.value ?? null;
+    const openLoto =
+      loto?.kpis?.find((k) => /open|pending|due/i.test(k.label))?.value ?? null;
+    const openWc =
+      workersComp?.kpis?.find((k) => /open/i.test(k.label))?.value ?? null;
+    return [
+      {
+        id: "open-incidents",
+        label: "Open Incidents",
+        count: typeof openIncidents === "number" ? openIncidents : null,
+        href: "/modules/incidents",
+        tone: "danger" as const,
+      },
+      {
+        id: "inspections",
+        label: "Inspections",
+        count:
+          typeof inspections?.kpis?.[0]?.value === "number" ? inspections.kpis[0].value : null,
+        href: "/modules/inspections",
+        tone: "warning" as const,
+      },
+      {
+        id: "training-overdue",
+        label: "Training Overdue",
+        count: typeof overdueTraining === "number" ? overdueTraining : null,
+        href: "/modules/training",
+        tone: "warning" as const,
+      },
+      {
+        id: "loto",
+        label: "LOTO Reviews",
+        count: typeof openLoto === "number" ? openLoto : null,
+        href: "/modules/loto",
+        tone: "info" as const,
+      },
+      {
+        id: "workers-comp",
+        label: "Workers' Comp Open",
+        count: typeof openWc === "number" ? openWc : null,
+        href: "/modules/workers-comp",
+        tone: "info" as const,
+      },
+    ];
+  }, [overview, incidents, inspections, personnel, loto, workersComp]);
+
   return (
     <div className="ind-dashboard">
       <PageHeader
@@ -476,16 +575,16 @@ export function IndustrialDashboard() {
         title="Dashboard"
         description={
           me?.tenantId
-            ? "Overview of authorized modules and safety analytics for your tenant."
-            : "Sign in and select a tenant to see authorized modules."
+            ? "What needs attention across your safety program — then drill into analytics."
+            : "Sign in and select your company to see authorized modules."
         }
         actions={
           <>
+            <Link className="btn btn-sm btn-primary" href="/modules/incidents">
+              Report Incident
+            </Link>
             <Link className="btn btn-sm btn-outline-primary" href="/modules/personnel">
               Personnel
-            </Link>
-            <Link className="btn btn-sm btn-outline-primary" href="/modules/incidents">
-              Incidents
             </Link>
             <Link className="btn btn-sm btn-outline-secondary" href="/settings/">
               Settings
@@ -494,28 +593,23 @@ export function IndustrialDashboard() {
         }
       />
 
-      <h2 className="h5 mb-3">Overview</h2>
+      <DashboardAttention
+        attention={attentionItems}
+        quickActions={quickActions}
+        loading={analyticsLoading && panel === "overview"}
+      />
+
+      <h2 className="h5 mb-3">At a glance</h2>
       <div className="row g-3 mb-4">
         <div className="col-12 col-sm-6 col-md-4">
           <div className="card h-100">
             <div className="card-body">
-              <div className="text-muted text-uppercase small">Product</div>
-              <div className="fw-semibold">Forge Industrial Safety</div>
-              <div className="small text-muted mt-1">
-                {entitled ? "Entitled" : "Not entitled on this tenant"}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-12 col-sm-6 col-md-4">
-          <div className="card h-100">
-            <div className="card-body">
-              <div className="text-muted text-uppercase small">Access</div>
+              <div className="text-muted text-uppercase small">Company access</div>
               <div className="fw-semibold">
-                {hasPermission("industrial.access") ? "industrial.access" : "Restricted"}
+                {entitled ? "Industrial Safety entitled" : "Not entitled"}
               </div>
               <div className="small text-muted mt-1">
-                {me?.isPlatformAdmin ? "Platform admin" : "Tenant membership"}
+                {me?.isPlatformAdmin ? "Platform administrator" : "Organization member"}
               </div>
             </div>
           </div>
@@ -523,11 +617,20 @@ export function IndustrialDashboard() {
         <div className="col-12 col-sm-6 col-md-4">
           <div className="card h-100">
             <div className="card-body">
-              <div className="text-muted text-uppercase small">Modules visible</div>
+              <div className="text-muted text-uppercase small">Modules available</div>
               <div className="fw-semibold">{available.length || "—"}</div>
-              <div className="small text-muted mt-1">After permission and flag filters</div>
+              <div className="small text-muted mt-1">Based on your permissions</div>
             </div>
           </div>
+        </div>
+        <div className="col-12 col-sm-6 col-md-4">
+          <Link href="/modules/analytics" className="card h-100 text-decoration-none">
+            <div className="card-body">
+              <div className="text-muted text-uppercase small">Analytics</div>
+              <div className="fw-semibold text-body">Open full analytics</div>
+              <div className="small text-muted mt-1">Trends, filters, and exports</div>
+            </div>
+          </Link>
         </div>
       </div>
 
@@ -576,8 +679,7 @@ export function IndustrialDashboard() {
               Analytics
             </h2>
             <p className="text-muted mb-0 small">
-              Shared filter context across domains. Firebase Bridge remains Analytics SoT until Phase
-              D acceptance.
+              Trends and KPIs from live company data. Filters apply across panels.
             </p>
           </div>
           {panel === "overview" &&

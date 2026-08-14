@@ -28,8 +28,10 @@ import {
   users,
 } from "@forge/database";
 
+/** Full industrial nav flag set (matches INDUSTRIAL_FEATURE_FLAGS in contracts). */
 const FLAG_KEYS = [
   "industrial.enabled",
+  "industrial.module.analytics.enabled",
   "industrial.module.personnel.enabled",
   "industrial.module.incidents.enabled",
   "industrial.module.inspections.enabled",
@@ -37,6 +39,32 @@ const FLAG_KEYS = [
   "industrial.module.jsa.enabled",
   "industrial.module.observations.enabled",
   "industrial.module.forms.enabled",
+  "industrial.module.scan.enabled",
+  "industrial.module.qr_links.enabled",
+  "industrial.module.documents.enabled",
+  "industrial.module.reporting.enabled",
+  "industrial.module.loto.enabled",
+  "industrial.module.equipment.enabled",
+  "industrial.module.forklifts.enabled",
+  "industrial.module.confined_space.enabled",
+  "industrial.module.hot_work.enabled",
+  "industrial.module.working_at_heights.enabled",
+  "industrial.module.electrical_safety.enabled",
+  "industrial.module.cranes_rigging.enabled",
+  "industrial.module.machine_safety.enabled",
+  "industrial.module.dot.enabled",
+  "industrial.module.workers_comp.enabled",
+  "industrial.module.osha.enabled",
+  "industrial.module.risk.enabled",
+  "industrial.module.chemical_safety.enabled",
+  "industrial.module.warehouse_safety.enabled",
+  "industrial.module.manufacturing_safety.enabled",
+  "industrial.module.contractor_safety.enabled",
+  "industrial.module.process_safety.enabled",
+  "industrial.module.environmental_safety.enabled",
+  "industrial.module.tasks.enabled",
+  "industrial.module.messaging.enabled",
+  "industrial.module.emergency_response.enabled",
 ];
 
 const env = await loadEnvironmentAsync({ ...LOCAL_PLACEHOLDER_ENV, ...process.env });
@@ -53,6 +81,7 @@ const candidates = await db
       ilike(tenants.tenantKey, "%producers%"),
       eq(tenants.tenantKey, "producers-rice-mill"),
       eq(tenants.slug, "producers-rice-mill"),
+      eq(tenants.id, "0882c865-59c2-49a6-ab88-ce6ca89be30c"),
     ),
   );
 
@@ -67,11 +96,43 @@ if (!createdByUserId) throw new Error("No user available for created_by_user_id"
 const now = new Date();
 const report = [];
 
+async function ensureDefinition(key) {
+  let def = await db.query.featureDefinitions.findFirst({ where: eq(featureDefinitions.key, key) });
+  if (def) return def;
+  const moduleSlug = key.replace(/^industrial\\.module\\./, "").replace(/\\.enabled$/, "");
+  const label =
+    key === "industrial.enabled"
+      ? "Forge Industrial Safety"
+      : moduleSlug
+          .split("_")
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(" ");
+  const id = createId();
+  await db.insert(featureDefinitions).values({
+    id,
+    key,
+    name: key === "industrial.enabled" ? label : \`Industrial \${label} module\`,
+    description:
+      key === "industrial.enabled"
+        ? "Master switch for Forge Industrial Safety shell (CORE)."
+        : \`Enable Industrial \${label} on AWS.\`,
+    valueType: "BOOLEAN",
+    defaultValueJson: key === "industrial.enabled",
+    createdAt: now,
+    updatedAt: now,
+  });
+  def = await db.query.featureDefinitions.findFirst({ where: eq(featureDefinitions.key, key) });
+  if (!def) throw new Error("failed to create feature definition " + key);
+  return def;
+}
+
 for (const tenant of candidates) {
   const enabled = [];
+  const createdDefs = [];
   for (const key of FLAG_KEYS) {
-    const def = await db.query.featureDefinitions.findFirst({ where: eq(featureDefinitions.key, key) });
-    if (!def) throw new Error("missing feature definition " + key);
+    const before = await db.query.featureDefinitions.findFirst({ where: eq(featureDefinitions.key, key) });
+    const def = await ensureDefinition(key);
+    if (!before) createdDefs.push(key);
     const existing = await db.query.featureOverrides.findFirst({
       where: and(
         eq(featureOverrides.tenantId, tenant.id),
@@ -86,7 +147,7 @@ for (const tenant of candidates) {
         tenantId: tenant.id,
         featureDefinitionId: def.id,
         valueJson: true,
-        reason: "Enable Industrial Operations IND-3 on Producers Rice Mill tenants",
+        reason: "Enable all Industrial module flags on Producers (Wave 1)",
         createdByUserId,
         createdAt: now,
         updatedAt: now,
@@ -94,7 +155,7 @@ for (const tenant of candidates) {
     } else if (existing.valueJson !== true) {
       await db
         .update(featureOverrides)
-        .set({ valueJson: true, updatedAt: now })
+        .set({ valueJson: true, updatedAt: now, reason: "Enable all Industrial module flags on Producers (Wave 1)" })
         .where(eq(featureOverrides.id, existing.id));
     }
     enabled.push(key);
@@ -103,7 +164,9 @@ for (const tenant of candidates) {
     tenantId: tenant.id,
     tenantKey: tenant.tenantKey,
     displayName: tenant.displayName,
+    enabledCount: enabled.length,
     enabled,
+    createdDefs,
   });
 }
 

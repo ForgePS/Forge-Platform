@@ -795,6 +795,123 @@ html.layout-menu-fixed .layout-menu .menu-inner {
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/* Wave 4 — mobile field flows                                                */
+/* -------------------------------------------------------------------------- */
+
+html,
+body {
+  overflow-x: clip;
+}
+
+.ind-shell-location .form-select {
+  min-width: 8rem;
+  max-width: 16rem;
+}
+
+.ind-filter-body {
+  display: none;
+}
+
+.ind-filter-body.is-open {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .ind-filter-body {
+    display: block;
+  }
+}
+
+.ind-content-pad {
+  padding-bottom: 1rem;
+}
+
+.ind-field-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 1030;
+  background: var(--bs-paper-bg, #fff);
+  border-top: 1px solid rgba(67, 89, 113, 0.12);
+  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
+  padding: 0.35rem 0.5rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+}
+
+.ind-field-bar__list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ind-field-bar__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  min-height: 3rem;
+  padding: 0.35rem 0.25rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: var(--bs-body-color, #697a8d);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.ind-field-bar__item i {
+  font-size: 1.25rem;
+}
+
+.ind-field-bar__item.is-active,
+.ind-field-bar__item:hover {
+  color: var(--bs-primary, #696cff);
+  background: rgba(105, 108, 255, 0.08);
+}
+
+@media (max-width: 767.98px) {
+  .ind-content-pad {
+    padding-bottom: 4.75rem;
+  }
+
+  .ind-shell-company {
+    max-width: 42%;
+  }
+
+  .ind-shell-location {
+    min-width: 0;
+  }
+
+  .ind-shell-location .form-select {
+    width: 100%;
+    max-width: none;
+  }
+
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ind-filter-toggle,
+  .ind-field-bar__item,
+  .btn {
+    min-height: 2.5rem;
+  }
+
+  .form-control,
+  .form-select {
+    min-height: 2.5rem;
+    font-size: 16px; /* avoid iOS zoom */
+  }
+
+  #ops-create .btn,
+  .ind-loto .btn-group .btn {
+    min-height: 2.75rem;
+  }
+}
+
 /* Analytics interim PDF path: browser print → Save as PDF (GAP-RPT-01 still deferred). */
 @media print {
   body * {

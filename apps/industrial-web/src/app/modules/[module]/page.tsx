@@ -1,4 +1,5 @@
 import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
+import { AnalyticsWorkspace } from "@/components/analytics-workspace";
 import { ComplianceWorkspace } from "@/components/compliance-workspace";
 import { EquipmentWorkspace } from "@/components/equipment-workspace";
 import { FleetBackendGap } from "@/components/fleet-backend-gap";
@@ -48,6 +49,9 @@ export default async function ModulePage({ params }: { params: Promise<{ module:
   }
   if (module === "personnel") {
     return <PersonnelWorkspace moduleName={name} />;
+  }
+  if (module === "analytics") {
+    return <AnalyticsWorkspace moduleName={name} />;
   }
   if (module === "qr-links") {
     return <QrLinksWorkspace moduleName={name} />;

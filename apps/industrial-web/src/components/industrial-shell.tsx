@@ -12,6 +12,8 @@ import { NetworkStatusBanner } from "@/lib/offline/network-status";
 import { ThemeModeToggle, useIndustrialThemeMode } from "@/components/theme-mode-toggle";
 import { useLoginBranding } from "@/hooks/use-login-branding";
 import { useTenantBranding } from "@/hooks/use-tenant-branding";
+import { useFacilityContext } from "@/hooks/use-facility-context";
+import { FieldQuickBar } from "@/components/field-quick-bar";
 
 const appEnv = process.env.NEXT_PUBLIC_APP_ENV ?? process.env.APP_ENV ?? "local";
 
@@ -108,11 +110,19 @@ function iconForModule(code: string, group: string): string {
 
 function iconForGroup(group: string): string {
   const g = group.toLowerCase();
+  if (g.includes("overview")) return "bx-home-circle";
+  if (g === "people") return "bx-group";
+  if (g === "safety" && !g.includes("program")) return "bx-error";
+  if (g.includes("safety program")) return "bx-error-circle";
+  if (g.includes("compliance")) return "bx-check-shield";
+  if (g.includes("operation")) return "bx-wrench";
+  if (g.includes("communication")) return "bx-message";
+  if (g.includes("reporting")) return "bx-bar-chart-alt-2";
+  if (g.includes("admin")) return "bx-cog";
   if (g.includes("people") || g.includes("training")) return "bx-group";
   if (g.includes("incident") || g.includes("claim")) return "bx-error";
   if (g.includes("risk") || g.includes("prevention")) return "bx-shield";
-  if (g.includes("compliance")) return "bx-check-shield";
-  if (g.includes("equipment") || g.includes("operations")) return "bx-wrench";
+  if (g.includes("equipment")) return "bx-wrench";
   if (g.includes("high")) return "bx-error-circle";
   if (g.includes("facility")) return "bx-buildings";
   if (g.includes("emergency")) return "bx-plus-medical";
@@ -196,7 +206,7 @@ function ShellBody({ children }: { children: ReactNode }) {
     const current = normalizePath(pathname);
     const group =
       current === "/settings"
-        ? "System Tools"
+        ? "Administration"
         : (INDUSTRIAL_MODULE_REGISTRY.find((entry) => pathsMatch(entry.route, current))?.group ??
           null);
     if (!group) return;
@@ -286,6 +296,8 @@ function ShellBody({ children }: { children: ReactNode }) {
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  const { sites, facilityId, setFacilityId, selectedLabel } = useFacilityContext(tenantId);
 
   if (isPublicAuthRoute) {
     return <>{children}</>;
@@ -398,8 +410,8 @@ function ShellBody({ children }: { children: ReactNode }) {
     flags,
   });
   const groups = [...new Set(nav.map((n) => n.group))];
-  const tenantLabel =
-    me.tenants.find((t) => t.tenantId === me.tenantId)?.displayName ?? me.tenantId;
+  const companyLabel =
+    me.tenants.find((t) => t.tenantId === me.tenantId)?.displayName ?? "Company";
 
   return (
     <div className="layout-wrapper layout-content-navbar" style={brandStyle}>
@@ -429,7 +441,7 @@ function ShellBody({ children }: { children: ReactNode }) {
             {groups.map((group) => {
               const isOpen = openGroups.has(group);
               const childItems = nav.filter((item) => item.group === group);
-              const settingsActive = group === "System Tools" && pathsMatch(pathname, "/settings");
+              const settingsActive = group === "Administration" && pathsMatch(pathname, "/settings");
               const groupActive =
                 settingsActive || childItems.some((item) => pathsMatch(pathname, item.route));
 
@@ -473,7 +485,7 @@ function ShellBody({ children }: { children: ReactNode }) {
                         </li>
                       );
                     })}
-                    {group === "System Tools" ? (
+                    {group === "Administration" ? (
                       <li className={settingsActive ? "menu-item active" : "menu-item"}>
                         <Link
                           href="/settings"
@@ -510,16 +522,47 @@ function ShellBody({ children }: { children: ReactNode }) {
             </div>
 
             <div className="navbar-nav-right d-flex align-items-center w-100" id="navbar-collapse">
-              <div className="navbar-nav align-items-center flex-grow-1">
-                <div className="nav-item d-flex align-items-center text-body-secondary small">
-                  <i className="bx bx-buildings me-2 fs-5" />
-                  <span>
-                    <span className="text-muted">Tenant:</span>{" "}
-                    <span className="fw-semibold text-heading">{tenantLabel}</span>
+              <div className="navbar-nav align-items-center flex-grow-1 gap-2 gap-md-3 flex-wrap py-1 ind-shell-context">
+                <div className="nav-item d-flex align-items-center text-body-secondary small ind-shell-company">
+                  <i className="bx bx-buildings me-2 fs-5 d-none d-sm-inline" />
+                  <span className="text-truncate">
+                    <span className="text-muted d-none d-sm-inline">Company:</span>{" "}
+                    <span className="fw-semibold text-heading">{companyLabel}</span>
                   </span>
+                </div>
+                <div className="nav-item d-flex align-items-center flex-grow-1 flex-md-grow-0 ind-shell-location">
+                  <label className="visually-hidden" htmlFor="ind-facility-select">
+                    Location
+                  </label>
+                  <select
+                    id="ind-facility-select"
+                    className="form-select form-select-sm"
+                    value={facilityId}
+                    onChange={(e) => setFacilityId(e.target.value)}
+                    aria-label="Location"
+                  >
+                    <option value="all">All Locations</option>
+                    {sites.map((site) => (
+                      <option key={site.id} value={site.id}>
+                        {site.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="visually-hidden">{selectedLabel}</span>
                 </div>
               </div>
               <ul className="navbar-nav flex-row align-items-center ms-auto">
+                <li className="nav-item navbar-dropdown dropdown-user dropdown me-2">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-icon btn-outline-secondary"
+                    aria-label="Notifications"
+                    title="Notifications — coming soon"
+                    disabled
+                  >
+                    <i className="bx bx-bell" />
+                  </button>
+                </li>
                 <li className="nav-item d-flex align-items-center gap-2">
                   <ThemeModeToggle />
                   <span className="avatar avatar-sm d-none d-md-inline-flex">
@@ -541,17 +584,17 @@ function ShellBody({ children }: { children: ReactNode }) {
 
           <div className="content-wrapper">
             <NetworkStatusBanner />
-            <div className="container-xxl flex-grow-1 container-p-y">
+            <div className="container-xxl flex-grow-1 container-p-y ind-content-pad">
               <div className="ind-content">{children}</div>
             </div>
             <footer className="content-footer footer bg-footer-theme">
               <div className="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
                 <div className="mb-2 mb-md-0">
-                  © {new Date().getFullYear()} {productDisplayName} · {appShortName} shell ·{" "}
-                  {INDUSTRIAL_MODULE_REGISTRY.length} modules · Firebase remains production SoT
+                  © {new Date().getFullYear()} {productDisplayName} · {appShortName}
                 </div>
               </div>
             </footer>
+            <FieldQuickBar />
           </div>
         </div>
       </div>

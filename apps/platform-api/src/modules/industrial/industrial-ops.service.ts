@@ -19,6 +19,11 @@ export const INDUSTRIAL_OPS_MODULES = [
   "incidents",
   "jsas",
   "observations",
+  "equipment",
+  "sites",
+  "loto",
+  "dot",
+  "workers-comp",
 ] as const;
 
 export type IndustrialOpsModule = (typeof INDUSTRIAL_OPS_MODULES)[number];
@@ -31,6 +36,11 @@ const TITLE_FIELD: Record<IndustrialOpsModule, string> = {
   incidents: "title",
   jsas: "title",
   observations: "description",
+  equipment: "equipmentName",
+  sites: "name",
+  loto: "title",
+  dot: "title",
+  "workers-comp": "title",
 };
 
 function isOpsModule(value: string): value is IndustrialOpsModule {
@@ -47,9 +57,48 @@ function titleFromPayload(module: IndustrialOpsModule, payload: Record<string, u
     if (combined) return combined;
     return "Personnel";
   }
+  if (module === "loto") {
+    const title = String(payload.title ?? "").trim();
+    const equipmentName = String(payload.equipmentName ?? "").trim();
+    if (title) return title;
+    if (equipmentName) return `LOTO · ${equipmentName}`;
+    return "LOTO procedure";
+  }
+  if (module === "dot") {
+    const title = String(payload.title ?? "").trim();
+    const category = String(payload.category ?? "").trim();
+    if (title) return title;
+    if (category) return `DOT · ${category}`;
+    return "DOT compliance item";
+  }
+  if (module === "workers-comp") {
+    const title = String(payload.title ?? payload.caseNumber ?? "").trim();
+    if (title) return title;
+    const employee = payload.employee;
+    const name =
+      employee && typeof employee === "object" && !Array.isArray(employee)
+        ? String((employee as Record<string, unknown>).employeeName ?? "").trim()
+        : "";
+    if (name) return `WC · ${name}`;
+    return "Workers' Comp case";
+  }
   const field = TITLE_FIELD[module];
   const value = String(payload[field] ?? "").trim();
   return value || module;
+}
+
+function mapRow(row: typeof industrialOpsRecords.$inferSelect) {
+  return {
+    id: row.id,
+    module: row.module,
+    title: row.title,
+    status: row.status,
+    displayName: row.title,
+    ...row.payload,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    recordVersion: row.recordVersion,
+  };
 }
 
 @Injectable()
@@ -94,19 +143,29 @@ export class IndustrialOpsService {
         .offset(offset)
         .orderBy(desc(industrialOpsRecords.createdAt));
 
-      const items = rows.map((row) => ({
-        id: row.id,
-        module: row.module,
-        title: row.title,
-        status: row.status,
-        displayName: row.title,
-        ...row.payload,
-        createdAt: row.createdAt.toISOString(),
-        updatedAt: row.updatedAt.toISOString(),
-        recordVersion: row.recordVersion,
-      }));
+      return { items: rows.map(mapRow), page, pageSize };
+    });
+  }
 
-      return { items, page, pageSize };
+  async get(principal: ForgePrincipal, module: string, id: string) {
+    if (!isOpsModule(module)) {
+      throw new ForgeError("NOT_FOUND", `Unknown industrial module: ${module}`);
+    }
+    return withTenantTransaction(this.db, principal.tenantId, async (tx) => {
+      const [row] = await tx
+        .select()
+        .from(industrialOpsRecords)
+        .where(
+          and(
+            eq(industrialOpsRecords.tenantId, principal.tenantId),
+            eq(industrialOpsRecords.module, module),
+            eq(industrialOpsRecords.id, id),
+            isNull(industrialOpsRecords.archivedAt),
+          ),
+        )
+        .limit(1);
+      if (!row) throw new ForgeError("NOT_FOUND", "Record not found");
+      return mapRow(row);
     });
   }
 
@@ -119,6 +178,9 @@ export class IndustrialOpsService {
     if (module === "personnel") {
       payload.displayName = title;
     }
+    if (module === "equipment") {
+      payload.equipmentName = String(payload.equipmentName ?? title).trim() || title;
+    }
     const id = createId();
     const now = new Date();
 
@@ -128,7 +190,7 @@ export class IndustrialOpsService {
         tenantId: principal.tenantId,
         module,
         title,
-        status: "ACTIVE",
+        status: String(payload.status ?? "ACTIVE"),
         payload,
         recordVersion: 1,
         createdAt: now,
@@ -139,13 +201,128 @@ export class IndustrialOpsService {
         id,
         module,
         title,
-        status: "ACTIVE",
+        status: String(payload.status ?? "ACTIVE"),
         displayName: title,
         ...payload,
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
         recordVersion: 1,
       };
+    });
+  }
+
+  async updateStatus(principal: ForgePrincipal, module: string, id: string, body: unknown) {
+    if (!isOpsModule(module)) {
+      throw new ForgeError("NOT_FOUND", `Unknown industrial module: ${module}`);
+    }
+    const { status } = z.object({ status: z.string().min(1).max(64) }).parse(body ?? {});
+    const now = new Date();
+    return withTenantTransaction(this.db, principal.tenantId, async (tx) => {
+      const [row] = await tx
+        .update(industrialOpsRecords)
+        .set({ status, updatedAt: now, recordVersion: sql`${industrialOpsRecords.recordVersion} + 1` })
+        .where(
+          and(
+            eq(industrialOpsRecords.tenantId, principal.tenantId),
+            eq(industrialOpsRecords.module, module),
+            eq(industrialOpsRecords.id, id),
+            isNull(industrialOpsRecords.archivedAt),
+          ),
+        )
+        .returning();
+      if (!row) throw new ForgeError("NOT_FOUND", "Record not found");
+      return mapRow(row);
+    });
+  }
+
+  /** Merge business fields into record payload (photos, CAPA notes, next-action metadata). */
+  async updateFields(principal: ForgePrincipal, module: string, id: string, body: unknown) {
+    if (!isOpsModule(module)) {
+      throw new ForgeError("NOT_FOUND", `Unknown industrial module: ${module}`);
+    }
+    const patch = z.record(z.unknown()).parse(body ?? {});
+    const now = new Date();
+    return withTenantTransaction(this.db, principal.tenantId, async (tx) => {
+      const [existing] = await tx
+        .select()
+        .from(industrialOpsRecords)
+        .where(
+          and(
+            eq(industrialOpsRecords.tenantId, principal.tenantId),
+            eq(industrialOpsRecords.module, module),
+            eq(industrialOpsRecords.id, id),
+            isNull(industrialOpsRecords.archivedAt),
+          ),
+        )
+        .limit(1);
+      if (!existing) throw new ForgeError("NOT_FOUND", "Record not found");
+
+      const prevPayload =
+        existing.payload && typeof existing.payload === "object" && !Array.isArray(existing.payload)
+          ? (existing.payload as Record<string, unknown>)
+          : {};
+      const nextPayload = { ...prevPayload, ...patch };
+      delete nextPayload.id;
+      delete nextPayload.module;
+      delete nextPayload.recordVersion;
+
+      const nextStatus =
+        typeof patch.status === "string" && patch.status.trim()
+          ? String(patch.status).trim()
+          : existing.status;
+      const nextTitle = titleFromPayload(module, {
+        ...nextPayload,
+        title: nextPayload.title ?? existing.title,
+      });
+
+      const [row] = await tx
+        .update(industrialOpsRecords)
+        .set({
+          payload: nextPayload,
+          status: nextStatus,
+          title: nextTitle,
+          updatedAt: now,
+          recordVersion: sql`${industrialOpsRecords.recordVersion} + 1`,
+        })
+        .where(
+          and(
+            eq(industrialOpsRecords.tenantId, principal.tenantId),
+            eq(industrialOpsRecords.module, module),
+            eq(industrialOpsRecords.id, id),
+            isNull(industrialOpsRecords.archivedAt),
+          ),
+        )
+        .returning();
+      if (!row) throw new ForgeError("NOT_FOUND", "Record not found");
+      return mapRow(row);
+    });
+  }
+
+  async archive(principal: ForgePrincipal, module: string, id: string) {
+    if (!isOpsModule(module)) {
+      throw new ForgeError("NOT_FOUND", `Unknown industrial module: ${module}`);
+    }
+    const now = new Date();
+    return withTenantTransaction(this.db, principal.tenantId, async (tx) => {
+      const [row] = await tx
+        .update(industrialOpsRecords)
+        .set({
+          archivedAt: now,
+          updatedAt: now,
+          status: "ARCHIVED",
+          recordVersion: sql`${industrialOpsRecords.recordVersion} + 1`,
+        })
+        .where(
+          and(
+            eq(industrialOpsRecords.tenantId, principal.tenantId),
+            eq(industrialOpsRecords.module, module),
+            eq(industrialOpsRecords.id, id),
+            isNull(industrialOpsRecords.archivedAt),
+          ),
+        )
+        .returning();
+      if (!row) throw new ForgeError("NOT_FOUND", "Record not found");
+      return { id: row.id, archived: true };
     });
   }
 }
