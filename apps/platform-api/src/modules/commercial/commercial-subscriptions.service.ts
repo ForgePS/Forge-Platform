@@ -543,10 +543,13 @@ export class CommercialSubscriptionsService {
         const periodStart = before.currentPeriodEnd > now ? before.currentPeriodEnd : now;
         const periodEnd = new Date(periodStart.getTime() + periodDays * 86_400_000);
 
-        assertCommercialTransition(
-          before.commercialStatus as CommercialSubscriptionStatus,
-          "ACTIVE",
-        );
+        // Renew keeps ACTIVE subscriptions in ACTIVE (period roll only).
+        if (before.commercialStatus !== "ACTIVE") {
+          assertCommercialTransition(
+            before.commercialStatus as CommercialSubscriptionStatus,
+            "ACTIVE",
+          );
+        }
 
         const nextEffective = data.effectivePriceCents ?? before.effectivePriceCents;
         const nextCatalog = data.catalogPriceCents ?? before.catalogPriceCents;
