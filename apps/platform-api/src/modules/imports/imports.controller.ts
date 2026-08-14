@@ -545,6 +545,16 @@ export class ImportsController {
     return ok(await this.imports.listMappings(principal, jobId), getRequestIds(req));
   }
 
+  @Post("jobs/:jobId/suggest-mappings")
+  @RequirePermission("import.map")
+  async suggestMappings(
+    @Param("jobId") jobId: string,
+    @Principal() principal: ForgePrincipal,
+    @Req() req: RequestWithIds,
+  ) {
+    return ok(await this.imports.suggestMappings(principal, jobId), getRequestIds(req));
+  }
+
   @Put("jobs/:jobId/mappings")
   @RequirePermission("import.map")
   @Idempotent({ resourceType: "import_mappings", required: true })

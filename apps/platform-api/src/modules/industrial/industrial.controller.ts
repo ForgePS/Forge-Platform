@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Post, Req } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Req } from "@nestjs/common";
+import { ForgeError } from "@forge/errors";
 import { ok } from "../../common/api-response.js";
 import { getRequestIds, type RequestWithIds } from "../../common/request-ids.js";
 import { RequirePermission } from "../auth-context/require-permission.decorator.js";
@@ -27,6 +28,145 @@ export class IndustrialController {
     @Req() req: RequestWithIds,
   ) {
     const data = await this.industrial.getSite(tenantId, siteId);
+    return ok(data, getRequestIds(req));
+  }
+
+  @Get("departments")
+  @RequirePermission("industrial.access", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
+  async listDepartments(@Param("tenantId") tenantId: string, @Req() req: RequestWithIds) {
+    const data = await this.industrial.listDepartments(tenantId);
+    return ok(data, getRequestIds(req), { page: 1, pageSize: data.length, total: data.length });
+  }
+
+  @Post("departments")
+  @RequirePermission("industrial.access", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
+  async createDepartment(
+    @Param("tenantId") tenantId: string,
+    @Body() body: Record<string, unknown>,
+    @Req() req: RequestWithIds,
+  ) {
+    const input: Parameters<IndustrialService["createDepartment"]>[1] = {
+      name: String(body.name ?? ""),
+    };
+    if (typeof body.description === "string") input.description = body.description;
+    const data = await this.industrial.createDepartment(tenantId, input);
+    return ok(data, getRequestIds(req));
+  }
+
+  @Get("positions")
+  @RequirePermission("industrial.access", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
+  async listPositions(@Param("tenantId") tenantId: string, @Req() req: RequestWithIds) {
+    const data = await this.industrial.listPositions(tenantId);
+    return ok(data, getRequestIds(req), { page: 1, pageSize: data.length, total: data.length });
+  }
+
+  @Post("positions")
+  @RequirePermission("industrial.access", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
+  async createPosition(
+    @Param("tenantId") tenantId: string,
+    @Body() body: Record<string, unknown>,
+    @Req() req: RequestWithIds,
+  ) {
+    const input: Parameters<IndustrialService["createPosition"]>[1] = {
+      name: String(body.name ?? ""),
+    };
+    if (typeof body.description === "string") input.description = body.description;
+    if (typeof body.departmentId === "string") input.departmentId = body.departmentId;
+    const data = await this.industrial.createPosition(tenantId, input);
+    return ok(data, getRequestIds(req));
+  }
+
+  @Patch("positions/:id")
+  @RequirePermission("industrial.access", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
+  async archivePosition(
+    @Param("tenantId") tenantId: string,
+    @Param("id") id: string,
+    @Req() req: RequestWithIds,
+  ) {
+    const data = await this.industrial.archivePosition(tenantId, id);
+    return ok(data, getRequestIds(req));
+  }
+
+  @Get("employment-types")
+  @RequirePermission("industrial.access", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
+  async listEmploymentTypes(@Param("tenantId") tenantId: string, @Req() req: RequestWithIds) {
+    const data = await this.industrial.listEmploymentTypes(tenantId);
+    return ok(data, getRequestIds(req), { page: 1, pageSize: data.length, total: data.length });
+  }
+
+  @Post("employment-types")
+  @RequirePermission("industrial.access", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
+  async createEmploymentType(
+    @Param("tenantId") tenantId: string,
+    @Body() body: Record<string, unknown>,
+    @Req() req: RequestWithIds,
+  ) {
+    const input: Parameters<IndustrialService["createEmploymentType"]>[1] = {
+      name: String(body.name ?? ""),
+    };
+    if (typeof body.description === "string") input.description = body.description;
+    const data = await this.industrial.createEmploymentType(tenantId, input);
+    return ok(data, getRequestIds(req));
+  }
+
+  @Patch("employment-types/:id")
+  @RequirePermission("industrial.access", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
+  async archiveEmploymentType(
+    @Param("tenantId") tenantId: string,
+    @Param("id") id: string,
+    @Req() req: RequestWithIds,
+  ) {
+    const data = await this.industrial.archiveEmploymentType(tenantId, id);
+    return ok(data, getRequestIds(req));
+  }
+
+  @Get("personnel")
+  @RequirePermission("industrial.access", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
+  async listPersonnel(@Param("tenantId") tenantId: string, @Req() req: RequestWithIds) {
+    const data = await this.industrial.listPersonnel(tenantId);
+    return ok(data, getRequestIds(req), { page: 1, pageSize: data.length, total: data.length });
+  }
+
+  @Post("org-lookups/create-missing")
+  @RequirePermission("industrial.access", {
+    requiresEntitlement: { productCode: "FORGE_INDUSTRIAL" },
+  })
+  async createMissingOrgLookup(
+    @Param("tenantId") tenantId: string,
+    @Body() body: Record<string, unknown>,
+    @Req() req: RequestWithIds,
+  ) {
+    const kind = String(body.kind ?? "") as "department" | "position" | "employment_type";
+    if (kind !== "department" && kind !== "position" && kind !== "employment_type") {
+      throw new ForgeError(
+        "VALIDATION_FAILED",
+        "kind must be department, position, or employment_type",
+      );
+    }
+    const input: Parameters<IndustrialService["createMissingOrgLookup"]>[1] = {
+      kind,
+      name: String(body.name ?? ""),
+    };
+    if (typeof body.description === "string") input.description = body.description;
+    const data = await this.industrial.createMissingOrgLookup(tenantId, input);
     return ok(data, getRequestIds(req));
   }
 

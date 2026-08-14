@@ -310,6 +310,11 @@ function TenantDetailInner() {
                 </>
               ) : null}
             </dl>
+            <nav className={styles.linkRow} style={{ marginTop: "0.75rem" }}>
+              <Link href={`/setup-center/?tenantId=${encodeURIComponent(tenantId)}`}>Setup Center</Link>
+              <Link href={`/onboarding/`}>Onboarding</Link>
+              <Link href={`/imports/?tenantId=${encodeURIComponent(tenantId)}`}>Data import</Link>
+            </nav>
           </div>
 
           <div className={styles.panel} id="status">

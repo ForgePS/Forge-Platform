@@ -5,6 +5,8 @@ import {
   customerOnboardingSteps,
   facilities,
   industrialDepartments,
+  industrialEmploymentTypes,
+  industrialPositions,
   organizations,
   permissions,
   rolePermissions,
@@ -68,8 +70,17 @@ interface OnboardingSessionData {
   reviewed?: boolean;
   locationIds?: string[];
   departments?: Array<{ name: string; description?: string | undefined }>;
-  positions?: Array<{ name: string }>;
-  employmentTypes?: Array<{ name: string }>;
+  positions?: Array<{
+    name: string;
+    description?: string | undefined;
+    departmentName?: string | undefined;
+  }>;
+  employmentTypes?: Array<{ name: string; description?: string | undefined }>;
+  importJobsCompleted?: string[];
+  personnelImported?: boolean;
+  fleetImported?: boolean;
+  documentsConfigured?: { documentIds?: string[]; count?: number };
+  businessSettingsConfigured?: boolean;
 }
 
 export interface ActivationError {
@@ -141,13 +152,47 @@ const orgLookupsStepSchema = z.object({
     .max(100)
     .default([]),
   positions: z
-    .array(z.object({ name: z.string().min(1).max(200) }))
+    .array(
+      z.object({
+        name: z.string().min(1).max(200),
+        description: z.string().max(1000).optional(),
+        departmentName: z.string().min(1).max(300).optional(),
+      }),
+    )
     .max(100)
     .default([]),
   employmentTypes: z
-    .array(z.object({ name: z.string().min(1).max(120) }))
+    .array(
+      z.object({
+        name: z.string().min(1).max(120),
+        description: z.string().max(1000).optional(),
+      }),
+    )
     .max(50)
     .default([]),
+});
+
+const dataImportStepSchema = z.object({
+  importJobsCompleted: z.array(z.string().min(1).max(128)).max(50).optional(),
+  personnelImported: z.boolean().optional(),
+  fleetImported: z.boolean().optional(),
+});
+
+const documentsStepSchema = z.object({
+  documentIds: z.array(z.string().uuid()).max(100).optional(),
+  count: z.number().int().nonnegative().optional(),
+});
+
+const businessSettingsStepSchema = z.object({
+  timezone: z.string().max(64).optional(),
+  dateFormat: z.string().max(64).optional(),
+  employeeIdFormat: z.string().max(120).optional(),
+  emailNotifications: z.boolean().optional(),
+  mobileAccess: z.boolean().optional(),
+  employeePortal: z.boolean().optional(),
+  incidentNumbering: z.string().max(120).optional(),
+  inspectionNumbering: z.string().max(120).optional(),
+  fleetNumbering: z.string().max(120).optional(),
 });
 
 const brandingStepSchema = z.object({
@@ -554,65 +599,187 @@ export class OnboardingService {
           nextSessionData.departments = lookupInput.departments;
           nextSessionData.positions = lookupInput.positions;
           nextSessionData.employmentTypes = lookupInput.employmentTypes;
-          // Persist industrial departments when Industrial Safety is entitled.
-          if (
-            (nextSessionData.productCodes ?? []).includes("FORGE_INDUSTRIAL") &&
-            lookupInput.departments.length > 0
-          ) {
-            await withTenantTransaction(
-              this.db,
-              tenantId,
-              async (tx) => {
-                for (const dept of lookupInput.departments) {
-                  const existing = await tx
-                    .select()
-                    .from(industrialDepartments)
-                    .where(
-                      and(
-                        eq(industrialDepartments.tenantId, tenantId),
-                        eq(industrialDepartments.name, dept.name),
-                      ),
-                    )
-                    .limit(1);
-                  if (existing[0]) continue;
-                  const now = new Date();
-                  await tx.insert(industrialDepartments).values({
-                    id: createId(),
+          // Persist industrial org lookups when Industrial Safety is entitled.
+          if ((nextSessionData.productCodes ?? []).includes("FORGE_INDUSTRIAL")) {
+            const hasLookups =
+              lookupInput.departments.length > 0 ||
+              lookupInput.positions.length > 0 ||
+              lookupInput.employmentTypes.length > 0;
+            if (hasLookups) {
+              await withTenantTransaction(
+                this.db,
+                tenantId,
+                async (tx) => {
+                  const departmentIdsByName = new Map<string, string>();
+                  for (const dept of lookupInput.departments) {
+                    const existing = await tx
+                      .select()
+                      .from(industrialDepartments)
+                      .where(
+                        and(
+                          eq(industrialDepartments.tenantId, tenantId),
+                          eq(industrialDepartments.name, dept.name),
+                        ),
+                      )
+                      .limit(1);
+                    if (existing[0]) {
+                      departmentIdsByName.set(dept.name.toLowerCase(), existing[0].id);
+                      continue;
+                    }
+                    const now = new Date();
+                    const id = createId();
+                    await tx.insert(industrialDepartments).values({
+                      id,
+                      tenantId,
+                      name: dept.name,
+                      status: "ACTIVE",
+                      sourceSystem: "FORGE",
+                      sourcePayload: {
+                        description: dept.description ?? null,
+                        source: "onboarding",
+                      },
+                      createdAt: now,
+                      updatedAt: now,
+                    });
+                    departmentIdsByName.set(dept.name.toLowerCase(), id);
+                  }
+
+                  for (const position of lookupInput.positions) {
+                    const existing = await tx
+                      .select()
+                      .from(industrialPositions)
+                      .where(
+                        and(
+                          eq(industrialPositions.tenantId, tenantId),
+                          eq(industrialPositions.name, position.name),
+                        ),
+                      )
+                      .limit(1);
+                    if (existing[0]) continue;
+                    let departmentId: string | undefined;
+                    if (position.departmentName) {
+                      departmentId = departmentIdsByName.get(
+                        position.departmentName.toLowerCase(),
+                      );
+                      if (!departmentId) {
+                        const deptRows = await tx
+                          .select()
+                          .from(industrialDepartments)
+                          .where(
+                            and(
+                              eq(industrialDepartments.tenantId, tenantId),
+                              eq(industrialDepartments.name, position.departmentName),
+                            ),
+                          )
+                          .limit(1);
+                        departmentId = deptRows[0]?.id;
+                      }
+                    }
+                    const now = new Date();
+                    await tx.insert(industrialPositions).values({
+                      id: createId(),
+                      tenantId,
+                      name: position.name,
+                      description: position.description,
+                      departmentId,
+                      status: "ACTIVE",
+                      sourceSystem: "FORGE",
+                      sourcePayload: {
+                        description: position.description ?? null,
+                        departmentName: position.departmentName ?? null,
+                        source: "onboarding",
+                      },
+                      createdAt: now,
+                      updatedAt: now,
+                    });
+                  }
+
+                  for (const empType of lookupInput.employmentTypes) {
+                    const existing = await tx
+                      .select()
+                      .from(industrialEmploymentTypes)
+                      .where(
+                        and(
+                          eq(industrialEmploymentTypes.tenantId, tenantId),
+                          eq(industrialEmploymentTypes.name, empType.name),
+                        ),
+                      )
+                      .limit(1);
+                    if (existing[0]) continue;
+                    const now = new Date();
+                    await tx.insert(industrialEmploymentTypes).values({
+                      id: createId(),
+                      tenantId,
+                      name: empType.name,
+                      description: empType.description,
+                      status: "ACTIVE",
+                      sourceSystem: "FORGE",
+                      sourcePayload: {
+                        description: empType.description ?? null,
+                        source: "onboarding",
+                      },
+                      createdAt: now,
+                      updatedAt: now,
+                    });
+                  }
+
+                  await this.audit.writeInTransaction(tx, {
                     tenantId,
-                    name: dept.name,
-                    status: "ACTIVE",
-                    sourceSystem: "FORGE",
-                    sourcePayload: { description: dept.description ?? null, source: "onboarding" },
-                    createdAt: now,
-                    updatedAt: now,
+                    actorUserId: principal.userId,
+                    actorPersonId: principal.personId,
+                    actorType: "USER",
+                    action: "onboarding.org_lookups",
+                    resourceType: "customer_onboarding_session",
+                    resourceId: sessionId,
+                    result: "SUCCESS",
+                    riskLevel: "LOW",
+                    correlationId: principal.correlationId,
+                    requestId: principal.requestId,
+                    after: {
+                      departments: lookupInput.departments.length,
+                      positions: lookupInput.positions.length,
+                      employmentTypes: lookupInput.employmentTypes.length,
+                    },
                   });
-                }
-                await this.audit.writeInTransaction(tx, {
-                  tenantId,
-                  actorUserId: principal.userId,
-                  actorPersonId: principal.personId,
-                  actorType: "USER",
-                  action: "onboarding.org_lookups",
-                  resourceType: "customer_onboarding_session",
-                  resourceId: sessionId,
-                  result: "SUCCESS",
-                  riskLevel: "LOW",
-                  correlationId: principal.correlationId,
-                  requestId: principal.requestId,
-                  after: {
-                    departments: lookupInput.departments.length,
-                    positions: lookupInput.positions.length,
-                  },
-                });
-              },
-              principal.userId,
-            );
+                },
+                principal.userId,
+              );
+            }
           }
           stepPayload = {
             departments: lookupInput.departments,
             positions: lookupInput.positions,
             employmentTypes: lookupInput.employmentTypes,
           };
+          break;
+        }
+        case "CONFIGURE_DATA_IMPORT": {
+          const importInput = dataImportStepSchema.parse(parsed.payload);
+          if (importInput.importJobsCompleted !== undefined) {
+            nextSessionData.importJobsCompleted = importInput.importJobsCompleted;
+          }
+          if (importInput.personnelImported !== undefined) {
+            nextSessionData.personnelImported = importInput.personnelImported;
+          }
+          if (importInput.fleetImported !== undefined) {
+            nextSessionData.fleetImported = importInput.fleetImported;
+          }
+          stepPayload = { ...importInput };
+          break;
+        }
+        case "CONFIGURE_DOCUMENTS": {
+          const docsInput = documentsStepSchema.parse(parsed.payload);
+          const documentsConfigured: {
+            documentIds?: string[];
+            count?: number;
+          } = {
+            count: docsInput.count ?? docsInput.documentIds?.length ?? 0,
+          };
+          if (docsInput.documentIds !== undefined) {
+            documentsConfigured.documentIds = docsInput.documentIds;
+          }
+          nextSessionData.documentsConfigured = documentsConfigured;
+          stepPayload = { ...documentsConfigured };
           break;
         }
         case "CONFIGURE_BRANDING": {
@@ -634,6 +801,19 @@ export class OnboardingService {
           );
           nextSessionData.brandingConfigured = true;
           stepPayload = { ...brandingInput, appliedDefaults: true };
+          break;
+        }
+        case "CONFIGURE_BUSINESS_SETTINGS": {
+          const businessInput = businessSettingsStepSchema.parse(parsed.payload);
+          await this.configuration.put(
+            tenantId,
+            "business",
+            "defaults",
+            { value: businessInput },
+            principal,
+          );
+          nextSessionData.businessSettingsConfigured = true;
+          stepPayload = { ...businessInput };
           break;
         }
         case "CREATE_PRIMARY_ADMINISTRATOR": {

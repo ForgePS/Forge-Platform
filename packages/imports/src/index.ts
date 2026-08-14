@@ -366,6 +366,16 @@ export {
   StubProgressReporter,
 } from "./pipeline/stubs.js";
 export {
+  AliasColumnMapper,
+  COLUMN_ALIAS_GROUPS,
+  mappingStatus,
+  resolveAliasTarget,
+} from "./pipeline/column-mapper.js";
+export {
+  SchemaRowValidator,
+  summarizeValidation,
+} from "./validation/schema-validator.js";
+export {
   StubSchemaLoader,
   StubTransformer,
   StubImportExecutor,

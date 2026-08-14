@@ -68,6 +68,46 @@ export const industrialDepartments = pgTable(
   (t) => [index("industrial_departments_tenant_site_idx").on(t.tenantId, t.siteId)],
 );
 
+export const industrialPositions = pgTable(
+  "industrial_positions",
+  {
+    id: uuid("id").primaryKey(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    departmentId: uuid("department_id").references(() => industrialDepartments.id),
+    name: varchar("name", { length: 200 }).notNull(),
+    description: varchar("description", { length: 1000 }),
+    status: varchar("status", { length: 64 }).notNull().default("ACTIVE"),
+    ...sourceCols,
+    createdAt: createdAtColumn,
+    updatedAt: updatedAtColumn,
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("industrial_positions_tenant_dept_idx").on(t.tenantId, t.departmentId),
+    uniqueIndex("industrial_positions_tenant_name_uidx").on(t.tenantId, t.name),
+  ],
+);
+
+export const industrialEmploymentTypes = pgTable(
+  "industrial_employment_types",
+  {
+    id: uuid("id").primaryKey(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    name: varchar("name", { length: 120 }).notNull(),
+    description: varchar("description", { length: 1000 }),
+    status: varchar("status", { length: 64 }).notNull().default("ACTIVE"),
+    ...sourceCols,
+    createdAt: createdAtColumn,
+    updatedAt: updatedAtColumn,
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("industrial_employment_types_tenant_name_uidx").on(t.tenantId, t.name)],
+);
+
 export const industrialPersonnel = pgTable(
   "industrial_personnel",
   {
@@ -77,11 +117,16 @@ export const industrialPersonnel = pgTable(
       .references(() => tenants.id),
     siteId: uuid("site_id").references(() => industrialSites.id),
     departmentId: uuid("department_id").references(() => industrialDepartments.id),
+    positionId: uuid("position_id").references(() => industrialPositions.id),
+    employmentTypeId: uuid("employment_type_id").references(() => industrialEmploymentTypes.id),
     employeeNumber: varchar("employee_number", { length: 120 }),
     displayName: varchar("display_name", { length: 300 }).notNull(),
     firstName: varchar("first_name", { length: 150 }),
     lastName: varchar("last_name", { length: 150 }),
     email: varchar("email", { length: 320 }),
+    phone: varchar("phone", { length: 40 }),
+    hireDate: date("hire_date"),
+    supervisorName: varchar("supervisor_name", { length: 300 }),
     status: varchar("status", { length: 64 }).notNull().default("ACTIVE"),
     ...sourceCols,
     createdAt: createdAtColumn,
@@ -425,3 +470,26 @@ export const industrialJsas = pgTable("industrial_jsas", {
   updatedAt: updatedAtColumn,
   archivedAt: timestamp("archived_at", { withTimezone: true }),
 });
+
+/** Company documents uploaded during onboarding / Setup Center (tenant-scoped). */
+export const platformCompanyDocuments = pgTable(
+  "platform_company_documents",
+  {
+    id: uuid("id").primaryKey(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    documentId: uuid("document_id").notNull(),
+    title: varchar("title", { length: 300 }).notNull(),
+    category: varchar("category", { length: 64 }).notNull().default("GENERAL"),
+    mimeType: varchar("mime_type", { length: 255 }).notNull(),
+    originalFilename: varchar("original_filename", { length: 500 }).notNull(),
+    byteSize: integer("byte_size").notNull(),
+    status: varchar("status", { length: 64 }).notNull().default("ACTIVE"),
+    createdByUserId: uuid("created_by_user_id"),
+    createdAt: createdAtColumn,
+    updatedAt: updatedAtColumn,
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+  },
+  (t) => [index("platform_company_documents_tenant_idx").on(t.tenantId, t.status)],
+);

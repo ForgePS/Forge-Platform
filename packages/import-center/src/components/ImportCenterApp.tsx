@@ -30,6 +30,11 @@ import {
   SensitiveValue,
 } from "./badges.js";
 
+export type CreateLookupFn = (input: {
+  kind: string;
+  name: string;
+}) => Promise<{ id: string; name: string }>;
+
 export type ImportCenterAppProps = {
   api: ImportApi;
   tenantId: string | null;
@@ -43,7 +48,35 @@ export type ImportCenterAppProps = {
   onNavigate?: (href: string) => void;
   /** Application environment — drives production scanner restriction banner */
   appEnv?: string | null;
+  /** Compact chrome for embedding inside onboarding / setup flows */
+  embedded?: boolean;
+  /** Create missing department/position/employment type from validation errors */
+  createLookup?: CreateLookupFn;
 };
+
+/** Parse row-error text that mentions an unknown department or position. */
+export function parseMissingOrgLookupHint(
+  message: string,
+  fieldPath?: string | null,
+): { kind: "department" | "position" | "employment_type"; name: string } | null {
+  const haystack = `${fieldPath ?? ""} ${message}`;
+  const match = haystack.match(
+    /(?:unknown|missing|invalid)\s+(department|position|employment[_\s-]?type)\s*(?:named\s+)?[:\-]?\s*["']?([^"'.,;\n]+)/i,
+  );
+  if (match?.[1] && match[2]) {
+    const raw = match[1].toLowerCase().replace(/[\s-]+/g, "_");
+    const kind =
+      raw.startsWith("employment") ? ("employment_type" as const) : (raw as "department" | "position");
+    return { kind, name: match[2].trim() };
+  }
+  const quoted = message.match(/["']([^"']+)["']/);
+  if (quoted?.[1] && fieldPath) {
+    if (/department/i.test(fieldPath)) return { kind: "department", name: quoted[1].trim() };
+    if (/position|job.?title/i.test(fieldPath)) return { kind: "position", name: quoted[1].trim() };
+    if (/employment/i.test(fieldPath)) return { kind: "employment_type", name: quoted[1].trim() };
+  }
+  return null;
+}
 
 const panel: CSSProperties = {
   border: "1px solid #d0d0d0",
@@ -89,6 +122,8 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
     initialView = null,
     onNavigate,
     appEnv = null,
+    embedded = false,
+    createLookup,
   } = props;
 
   const [view, setView] = useState<ImportWorkflowView>(initialView ?? "dashboard");
@@ -105,6 +140,8 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
   const [resultsPayload, setResultsPayload] = useState<Record<string, unknown> | null>(null);
   const [duplicates, setDuplicates] = useState<unknown[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [lookupBusy, setLookupBusy] = useState<string | null>(null);
+  const [lookupNotice, setLookupNotice] = useState<string | null>(null);
   const [newForm, setNewForm] = useState({
     displayName: "",
     description: "",
@@ -496,21 +533,86 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
     }
   }
 
+  async function handleAutoMap() {
+    if (!jobId) return;
+    const blocked = disabledReason(hasPermission, "import.map");
+    if (blocked) {
+      setError(blocked);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const suggested = await api.suggestMappings(jobId);
+      setMappings(Array.isArray(suggested.mappings) ? suggested.mappings : []);
+    } catch (err) {
+      reportError(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCreateLookup(kind: string, name: string) {
+    if (!createLookup) return;
+    const key = `${kind}:${name}`;
+    setLookupBusy(key);
+    setLookupNotice(null);
+    setError(null);
+    try {
+      const created = await createLookup({ kind, name });
+      setLookupNotice(`Created ${kind.replace(/_/g, " ")} “${created.name}”. Re-validate to continue.`);
+    } catch (err) {
+      reportError(err);
+    } finally {
+      setLookupBusy(null);
+    }
+  }
+
+  function renderLookupAction(err: ImportRowError) {
+    if (!createLookup) return null;
+    const hint = parseMissingOrgLookupHint(err.message, err.fieldPath);
+    if (!hint) return null;
+    const key = `${hint.kind}:${hint.name}`;
+    return (
+      <button
+        type="button"
+        disabled={lookupBusy === key}
+        onClick={() => void handleCreateLookup(hint.kind, hint.name)}
+        style={{ marginLeft: "0.5rem" }}
+      >
+        {lookupBusy === key ? "Creating…" : `Create ${hint.kind.replace(/_/g, " ")} “${hint.name}”`}
+      </button>
+    );
+  }
+
   const malwareVerdict = (job?.file?.malwareVerdict ?? "NOT_SUBMITTED") as MalwareVerdict;
   const quarantined =
     job?.status === "QUARANTINED" || job?.file?.quarantineStatus === "QUARANTINED";
 
   return (
     <div>
-      <header style={{ marginBottom: "1.25rem" }}>
-        <h1 style={{ margin: 0 }}>Import Center</h1>
-        <p style={{ margin: "0.35rem 0 0", color: "#555" }}>
-          Shared Universal Import Platform — product-neutral workflow. Server state is authoritative.
-        </p>
+      <header style={{ marginBottom: embedded ? "0.75rem" : "1.25rem" }}>
+        <h1 style={{ margin: 0, fontSize: embedded ? "1.15rem" : undefined }}>
+          {embedded ? "Data Import" : "Import Center"}
+        </h1>
+        {embedded ? (
+          <p style={{ margin: "0.35rem 0 0", color: "#555" }}>
+            Import Personnel (XLSX/CSV) and Fleet without leaving onboarding.
+          </p>
+        ) : (
+          <p style={{ margin: "0.35rem 0 0", color: "#555" }}>
+            Shared Universal Import Platform — product-neutral workflow. Server state is authoritative.
+          </p>
+        )}
       </header>
 
       <ProductionScannerRestrictionBanner appEnv={appEnv} />
-      <PrivilegedAccessBanner visible={privileged && view !== "dashboard"} />
+      {!embedded ? <PrivilegedAccessBanner visible={privileged && view !== "dashboard"} /> : null}
+      {lookupNotice ? (
+        <div role="status" style={{ ...panel, borderColor: "#2f855a", background: "#f0fff4" }}>
+          {lookupNotice}
+        </div>
+      ) : null}
 
       <nav aria-label="Import Center sections" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
         {(
@@ -878,6 +980,13 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
               <button
                 type="button"
                 disabled={Boolean(disabledReason(hasPermission, "import.map"))}
+                onClick={() => void handleAutoMap()}
+              >
+                Auto-map columns
+              </button>{" "}
+              <button
+                type="button"
+                disabled={Boolean(disabledReason(hasPermission, "import.map"))}
                 onClick={() => void handleSaveMappings()}
               >
                 Save mappings
@@ -927,7 +1036,7 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
           <table style={tableStyle}>
             <thead>
               <tr>
-                {["Code", "Field", "Message", "Severity"].map((h) => (
+                {["Code", "Field", "Message", "Severity", "Fix"].map((h) => (
                   <th key={h} style={thtd}>
                     {h}
                   </th>
@@ -941,10 +1050,32 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
                   <td style={thtd}>{err.fieldPath ?? "—"}</td>
                   <td style={thtd}>{err.message}</td>
                   <td style={thtd}>{err.severity}</td>
+                  <td style={thtd}>{renderLookupAction(err)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <button
+            type="button"
+            disabled={Boolean(disabledReason(hasPermission, "import.validate")) || !jobId}
+            onClick={() => {
+              if (!jobId) return;
+              void (async () => {
+                try {
+                  await api.requestValidation(jobId);
+                  const rows = await api.listErrors(jobId);
+                  setErrors(Array.isArray(rows) ? rows : []);
+                  setLookupNotice((prev) =>
+                    prev ? `${prev} Validation refreshed.` : "Validation refreshed.",
+                  );
+                } catch (err) {
+                  reportError(err);
+                }
+              })();
+            }}
+          >
+            Re-validate
+          </button>{" "}
           <button type="button" onClick={() => navigate("preview", jobId)}>
             Continue to preview
           </button>
@@ -1166,7 +1297,7 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
           <table style={tableStyle}>
             <thead>
               <tr>
-                {["Code", "Message", "Retry"].map((h) => (
+                {["Code", "Message", "Actions"].map((h) => (
                   <th key={h} style={thtd}>
                     {h}
                   </th>
@@ -1186,6 +1317,7 @@ export function ImportCenterApp(props: ImportCenterAppProps) {
                     >
                       Retry
                     </button>
+                    {renderLookupAction(err)}
                   </td>
                 </tr>
               ))}

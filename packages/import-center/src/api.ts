@@ -103,6 +103,14 @@ export function createImportApi(transport: ImportApiTransport) {
     listMappings(jobId: string) {
       return transport.get<ImportMappingRow[]>(`${base}/jobs/${jobId}/mappings`);
     },
+    suggestMappings(jobId: string) {
+      return transport.send<{
+        jobId: string;
+        templateKey: string;
+        detectedHeaders: string[];
+        mappings: ImportMappingRow[];
+      }>(`${base}/jobs/${jobId}/suggest-mappings`, "POST", {});
+    },
     putMappings(jobId: string, mappings: ImportMappingRow[], idempotencyKey?: string) {
       return transport.send(
         `${base}/jobs/${jobId}/mappings`,
@@ -242,3 +250,27 @@ export function createImportApi(transport: ImportApiTransport) {
 }
 
 export type ImportApi = ReturnType<typeof createImportApi>;
+
+export type CreateLookupInput = {
+  kind: string;
+  name: string;
+  description?: string;
+};
+
+export type CreateLookupResult = {
+  id: string;
+  name: string;
+};
+
+/** Creates missing industrial org lookups (department / position / employment_type). */
+export function createLookupViaTransport(
+  transport: ImportApiTransport,
+  tenantId: string,
+): (input: CreateLookupInput) => Promise<CreateLookupResult> {
+  return (input) =>
+    transport.send<CreateLookupResult>(
+      `/api/v1/tenants/${tenantId}/industrial/org-lookups/create-missing`,
+      "POST",
+      input,
+    );
+}

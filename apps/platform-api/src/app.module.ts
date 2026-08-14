@@ -18,6 +18,7 @@ import { AuthorizationModule } from "./modules/authorization/authorization.modul
 import { BrandingModule } from "./modules/branding/branding.module.js";
 import { ApiKeysModule } from "./modules/api-keys/api-keys.module.js";
 import { CognitoModule } from "./modules/cognito/cognito.module.js";
+import { CompanyDocumentsModule } from "./modules/company-documents/company-documents.module.js";
 import { ConfigurationModule } from "./modules/configuration/configuration.module.js";
 import { EntitlementsModule } from "./modules/entitlements/entitlements.module.js";
 import { FeatureFlagsModule } from "./modules/feature-flags/feature-flags.module.js";
@@ -79,6 +80,7 @@ export class AppModule {
         ConfigurationModule,
         ImportsModule,
         BrandingModule,
+        CompanyDocumentsModule,
         ApiKeysModule,
         WebhooksModule,
         SupportModule,

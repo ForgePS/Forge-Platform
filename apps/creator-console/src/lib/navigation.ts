@@ -36,6 +36,12 @@ export const CREATOR_NAV_GROUPS: ForgeNavigationGroup[] = [
         permission: "platform.onboarding.manage",
       },
       {
+        id: "setup-center",
+        label: "Setup Center",
+        route: "/setup-center",
+        permission: "platform.tenant.read",
+      },
+      {
         id: "facilities",
         label: "Locations",
         route: "/facilities",

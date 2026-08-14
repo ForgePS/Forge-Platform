@@ -482,11 +482,14 @@ export const ONBOARDING_STEPS = [
   { number: 6, key: "CONFIGURE_SUBSCRIPTION", label: "Configure subscription" },
   { number: 7, key: "CONFIGURE_LOCATIONS", label: "Configure locations" },
   { number: 8, key: "CONFIGURE_ORG_LOOKUPS", label: "Configure organization setup" },
-  { number: 9, key: "CONFIGURE_BRANDING", label: "Configure branding" },
-  { number: 10, key: "CREATE_PRIMARY_ADMINISTRATOR", label: "Create primary administrator" },
-  { number: 11, key: "SEND_INVITATION", label: "Send invitation" },
-  { number: 12, key: "REVIEW_CONFIGURATION", label: "Review configuration" },
-  { number: 13, key: "ACTIVATE_TENANT", label: "Activate company" },
+  { number: 9, key: "CONFIGURE_DATA_IMPORT", label: "Import company data" },
+  { number: 10, key: "CONFIGURE_DOCUMENTS", label: "Upload company documents" },
+  { number: 11, key: "CONFIGURE_BRANDING", label: "Configure branding" },
+  { number: 12, key: "CONFIGURE_BUSINESS_SETTINGS", label: "Configure business settings" },
+  { number: 13, key: "CREATE_PRIMARY_ADMINISTRATOR", label: "Create primary administrator" },
+  { number: 14, key: "SEND_INVITATION", label: "Send invitation" },
+  { number: 15, key: "REVIEW_CONFIGURATION", label: "Review configuration" },
+  { number: 16, key: "ACTIVATE_TENANT", label: "Activate company" },
 ] as const;
 
 export type OnboardingStepKey = (typeof ONBOARDING_STEPS)[number]["key"];

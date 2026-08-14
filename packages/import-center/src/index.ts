@@ -17,4 +17,9 @@ export {
   ImportEmptyState,
   ImportProgressBar,
 } from "./components/badges.js";
-export { ImportCenterApp, type ImportCenterAppProps } from "./components/ImportCenterApp.js";
+export {
+  ImportCenterApp,
+  parseMissingOrgLookupHint,
+  type ImportCenterAppProps,
+  type CreateLookupFn,
+} from "./components/ImportCenterApp.js";

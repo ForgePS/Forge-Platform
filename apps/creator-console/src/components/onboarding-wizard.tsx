@@ -14,6 +14,12 @@ import {
 } from "@forge/ui";
 import { catalogModulesForSeed } from "@forge/contracts";
 import {
+  createImportApi,
+  createLookupViaTransport,
+  ImportCenterApp,
+} from "@forge/import-center";
+import {
+  apiGet,
   apiSend,
   humanizeForgeError,
   onboardingActivate,
@@ -24,6 +30,7 @@ import {
   type OnboardingSessionView,
   type OnboardingStepRow,
 } from "@/lib/api";
+import { useAuth } from "@/hooks/use-auth";
 import { tenantDetailHref } from "@/hooks/use-tenant-id";
 import { productDisplayName } from "@/lib/presentation";
 import styles from "../app/page.module.css";
@@ -40,7 +47,31 @@ type LocationDraft = {
   timezone: string;
 };
 
-type LookupDraft = { name: string };
+type LookupDraft = {
+  name: string;
+  description?: string;
+  departmentName?: string;
+  active?: boolean;
+};
+
+type CompanyDocDraft = {
+  id: string;
+  title: string;
+  filename: string;
+  size: number;
+};
+
+type BusinessSettingsDraft = {
+  timezone: string;
+  dateFormat: string;
+  employeeIdFormat: string;
+  emailNotifications: boolean;
+  mobileAccess: boolean;
+  employeePortal: boolean;
+  incidentNumbering: string;
+  inspectionNumbering: string;
+  fleetNumbering: string;
+};
 
 const COMPANY_TYPES = [
   { value: "INDUSTRIAL", label: "Industrial / Manufacturing", template: "INDUSTRIAL_STARTER" },
@@ -56,6 +87,19 @@ const BUSINESS_ROLES: Array<{ label: string; match: RegExp }> = [
   { label: "Training Administrator", match: /TRAINING/i },
   { label: "Read Only", match: /EMPLOYEE|MEMBER|READ/i },
 ];
+
+const US_TIMEZONES = [
+  { value: "America/New_York", label: "Eastern Time" },
+  { value: "America/Chicago", label: "Central Time" },
+  { value: "America/Denver", label: "Mountain Time" },
+  { value: "America/Phoenix", label: "Arizona Time" },
+  { value: "America/Los_Angeles", label: "Pacific Time" },
+  { value: "America/Anchorage", label: "Alaska Time" },
+  { value: "Pacific/Honolulu", label: "Hawaii Time" },
+] as const;
+
+const COMPANY_DOC_ACCEPT =
+  "application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/jpeg,image/png,image/webp,image/gif,.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp,.gif";
 
 function normalizeKey(value: string): string {
   return value
@@ -87,8 +131,11 @@ function stepLabel(key: string): string {
     SELECT_MODULES: "Modules",
     CONFIGURE_SUBSCRIPTION: "Subscription",
     CONFIGURE_LOCATIONS: "Locations",
-    CONFIGURE_ORG_LOOKUPS: "Departments & positions",
+    CONFIGURE_ORG_LOOKUPS: "Organization",
+    CONFIGURE_DATA_IMPORT: "Data import",
+    CONFIGURE_DOCUMENTS: "Documents",
     CONFIGURE_BRANDING: "Branding",
+    CONFIGURE_BUSINESS_SETTINGS: "Business settings",
     CREATE_PRIMARY_ADMINISTRATOR: "Administrators",
     SEND_INVITATION: "Invitations",
     REVIEW_CONFIGURATION: "Review",
@@ -97,6 +144,7 @@ function stepLabel(key: string): string {
   return map[key] ?? key.replace(/_/g, " ").toLowerCase();
 }
 
+/** Steps shown in the activator wizard (exclude start/activate bookkeeping). Keep DATA_IMPORT. */
 function pendingSteps(steps: OnboardingStepRow[]): OnboardingStepRow[] {
   return steps.filter(
     (s) =>
@@ -107,12 +155,23 @@ function pendingSteps(steps: OnboardingStepRow[]): OnboardingStepRow[] {
   );
 }
 
+function formatBytes(size: number): string {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function emptyLookup(name = ""): LookupDraft {
+  return { name, description: "", active: true };
+}
+
 export function OnboardingWizard({
   initialSessionId,
 }: {
   initialSessionId?: string | undefined;
 }) {
   const toast = useToast();
+  const { hasPermission } = useAuth();
   const [view, setView] = useState<OnboardingSessionView | null>(null);
   const [etag, setEtag] = useState<string | null>(null);
   const [phase, setPhase] = useState<"start" | "wizard" | "success">("start");
@@ -147,8 +206,28 @@ export function OnboardingWizard({
       timezone: "America/Chicago",
     },
   ]);
-  const [departments, setDepartments] = useState<LookupDraft[]>([{ name: "Operations" }]);
-  const [positions, setPositions] = useState<LookupDraft[]>([{ name: "Supervisor" }]);
+  const [departments, setDepartments] = useState<LookupDraft[]>([emptyLookup("Operations")]);
+  const [positions, setPositions] = useState<LookupDraft[]>([emptyLookup("Supervisor")]);
+  const [employmentTypes, setEmploymentTypes] = useState<LookupDraft[]>([
+    emptyLookup("Full time"),
+    emptyLookup("Part time"),
+  ]);
+  const [deptDraft, setDeptDraft] = useState<LookupDraft>(emptyLookup());
+  const [posDraft, setPosDraft] = useState<LookupDraft>(emptyLookup());
+  const [empDraft, setEmpDraft] = useState<LookupDraft>(emptyLookup());
+  const [companyDocs, setCompanyDocs] = useState<CompanyDocDraft[]>([]);
+  const [docUploading, setDocUploading] = useState(false);
+  const [businessSettings, setBusinessSettings] = useState<BusinessSettingsDraft>({
+    timezone: "America/Chicago",
+    dateFormat: "MM/DD/YYYY",
+    employeeIdFormat: "EMP-####",
+    emailNotifications: true,
+    mobileAccess: true,
+    employeePortal: true,
+    incidentNumbering: "INC-",
+    inspectionNumbering: "INSP-",
+    fleetNumbering: "FLT-",
+  });
   const [primaryColor, setPrimaryColor] = useState("#1a365d");
   const [secondaryColor, setSecondaryColor] = useState("#2d3748");
   const [supportEmail, setSupportEmail] = useState("");
@@ -163,6 +242,27 @@ export function OnboardingWizard({
   const [adminRoleCode, setAdminRoleCode] = useState("");
   const [sendInviteNow, setSendInviteNow] = useState(true);
   const [activatedTenantId, setActivatedTenantId] = useState<string | null>(null);
+
+  const importApi = useMemo(
+    () =>
+      createImportApi({
+        get: (path, options) => apiGet(path, options),
+        send: (path, method, payload, options) => apiSend(path, method, payload, options),
+      }),
+    [],
+  );
+
+  const createLookup = useMemo(() => {
+    const tenantId = view?.session.tenantId;
+    if (!tenantId) return undefined;
+    return createLookupViaTransport(
+      {
+        get: (path, options) => apiGet(path, options),
+        send: (path, method, payload, options) => apiSend(path, method, payload, options),
+      },
+      tenantId,
+    );
+  }, [view?.session.tenantId]);
 
   const catalogProducts = useMemo(
     () => [
@@ -184,6 +284,8 @@ export function OnboardingWizard({
     ],
     [],
   );
+
+  const industrialSelected = selectedProducts.includes("FORGE_INDUSTRIAL");
 
   useEffect(() => {
     if (!slugTouched && displayName) setSlug(normalizeSlug(displayName));
@@ -271,6 +373,7 @@ export function OnboardingWizard({
       setOrgDisplayName(displayName.trim());
       setOrgLegalName(legalName.trim() || displayName.trim());
       setOrgSlug(normalizeSlug(`${displayName}-org`));
+      setBusinessSettings((prev) => ({ ...prev, timezone }));
       const product = result.data.template?.productCode;
       if (product) setSelectedProducts([product]);
       const modules = result.data.template?.modules?.map((m) => m.code) ?? [];
@@ -344,6 +447,45 @@ export function OnboardingWizard({
     }
   }
 
+  async function uploadCompanyDocument(file: File | null) {
+    if (!view || !file) return;
+    setDocUploading(true);
+    setError(null);
+    try {
+      const title = file.name.replace(/\.[^.]+$/, "") || file.name;
+      const upload = await apiSend<{ id: string; documentId: string; uploadUrl: string }>(
+        `/api/v1/tenants/${view.session.tenantId}/company-documents/upload-url`,
+        "POST",
+        {
+          title,
+          filename: file.name,
+          mimeType: file.type || "application/octet-stream",
+          contentLength: file.size,
+        },
+      );
+      const put = await fetch(upload.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      if (!put.ok) throw new Error("Document upload failed. Please try again.");
+      await apiSend(
+        `/api/v1/tenants/${view.session.tenantId}/company-documents/${upload.id}/complete`,
+        "POST",
+        {},
+      );
+      setCompanyDocs((prev) => [
+        ...prev,
+        { id: upload.id, title, filename: file.name, size: file.size },
+      ]);
+      toast.push("Document uploaded", "success");
+    } catch (err) {
+      setError(humanizeForgeError(err instanceof Error ? err.message : "Document upload failed."));
+    } finally {
+      setDocUploading(false);
+    }
+  }
+
   async function activateCompany() {
     if (!view || !etag) return;
     setBusy(true);
@@ -393,6 +535,9 @@ export function OnboardingWizard({
         <div className={styles.actions} style={{ marginTop: "1rem" }}>
           <Link className={styles.button} href={tenantDetailHref(activatedTenantId)}>
             Open company
+          </Link>
+          <Link className={styles.buttonSecondary} href={`/setup-center/?tenantId=${activatedTenantId}`}>
+            Setup Center
           </Link>
           <Link className={styles.buttonSecondary} href={`/imports/?tenantId=${activatedTenantId}`}>
             Import data
@@ -463,10 +608,11 @@ export function OnboardingWizard({
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
               >
-                <option value="America/Chicago">Central Time</option>
-                <option value="America/New_York">Eastern Time</option>
-                <option value="America/Denver">Mountain Time</option>
-                <option value="America/Los_Angeles">Pacific Time</option>
+                {US_TIMEZONES.map((tz) => (
+                  <option key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </option>
+                ))}
               </select>
             </FormField>
             <FormField label="Web address" htmlFor="slug" hint="Used for the customer portal address. Forge fills this in for you.">
@@ -780,52 +926,355 @@ export function OnboardingWizard({
       ) : null}
 
       {activeStepKey === "CONFIGURE_ORG_LOOKUPS" ? (
-        <FormSection title="Departments & positions">
-          <p className={styles.muted}>Optional now — you can add more later from Setup.</p>
-          <FormField label="Departments" htmlFor="departments">
-            <textarea
-              id="departments"
-              className={styles.input}
-              rows={4}
-              value={departments.map((d) => d.name).join("\n")}
-              onChange={(e) =>
-                setDepartments(
-                  e.target.value
-                    .split("\n")
-                    .map((name) => name.trim())
-                    .filter(Boolean)
-                    .map((name) => ({ name })),
-                )
-              }
-              placeholder={"One department per line\nMaintenance\nOperations"}
-            />
-          </FormField>
-          <FormField label="Positions / job titles" htmlFor="positions">
-            <textarea
-              id="positions"
-              className={styles.input}
-              rows={3}
-              value={positions.map((d) => d.name).join("\n")}
-              onChange={(e) =>
-                setPositions(
-                  e.target.value
-                    .split("\n")
-                    .map((name) => name.trim())
-                    .filter(Boolean)
-                    .map((name) => ({ name })),
-                )
-              }
-            />
-          </FormField>
+        <FormSection title="Organization">
+          <p className={styles.muted}>
+            Add departments, positions, and employment types. You can refine these later from Setup Center.
+          </p>
+
+          <div style={{ marginTop: "1rem" }}>
+            <h3 style={{ margin: "0 0 0.5rem", fontSize: "1rem" }}>Departments</h3>
+            <ul className={styles.list}>
+              {departments.map((row, index) => (
+                <li key={`dept-${index}`} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <span>
+                    {row.name}
+                    {row.description ? ` — ${row.description}` : ""}
+                    {row.active === false ? " (inactive)" : ""}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.buttonSecondary}
+                    onClick={() => setDepartments((prev) => prev.filter((_, i) => i !== index))}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.5rem" }}>
+              <FormField label="Department name" htmlFor="dept-name">
+                <input
+                  id="dept-name"
+                  className={styles.input}
+                  value={deptDraft.name}
+                  onChange={(e) => setDeptDraft((d) => ({ ...d, name: e.target.value }))}
+                />
+              </FormField>
+              <FormField label="Description (optional)" htmlFor="dept-desc">
+                <input
+                  id="dept-desc"
+                  className={styles.input}
+                  value={deptDraft.description ?? ""}
+                  onChange={(e) => setDeptDraft((d) => ({ ...d, description: e.target.value }))}
+                />
+              </FormField>
+              <label style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <input
+                  type="checkbox"
+                  checked={deptDraft.active !== false}
+                  onChange={(e) => setDeptDraft((d) => ({ ...d, active: e.target.checked }))}
+                />
+                Active
+              </label>
+              <button
+                type="button"
+                className={styles.buttonSecondary}
+                onClick={() => {
+                  if (!deptDraft.name.trim()) return;
+                  setDepartments((prev) => [
+                    ...prev,
+                    {
+                      name: deptDraft.name.trim(),
+                      ...(deptDraft.description?.trim()
+                        ? { description: deptDraft.description.trim() }
+                        : {}),
+                      active: deptDraft.active !== false,
+                    },
+                  ]);
+                  setDeptDraft(emptyLookup());
+                }}
+              >
+                + Add Department
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginTop: "1.5rem" }}>
+            <h3 style={{ margin: "0 0 0.5rem", fontSize: "1rem" }}>Positions</h3>
+            <ul className={styles.list}>
+              {positions.map((row, index) => (
+                <li key={`pos-${index}`} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <span>
+                    {row.name}
+                    {row.departmentName ? ` · ${row.departmentName}` : ""}
+                    {row.description ? ` — ${row.description}` : ""}
+                    {row.active === false ? " (inactive)" : ""}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.buttonSecondary}
+                    onClick={() => setPositions((prev) => prev.filter((_, i) => i !== index))}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.5rem" }}>
+              <FormField label="Position name" htmlFor="pos-name">
+                <input
+                  id="pos-name"
+                  className={styles.input}
+                  value={posDraft.name}
+                  onChange={(e) => setPosDraft((d) => ({ ...d, name: e.target.value }))}
+                />
+              </FormField>
+              <FormField label="Description (optional)" htmlFor="pos-desc">
+                <input
+                  id="pos-desc"
+                  className={styles.input}
+                  value={posDraft.description ?? ""}
+                  onChange={(e) => setPosDraft((d) => ({ ...d, description: e.target.value }))}
+                />
+              </FormField>
+              <FormField label="Department (optional)" htmlFor="pos-dept">
+                <select
+                  id="pos-dept"
+                  className={styles.input}
+                  value={posDraft.departmentName ?? ""}
+                  onChange={(e) =>
+                    setPosDraft((d) => ({ ...d, departmentName: e.target.value || undefined }))
+                  }
+                >
+                  <option value="">No department</option>
+                  {departments.map((d) => (
+                    <option key={d.name} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <label style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <input
+                  type="checkbox"
+                  checked={posDraft.active !== false}
+                  onChange={(e) => setPosDraft((d) => ({ ...d, active: e.target.checked }))}
+                />
+                Active
+              </label>
+              <button
+                type="button"
+                className={styles.buttonSecondary}
+                onClick={() => {
+                  if (!posDraft.name.trim()) return;
+                  setPositions((prev) => [
+                    ...prev,
+                    {
+                      name: posDraft.name.trim(),
+                      ...(posDraft.description?.trim()
+                        ? { description: posDraft.description.trim() }
+                        : {}),
+                      ...(posDraft.departmentName ? { departmentName: posDraft.departmentName } : {}),
+                      active: posDraft.active !== false,
+                    },
+                  ]);
+                  setPosDraft(emptyLookup());
+                }}
+              >
+                + Add Position
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginTop: "1.5rem" }}>
+            <h3 style={{ margin: "0 0 0.5rem", fontSize: "1rem" }}>Employment types</h3>
+            <ul className={styles.list}>
+              {employmentTypes.map((row, index) => (
+                <li key={`emp-${index}`} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <span>
+                    {row.name}
+                    {row.description ? ` — ${row.description}` : ""}
+                    {row.active === false ? " (inactive)" : ""}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.buttonSecondary}
+                    onClick={() => setEmploymentTypes((prev) => prev.filter((_, i) => i !== index))}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.5rem" }}>
+              <FormField label="Employment type name" htmlFor="emp-name">
+                <input
+                  id="emp-name"
+                  className={styles.input}
+                  value={empDraft.name}
+                  onChange={(e) => setEmpDraft((d) => ({ ...d, name: e.target.value }))}
+                />
+              </FormField>
+              <FormField label="Description (optional)" htmlFor="emp-desc">
+                <input
+                  id="emp-desc"
+                  className={styles.input}
+                  value={empDraft.description ?? ""}
+                  onChange={(e) => setEmpDraft((d) => ({ ...d, description: e.target.value }))}
+                />
+              </FormField>
+              <label style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <input
+                  type="checkbox"
+                  checked={empDraft.active !== false}
+                  onChange={(e) => setEmpDraft((d) => ({ ...d, active: e.target.checked }))}
+                />
+                Active
+              </label>
+              <button
+                type="button"
+                className={styles.buttonSecondary}
+                onClick={() => {
+                  if (!empDraft.name.trim()) return;
+                  setEmploymentTypes((prev) => [
+                    ...prev,
+                    {
+                      name: empDraft.name.trim(),
+                      ...(empDraft.description?.trim()
+                        ? { description: empDraft.description.trim() }
+                        : {}),
+                      active: empDraft.active !== false,
+                    },
+                  ]);
+                  setEmpDraft(emptyLookup());
+                }}
+              >
+                + Add Employment Type
+              </button>
+            </div>
+          </div>
+
           <button
             className={styles.button}
             type="button"
             disabled={busy}
+            style={{ marginTop: "1.25rem" }}
             onClick={() =>
               void completeCurrent({
-                departments,
-                positions,
-                employmentTypes: [{ name: "Full time" }, { name: "Part time" }],
+                departments: departments
+                  .filter((d) => d.name.trim())
+                  .map((d) => ({
+                    name: d.name.trim(),
+                    ...(d.description?.trim() ? { description: d.description.trim() } : {}),
+                  })),
+                positions: positions
+                  .filter((p) => p.name.trim())
+                  .map((p) => ({
+                    name: p.name.trim(),
+                    ...(p.description?.trim() ? { description: p.description.trim() } : {}),
+                    ...(p.departmentName ? { departmentName: p.departmentName } : {}),
+                  })),
+                employmentTypes: employmentTypes
+                  .filter((e) => e.name.trim())
+                  .map((e) => ({
+                    name: e.name.trim(),
+                    ...(e.description?.trim() ? { description: e.description.trim() } : {}),
+                  })),
+              })
+            }
+          >
+            Save and continue
+          </button>
+        </FormSection>
+      ) : null}
+
+      {activeStepKey === "CONFIGURE_DATA_IMPORT" ? (
+        <FormSection title="Data import">
+          <p className={styles.muted}>
+            Import Personnel (XLSX/CSV) and Fleet without leaving onboarding. You can skip and finish imports later
+            from Setup Center.
+          </p>
+          {view?.session.tenantId ? (
+            <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+              <ImportCenterApp
+                api={importApi}
+                tenantId={view.session.tenantId}
+                hasPermission={hasPermission}
+                embedded
+                basePath="/onboarding/import"
+                initialView="dashboard"
+                onNavigate={() => undefined}
+                {...(createLookup ? { createLookup } : {})}
+                appEnv={process.env.NEXT_PUBLIC_APP_ENV ?? process.env.APP_ENV ?? "local"}
+              />
+            </div>
+          ) : null}
+          <div className={styles.actions}>
+            <button
+              className={styles.button}
+              type="button"
+              disabled={busy}
+              onClick={() =>
+                void completeCurrent({ personnelImported: true, fleetImported: true })
+              }
+            >
+              Continue — imports done
+            </button>
+            <button
+              className={styles.buttonSecondary}
+              type="button"
+              disabled={busy}
+              onClick={() => void completeCurrent({ skipped: true })}
+            >
+              Skip for now
+            </button>
+          </div>
+        </FormSection>
+      ) : null}
+
+      {activeStepKey === "CONFIGURE_DOCUMENTS" ? (
+        <FormSection title="Company documents">
+          <p className={styles.muted}>Upload PDF, Word, Excel, or image files for company policies and handbooks.</p>
+          <ForgeAssetUploader
+            id="company-documents"
+            label="COMPANY DOCUMENTS"
+            accept={COMPANY_DOC_ACCEPT}
+            hint="PDF, Word, Excel, or images up to 25 MB."
+            maxBytes={25_000_000}
+            uploading={docUploading}
+            onSelect={(file: File | null) => void uploadCompanyDocument(file)}
+          />
+          {companyDocs.length ? (
+            <ul className={styles.list} style={{ marginTop: "1rem" }}>
+              {companyDocs.map((doc) => (
+                <li key={doc.id} style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+                  <span>
+                    <strong>{doc.title}</strong> · {doc.filename} · {formatBytes(doc.size)}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.buttonSecondary}
+                    onClick={() => setCompanyDocs((prev) => prev.filter((d) => d.id !== doc.id))}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={styles.muted} style={{ marginTop: "0.75rem" }}>
+              No documents uploaded yet.
+            </p>
+          )}
+          <button
+            className={styles.button}
+            type="button"
+            disabled={busy}
+            style={{ marginTop: "1rem" }}
+            onClick={() =>
+              void completeCurrent({
+                documentIds: companyDocs.map((d) => d.id),
+                count: companyDocs.length,
               })
             }
           >
@@ -878,6 +1327,122 @@ export function OnboardingWizard({
                 supportEmail: supportEmail || undefined,
                 emailSenderName: displayName || orgDisplayName,
                 logoDocumentId,
+              })
+            }
+          >
+            Save and continue
+          </button>
+        </FormSection>
+      ) : null}
+
+      {activeStepKey === "CONFIGURE_BUSINESS_SETTINGS" ? (
+        <FormSection title="Business settings">
+          <FormField label="Time zone" htmlFor="biz-tz">
+            <select
+              id="biz-tz"
+              className={styles.input}
+              value={businessSettings.timezone}
+              onChange={(e) => setBusinessSettings((s) => ({ ...s, timezone: e.target.value }))}
+            >
+              {US_TIMEZONES.map((tz) => (
+                <option key={tz.value} value={tz.value}>
+                  {tz.label}
+                </option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Date format" htmlFor="biz-date">
+            <select
+              id="biz-date"
+              className={styles.input}
+              value={businessSettings.dateFormat}
+              onChange={(e) => setBusinessSettings((s) => ({ ...s, dateFormat: e.target.value }))}
+            >
+              <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+              <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+              <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+            </select>
+          </FormField>
+          <FormField label="Employee ID format" htmlFor="biz-emp-id" hint="Example: EMP-####">
+            <input
+              id="biz-emp-id"
+              className={styles.input}
+              value={businessSettings.employeeIdFormat}
+              onChange={(e) => setBusinessSettings((s) => ({ ...s, employeeIdFormat: e.target.value }))}
+            />
+          </FormField>
+          <label style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
+            <input
+              type="checkbox"
+              checked={businessSettings.emailNotifications}
+              onChange={(e) => setBusinessSettings((s) => ({ ...s, emailNotifications: e.target.checked }))}
+            />
+            Email notifications
+          </label>
+          <label style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <input
+              type="checkbox"
+              checked={businessSettings.mobileAccess}
+              onChange={(e) => setBusinessSettings((s) => ({ ...s, mobileAccess: e.target.checked }))}
+            />
+            Mobile access
+          </label>
+          <label style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <input
+              type="checkbox"
+              checked={businessSettings.employeePortal}
+              onChange={(e) => setBusinessSettings((s) => ({ ...s, employeePortal: e.target.checked }))}
+            />
+            Employee portal
+          </label>
+          {industrialSelected ? (
+            <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.75rem" }}>
+              <FormField label="Incident numbering prefix" htmlFor="biz-inc">
+                <input
+                  id="biz-inc"
+                  className={styles.input}
+                  value={businessSettings.incidentNumbering}
+                  onChange={(e) => setBusinessSettings((s) => ({ ...s, incidentNumbering: e.target.value }))}
+                />
+              </FormField>
+              <FormField label="Inspection numbering prefix" htmlFor="biz-insp">
+                <input
+                  id="biz-insp"
+                  className={styles.input}
+                  value={businessSettings.inspectionNumbering}
+                  onChange={(e) => setBusinessSettings((s) => ({ ...s, inspectionNumbering: e.target.value }))}
+                />
+              </FormField>
+              <FormField label="Fleet numbering prefix" htmlFor="biz-fleet">
+                <input
+                  id="biz-fleet"
+                  className={styles.input}
+                  value={businessSettings.fleetNumbering}
+                  onChange={(e) => setBusinessSettings((s) => ({ ...s, fleetNumbering: e.target.value }))}
+                />
+              </FormField>
+            </div>
+          ) : null}
+          <button
+            className={styles.button}
+            type="button"
+            disabled={busy}
+            style={{ marginTop: "1rem" }}
+            onClick={() =>
+              void completeCurrent({
+                timezone: businessSettings.timezone,
+                dateFormat: businessSettings.dateFormat,
+                employeeIdFormat: businessSettings.employeeIdFormat,
+                emailNotifications: businessSettings.emailNotifications,
+                mobileAccess: businessSettings.mobileAccess,
+                employeePortal: businessSettings.employeePortal,
+                ...(industrialSelected
+                  ? {
+                      incidentNumbering: businessSettings.incidentNumbering,
+                      inspectionNumbering: businessSettings.inspectionNumbering,
+                      fleetNumbering: businessSettings.fleetNumbering,
+                    }
+                  : {}),
               })
             }
           >
@@ -957,6 +1522,8 @@ export function OnboardingWizard({
             <li>Modules — {selectedModules.length} enabled</li>
             <li>Locations — {locations.filter((l) => l.name.trim()).length} configured</li>
             <li>Departments — {departments.length} configured</li>
+            <li>Employment types — {employmentTypes.length} configured</li>
+            <li>Documents — {companyDocs.length} uploaded</li>
             <li>Administrator — {adminEmail || "Configured"}</li>
             <li>Logo — {logoDocumentId ? "Uploaded" : "Optional / defaults applied"}</li>
           </ul>
@@ -969,8 +1536,8 @@ export function OnboardingWizard({
               {busy ? "Activating…" : "Activate company"}
             </button>
             {view ? (
-              <Link className={styles.buttonSecondary} href={`/imports/?tenantId=${view.session.tenantId}`}>
-                Open data import (optional)
+              <Link className={styles.buttonSecondary} href={`/setup-center/?tenantId=${view.session.tenantId}`}>
+                Open Setup Center
               </Link>
             ) : null}
           </div>
