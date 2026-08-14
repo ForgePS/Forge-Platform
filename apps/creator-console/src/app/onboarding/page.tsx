@@ -80,7 +80,7 @@ function OnboardingHomeInner() {
               const total = row.steps.length || 1;
               return (
                 <li key={row.session.id}>
-                  <Link href={`/onboarding/session/${row.session.id}/`}>Continue setup</Link>
+                  <Link href={`/onboarding/continue/?sessionId=${row.session.id}`}>Continue setup</Link>
                   {" · "}
                   <StatusBadge tone="warning">Step {row.session.currentStep}</StatusBadge>
                   {" · "}
