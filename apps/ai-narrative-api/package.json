@@ -19,9 +19,9 @@
     "@forge/ai-observability": "workspace:*",
     "@forge/environment": "workspace:*",
     "@forge/observability": "workspace:*",
-    "@nestjs/common": "^11.1.3",
-    "@nestjs/core": "^11.1.3",
-    "@nestjs/platform-express": "^11.1.3",
+    "@nestjs/common": "^11.1.29",
+    "@nestjs/core": "^11.1.29",
+    "@nestjs/platform-express": "^11.1.29",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
