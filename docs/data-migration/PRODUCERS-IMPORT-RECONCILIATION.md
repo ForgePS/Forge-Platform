@@ -1,13 +1,35 @@
-# PRODUCERS — Aurora import reconciliation (CONTROLLED-AURORA-IMPORT-S1)
+# PRODUCERS — Import reconciliation (CONTROLLED-AURORA-IMPORT-S1R)
 
-**Status:** NEEDS REVIEW  
-**Live tenant:** `019ff7d0-c20f-7659-81e4-c0cd68e23262` (`producers-rice-mill`)  
-**Package twin tenant (remapped):** `5da680d3-50f5-46ac-8b85-6cf454b6a0da`  
-**Import run (latest apply):** `cai-s1-apply2-20260813T213639Z`
+**Status:** DB_IMPORT_COMPLETE (files promoted; delta not run)  
+**Parent run:** `cai-s1-apply2-20260813T213639Z`  
+**Remediation run:** `cai-s1r-apply2-20260814T110922Z`  
+**Release:** `75e1194bb47af1ad80c83353265b121594427257`
 
-## Source accounting (package)
+## Error normalization (apply2)
 
-| Bucket | Count |
+| Class | Count |
+| --- | --- |
+| INSERTED | 1 |
+| UPDATED / SKIPPED_EXISTING | 38109 |
+| EXCLUDE_APPROVED | 143 |
+| WARNING_EXPLAINED | 3994 |
+| ERROR_UNEXPLAINED | **0** |
+| FATAL | **0** |
+
+## Key entity outcomes after remediation
+
+| Entity | Notes |
+| --- | --- |
+| `qr_links` | 2524 present (idempotent update) |
+| `qr_link_versions` | 2524 in-scope resolved; 2576 SKIP_MISSING_PARENT (explained) |
+| `platform_ehs_audit_templates` / versions | logical `forge_tmpl_*` resolved; 34 versions loaded |
+| `industrial_attachments` | 13 Producers rows |
+| `industrial_equipment_document_links` | 12 loaded with deterministic document stubs |
+| Fleet vehicles | **0 fabricated** |
+
+## Source document accounting (unchanged disposition)
+
+| Disposition | Count |
 | --- | --- |
 | AURORA_OPERATIONAL | 15914 |
 | AURORA_HISTORY | 26139 |
@@ -16,27 +38,9 @@
 | S3_ARCHIVE | 0 |
 | **TOTAL** | **42265** |
 
-EXCLUDE files processed: 14 files / 143 lines (accounted; not loaded into operational tables).
+SOURCE_DOCS_ACCOUNTED: **42265** / UNACCOUNTED: **0**
 
-## Write outcomes (apply #2)
+## Tenant
 
-Importer does **not** treat platform-default (`awsTenantId=null`, `awsTenantKey=platform-default`) rows as Producers writes — those are skipped (`missing_tenant`). That explains ~50% skips on many specialty modules that ship forge-default + Producers pairs.
-
-### Residual unexplained / failed writes
-
-| DOMAIN / ENTITY | ISSUE | COUNT | STATUS |
-| --- | --- | --- | --- |
-| QR link versions | unresolved `qr_link_id` (parent not in Producers id-map) | 3902 errors; 1198 inserted | NEEDS_FIX |
-| EHS template versions | logical `templateId` not Firestore source id | 34 | NEEDS_FIX |
-| Attachments | mapping/required fields | 13 | NEEDS_FIX |
-| Equipment document links | FK/mapping | 12 | NEEDS_FIX |
-| Inspections | 1 status null | 1 | NEEDS_FIX |
-
-`UNEXPLAINED_DB_DIFFERENCE`: **not zero** until residual entities are remapped or explicitly classified as out-of-scope skips.
-
-`FATAL_IMPORT_ERRORS` (security / cross-tenant / schema mismatch): **0**  
-`FABRICATED_VEHICLES`: **0**
-
-## Tenant ownership
-
-All applied Producers operational rows targeted live tenant `019ff7d0-...` via remap. Platform EHS templates inserted as global (null tenant) where schema allows.
+Live: `019ff7d0-c20f-7659-81e4-c0cd68e23262`  
+Package twin remap approved; twin UUID must not remain as operational `tenant_id`.

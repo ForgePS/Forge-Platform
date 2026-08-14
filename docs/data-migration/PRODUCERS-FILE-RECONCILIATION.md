@@ -1,33 +1,44 @@
-# PRODUCERS — File reconciliation (CONTROLLED-AURORA-IMPORT-S1)
+# PRODUCERS — File reconciliation (CONTROLLED-AURORA-IMPORT-S1R)
 
-**Status:** NOT COMPLETE (promotion not executed in this sprint)
+**Status:** COMPLETE (customer promotion executed)  
+**Date (UTC):** 2026-08-14  
 
-## Source corpus (staging)
+## Source corpus (staging — retained)
 
 `s3://forge-production-imports-511343547817-us-east-1/storage/source/`
 
 | Class | Count |
 | --- | --- |
-| Customer-confirmed | 9292 |
-| Platform global | 12 |
+| Customer | 9290 |
+| Platform global | 14 |
 | Excluded orphan test (`dqf-exports/test/...`) | 1 |
 | Ambiguous | 0 |
 | **Total** | **9305** |
 
+Inventory note: mission brief cited 9292/12; staged classification corrected to 9290/14 (includes `business-forge-default` + `platform-*` template assets).
+
 ## Authoritative destination
 
-Documents bucket (from production API config / prior IND-11 architecture):  
-`forge-production-documents-511343547817-us-east-1`
+| Item | Value |
+| --- | --- |
+| Bucket | `forge-production-documents-511343547817-us-east-1` |
+| Customer prefix | `tenants/019ff7d0-c20f-7659-81e4-c0cd68e23262/…` |
+| Remap | Firebase `business-1782553339499` → live tenant UUID in key path |
+| KMS | `arn:aws:kms:us-east-1:511343547817:key/6e96628b-16ff-4d12-9e3b-ea3a095af38f` |
+| Public access | BLOCKED |
+| Method | S3 server-side `CopyObject` + SSE-KMS |
 
 ## Promotion results
 
 | Metric | Value |
 | --- | --- |
-| CUSTOMER_FILES_PROMOTED | **0** (not run) |
-| PLATFORM_GLOBAL_FILES into Producers | **0** (must remain 0) |
-| ORPHAN_FILE_PROMOTED | **NO** |
-| MISSING_CUSTOMER_FILES | N/A until promotion |
-| WRONG_TENANT_FILES | N/A until promotion |
-| BROKEN_ATTACHMENT_REFERENCES | pending post-promotion validation |
+| CUSTOMER_FILES_PROMOTED_OR_IDENTICAL_EXISTING | **9290** |
+| PLATFORM_GLOBAL under Producers prefix | **0** |
+| ORPHAN_TEST_FILE_PROMOTED | **NO** |
+| TARGET_KEY_COLLISIONS | **0** |
+| AMBIGUOUS_FILES | **0** |
+| MISSING_CUSTOMER_FILES | **0** |
+| UNEXPLAINED_FILE_DIFFERENCE | **0** |
+| FILE_SAMPLE_INTEGRITY (spot head + SSE-KMS) | **PASS** |
 
-Do not delete staging copies. Use server-side S3 copy with SSE-KMS and tenant-scoped keys.
+Evidence: `.tmp-data-migration/dm-s2/cai-s1r/file-promotion-summary.json` (local operational artifact; not committed).

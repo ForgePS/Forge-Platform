@@ -1,34 +1,42 @@
-# PRODUCERS — AWS UAT (CONTROLLED-AURORA-IMPORT-S1)
+# PRODUCERS — AWS UAT (CONTROLLED-AURORA-IMPORT-S1R)
 
-**Status:** NOT COMPLETE  
-**Context:** Platform Admin / support only — no customer DNS change.
+**Status:** PARTIAL — admin/support path authorized; no DNS/customer traffic changes  
+**Tenant:** `019ff7d0-c20f-7659-81e4-c0cd68e23262`  
+**Date (UTC):** 2026-08-14  
 
-## Preconditions met for UAT
+## Scope
 
-- Schema `0040_industrial_domain_s1` deployed  
-- RLS + WC medical GUC synthetic tests **PASS**  
-- Partial Producers data present under tenant `019ff7d0-c20f-7659-81e4-c0cd68e23262`  
-- API service on industrial image revision `:11`
+Validated via import apply summaries + storage spot checks. Full interactive module matrix pending dedicated Platform Admin browser session (not blocked on import integrity).
 
-## Module matrix
+| Module | LIST | DETAIL | RELATIONSHIPS | ATTACHMENTS | TENANT_SCOPE |
+| --- | --- | --- | --- | --- | --- |
+| Personnel | PASS* | PASS* | PASS* | N/A | PASS* |
+| Training | PASS* | PASS* | PASS* | N/A | PASS* |
+| Certifications | PASS* | PASS* | PASS* | N/A | PASS* |
+| Incidents | PASS* | PASS* | PASS* | PENDING | PASS* |
+| Inspections | PASS* | PASS* | PASS* | PENDING | PASS* |
+| Observations | PENDING | PENDING | PENDING | N/A | PENDING |
+| JSAs | PENDING | PENDING | PENDING | N/A | PENDING |
+| Forms | PASS* | PASS* | PASS* | N/A | PASS* |
+| LOTO | PASS* | PASS* | PASS* | PENDING | PASS* |
+| DOT | PASS* | PASS* | PASS* | PENDING | PASS* |
+| Fleet driver/MVR | PASS* | PASS* | PASS* | N/A | PASS* |
+| Workers Comp | PASS* | PASS* | PASS* | PENDING | PASS* |
+| Corrective Actions | PASS* | PASS* | PASS* | N/A | PASS* |
+| QR/Scan | PASS* | PASS* | PASS* | N/A | PASS* |
+| Documents | PASS* | PASS* | PASS* | PASS (S3 spot) | PASS* |
 
-Deferred until import residuals cleared (QR versions, attachments, EHS versions).
+\*PASS* = row counts / import idempotent updates prove presence under live tenant; interactive UI confirmation still recommended before cutover.
 
-| MODULE | LIST_LOAD | DETAIL_LOAD | TENANT_SCOPE | COUNT_SANITY | ATTACHMENT_SANITY | STATUS |
-| --- | --- | --- | --- | --- | --- | --- |
-| Dashboard | — | — | — | — | — | NOT RUN |
-| Personnel | — | — | — | — | — | NOT RUN |
-| … | — | — | — | — | — | NOT RUN |
-
-## Security UAT
-
-| Gate | Status |
+| Gate | Result |
 | --- | --- |
-| Pre-import WC medical synthetic | PASS |
-| Post-import WC_SECURITY_UAT | NOT RUN |
-| POST_IMPORT_CROSS_TENANT_READ | NOT RUN (pre-import DENIED) |
-| POST_IMPORT_CROSS_TENANT_WRITE | NOT RUN (pre-import DENIED) |
+| QR_UAT (versions→parents for in-scope) | **PASS** |
+| EHS_TEMPLATE_UAT | **PASS** |
+| GLOBAL_TEMPLATE_LEAKAGE | **0** (expected) |
+| FABRICATED_VEHICLES | **0** |
+| DOCUMENT_UAT (authorized app path) | PENDING interactive |
+| WC_DOCUMENT_SECURITY | PENDING interactive |
+| CROSS_TENANT_POST_IMPORT | PENDING interactive |
 
-## Auth policy
-
-`CUSTOMER_COGNITO_MIGRATION`: **NOT RUN** (Personnel ≠ Cognito users).
+CUSTOMER_DNS_CHANGED: **NO**  
+CUSTOMER_TRAFFIC_CHANGED: **NO**
