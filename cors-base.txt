@@ -1,0 +1,28 @@
+﻿HTTP/1.1 204 No Content
+Content-Length: 0
+Connection: keep-alive
+Date: Fri, 14 Aug 2026 19:13:05 GMT
+X-Powered-By: Express
+x-correlation-id: 39d0c9046533eb68a5b57d99b6805480
+Vary: Origin
+X-Cache: Miss from cloudfront
+Via: 1.1 3d2021485aa5a209423b24a158bd8dac.cloudfront.net (CloudFront)
+X-Amz-Cf-Pop: DFW56-P10
+X-Amz-Cf-Id: Qj0NN7LYHmGAbVcIgSbnACuhHzsSMxZ26IkoEbhI7YAG6_mi9VdP9w==
+X-XSS-Protection: 1; mode=block
+X-Frame-Options: DENY
+Referrer-Policy: strict-origin-when-cross-origin
+Content-Security-Policy: default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
+X-Content-Type-Options: nosniff
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+Cross-Origin-Resource-Policy: cross-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: https://industrial.forgepublicsafety.com
+Access-Control-Allow-Methods: GET,HEAD,OPTIONS,PUT,POST,PATCH,DELETE
+Vary: Access-Control-Request-Method
+Vary: Origin
+Vary: Access-Control-Request-Headers
+Access-Control-Max-Age: 3600
+Access-Control-Allow-Headers: authorization
+

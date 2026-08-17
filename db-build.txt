@@ -1,0 +1,5 @@
+﻿
+> @forge/database@0.1.0 build C:\Users\jerem\Projects\forge-platform-industrial-recon\packages\database
+> tsc -p tsconfig.json
+
+EXIT:0

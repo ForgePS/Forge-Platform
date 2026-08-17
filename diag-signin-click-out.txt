@@ -1,0 +1,41 @@
+﻿{
+  "clicked": "button",
+  "finalUrl": "https://forge-production-547817.auth.us-east-1.amazoncognito.com/login?response_type=code&client_id=7vq5mid0et267n7e2thg2b0kkr&redirect_uri=https%3A%2F%2Findustrial.forgepublicsafety.com%2Fauth%2Fcallback%2F&scope=openid+email+profile&code_challenge_method=S256&code_challenge=pylTW72HwrpuDcG7-mA15KDCwEARragRdowtUXraXS8&state=eefc26b0-9018-4ed1-acf4-2c45ed0e95a3",
+  "navigations": [
+    "https://industrial.forgepublicsafety.com/",
+    "https://industrial.forgepublicsafety.com/",
+    "https://forge-production-547817.auth.us-east-1.amazoncognito.com/login?response_type=code&client_id=7vq5mid0et267n7e2thg2b0kkr&redirect_uri=https%3A%2F%2Findustrial.forgepublicsafety.com%2Fauth%2Fcallback%2F&scope=openid+email+profile&code_challenge_method=S256&code_challenge=pylTW72HwrpuDcG7-mA15KDCwEARragRdowtUXraXS8&state=eefc26b0-9018-4ed1-acf4-2c45ed0e95a3"
+  ],
+  "requestFailures": [],
+  "authResponses": [
+    {
+      "url": "https://dygmtx4vxgy9i.cloudfront.net/api/v1/public/login-branding?host=industrial.forgepublicsafety.com",
+      "status": 404
+    },
+    {
+      "url": "https://dygmtx4vxgy9i.cloudfront.net/api/v1/auth/me",
+      "status": 401
+    },
+    {
+      "url": "https://forge-production-547817.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=code&client_id=7vq5mid0et267n7e2thg2b0kkr&redirect_uri=https%3A%2F%2Findustrial.forgepublicsafety.com%2Fauth%2Fcallback%2F&scope=openid+email+profile&code_challenge_method=S256&code_challenge=pylTW72HwrpuDcG7-mA15KDCwEARragRdowtUXraXS8&state=eefc26b0-9018-4ed1-acf4-2c45ed0e95a3",
+      "status": 302
+    },
+    {
+      "url": "https://forge-production-547817.auth.us-east-1.amazoncognito.com/login?response_type=code&client_id=7vq5mid0et267n7e2thg2b0kkr&redirect_uri=https%3A%2F%2Findustrial.forgepublicsafety.com%2Fauth%2Fcallback%2F&scope=openid+email+profile&code_challenge_method=S256&code_challenge=pylTW72HwrpuDcG7-mA15KDCwEARragRdowtUXraXS8&state=eefc26b0-9018-4ed1-acf4-2c45ed0e95a3",
+      "status": 200
+    },
+    {
+      "url": "https://d3oia8etllorh5.cloudfront.net/20240614193835/css/cognito-login.css",
+      "status": 200
+    },
+    {
+      "url": "https://d3oia8etllorh5.cloudfront.net/20240614193835/js/amazon-cognito-advanced-security-data.min.js",
+      "status": 200
+    }
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 ()",
+    "Failed to load resource: the server responded with a status of 401 ()"
+  ],
+  "visibleText": "Sign in with your email and password\nEmail\nPassword\nForgot your password?\n\n"
+}

@@ -1,0 +1,13 @@
+﻿
+ RUN  v3.2.7 C:/Users/jerem/Projects/forge-platform-industrial-recon/apps/industrial-web
+
+ Γ£ô src/lib/personnel-seasonal.test.ts (3 tests) 9ms
+ Γ£ô src/lib/offline/offline.test.ts (12 tests) 15ms
+ Γ£ô src/lib/navigation.test.ts (11 tests) 8ms
+ Γ£ô src/lib/module-routes.test.ts (36 tests) 14ms
+
+ Test Files  4 passed (4)
+      Tests  62 passed (62)
+   Start at  17:47:39
+   Duration  3.78s (transform 1.08s, setup 0ms, collect 3.14s, tests 47ms, environment 6.58s, prepare 1.18s)
+

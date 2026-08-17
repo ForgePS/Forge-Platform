@@ -1,0 +1,21 @@
+﻿HTTP/1.1 204 No Content
+Content-Length: 0
+Connection: keep-alive
+Date: Fri, 14 Aug 2026 19:12:47 GMT
+X-Powered-By: Express
+x-correlation-id: 22bed30e218feeeffd4b5f32d4c7c163
+Vary: Origin
+X-Cache: Miss from cloudfront
+Via: 1.1 4439f0bf3ee1c953b08588ef924b8fb4.cloudfront.net (CloudFront)
+X-Amz-Cf-Pop: DFW56-P10
+X-Amz-Cf-Id: pd1BFKSSllRv_qBugLIF2sWoYIltl-I-x7VRq5AvKwBATnyJkUIwtA==
+X-XSS-Protection: 1; mode=block
+X-Frame-Options: DENY
+Referrer-Policy: strict-origin-when-cross-origin
+Content-Security-Policy: default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
+X-Content-Type-Options: nosniff
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+Cross-Origin-Resource-Policy: cross-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+Vary: Origin
+

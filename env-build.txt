@@ -1,0 +1,4 @@
+﻿
+> @forge/environment@0.1.0 build C:\Users\jerem\Projects\forge-platform-industrial-recon\packages\environment
+> tsc -p tsconfig.json
+

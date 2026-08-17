@@ -1,0 +1,16 @@
+﻿aws : 
+At C:\Users\jerem\AppData\Local\Temp\ps-script-f6fef0de-3eb3-4c40-82f7-b673475a96eb.ps1:126 char:431
++ ... tput "---"; aws logs filter-log-events --log-group-name /forge/produc ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+usage: aws [options] <command> <subcommand> [<subcommand> ...] [parameters]
+To see help text, you can run:
+
+  aws help
+  aws <command> help
+  aws <command> <subcommand> help
+
+
+aws: [ERROR]: Unknown options: records\, params:

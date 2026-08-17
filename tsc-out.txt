@@ -1,0 +1,4 @@
+﻿src/main.ts(27,64): error TS2339: Property 'CORS_ORIGIN_SUFFIXES' does not exist on type '{ NODE_ENV: "development" | "production" | "test"; APP_ENV: "local" | "development" | "testing" | "staging" | "production" | "govcloud-development" | "govcloud-staging" | "govcloud-production"; ... 42 more ...; SQS_CAD_RETENTION_QUEUE_URL?: string | undefined; }'.
+undefined
+C:\Users\jerem\Projects\forge-platform-industrial-recon\apps\platform-api:
+ΓÇëERR_PNPM_RECURSIVE_EXEC_FIRST_FAILΓÇë Command failed with exit code 2: tsc -p tsconfig.json --noEmit

@@ -1,0 +1,21 @@
+﻿node : node:internal/modules/cjs/loader:1210
+At C:\Users\jerem\AppData\Local\Temp\ps-script-43ac4cfb-d687-41c0-8e38-7b071eeec9eb.ps1:126 char:1
++ node scripts/diag-industrial-login-fetch.mjs 2>&1 | Out-File -Encodin ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/modules/cjs/loader:1210:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  throw err;
+  ^
+
+Error: Cannot find module 
+'C:\Users\jerem\Projects\forge-platform-industrial-recon\apps\rms-web-e2e\scripts\diag-industrial-login-fetch.mjs'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.20.2

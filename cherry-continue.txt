@@ -1,0 +1,12 @@
+﻿[industrial/model-reconciliation-s1 b860639] feat(industrial): add FiredUp-style safety training quiz module
+ Date: Fri Aug 14 13:22:15 2026 -0500
+ 12 files changed, 3104 insertions(+), 3 deletions(-)
+ create mode 100644 apps/industrial-web/src/components/training-workspace.tsx
+ create mode 100644 apps/industrial-web/src/features/training/api.ts
+ create mode 100644 apps/industrial-web/src/features/training/types.ts
+ create mode 100644 apps/platform-api/src/modules/industrial/industrial-training.controller.ts
+ create mode 100644 apps/platform-api/src/modules/industrial/industrial-training.service.ts
+ create mode 100644 docs/industrial/TRAINING-QUIZ-MODULE.md
+ create mode 100644 packages/database/drizzle/0042_industrial_training_quiz_s1.sql
+ create mode 100644 scripts/seed-industrial-training-demo.mjs
+EXIT:0

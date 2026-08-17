@@ -1,0 +1,2753 @@
+﻿
+ RUN  v3.2.7 C:/Users/jerem/Projects/forge-platform-industrial-recon/apps/industrial-web
+
+ Γ£ô src/lib/personnel-seasonal.test.ts (3 tests) 6ms
+ Γ£ô src/lib/offline/offline.test.ts (12 tests) 9ms
+ Γ¥» src/lib/navigation.test.ts (11 tests | 1 failed) 13ms
+   Γ£ô industrial navigation foundation > returns empty nav when not entitled 2ms
+   Γ£ô industrial navigation foundation > hides AVAILABLE modules when strict entitlements and none enabled 1ms
+   Γ£ô industrial navigation foundation > enables IND-3 module when entitled and access granted 0ms
+   ├ù industrial navigation foundation > blocks LEGACY_ONLY modules even when listed in entitlements 7ms
+     ΓåÆ expected 'AVAILABLE' to be 'LEGACY_ONLY' // Object.is equality
+   Γ£ô industrial navigation foundation > does not treat feature flags as authorization bypass 0ms
+   Γ£ô industrial navigation foundation > marks CORE available with industrial.access when product entitled 0ms
+   Γ£ô industrial navigation foundation > honors explicit feature-flag OFF for AVAILABLE modules 0ms
+   Γ£ô industrial navigation foundation > maps JSAS to industrial.module.jsa.enabled 0ms
+   Γ£ô industrial navigation foundation > preserves distinct Scan and QR Links entries 0ms
+   Γ£ô industrial navigation foundation > uses explicit unavailable messaging 0ms
+   Γ£ô industrial navigation foundation > keeps hosting/infrastructure names out of customer-facing copy 0ms
+ Γ¥» src/lib/module-routes.test.ts (35 tests | 23 failed) 60ms
+   Γ£ô module route coverage > ANALYTICS resolves its registry slug analytics to a workspace 1ms
+   Γ£ô module route coverage > PERSONNEL resolves its registry slug personnel to a workspace 0ms
+   Γ£ô module route coverage > TRAINING resolves its registry slug training to a workspace 0ms
+   ├ù module route coverage > JSAS resolves its registry slug jsas to a workspace 13ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"jsas"'
+   ├ù module route coverage > INCIDENTS resolves its registry slug incidents to a workspace 4ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"incidents"'
+   ├ù module route coverage > OSHA resolves its registry slug osha to a workspace 2ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"osha"'
+   ├ù module route coverage > WORKERS_COMP resolves its registry slug workers-comp to a workspace 2ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"workers-comp"'
+   ├ù module route coverage > INSPECTIONS resolves its registry slug inspections to a workspace 2ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"inspections"'
+   ├ù module route coverage > FORMS resolves its registry slug forms to a workspace 1ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"forms"'
+   ├ù module route coverage > OBSERVATIONS resolves its registry slug observations to a workspace 3ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"observations"'
+   ├ù module route coverage > RISK resolves its registry slug risk to a workspace 2ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"risk"'
+   ├ù module route coverage > DOT_COMPLIANCE resolves its registry slug dot-compliance to a workspace 3ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"dot-compliance"'
+   ├ù module route coverage > CONTRACTOR_SAFETY resolves its registry slug contractor-safety to a workspace 4ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"contractor-safety"'
+   ├ù module route coverage > PROCESS_SAFETY resolves its registry slug process-safety to a workspace 2ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"process-safety"'
+   ├ù module route coverage > ENVIRONMENTAL_SAFETY resolves its registry slug environmental-safety to a workspace 2ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"environmental-safety"'
+   Γ£ô module route coverage > EQUIPMENT resolves its registry slug equipment to a workspace 0ms
+   ├ù module route coverage > FORKLIFTS resolves its registry slug forklifts to a workspace 1ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"forklifts"'
+   ├ù module route coverage > CRANES_RIGGING resolves its registry slug cranes-rigging to a workspace 1ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"cranes-rigging"'
+   ├ù module route coverage > MACHINE_SAFETY resolves its registry slug machine-safety to a workspace 1ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"machine-safety"'
+   ├ù module route coverage > ELECTRICAL_SAFETY resolves its registry slug electrical-safety to a workspace 2ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"electrical-safety"'
+   Γ£ô module route coverage > LOCKOUT_TAGOUT resolves its registry slug lockout-tagout to a workspace 0ms
+   ├ù module route coverage > CONFINED_SPACE resolves its registry slug confined-space to a workspace 1ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"confined-space"'
+   ├ù module route coverage > HOT_WORK resolves its registry slug hot-work to a workspace 1ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"hot-work"'
+   ├ù module route coverage > WORKING_AT_HEIGHTS resolves its registry slug working-at-heights to a workspace 1ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"working-at-heights"'
+   ├ù module route coverage > CHEMICAL_SAFETY resolves its registry slug chemical-safety to a workspace 1ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"chemical-safety"'
+   ├ù module route coverage > WAREHOUSE_SAFETY resolves its registry slug warehouse-safety to a workspace 1ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"warehouse-safety"'
+   ├ù module route coverage > MANUFACTURING_SAFETY resolves its registry slug manufacturing-safety to a workspace 2ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"manufacturing-safety"'
+   ├ù module route coverage > EMERGENCY_RESPONSE resolves its registry slug emergency-response to a workspace 2ms
+     ΓåÆ expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"emergency-response"'
+   Γ£ô module route coverage > TASKS resolves its registry slug tasks to a workspace 0ms
+   Γ£ô module route coverage > MESSAGING resolves its registry slug messaging to a workspace 0ms
+   Γ£ô module route coverage > DOCUMENTS resolves its registry slug documents to a workspace 0ms
+   Γ£ô module route coverage > QR_LINKS resolves its registry slug qr-links to a workspace 0ms
+   Γ£ô module route coverage > REPORTING resolves its registry slug reporting to a workspace 0ms
+   Γ£ô module route coverage > IMPORT resolves its registry slug import to a workspace 0ms
+   Γ£ô module route coverage > documents modules that intentionally have no workspace yet 0ms
+node.exe : 
+At C:\nvm4w\nodejs\pnpm.ps1:16 char:5
++     & "$basedir/node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs"  ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Tests 24 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > JSAS resolves its registry slug jsas to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"jsas"'
+
+- Expected
++ Received
+
+- "jsas"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > INCIDENTS resolves its registry slug incidents to a 
+workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"incidents"'
+
+- Expected
++ Received
+
+- "incidents"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > OSHA resolves its registry slug osha to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"osha"'
+
+- Expected
++ Received
+
+- "osha"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[3/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > WORKERS_COMP resolves its registry slug workers-comp to 
+a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"workers-comp"'
+
+- Expected
++ Received
+
+- "workers-comp"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[4/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > INSPECTIONS resolves its registry slug inspections to a 
+workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"inspections"'
+
+- Expected
++ Received
+
+- "inspections"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[5/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > FORMS resolves its registry slug forms to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"forms"'
+
+- Expected
++ Received
+
+- "forms"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[6/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > OBSERVATIONS resolves its registry slug observations to 
+a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"observations"'
+
+- Expected
++ Received
+
+- "observations"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[7/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > RISK resolves its registry slug risk to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"risk"'
+
+- Expected
++ Received
+
+- "risk"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[8/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > DOT_COMPLIANCE resolves its registry slug 
+dot-compliance to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"dot-compliance"'
+
+- Expected
++ Received
+
+- "dot-compliance"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[9/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > CONTRACTOR_SAFETY resolves its registry slug 
+contractor-safety to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"contractor-safety"'
+
+- Expected
++ Received
+
+- "contractor-safety"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[10/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > PROCESS_SAFETY resolves its registry slug 
+process-safety to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"process-safety"'
+
+- Expected
++ Received
+
+- "process-safety"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[11/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > ENVIRONMENTAL_SAFETY resolves its registry slug 
+environmental-safety to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"environmental-safety"'
+
+- Expected
++ Received
+
+- "environmental-safety"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[12/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > FORKLIFTS resolves its registry slug forklifts to a 
+workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"forklifts"'
+
+- Expected
++ Received
+
+- "forklifts"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[13/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > CRANES_RIGGING resolves its registry slug 
+cranes-rigging to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"cranes-rigging"'
+
+- Expected
++ Received
+
+- "cranes-rigging"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[14/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > MACHINE_SAFETY resolves its registry slug 
+machine-safety to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"machine-safety"'
+
+- Expected
++ Received
+
+- "machine-safety"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[15/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > ELECTRICAL_SAFETY resolves its registry slug 
+electrical-safety to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"electrical-safety"'
+
+- Expected
++ Received
+
+- "electrical-safety"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[16/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > CONFINED_SPACE resolves its registry slug 
+confined-space to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"confined-space"'
+
+- Expected
++ Received
+
+- "confined-space"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[17/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > HOT_WORK resolves its registry slug hot-work to a 
+workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"hot-work"'
+
+- Expected
++ Received
+
+- "hot-work"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[18/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > WORKING_AT_HEIGHTS resolves its registry slug 
+working-at-heights to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"working-at-heights"'
+
+- Expected
++ Received
+
+- "working-at-heights"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[19/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > CHEMICAL_SAFETY resolves its registry slug 
+chemical-safety to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"chemical-safety"'
+
+- Expected
++ Received
+
+- "chemical-safety"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[20/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > WAREHOUSE_SAFETY resolves its registry slug 
+warehouse-safety to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"warehouse-safety"'
+
+- Expected
++ Received
+
+- "warehouse-safety"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[21/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > MANUFACTURING_SAFETY resolves its registry slug 
+manufacturing-safety to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"manufacturing-safety"'
+
+- Expected
++ Received
+
+- "manufacturing-safety"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[22/24]ΓÄ»
+
+ FAIL  src/lib/module-routes.test.ts > module route coverage > EMERGENCY_RESPONSE resolves its registry slug 
+emergency-response to a workspace
+AssertionError: expected 'import { INDUSTRIAL_MODULE_REGISTRY }ΓÇª' to contain '"emergency-response"'
+
+- Expected
++ Received
+
+- "emergency-response"
++ import { INDUSTRIAL_MODULE_REGISTRY } from "@forge/contracts";
++ import { AnalyticsWorkspace } from "@/components/analytics-workspace";
++ import { ComplianceWorkspace } from "@/components/compliance-workspace";
++ import { EquipmentWorkspace } from "@/components/equipment-workspace";
++ import { HighRiskWorkspace } from "@/components/high-risk-workspace";
++ import { LotoWorkspace } from "@/components/loto-workspace";
++ import { ModuleUnavailable } from "@/components/module-unavailable";
++ import { OpsModuleWorkspace } from "@/components/ops-module-workspace";
++ import { PersonnelWorkspace } from "@/components/personnel-workspace";
++ import { TrainingWorkspace } from "@/components/training-workspace";
++ import { isInd6ComplianceModule } from "@/lib/compliance-modules";
++ import { isInd5HighRiskModule } from "@/lib/high-risk-modules";
++ import { isInd3OpsModule } from "@/lib/ops-modules";
++ import { isInd7CoordinationModule } from "@/lib/coordination-modules";
++ import { TasksWorkspace } from "@/components/tasks-workspace";
++ import { MessagingWorkspace } from "@/components/messaging-workspace";
++ import { EmergencyResponseWorkspace } from "@/components/emergency-response-workspace";
++ import { QrLinksWorkspace } from "@/components/qr-links-workspace";
++ import { DocumentsWorkspace } from "@/components/documents-workspace";
++ import { ReportingWorkspace } from "@/components/reporting-workspace";
++ import { IndustrialImportWorkspace } from "@/components/industrial-import-workspace";
++ 
++ /** Static export params for SPA deep links (directory-index rewrite only). */
++ export function generateStaticParams() {
++   const slugs = new Set<string>(["placeholder", "equipment", "loto", "personnel", "analytics"]);
++   for (const m of INDUSTRIAL_MODULE_REGISTRY) {
++     if (m.route.startsWith("/modules/")) {
++       slugs.add(m.route.replace("/modules/", ""));
++     }
++   }
++   return [...slugs].map((module) => ({ module }));
++ }
++ 
++ export default async function ModulePage({
++   params,
++ }: {
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  24 failed | 37 passed (61)
+   Start at  17:45:23
+   Duration  19.79s (transform 478ms, setup 0ms, collect 1.94s, tests 88ms, environment 72.77s, prepare 1.02s)
+
++   params: Promise<{ module: string }>;
++ }) {
++   const { module } = await params;
++   const entry = INDUSTRIAL_MODULE_REGISTRY.find(
++     (m) => m.route === `/modules/${module}` || m.code.toLowerCase().replace(/_/g, "-") === module,
++   );
++   const name = entry?.name ?? module;
++ 
++   if (module === "analytics") {
++     return <AnalyticsWorkspace moduleName={name} />;
++   }
++   if (module === "equipment") {
++     return <EquipmentWorkspace moduleName={name} />;
++   }
++   // The registry route for LOCKOUT_TAGOUT is /modules/lockout-tagout, so accept
++   // that alongside the shorter legacy slug or the workspace is unreachable and
++   // renders as unavailable.
++   if (module === "loto" || module === "lockout-tagout") {
++     return <LotoWorkspace moduleName={name} />;
++   }
++   if (module === "personnel") {
++     return <PersonnelWorkspace moduleName={name} />;
++   }
++   if (module === "training") {
++     return <TrainingWorkspace moduleName={name} />;
++   }
++   if (module === "qr-links") {
++     return <QrLinksWorkspace moduleName={name} />;
++   }
++   if (module === "documents") {
++     return <DocumentsWorkspace moduleName={name} />;
++   }
++   if (module === "reporting") {
++     return <ReportingWorkspace moduleName={name} />;
++   }
++   if (module === "import") {
++     return <IndustrialImportWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd5HighRiskModule(module)) {
++     return <HighRiskWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd6ComplianceModule(module)) {
++     return <ComplianceWorkspace module={module} moduleName={name} />;
++   }
++ 
++   if (isInd7CoordinationModule(module)) {
++     if (module === "tasks") return <TasksWorkspace moduleName={name} />;
++     if (module === "messaging") return <MessagingWorkspace moduleName={name} />;
++     return <EmergencyResponseWorkspace moduleName={name} />;
++   }
++ 
++   if (isInd3OpsModule(module)) {
++     return <OpsModuleWorkspace module={module} moduleName={name} />;
++   }
++ 
++   return <ModuleUnavailable moduleName={name} status={entry?.migrationStatus ?? "LEGACY_FIREBASE"} />;
++ }
++
+
+ Γ¥» src/lib/module-routes.test.ts:33:20
+     31|       // Either matched explicitly by slug, or covered by one of the gΓÇª
+     32|       // predicates whose module lists are keyed by the same slug.
+     33|       expect(page).toContain(`"${slug}"`);
+       |                    ^
+     34|     },
+     35|   );
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[23/24]ΓÄ»
+
+ FAIL  src/lib/navigation.test.ts > industrial navigation foundation > blocks LEGACY_ONLY modules even when listed in 
+entitlements
+AssertionError: expected 'AVAILABLE' to be 'LEGACY_ONLY' // Object.is equality
+
+Expected: "LEGACY_ONLY"
+Received: "AVAILABLE"
+
+ Γ¥» src/lib/navigation.test.ts:55:45
+     53|     });
+     54|     const analytics = nav.find((n) => n.code === "ANALYTICS");
+     55|     expect(analytics?.implementationStatus).toBe("LEGACY_ONLY");
+       |                                             ^
+     56|     expect(analytics?.available).toBe(false);
+     57|   });
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[24/24]ΓÄ»
+
+undefined
+C:\Users\jerem\Projects\forge-platform-industrial-recon\apps\industrial-web:
+ΓÇëERR_PNPM_RECURSIVE_EXEC_FIRST_FAILΓÇë Command failed with exit code 1: vitest run src/lib

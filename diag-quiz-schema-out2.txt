@@ -1,0 +1,27 @@
+﻿{
+  "cluster": "forge-production-ecs-platform",
+  "taskDef": "arn:aws:ecs:us-east-1:511343547817:task-definition/forge-production-ecs-platform-api:25",
+  "subnets": [
+    "subnet-0a2094e13d635f9f0",
+    "subnet-07efcd403943fee8a",
+    "subnet-02b40cdf3aafce68d"
+  ],
+  "securityGroups": [
+    "sg-0b33efb44ba9bc61d"
+  ],
+  "action": "starting diag-training-quiz-schema",
+  "environmentOverrides": [
+    "DATABASE_SECRET_ARN"
+  ]
+}
+{
+  "taskArn": "arn:aws:ecs:us-east-1:511343547817:task/forge-production-ecs-platform/f8196c3b49b54743b8fdead94dca5072",
+  "status": "started",
+  "label": "diag-training-quiz-schema"
+}
+Wait with: aws ecs wait tasks-stopped --cluster forge-production-ecs-platform --tasks arn:aws:ecs:us-east-1:511343547817:task/forge-production-ecs-platform/f8196c3b49b54743b8fdead94dca5072
+{	  "trainingTables": [	    {	      "table_name": "industrial_training_attempts"	    },	    {	      "table_name": "industrial_training_chapters"	    },	    {	      "table_name": "industrial_training_questions"	    },	    {	      "table_name": "industrial_training_quizzes"	    },	    {	      "table_name": "industrial_training_records"	    },	    {	      "table_name": "industrial_training_sources"	    },	    {	      "table_name": "industrial_training_user_stats"	    }	  ],	  "quizLikeTables": [	    {	      "table_name": "industrial_training_attempts"	    },	    {	      "table_name": "industrial_training_questions"	    },	    {	      "table_name": "industrial_training_quizzes"	    }	  ],	  "appliedMigrations": [	    {	      "id": 43,	      "created_at": "1786730615376"	    },	    {	      "id": 42,	      "created_at": "1754960000000"	    },	    {	      "id": 41,	      "created_at": "1754950000000"	    },	    {	      "id": 40,	      "created_at": "1754940000000"	    },	    {	      "id": 39,	      "created_at": "1754930000000"	    },	    {	      "id": 38,	      "created_at": "1754920000000"	    },	    {	      "id": 37,	      "created_at": "1754910000000"	    },	    {	      "id": 36,	      "created_at": "1754900000000"	    },	    {	      "id": 35,	      "created_at": "1754890000000"	    },	    {	      "id": 34,	      "created_at": "1754880000000"	    }	  ],	  "trainingRecordCount": [	    {	      "total": 17	    }	  ]	}
+{
+  "taskArn": "arn:aws:ecs:us-east-1:511343547817:task/forge-production-ecs-platform/f8196c3b49b54743b8fdead94dca5072",
+  "exitCode": 0
+}

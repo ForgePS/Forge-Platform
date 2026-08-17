@@ -1,0 +1,36 @@
+﻿{
+  "target": "https://producers-rice-mill.forgepublicsafety.com/",
+  "origin": "https://producers-rice-mill.forgepublicsafety.com",
+  "requestFailures": [
+    {
+      "url": "https://dygmtx4vxgy9i.cloudfront.net/api/v1/public/login-branding?host=producers-rice-mill.forgepublicsafety.com",
+      "method": "GET",
+      "resourceType": "fetch",
+      "failure": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://dygmtx4vxgy9i.cloudfront.net/api/v1/auth/me",
+      "method": "GET",
+      "resourceType": "fetch",
+      "failure": "net::ERR_FAILED"
+    }
+  ],
+  "crossOriginResponses": [
+    {
+      "url": "https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/publicsans/v21/ijwRs572Xtc6ZYQws9YVwnNGfJ4.woff2",
+      "status": 200
+    }
+  ],
+  "consoleErrors": [
+    "Access to fetch at 'https://dygmtx4vxgy9i.cloudfront.net/api/v1/public/login-branding?host=producers-rice-mill.forgepublicsafety.com' from origin 'https://producers-rice-mill.forgepublicsafety.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+    "Failed to load resource: net::ERR_FAILED",
+    "Access to fetch at 'https://dygmtx4vxgy9i.cloudfront.net/api/v1/auth/me' from origin 'https://producers-rice-mill.forgepublicsafety.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+    "Failed to load resource: net::ERR_FAILED"
+  ],
+  "pageErrors": [],
+  "visibleText": "Forge Industrial\nWelcome to Forge Industrial Safety\n\nSign in is required to continue.\n\nFailed to fetch\n\nSign in"
+}

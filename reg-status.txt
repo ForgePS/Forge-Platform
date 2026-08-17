@@ -1,0 +1,7 @@
+﻿node : C:\nvm4w\nodejs\node.exe: bad option: --experimental-strip-types
+At C:\Users\jerem\AppData\Local\Temp\ps-script-7de77330-e13b-433e-9dd6-45132d0b010d.ps1:126 char:1
++ node --experimental-strip-types scripts/_registry-status.mjs 2>&1 | O ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\nvm4w\nodejs...tal-strip-types:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

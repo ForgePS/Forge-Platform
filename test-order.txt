@@ -1,0 +1,12 @@
+﻿
+ RUN  v3.2.7 C:/Users/jerem/Projects/forge-platform-industrial-recon/apps/platform-api
+
+ Γ£ô src/modules/industrial/industrial-api-contract.test.ts (5 tests) 13ms
+ Γ£ô src/modules/industrial/industrial-domain.service.test.ts (7 tests) 11ms
+ Γ£ô src/modules/industrial/industrial-bootstrap.service.test.ts (5 tests) 8ms
+
+ Test Files  3 passed (3)
+      Tests  17 passed (17)
+   Start at  16:43:42
+   Duration  3.85s (transform 1.48s, setup 0ms, collect 7.27s, tests 32ms, environment 1ms, prepare 838ms)
+

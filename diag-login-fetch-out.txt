@@ -1,0 +1,29 @@
+﻿{
+  "target": "https://industrial.forgepublicsafety.com/",
+  "origin": "https://industrial.forgepublicsafety.com",
+  "requestFailures": [],
+  "crossOriginResponses": [
+    {
+      "url": "https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/publicsans/v21/ijwRs572Xtc6ZYQws9YVwnNGfJ4.woff2",
+      "status": 200
+    },
+    {
+      "url": "https://dygmtx4vxgy9i.cloudfront.net/api/v1/public/login-branding?host=industrial.forgepublicsafety.com",
+      "status": 404
+    },
+    {
+      "url": "https://dygmtx4vxgy9i.cloudfront.net/api/v1/auth/me",
+      "status": 401
+    }
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 ()",
+    "Failed to load resource: the server responded with a status of 401 ()"
+  ],
+  "pageErrors": [],
+  "visibleText": "Forge Industrial\nWelcome to Forge Industrial Safety\n\nSign in is required to continue.\n\nUnauthenticated\n\nSign in"
+}
