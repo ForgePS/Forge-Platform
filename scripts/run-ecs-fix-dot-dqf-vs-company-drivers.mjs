@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * Seed DOT compliance records from imported vehicles (not company drivers)
+ * Archive company-driver rows that were seeded into Drivers (DQF)
  * for producers-rice-mill in production.
  *
  * Dry-run:
- *   TENANT_KEY=producers-rice-mill node scripts/run-ecs-seed-dot-from-import.mjs
+ *   TENANT_KEY=producers-rice-mill node scripts/run-ecs-fix-dot-dqf-vs-company-drivers.mjs
  * Apply:
- *   TENANT_KEY=producers-rice-mill APPLY=1 node scripts/run-ecs-seed-dot-from-import.mjs
+ *   TENANT_KEY=producers-rice-mill APPLY=1 node scripts/run-ecs-fix-dot-dqf-vs-company-drivers.mjs
  */
 import { spawnSync } from "node:child_process";
 import path from "node:path";
@@ -25,9 +25,9 @@ if (TENANT_KEY !== "producers-rice-mill") {
   process.exit(1);
 }
 
-const prefix = `seed/dot-from-import/${new Date().toISOString().replace(/[:.]/g, "-")}`;
-const key = `${prefix}/seed-dot-from-import.mjs`;
-const local = path.resolve("scripts/seed-dot-from-import.mjs");
+const prefix = `fix/dot-dqf-vs-company-drivers/${new Date().toISOString().replace(/[:.]/g, "-")}`;
+const key = `${prefix}/fix-dot-dqf-vs-company-drivers.mjs`;
+const local = path.resolve("scripts/fix-dot-dqf-vs-company-drivers.mjs");
 
 const up = spawnSync("aws", ["s3", "cp", local, `s3://${IMPORTS_BUCKET}/${key}`], {
   encoding: "utf8",
@@ -55,14 +55,14 @@ const evalCode = [
   `const key=${JSON.stringify(key)};`,
   `const c=new S3Client({});`,
   `const r=await c.send(new GetObjectCommand({Bucket:bucket,Key:key}));`,
-  `writeFileSync("/tmp/seed-dot-from-import.mjs", await r.Body.transformToString("utf8"));`,
-  `const run=spawnSync(process.execPath,["/tmp/seed-dot-from-import.mjs"],{stdio:"inherit",env:process.env});`,
+  `writeFileSync("/tmp/fix-dot-dqf-vs-company-drivers.mjs", await r.Body.transformToString("utf8"));`,
+  `const run=spawnSync(process.execPath,["/tmp/fix-dot-dqf-vs-company-drivers.mjs"],{stdio:"inherit",env:process.env});`,
   `process.exit(run.status??1);`,
 ].join("");
 
 const { cluster, taskArn } = runPlatformApiOneOff(
   ["node", "--input-type=module", "-e", evalCode],
-  `seed-dot-${APPLY === "1" ? "apply" : "dry"}-${TENANT_KEY}`,
+  `fix-dot-dqf-${APPLY === "1" ? "apply" : "dry"}-${TENANT_KEY}`,
   {
     forgeEnvironment: "production",
     environment: {
