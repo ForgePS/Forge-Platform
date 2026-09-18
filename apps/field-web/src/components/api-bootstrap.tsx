@@ -1,12 +1,10 @@
 "use client";
 
 import { configureApiClient, registerForgeBrowserCleanup } from "@forge/web-kit";
-import { purgeIndustrialForgeBrowserState } from "@/lib/forge-browser-purge";
+import { purgeFieldForgeBrowserState } from "@/lib/forge-browser-purge";
 
 const allowDevPrincipal = process.env.NEXT_PUBLIC_ALLOW_DEV_PRINCIPAL === "true";
 
-// Configure synchronously at module load so AuthProvider's first /auth/me
-// call does not race against a useEffect and hit the localhost default.
 configureApiClient({
   baseUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
   ...(allowDevPrincipal && process.env.NEXT_PUBLIC_DEV_PRINCIPAL
@@ -14,10 +12,8 @@ configureApiClient({
     : {}),
 });
 
-// RG-09: wipe Forge-owned industrial client state on logout and tenant switch.
-registerForgeBrowserCleanup((reason) => {
-  purgeIndustrialForgeBrowserState(reason);
-});
+// RG-09: wipe Forge-owned field offline/IDB/cache state on logout and tenant switch.
+registerForgeBrowserCleanup((reason) => purgeFieldForgeBrowserState(reason));
 
 export function ApiBootstrap({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
