@@ -1,29 +1,30 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { ApiBootstrap } from "@/components/api-bootstrap";
-import { IndustrialShell } from "@/components/industrial-shell";
+import { FieldShell } from "@/components/field-shell";
 import { SneatHeadAssets } from "@/components/sneat-assets";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Forge Industrial Safety",
-  description: "Forge Industrial Safety",
-  applicationName: "Forge Industrial Safety",
+  title: "Forge Safety - Field Version",
+  description: "Mobile operational app for Forge Industrial Safety",
+  applicationName: "Forge Safety - Field Version",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "Forge Industrial",
+    statusBarStyle: "black-translucent",
+    title: "Field Version",
   },
-  formatDetection: {
-    telephone: false,
+  icons: {
+    icon: [{ url: "/brand/forge-field-logo.png", type: "image/png" }],
+    apple: [{ url: "/brand/forge-field-logo.png", type: "image/png" }],
   },
-  icons: { icon: "/sneat/img/favicon.ico" },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f5f9" },
     { media: "(prefers-color-scheme: dark)", color: "#232333" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f5f9" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -34,20 +35,20 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
-      className="light-style layout-menu-fixed"
+      className="dark-style layout-navbar-fixed"
       data-theme="theme-default"
       data-assets-path="/sneat/"
-      data-template="vertical-menu-template"
+      data-bs-theme="dark"
       suppressHydrationWarning
     >
       <head>
-        {/* External FOUC boot — required for CSP script-src 'self' (FIS-M01). */}
+        {/* External FOUC boot — keep in sync with field-theme.ts; CSP script-src 'self' (FIS-M01). */}
         <script src="/theme-boot.js" />
         <SneatHeadAssets />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <ApiBootstrap>
-          <IndustrialShell>{children}</IndustrialShell>
+          <FieldShell>{children}</FieldShell>
         </ApiBootstrap>
       </body>
     </html>
