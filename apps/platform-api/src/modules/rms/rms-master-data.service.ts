@@ -407,6 +407,7 @@ export class RmsMasterDataService {
         lastFlowTestDate: data.testDate,
         staticPsi: data.staticPsi,
         residualPsi: data.residualPsi,
+        dischargeSize: data.dischargeSize ?? hydrant.dischargeSize,
         flowGpm: data.flowGpm,
         nfpaClass: data.nfpaClass,
         nfpaColor: data.nfpaColor,
