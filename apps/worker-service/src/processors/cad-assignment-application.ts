@@ -11,9 +11,11 @@ import {
   createId,
   nerisIncidentPersonnel,
   nerisIncidentUnits,
+  rmsPersonnel,
+  rmsUnits,
   type DatabaseTransaction,
 } from "@forge/database";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 export async function applyCadAssignments(
   tx: DatabaseTransaction,
@@ -57,7 +59,10 @@ async function applyUnits(
       ),
     });
 
-    if (!mapping?.forgeUnitId) {
+    const forgeUnitId = mapping
+      ? await resolveForgeUnitId(tx, input.tenantId, mapping.forgeUnitId, mapping.forgeApparatusId)
+      : null;
+    if (!forgeUnitId) {
       await recordUnknownUnit(tx, input, unit);
       continue;
     }
@@ -66,7 +71,7 @@ async function applyUnits(
       where: and(
         eq(nerisIncidentUnits.tenantId, input.tenantId),
         eq(nerisIncidentUnits.incidentId, input.incidentId),
-        eq(nerisIncidentUnits.unitId, mapping.forgeUnitId),
+        eq(nerisIncidentUnits.unitId, forgeUnitId),
       ),
     });
 
@@ -94,7 +99,7 @@ async function applyUnits(
         id: createId(),
         tenantId: input.tenantId,
         incidentId: input.incidentId,
-        unitId: mapping.forgeUnitId,
+        unitId: forgeUnitId,
         ...values,
         createdAt: now,
       });
@@ -167,7 +172,15 @@ async function applyPersonnel(
       ),
     });
 
-    if (!mapping?.forgePersonnelId) {
+    const forgePersonnelId = mapping
+      ? await resolveForgePersonnelId(
+          tx,
+          input.tenantId,
+          mapping.forgePersonnelId,
+          mapping.forgePersonId,
+        )
+      : null;
+    if (!forgePersonnelId) {
       await recordUnknownPersonnel(tx, input, person);
       continue;
     }
@@ -176,7 +189,7 @@ async function applyPersonnel(
       where: and(
         eq(nerisIncidentPersonnel.tenantId, input.tenantId),
         eq(nerisIncidentPersonnel.incidentId, input.incidentId),
-        eq(nerisIncidentPersonnel.personnelId, mapping.forgePersonnelId),
+        eq(nerisIncidentPersonnel.personnelId, forgePersonnelId),
       ),
     });
 
@@ -196,7 +209,7 @@ async function applyPersonnel(
         id: createId(),
         tenantId: input.tenantId,
         incidentId: input.incidentId,
-        personnelId: mapping.forgePersonnelId,
+        personnelId: forgePersonnelId,
         unitAssignmentId: null,
         role: person.role ?? "RESPONDER",
         exposureInvolved: false,
@@ -252,4 +265,43 @@ async function recordUnknownPersonnel(
       updatedAt: now,
     });
   }
+}
+
+
+async function resolveForgeUnitId(
+  tx: DatabaseTransaction,
+  tenantId: string,
+  forgeUnitId: string | null,
+  forgeApparatusId: string | null,
+): Promise<string | null> {
+  if (forgeUnitId) return forgeUnitId;
+  if (!forgeApparatusId) return null;
+  const unit = await tx.query.rmsUnits.findFirst({
+    where: and(
+      eq(rmsUnits.tenantId, tenantId),
+      eq(rmsUnits.apparatusId, forgeApparatusId),
+      eq(rmsUnits.status, "ACTIVE"),
+      isNull(rmsUnits.deletedAt),
+    ),
+  });
+  return unit?.id ?? null;
+}
+
+async function resolveForgePersonnelId(
+  tx: DatabaseTransaction,
+  tenantId: string,
+  forgePersonnelId: string | null,
+  forgePersonId: string | null,
+): Promise<string | null> {
+  if (forgePersonnelId) return forgePersonnelId;
+  if (!forgePersonId) return null;
+  const personnel = await tx.query.rmsPersonnel.findFirst({
+    where: and(
+      eq(rmsPersonnel.tenantId, tenantId),
+      eq(rmsPersonnel.personId, forgePersonId),
+      eq(rmsPersonnel.status, "ACTIVE"),
+      isNull(rmsPersonnel.deletedAt),
+    ),
+  });
+  return personnel?.id ?? null;
 }
