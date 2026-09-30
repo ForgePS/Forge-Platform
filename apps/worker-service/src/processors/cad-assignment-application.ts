@@ -63,6 +63,7 @@ async function applyUnits(
       ? await resolveForgeUnitId(tx, input.tenantId, mapping.forgeUnitId, mapping.forgeApparatusId)
       : null;
     if (!forgeUnitId) {
+      if (mapping?.externalAgency) continue;
       await recordUnknownUnit(tx, input, unit);
       continue;
     }
@@ -129,7 +130,9 @@ async function recordUnknownUnit(
         occurrenceCount: existing.occurrenceCount + 1,
         lastSeenAt: now,
         lastRawMessageId: input.rawMessageId,
-        status: existing.status === "MAPPED" ? existing.status : "OPEN",
+        status: ["IGNORED_WITH_REASON", "ESCALATED"].includes(existing.status)
+          ? existing.status
+          : "OPEN",
         recordVersion: existing.recordVersion + 1,
         updatedAt: now,
       })
@@ -181,6 +184,7 @@ async function applyPersonnel(
         )
       : null;
     if (!forgePersonnelId) {
+      if (mapping?.externalAgency) continue;
       await recordUnknownPersonnel(tx, input, person);
       continue;
     }
@@ -244,7 +248,9 @@ async function recordUnknownPersonnel(
         occurrenceCount: existing.occurrenceCount + 1,
         lastSeenAt: now,
         lastRawMessageId: input.rawMessageId,
-        status: existing.status === "MAPPED" ? existing.status : "OPEN",
+        status: ["IGNORED_WITH_REASON", "ESCALATED"].includes(existing.status)
+          ? existing.status
+          : "OPEN",
         recordVersion: existing.recordVersion + 1,
         updatedAt: now,
       })
