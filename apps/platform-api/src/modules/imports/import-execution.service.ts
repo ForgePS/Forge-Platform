@@ -136,10 +136,15 @@ export class ImportExecutionService {
             ),
             orderBy: [asc(importColumnMappings.ordinal)],
           });
-          // S8 / pre-S9: no product adapters are authorized. Default to the neutral
-          // reference adapter so execute does not invent FORGE_*:… keys that the worker
-          // cannot resolve (DEF-S8-024). Callers may still pass an explicit adapterKey.
-          const adapterKey = input.adapterKey ?? "reference:generic:record@1";
+          // Product adapters are selected only for explicitly supported product/module/record
+          // tuples. Unknown import categories retain the neutral reference adapter.
+          const defaultAdapterKey =
+            job.productCode === "FORGE_RMS" &&
+            job.moduleCode === "HYDRANTS" &&
+            job.recordType === "hydrant"
+              ? "FORGE_RMS:HYDRANTS:hydrant@1"
+              : "reference:generic:record@1";
+          const adapterKey = input.adapterKey ?? defaultAdapterKey;
           const batchSize = resolveBatchSize(input.batchSize);
           const [rowCount] = await tx
             .select({ value: count() })
