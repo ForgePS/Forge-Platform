@@ -161,6 +161,26 @@ test.describe("Phase 4 CAD acceptance @phase4 @cad", () => {
       expect(row).not.toHaveProperty("rawPayload");
       expect(row).not.toHaveProperty("payloadJson");
     }
+
+    const sentMessage = list.find(
+      (row) => String(row.sourceIncidentId ?? "") === `SRC-${runId}`,
+    );
+    expect(sentMessage?.id).toBeTruthy();
+
+    const detail = await apiRequest(
+      page,
+      "GET",
+      `/api/v1/tenants/${tenantId}/cad/messages/${String(sentMessage?.id)}`,
+    );
+    expectOkStatus(detail.status, "message detail");
+    const detailData = unwrapData<{
+      message: Record<string, unknown>;
+      normalizedEvents: Array<Record<string, unknown>>;
+    }>(detail.json);
+    expect(detailData.message.id).toBe(sentMessage?.id);
+    expect(Array.isArray(detailData.normalizedEvents)).toBe(true);
+    const detailBody = String(detail.body);
+    expect(detailBody).not.toMatch(/inlinePayloadEncrypted|payloadS3Bucket|payloadS3Key|rawPayload/i);
   });
 
   test("12/13 — operations summary returns queue counters", async ({ authenticatedPage: page }) => {
