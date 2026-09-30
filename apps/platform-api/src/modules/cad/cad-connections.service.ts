@@ -15,6 +15,7 @@ import {
   cadIncidentLinks,
   cadPersonnelMappings,
   cadRawMessages,
+  cadNormalizedEvents,
   cadUnitMappings,
   cadUnknownPersonnel,
   cadUnknownUnits,
@@ -743,6 +744,69 @@ export class CadConnectionsService {
         .where(eq(cadRawMessages.tenantId, tenantId))
         .orderBy(desc(cadRawMessages.receivedAt))
         .limit(100);
+    });
+  }
+
+  async getMessageDetail(tenantId: string, rawMessageId: string) {
+    await this.assertCadEnabled(tenantId);
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const message = await tx.query.cadRawMessages.findFirst({
+        where: and(
+          eq(cadRawMessages.tenantId, tenantId),
+          eq(cadRawMessages.id, rawMessageId),
+        ),
+      });
+      if (!message) throw new ForgeError("NOT_FOUND", "CAD message not found");
+
+      const normalizedEvents = await tx
+        .select({
+          id: cadNormalizedEvents.id,
+          cadRawMessageId: cadNormalizedEvents.cadRawMessageId,
+          cadConnectionId: cadNormalizedEvents.cadConnectionId,
+          sourceMessageId: cadNormalizedEvents.sourceMessageId,
+          sourceIncidentId: cadNormalizedEvents.sourceIncidentId,
+          sourceIncidentNumber: cadNormalizedEvents.sourceIncidentNumber,
+          sourceEventId: cadNormalizedEvents.sourceEventId,
+          sourceSequence: cadNormalizedEvents.sourceSequence,
+          normalizedEventType: cadNormalizedEvents.normalizedEventType,
+          normalizedEventTimestamp: cadNormalizedEvents.normalizedEventTimestamp,
+          originalEventTimestamp: cadNormalizedEvents.originalEventTimestamp,
+          originalTimezone: cadNormalizedEvents.originalTimezone,
+          normalizedPayload: cadNormalizedEvents.normalizedPayload,
+          normalizationWarnings: cadNormalizedEvents.normalizationWarnings,
+          normalizationErrors: cadNormalizedEvents.normalizationErrors,
+          mappingStatus: cadNormalizedEvents.mappingStatus,
+          incidentApplicationStatus: cadNormalizedEvents.incidentApplicationStatus,
+          createdAt: cadNormalizedEvents.createdAt,
+        })
+        .from(cadNormalizedEvents)
+        .where(
+          and(
+            eq(cadNormalizedEvents.tenantId, tenantId),
+            eq(cadNormalizedEvents.cadRawMessageId, rawMessageId),
+          ),
+        )
+        .orderBy(cadNormalizedEvents.normalizedEventTimestamp);
+
+      return {
+        message: {
+          id: message.id,
+          cadConnectionId: message.cadConnectionId,
+          receivedAt: message.receivedAt,
+          transportType: message.transportType,
+          sourceMessageId: message.sourceMessageId,
+          sourceIncidentId: message.sourceIncidentId,
+          sourceEventType: message.sourceEventType,
+          sourceVersion: message.sourceVersion,
+          sourceSequence: message.sourceSequence,
+          processingStatus: message.processingStatus,
+          authenticationStatus: message.authenticationStatus,
+          payloadSizeBytes: message.payloadSizeBytes,
+          payloadHash: message.payloadHash,
+          correlationId: message.correlationId,
+        },
+        normalizedEvents,
+      };
     });
   }
 
