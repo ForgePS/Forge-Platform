@@ -55,3 +55,39 @@ export function validateImportExecuteMessage(raw: unknown): MessageValidationRes
   }
   return { ok: true, message: parsed.data };
 }
+
+
+export const IMPORT_ROLLBACK_MESSAGE_TYPE = "IMPORT_ROLLBACK" as const;
+export const IMPORT_ROLLBACK_SCHEMA_VERSION = "1" as const;
+
+export const importRollbackMessageSchema = z.object({
+  schemaVersion: z.literal(IMPORT_ROLLBACK_SCHEMA_VERSION),
+  messageType: z.literal(IMPORT_ROLLBACK_MESSAGE_TYPE),
+  jobId: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  rollbackEventId: z.string().uuid(),
+  requestedBy: z.string().uuid().nullable(),
+  correlationId: z.string().min(1).max(128),
+  idempotencyKey: z.string().min(1).max(255),
+  attempt: z.number().int().min(1).max(100),
+  requestedAt: z.string().datetime({ offset: true }),
+});
+export type ImportRollbackMessage=z.infer<typeof importRollbackMessageSchema>;
+
+export function createImportRollbackMessage(input:Omit<ImportRollbackMessage,"schemaVersion"|"messageType"|"requestedAt"|"attempt">&{attempt?:number;requestedAt?:string}):ImportRollbackMessage{
+  return importRollbackMessageSchema.parse({
+    ...input,
+    schemaVersion:IMPORT_ROLLBACK_SCHEMA_VERSION,
+    messageType:IMPORT_ROLLBACK_MESSAGE_TYPE,
+    attempt:input.attempt??1,
+    requestedAt:input.requestedAt??new Date().toISOString(),
+  });
+}
+
+export function validateImportRollbackMessage(raw:unknown):
+  |{ok:true;message:ImportRollbackMessage}
+  |{ok:false;reason:string;code:string}{
+  const parsed=importRollbackMessageSchema.safeParse(raw);
+  if(!parsed.success)return {ok:false,reason:parsed.error.issues.map(i=>i.message).join("; "),code:"IMPORT_ROLLBACK_MESSAGE_INVALID"};
+  return {ok:true,message:parsed.data};
+}
