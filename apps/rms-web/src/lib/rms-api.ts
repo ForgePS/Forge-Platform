@@ -891,6 +891,30 @@ export type CadMessageDetail = {
   normalizedEvents: CadNormalizedEventDetail[];
 };
 
+export type CadFieldProvenance = {
+  id: string;
+  incidentId: string;
+  fieldIdentifier: string;
+  currentValueSource: string;
+  sourceSystem: string;
+  cadConnectionId: string | null;
+  cadRawMessageId: string | null;
+  cadNormalizedEventId: string | null;
+  sourcePath: string | null;
+  sourceValueHash: string | null;
+  mappingProfileId: string | null;
+  mappingVersion: number | null;
+  appliedAt: string;
+  appliedByUserId: string | null;
+  manualOverrideAt: string | null;
+  manualOverrideByUserId: string | null;
+  manualOverrideReason: string | null;
+  ownershipPolicy: string;
+  recordVersion: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type CadIncidentStatus = {
   links: Array<{
     id: string;
@@ -903,7 +927,13 @@ export type CadIncidentStatus = {
     updatedAt: string;
   }>;
   openConflicts: CadConflict[];
-  operatingHints: { linked: boolean; conflictCount: number };
+  fieldProvenance: CadFieldProvenance[];
+  operatingHints: {
+    linked: boolean;
+    conflictCount: number;
+    cadOwnedFieldCount?: number;
+    manualOverrideCount?: number;
+  };
 };
 
 export function getCadOperationsSummary(tenantId: string): Promise<CadOperationsSummary> {
