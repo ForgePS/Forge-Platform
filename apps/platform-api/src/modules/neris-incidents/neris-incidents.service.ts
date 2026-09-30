@@ -295,6 +295,25 @@ export class NerisIncidentsService {
     }, principal.userId);
   }
 
+  async listFieldValues(tenantId: string, incidentId: string) {
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      await this.requireIncident(tx, tenantId, incidentId);
+      return tx
+        .select()
+        .from(nerisIncidentFieldValues)
+        .where(
+          and(
+            eq(nerisIncidentFieldValues.tenantId, tenantId),
+            eq(nerisIncidentFieldValues.incidentId, incidentId),
+          ),
+        )
+        .orderBy(
+          nerisIncidentFieldValues.sectionKey,
+          nerisIncidentFieldValues.createdAt,
+        );
+    });
+  }
+
   async batchUpsertFieldValues(
     tenantId: string,
     incidentId: string,
