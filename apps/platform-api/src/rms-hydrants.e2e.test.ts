@@ -80,6 +80,25 @@ describe("RMS hydrant domain", () => {
     expect(history.body.data).toHaveLength(1);
     expect(history.body.data[0].pitotPsi).toBe(18);
 
+    const inspection = await api
+      .post(`/api/v1/tenants/${tenant.tenantId}/rms/hydrants/${hydrantId}/inspections`)
+      .set("Idempotency-Key", createId())
+      .send({ inspectionDate: "2026-09-30T12:00:00.000Z", operationalStatus: "NEEDS_REPAIR", inspector: "Test Inspector", checklist: { "Caps present and secure": false }, issueCount: 1, notes: "Cap requires attention" })
+      .expect(200);
+    expect(inspection.body.data.hydrant.status).toBe("NEEDS_REPAIR");
+
+    const damage = await api
+      .post(`/api/v1/tenants/${tenant.tenantId}/rms/hydrants/${hydrantId}/damage-reports`)
+      .set("Idempotency-Key", createId())
+      .send({ reportedAt: "2026-09-30T12:05:00.000Z", severity: "major", operationalStatus: "OUT_OF_SERVICE", leakPresent: true, trafficHazard: false, alternateWaterSupply: "HYD-TEST-002", reportedBy: "Test Administrator", notes: "Impact damage" })
+      .expect(200);
+    expect(damage.body.data.hydrant.status).toBe("OUT_OF_SERVICE");
+
+    const inspections = await api.get(`/api/v1/tenants/${tenant.tenantId}/rms/hydrants/${hydrantId}/inspections`).expect(200);
+    expect(inspections.body.data).toHaveLength(1);
+    const damageReports = await api.get(`/api/v1/tenants/${tenant.tenantId}/rms/hydrants/${hydrantId}/damage-reports`).expect(200);
+    expect(damageReports.body.data).toHaveLength(1);
+
     const list = await api
       .get(`/api/v1/tenants/${tenant.tenantId}/rms/hydrants?search=Spahn`)
       .expect(200);
