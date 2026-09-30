@@ -62,12 +62,48 @@ CREATE TABLE IF NOT EXISTS "rms_hydrant_flow_tests" (
 CREATE INDEX IF NOT EXISTS "rms_hydrant_flow_tests_hydrant_date_idx" ON "rms_hydrant_flow_tests" ("hydrant_id","test_date");
 CREATE INDEX IF NOT EXISTS "rms_hydrant_flow_tests_tenant_idx" ON "rms_hydrant_flow_tests" ("tenant_id");
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON "rms_hydrants", "rms_hydrant_flow_tests" TO forge_app;
+CREATE TABLE IF NOT EXISTS "rms_hydrant_inspections" (
+  "id" uuid PRIMARY KEY,
+  "tenant_id" uuid NOT NULL REFERENCES "tenants"("id"),
+  "hydrant_id" uuid NOT NULL REFERENCES "rms_hydrants"("id"),
+  "inspection_at" timestamptz NOT NULL,
+  "operational_status" varchar(32) NOT NULL,
+  "inspector" varchar(200),
+  "checklist_json" jsonb NOT NULL DEFAULT '{}'::jsonb,
+  "issue_count" integer NOT NULL DEFAULT 0,
+  "notes" text,
+  "created_by_user_id" uuid,
+  "created_at" timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS "rms_hydrant_inspections_hydrant_date_idx" ON "rms_hydrant_inspections" ("hydrant_id","inspection_at");
+CREATE INDEX IF NOT EXISTS "rms_hydrant_inspections_tenant_idx" ON "rms_hydrant_inspections" ("tenant_id");
+
+CREATE TABLE IF NOT EXISTS "rms_hydrant_damage_reports" (
+  "id" uuid PRIMARY KEY,
+  "tenant_id" uuid NOT NULL REFERENCES "tenants"("id"),
+  "hydrant_id" uuid NOT NULL REFERENCES "rms_hydrants"("id"),
+  "reported_at" timestamptz NOT NULL,
+  "severity" varchar(32) NOT NULL,
+  "operational_status" varchar(32) NOT NULL,
+  "leak_present" boolean,
+  "traffic_hazard" boolean,
+  "alternate_water_supply" text,
+  "water_provider" varchar(200),
+  "work_order_reference" varchar(120),
+  "reported_by" varchar(200),
+  "notes" text,
+  "created_by_user_id" uuid,
+  "created_at" timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS "rms_hydrant_damage_reports_hydrant_date_idx" ON "rms_hydrant_damage_reports" ("hydrant_id","reported_at");
+CREATE INDEX IF NOT EXISTS "rms_hydrant_damage_reports_tenant_idx" ON "rms_hydrant_damage_reports" ("tenant_id");
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON "rms_hydrants", "rms_hydrant_flow_tests", "rms_hydrant_inspections", "rms_hydrant_damage_reports" TO forge_app;
 
 DO $$
 DECLARE t text;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['rms_hydrants','rms_hydrant_flow_tests']
+  FOREACH t IN ARRAY ARRAY['rms_hydrants','rms_hydrant_flow_tests','rms_hydrant_inspections','rms_hydrant_damage_reports']
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
