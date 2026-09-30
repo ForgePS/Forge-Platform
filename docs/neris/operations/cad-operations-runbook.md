@@ -60,3 +60,24 @@ EMF metrics (worker stdout): `CadPolling*`, `CadRetention*`.
 2. Disable all CAD connections.
 3. Clear `CAD_POLLING_TENANT_IDS` / `CAD_RETENTION_TENANT_IDS`.
 4. Do not rotate/replace `forge-development-secrets-database-app`.
+
+
+## Normalized message detail
+
+Operators and RMS clients can read the normalized, vendor-neutral interpretation of a persisted CAD message without receiving the raw payload bytes:
+
+`GET /api/v1/tenants/:tenantId/cad/messages/:rawMessageId`
+
+Permission: `rms.cad.message.view`.
+
+The response contains:
+
+- sanitized raw-message metadata
+- source incident/message identifiers
+- processing/authentication status
+- normalized event type and timestamp
+- `normalizedPayload` for each normalized event
+- normalization warnings/errors
+- mapping/application status
+
+The response intentionally excludes raw encrypted payload bytes, S3 payload bucket/key details, credentials, and webhook secrets. Use this endpoint for reviewed CAD prefill, form resume, and Auto-Dispatch assistance rather than reading raw vendor payload storage.

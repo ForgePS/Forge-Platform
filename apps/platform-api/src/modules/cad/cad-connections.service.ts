@@ -12,9 +12,11 @@ import {
 import {
   cadConnections,
   cadConflicts,
+  cadFieldProvenance,
   cadIncidentLinks,
   cadPersonnelMappings,
   cadRawMessages,
+  cadNormalizedEvents,
   cadUnitMappings,
   cadUnknownPersonnel,
   cadUnknownUnits,
@@ -746,6 +748,69 @@ export class CadConnectionsService {
     });
   }
 
+  async getMessageDetail(tenantId: string, rawMessageId: string) {
+    await this.assertCadEnabled(tenantId);
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const message = await tx.query.cadRawMessages.findFirst({
+        where: and(
+          eq(cadRawMessages.tenantId, tenantId),
+          eq(cadRawMessages.id, rawMessageId),
+        ),
+      });
+      if (!message) throw new ForgeError("NOT_FOUND", "CAD message not found");
+
+      const normalizedEvents = await tx
+        .select({
+          id: cadNormalizedEvents.id,
+          cadRawMessageId: cadNormalizedEvents.cadRawMessageId,
+          cadConnectionId: cadNormalizedEvents.cadConnectionId,
+          sourceMessageId: cadNormalizedEvents.sourceMessageId,
+          sourceIncidentId: cadNormalizedEvents.sourceIncidentId,
+          sourceIncidentNumber: cadNormalizedEvents.sourceIncidentNumber,
+          sourceEventId: cadNormalizedEvents.sourceEventId,
+          sourceSequence: cadNormalizedEvents.sourceSequence,
+          normalizedEventType: cadNormalizedEvents.normalizedEventType,
+          normalizedEventTimestamp: cadNormalizedEvents.normalizedEventTimestamp,
+          originalEventTimestamp: cadNormalizedEvents.originalEventTimestamp,
+          originalTimezone: cadNormalizedEvents.originalTimezone,
+          normalizedPayload: cadNormalizedEvents.normalizedPayload,
+          normalizationWarnings: cadNormalizedEvents.normalizationWarnings,
+          normalizationErrors: cadNormalizedEvents.normalizationErrors,
+          mappingStatus: cadNormalizedEvents.mappingStatus,
+          incidentApplicationStatus: cadNormalizedEvents.incidentApplicationStatus,
+          createdAt: cadNormalizedEvents.createdAt,
+        })
+        .from(cadNormalizedEvents)
+        .where(
+          and(
+            eq(cadNormalizedEvents.tenantId, tenantId),
+            eq(cadNormalizedEvents.cadRawMessageId, rawMessageId),
+          ),
+        )
+        .orderBy(cadNormalizedEvents.normalizedEventTimestamp);
+
+      return {
+        message: {
+          id: message.id,
+          cadConnectionId: message.cadConnectionId,
+          receivedAt: message.receivedAt,
+          transportType: message.transportType,
+          sourceMessageId: message.sourceMessageId,
+          sourceIncidentId: message.sourceIncidentId,
+          sourceEventType: message.sourceEventType,
+          sourceVersion: message.sourceVersion,
+          sourceSequence: message.sourceSequence,
+          processingStatus: message.processingStatus,
+          authenticationStatus: message.authenticationStatus,
+          payloadSizeBytes: message.payloadSizeBytes,
+          payloadHash: message.payloadHash,
+          correlationId: message.correlationId,
+        },
+        normalizedEvents,
+      };
+    });
+  }
+
   async incidentCadStatus(tenantId: string, incidentId: string) {
     await this.assertCadEnabled(tenantId);
     return withTenantTransaction(this.db, tenantId, async (tx) => {
@@ -770,12 +835,29 @@ export class CadConnectionsService {
         .orderBy(desc(cadConflicts.createdAt))
         .limit(50);
 
+      const fieldProvenance = await tx
+        .select()
+        .from(cadFieldProvenance)
+        .where(
+          and(
+            eq(cadFieldProvenance.tenantId, tenantId),
+            eq(cadFieldProvenance.incidentId, incidentId),
+          ),
+        )
+        .orderBy(desc(cadFieldProvenance.updatedAt))
+        .limit(200);
+
       return {
         links,
         openConflicts: conflicts,
+        fieldProvenance,
         operatingHints: {
           linked: links.some((link) => link.linkStatus === "ACTIVE"),
           conflictCount: conflicts.length,
+          cadOwnedFieldCount: fieldProvenance.filter(
+            (row) => row.currentValueSource === "CAD" && !row.manualOverrideAt,
+          ).length,
+          manualOverrideCount: fieldProvenance.filter((row) => Boolean(row.manualOverrideAt)).length,
         },
       };
     });

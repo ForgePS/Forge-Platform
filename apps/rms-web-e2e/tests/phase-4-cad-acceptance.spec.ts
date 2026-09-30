@@ -161,6 +161,26 @@ test.describe("Phase 4 CAD acceptance @phase4 @cad", () => {
       expect(row).not.toHaveProperty("rawPayload");
       expect(row).not.toHaveProperty("payloadJson");
     }
+
+    const sentMessage = list.find(
+      (row) => String(row.sourceIncidentId ?? "") === `SRC-${runId}`,
+    );
+    expect(sentMessage?.id).toBeTruthy();
+
+    const detail = await apiRequest(
+      page,
+      "GET",
+      `/api/v1/tenants/${tenantId}/cad/messages/${String(sentMessage?.id)}`,
+    );
+    expectOkStatus(detail.status, "message detail");
+    const detailData = unwrapData<{
+      message: Record<string, unknown>;
+      normalizedEvents: Array<Record<string, unknown>>;
+    }>(detail.json);
+    expect(detailData.message.id).toBe(sentMessage?.id);
+    expect(Array.isArray(detailData.normalizedEvents)).toBe(true);
+    const detailBody = String(detail.body);
+    expect(detailBody).not.toMatch(/inlinePayloadEncrypted|payloadS3Bucket|payloadS3Key|rawPayload/i);
   });
 
   test("12/13 — operations summary returns queue counters", async ({ authenticatedPage: page }) => {
@@ -239,9 +259,14 @@ test.describe("Phase 4 CAD acceptance @phase4 @cad", () => {
       `/api/v1/tenants/${tenantId}/neris/incidents/${incidentId}/cad-status`,
     );
     expect(res.status).toBe(200);
-    const status = unwrapData<{ links?: unknown[]; openConflicts?: unknown[] }>(res.json);
+    const status = unwrapData<{
+      links?: unknown[];
+      openConflicts?: unknown[];
+      fieldProvenance?: unknown[];
+    }>(res.json);
     expect(Array.isArray(status.links)).toBe(true);
     expect(Array.isArray(status.openConflicts)).toBe(true);
+    expect(Array.isArray(status.fieldProvenance)).toBe(true);
   });
 
   test("21/22 — RMS CAD Operations + Connections pages load", async ({ authenticatedPage: page }) => {

@@ -16,6 +16,7 @@ import {
 } from "@forge/contracts";
 import {
   createId,
+  cadFieldProvenance,
   cadManualFallbackSessions,
   nerisIncidentActivity,
   nerisIncidentConfigurationSnapshots,
@@ -291,6 +292,65 @@ export class NerisIncidentsService {
       if (updated.status !== before.status) {
         await this.recordStatusChange(tx, tenantId, incidentId, before.status, updated.status, principal);
       }
+
+      const manualFieldMap: Array<{
+        inputKey: keyof typeof data;
+        identifier: string;
+        beforeValue: unknown;
+        afterValue: unknown;
+      }> = [
+        {
+          inputKey: "primaryIncidentTypeCode",
+          identifier: "incident.primaryIncidentTypeCode",
+          beforeValue: before.primaryIncidentTypeCode,
+          afterValue: updated.primaryIncidentTypeCode,
+        },
+        {
+          inputKey: "dispatchDescription",
+          identifier: "incident.dispatchDescription",
+          beforeValue: before.dispatchDescription,
+          afterValue: updated.dispatchDescription,
+        },
+        {
+          inputKey: "responseDistrict",
+          identifier: "incident.responseDistrict",
+          beforeValue: before.responseDistrict,
+          afterValue: updated.responseDistrict,
+        },
+        {
+          inputKey: "alarmAt",
+          identifier: "incident.alarmAt",
+          beforeValue: before.alarmAt?.toISOString?.() ?? before.alarmAt,
+          afterValue: updated.alarmAt?.toISOString?.() ?? updated.alarmAt,
+        },
+      ];
+
+      for (const field of manualFieldMap) {
+        if (!(field.inputKey in data)) continue;
+        if (JSON.stringify(field.beforeValue ?? null) === JSON.stringify(field.afterValue ?? null)) {
+          continue;
+        }
+        const provenance = await tx.query.cadFieldProvenance.findFirst({
+          where: and(
+            eq(cadFieldProvenance.tenantId, tenantId),
+            eq(cadFieldProvenance.incidentId, incidentId),
+            eq(cadFieldProvenance.fieldIdentifier, field.identifier),
+          ),
+        });
+        if (!provenance) continue;
+        await tx
+          .update(cadFieldProvenance)
+          .set({
+            currentValueSource: "FORGE",
+            manualOverrideAt: new Date(),
+            manualOverrideByUserId: principal.userId,
+            manualOverrideReason: "Officer edited CAD-owned incident field",
+            recordVersion: provenance.recordVersion + 1,
+            updatedAt: new Date(),
+          })
+          .where(eq(cadFieldProvenance.id, provenance.id));
+      }
+
       return updated;
     }, principal.userId);
   }
@@ -339,6 +399,20 @@ export class NerisIncidentsService {
           continue;
         }
 
+        const fieldDefinition = await tx.query.nerisFields.findFirst({
+          where: eq(nerisFields.id, value.fieldId),
+        });
+        const fieldIdentifier = fieldDefinition?.fieldKey
+          ? `neris.${fieldDefinition.fieldKey}`
+          : `neris.field.${value.fieldId}`;
+        const existingProvenance = await tx.query.cadFieldProvenance.findFirst({
+          where: and(
+            eq(cadFieldProvenance.tenantId, tenantId),
+            eq(cadFieldProvenance.incidentId, incidentId),
+            eq(cadFieldProvenance.fieldIdentifier, fieldIdentifier),
+          ),
+        });
+
         const now = new Date();
         const payload = {
           valueText: value.valueText,
@@ -376,6 +450,53 @@ export class NerisIncidentsService {
             })
             .returning();
           results.push(row);
+        }
+
+        if (value.prefillSource === "CAD") {
+          if (existingProvenance) {
+            await tx
+              .update(cadFieldProvenance)
+              .set({
+                currentValueSource: "CAD",
+                sourceSystem: "CAD",
+                manualOverrideAt: null,
+                manualOverrideByUserId: null,
+                manualOverrideReason: null,
+                appliedAt: existingProvenance.appliedAt ?? now,
+                recordVersion: existingProvenance.recordVersion + 1,
+                updatedAt: now,
+              })
+              .where(eq(cadFieldProvenance.id, existingProvenance.id));
+          } else {
+            await tx.insert(cadFieldProvenance).values({
+              id: createId(),
+              tenantId,
+              incidentId,
+              fieldIdentifier,
+              currentValueSource: "CAD",
+              sourceSystem: "CAD",
+              ownershipPolicy: "CAD_UNTIL_MANUAL_EDIT",
+              appliedAt: now,
+              createdAt: now,
+              updatedAt: now,
+            });
+          }
+        } else if (
+          existing?.prefillSource === "CAD" &&
+          value.prefillSource === "MANUAL" &&
+          existingProvenance
+        ) {
+          await tx
+            .update(cadFieldProvenance)
+            .set({
+              currentValueSource: "FORGE",
+              manualOverrideAt: now,
+              manualOverrideByUserId: principal.userId,
+              manualOverrideReason: "Officer edited CAD-prefilled NERIS value",
+              recordVersion: existingProvenance.recordVersion + 1,
+              updatedAt: now,
+            })
+            .where(eq(cadFieldProvenance.id, existingProvenance.id));
         }
       }
 

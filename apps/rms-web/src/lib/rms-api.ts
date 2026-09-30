@@ -850,6 +850,71 @@ export type CadRawMessageMeta = {
   cadConnectionId: string;
 };
 
+export type CadNormalizedEventDetail = {
+  id: string;
+  cadRawMessageId: string;
+  cadConnectionId: string;
+  sourceMessageId: string | null;
+  sourceIncidentId: string | null;
+  sourceIncidentNumber: string | null;
+  sourceEventId: string | null;
+  sourceSequence: number | null;
+  normalizedEventType: string;
+  normalizedEventTimestamp: string;
+  originalEventTimestamp: string | null;
+  originalTimezone: string | null;
+  normalizedPayload: Record<string, unknown>;
+  normalizationWarnings: unknown;
+  normalizationErrors: unknown;
+  mappingStatus: string | null;
+  incidentApplicationStatus: string | null;
+  createdAt: string;
+};
+
+export type CadMessageDetail = {
+  message: {
+    id: string;
+    cadConnectionId: string;
+    receivedAt: string;
+    transportType: string;
+    sourceMessageId: string | null;
+    sourceIncidentId: string | null;
+    sourceEventType: string | null;
+    sourceVersion: string | null;
+    sourceSequence: number | null;
+    processingStatus: string;
+    authenticationStatus: string;
+    payloadSizeBytes: number | null;
+    payloadHash: string;
+    correlationId: string;
+  };
+  normalizedEvents: CadNormalizedEventDetail[];
+};
+
+export type CadFieldProvenance = {
+  id: string;
+  incidentId: string;
+  fieldIdentifier: string;
+  currentValueSource: string;
+  sourceSystem: string;
+  cadConnectionId: string | null;
+  cadRawMessageId: string | null;
+  cadNormalizedEventId: string | null;
+  sourcePath: string | null;
+  sourceValueHash: string | null;
+  mappingProfileId: string | null;
+  mappingVersion: number | null;
+  appliedAt: string;
+  appliedByUserId: string | null;
+  manualOverrideAt: string | null;
+  manualOverrideByUserId: string | null;
+  manualOverrideReason: string | null;
+  ownershipPolicy: string;
+  recordVersion: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type CadIncidentStatus = {
   links: Array<{
     id: string;
@@ -862,7 +927,13 @@ export type CadIncidentStatus = {
     updatedAt: string;
   }>;
   openConflicts: CadConflict[];
-  operatingHints: { linked: boolean; conflictCount: number };
+  fieldProvenance: CadFieldProvenance[];
+  operatingHints: {
+    linked: boolean;
+    conflictCount: number;
+    cadOwnedFieldCount?: number;
+    manualOverrideCount?: number;
+  };
 };
 
 export function getCadOperationsSummary(tenantId: string): Promise<CadOperationsSummary> {
@@ -974,6 +1045,15 @@ export function resolveCadUnknownPersonnel(
 
 export function listCadMessages(tenantId: string): Promise<CadRawMessageMeta[]> {
   return apiGet<CadRawMessageMeta[]>(`${tenantBase(tenantId)}/cad/messages`);
+}
+
+export function getCadMessageDetail(
+  tenantId: string,
+  rawMessageId: string,
+): Promise<CadMessageDetail> {
+  return apiGet<CadMessageDetail>(
+    `${tenantBase(tenantId)}/cad/messages/${rawMessageId}`,
+  );
 }
 
 export function getIncidentCadStatus(

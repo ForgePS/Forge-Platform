@@ -126,6 +126,19 @@ export class CadConnectionsController {
     return ok(await this.connections.listMessages(tenantId), getRequestIds(req));
   }
 
+  @Get("api/v1/tenants/:tenantId/cad/messages/:rawMessageId")
+  @RequirePermission("rms.cad.message.view")
+  async getMessageDetail(
+    @Param("tenantId") tenantId: string,
+    @Param("rawMessageId") rawMessageId: string,
+    @Req() req: RequestWithIds,
+  ) {
+    return ok(
+      await this.connections.getMessageDetail(tenantId, rawMessageId),
+      getRequestIds(req),
+    );
+  }
+
   @Post("api/v1/tenants/:tenantId/cad/messages/:rawMessageId/reprocess")
   @RequirePermission("rms.cad.message.reprocess")
   async reprocessMessage(
