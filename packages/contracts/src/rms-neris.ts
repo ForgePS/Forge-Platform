@@ -166,6 +166,9 @@ export const createOccupancyInputSchema = z.object({
 
 export const createHydrantInputSchema = z.object({
   displayId: z.string().min(1).max(64),
+  officialHydrantId: z.string().max(64).optional().nullable(),
+  locationId: z.string().max(64).optional().nullable(),
+  district: z.string().max(120).optional().nullable(),
   addressLine1: z.string().max(300).optional().nullable(),
   city: z.string().max(120).optional().nullable(),
   state: z.string().max(64).optional().nullable(),
@@ -185,6 +188,8 @@ export const createHydrantInputSchema = z.object({
   residualPsi: z.number().nonnegative().optional().nullable(),
   nfpaClass: z.string().max(16).optional().nullable(),
   nfpaColor: z.string().max(64).optional().nullable(),
+  issue: z.string().max(8000).optional().nullable(),
+  alternateSupply: z.string().max(8000).optional().nullable(),
   notes: z.string().max(8000).optional().nullable(),
 });
 
@@ -192,10 +197,15 @@ export const createHydrantFlowTestInputSchema = z.object({
   testDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   staticPsi: z.number().nonnegative().optional().nullable(),
   residualPsi: z.number().nonnegative().optional().nullable(),
+  pitotPsi: z.number().nonnegative().optional().nullable(),
+  dischargeSize: z.number().positive().optional().nullable(),
   flowGpm: z.number().nonnegative(),
   nfpaClass: z.string().max(16).optional().nullable(),
   nfpaColor: z.string().max(64).optional().nullable(),
   testedBy: z.string().max(200).optional().nullable(),
+  shift: z.string().max(64).optional().nullable(),
+  flowResult: z.string().max(64).optional().nullable(),
+  status: z.string().max(32).optional().nullable(),
   notes: z.string().max(8000).optional().nullable(),
 });
 
