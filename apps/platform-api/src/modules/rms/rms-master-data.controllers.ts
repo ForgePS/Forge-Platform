@@ -258,6 +258,38 @@ export class RmsHydrantFlowTestsController {
   }
 }
 
+@Controller("api/v1/tenants/:tenantId/rms/hydrants/:hydrantId/inspections")
+export class RmsHydrantInspectionsController {
+  constructor(private readonly rms: RmsMasterDataService) {}
+  @Get()
+  @RequirePermission("rms.masterdata.read")
+  async list(@Param("tenantId") tenantId: string, @Param("hydrantId") hydrantId: string, @Req() req: RequestWithIds) {
+    return ok(await this.rms.listHydrantInspections(tenantId, hydrantId), getRequestIds(req));
+  }
+  @Post()
+  @RequirePermission("rms.masterdata.manage")
+  @Idempotent({ resourceType: "rms_hydrant_inspection" })
+  async create(@Param("tenantId") tenantId: string, @Param("hydrantId") hydrantId: string, @Body() body: unknown, @Principal() principal: ForgePrincipal, @Req() req: RequestWithIds) {
+    return ok(await this.rms.createHydrantInspection(tenantId, hydrantId, body, principal), getRequestIds(req));
+  }
+}
+
+@Controller("api/v1/tenants/:tenantId/rms/hydrants/:hydrantId/damage-reports")
+export class RmsHydrantDamageReportsController {
+  constructor(private readonly rms: RmsMasterDataService) {}
+  @Get()
+  @RequirePermission("rms.masterdata.read")
+  async list(@Param("tenantId") tenantId: string, @Param("hydrantId") hydrantId: string, @Req() req: RequestWithIds) {
+    return ok(await this.rms.listHydrantDamageReports(tenantId, hydrantId), getRequestIds(req));
+  }
+  @Post()
+  @RequirePermission("rms.masterdata.manage")
+  @Idempotent({ resourceType: "rms_hydrant_damage_report" })
+  async create(@Param("tenantId") tenantId: string, @Param("hydrantId") hydrantId: string, @Body() body: unknown, @Principal() principal: ForgePrincipal, @Req() req: RequestWithIds) {
+    return ok(await this.rms.createHydrantDamageReport(tenantId, hydrantId, body, principal), getRequestIds(req));
+  }
+}
+
 export const RmsOccupanciesController = resourceController(
   "occupancies",
   "rms_occupancy",
