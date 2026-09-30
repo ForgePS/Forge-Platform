@@ -18,6 +18,7 @@ import {
   cancelExecutionSchema,
   computeProgress,
   createImportExecuteMessage,
+  createImportRollbackMessage,
   executeImportJobSchema,
   nextStatusForS5Action,
   resolveBatchSize,
@@ -736,11 +737,24 @@ export class ImportExecutionService {
             status: next,
             classification,
             rollbackEventId: eventId,
-            note: "Rollback preparation only — compensation execution is deferred.",
+            rollbackMessage: createImportRollbackMessage({
+              jobId,
+              tenantId,
+              rollbackEventId: eventId,
+              requestedBy: principal.userId,
+              correlationId,
+              idempotencyKey,
+            }),
           };
         },
         principal.userId,
       );
+      if ("rollbackMessage" in result && result.rollbackMessage) {
+        await this.queue.enqueueRollback(result.rollbackMessage);
+        const { rollbackMessage: _rollbackMessage, ...response } = result;
+        return response;
+      }
+      return result;
     } catch (error) {
       this.mapStateError(error);
     }
