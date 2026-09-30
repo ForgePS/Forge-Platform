@@ -14,7 +14,7 @@ const sample = {
     incidentId: "SRC-1001",
     timestamp: "2026-09-30T10:00:00.000Z",
   },
-  eventType: "INCIDENT_UPDATE",
+  eventType: "INCIDENT_UPDATED",
   incident: { callType: "STRUCTURE_FIRE" },
   timestamps: {
     callReceived: "2026-09-30T09:59:00.000Z",
