@@ -1138,3 +1138,52 @@ export function rejectAiNarrative(
 export function getAiNarrativeHistory(requestId: string): Promise<AiNarrativeHistory> {
   return apiGet<AiNarrativeHistory>(`/api/v1/ai/narratives/${requestId}/history`);
 }
+
+
+export type HydrantSummary={
+  id:string;displayId:string;officialHydrantId:string|null;district:string|null;
+  addressLine1:string|null;city:string|null;state:string|null;status:string;
+  waterProvider:string|null;flowGpm:number|null;staticPsi:number|null;residualPsi:number|null;
+  nfpaClass:string|null;nfpaColor:string|null;lastInspectionDate:string|null;lastFlowTestDate:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type HydrantDetail=HydrantSummary&{
+  locationId:string|null;postalCode:string|null;latitude:number|null;longitude:number|null;
+  waterAssociation:string|null;subdivision:string|null;dischargeSize:number|null;hydrantType:string|null;
+  manufacturer:string|null;model:string|null;installDate:string|null;issue:string|null;
+  alternateSupply:string|null;notes:string|null;
+};
+export type HydrantFlowTest={id:string;testDate:string;staticPsi:number|null;residualPsi:number|null;pitotPsi:number|null;dischargeSize:number|null;flowGpm:number;nfpaClass:string|null;nfpaColor:string|null;testedBy:string|null;shift:string|null;flowResult:string|null;status:string|null;notes:string|null;createdAt:string};
+export type HydrantInspection={id:string;inspectionAt:string;operationalStatus:string;inspector:string|null;checklistJson:Record<string,unknown>;issueCount:number;notes:string|null;createdAt:string};
+export type HydrantDamageReport={id:string;reportedAt:string;severity:string;operationalStatus:string;leakPresent:boolean|null;trafficHazard:boolean|null;alternateWaterSupply:string|null;waterProvider:string|null;workOrderReference:string|null;reportedBy:string|null;notes:string|null;createdAt:string};
+
+export function listHydrants(tenantId:string,query:Record<string,string>):Promise<ApiResult<HydrantSummary[]>>{
+  return apiGetResult<HydrantSummary[]>(`${tenantBase(tenantId)}/rms/hydrants`,{query});
+}
+export function getHydrant(tenantId:string,hydrantId:string):Promise<HydrantDetail>{
+  return apiGet<HydrantDetail>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}`);
+}
+export function createHydrant(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<HydrantDetail>>{
+  return apiSendResult<HydrantDetail>(`${tenantBase(tenantId)}/rms/hydrants`,"POST",payload,{idempotencyKey:createIdempotencyKey("hydrant")});
+}
+export function patchHydrant(tenantId:string,hydrantId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<HydrantDetail>>{
+  return apiSendResult<HydrantDetail>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function listHydrantFlowTests(tenantId:string,hydrantId:string):Promise<HydrantFlowTest[]>{
+  return apiGet<HydrantFlowTest[]>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}/flow-tests`);
+}
+export function createHydrantFlowTest(tenantId:string,hydrantId:string,payload:Record<string,unknown>):Promise<HydrantFlowTest>{
+  return apiSend<HydrantFlowTest>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}/flow-tests`,"POST",payload,{idempotencyKey:createIdempotencyKey("hydrant-flow")});
+}
+export function listHydrantInspections(tenantId:string,hydrantId:string):Promise<HydrantInspection[]>{
+  return apiGet<HydrantInspection[]>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}/inspections`);
+}
+export function createHydrantInspection(tenantId:string,hydrantId:string,payload:Record<string,unknown>):Promise<HydrantInspection>{
+  return apiSend<HydrantInspection>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}/inspections`,"POST",payload,{idempotencyKey:createIdempotencyKey("hydrant-inspection")});
+}
+export function listHydrantDamageReports(tenantId:string,hydrantId:string):Promise<HydrantDamageReport[]>{
+  return apiGet<HydrantDamageReport[]>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}/damage-reports`);
+}
+export function createHydrantDamageReport(tenantId:string,hydrantId:string,payload:Record<string,unknown>):Promise<HydrantDamageReport>{
+  return apiSend<HydrantDamageReport>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}/damage-reports`,"POST",payload,{idempotencyKey:createIdempotencyKey("hydrant-damage")});
+}
