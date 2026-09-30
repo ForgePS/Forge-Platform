@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 import {
   RmsApparatusController,
+  RmsHydrantFlowTestsController,
+  RmsHydrantsController,
   RmsOccupanciesController,
   RmsPersonnelController,
   RmsPreplansController,
@@ -16,6 +18,8 @@ import { RmsMasterDataService } from "./rms-master-data.service.js";
     RmsStationsController,
     RmsShiftsController,
     RmsApparatusController,
+    RmsHydrantsController,
+    RmsHydrantFlowTestsController,
     RmsUnitsController,
     RmsPersonnelController,
     RmsRostersController,
