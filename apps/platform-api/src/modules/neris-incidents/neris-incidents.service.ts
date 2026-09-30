@@ -262,6 +262,33 @@ export class NerisIncidentsService {
     });
   }
 
+  async getLocationContext(tenantId: string, incidentId: string) {
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      await this.requireIncident(tx, tenantId, incidentId);
+      const [location, addresses] = await Promise.all([
+        tx.query.nerisIncidentLocations.findFirst({
+          where: and(
+            eq(nerisIncidentLocations.tenantId, tenantId),
+            eq(nerisIncidentLocations.incidentId, incidentId),
+          ),
+        }),
+        tx.query.nerisIncidentAddresses.findMany({
+          where: and(
+            eq(nerisIncidentAddresses.tenantId, tenantId),
+            eq(nerisIncidentAddresses.incidentId, incidentId),
+          ),
+          orderBy: (table, { asc }) => [asc(table.createdAt)],
+        }),
+      ]);
+      return {
+        incidentId,
+        location: location ?? null,
+        primaryAddress: addresses[0] ?? null,
+        addresses,
+      };
+    });
+  }
+
   async patch(
     tenantId: string,
     incidentId: string,
