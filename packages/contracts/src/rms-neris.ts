@@ -209,6 +209,28 @@ export const createHydrantFlowTestInputSchema = z.object({
   notes: z.string().max(8000).optional().nullable(),
 });
 
+export const createHydrantInspectionInputSchema = z.object({
+  inspectionDate: z.string().datetime(),
+  operationalStatus: z.enum(["IN_SERVICE", "NEEDS_REPAIR", "OUT_OF_SERVICE", "UNKNOWN"]),
+  inspector: z.string().max(200).optional().nullable(),
+  checklist: z.record(z.string(), z.boolean()).default({}),
+  issueCount: z.number().int().nonnegative().default(0),
+  notes: z.string().max(8000).optional().nullable(),
+});
+
+export const createHydrantDamageReportInputSchema = z.object({
+  reportedAt: z.string().datetime(),
+  severity: z.enum(["minor", "moderate", "major", "critical"]),
+  operationalStatus: z.enum(["IN_SERVICE", "NEEDS_REPAIR", "OUT_OF_SERVICE", "UNKNOWN"]),
+  leakPresent: z.boolean().optional().nullable(),
+  trafficHazard: z.boolean().optional().nullable(),
+  alternateWaterSupply: z.string().max(2000).optional().nullable(),
+  waterProvider: z.string().max(200).optional().nullable(),
+  workOrderReference: z.string().max(120).optional().nullable(),
+  reportedBy: z.string().max(200).optional().nullable(),
+  notes: z.string().max(8000).optional().nullable(),
+});
+
 export const createPreplanInputSchema = z.object({
   occupancyId: z.string().uuid(),
   versionLabel: z.string().min(1).max(64).default("1"),
