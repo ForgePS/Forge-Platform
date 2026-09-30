@@ -246,4 +246,27 @@ describe("NERIS Phase 2 incidents API", () => {
       .expect(200);
     expect(units.body.data).toHaveLength(1);
   });
+
+  it("reads tenant-scoped incident location context", async () => {
+    const tenant = await harness.createTenant({ moduleCodes: ["CORE", "PERSONNEL", "NERIS"] });
+    const user = await createIncidentUser(tenant.tenantId);
+    await enableIncidentFlags(tenant.tenantId, user.userId);
+    const api = harness.api(user.userId, tenant.tenantId);
+
+    const created = await api
+      .post(`/api/v1/tenants/${tenant.tenantId}/neris/incidents`)
+      .set("Idempotency-Key", createId())
+      .send({ incidentDate: "2026-09-30", dispatchDescription: "Location context read test" })
+      .expect(200);
+
+    const read = await api
+      .get(`/api/v1/tenants/${tenant.tenantId}/neris/incidents/${created.body.data.id}/location-context`)
+      .expect(200);
+
+    expect(read.body.data.incidentId).toBe(created.body.data.id);
+    expect(read.body.data.location).toBeNull();
+    expect(read.body.data.primaryAddress).toBeNull();
+    expect(read.body.data.addresses).toEqual([]);
+  });
+
 });

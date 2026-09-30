@@ -75,6 +75,16 @@ export class NerisIncidentsController {
     return ok(data, getRequestIds(req));
   }
 
+  @Get(":incidentId/location-context")
+  @RequirePermission("rms.neris.incident.view")
+  async locationContext(
+    @Param("tenantId") tenantId: string,
+    @Param("incidentId") incidentId: string,
+    @Req() req: RequestWithIds,
+  ) {
+    return ok(await this.incidents.getLocationContext(tenantId, incidentId), getRequestIds(req));
+  }
+
   @Patch(":incidentId")
   @RequirePermission("rms.neris.incident.edit")
   async patch(
