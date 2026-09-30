@@ -275,3 +275,68 @@ export const rmsPreplans = pgTable(
     index("rms_preplans_tenant_status_idx").on(table.tenantId, table.approvalStatus),
   ],
 );
+
+
+export const rmsHydrants = pgTable(
+  "rms_hydrants",
+  {
+    id: uuid("id").primaryKey(),
+    tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+    displayId: varchar("display_id", { length: 64 }).notNull(),
+    addressLine1: varchar("address_line1", { length: 300 }),
+    city: varchar("city", { length: 120 }),
+    state: varchar("state", { length: 64 }),
+    postalCode: varchar("postal_code", { length: 32 }),
+    latitude: doublePrecision("latitude"),
+    longitude: doublePrecision("longitude"),
+    status: varchar("status", { length: 32 }).notNull().default("IN_SERVICE"),
+    waterProvider: varchar("water_provider", { length: 200 }),
+    hydrantType: varchar("hydrant_type", { length: 80 }),
+    manufacturer: varchar("manufacturer", { length: 120 }),
+    model: varchar("model", { length: 120 }),
+    installDate: date("install_date"),
+    lastInspectionDate: date("last_inspection_date"),
+    lastFlowTestDate: date("last_flow_test_date"),
+    flowGpm: doublePrecision("flow_gpm"),
+    staticPsi: doublePrecision("static_psi"),
+    residualPsi: doublePrecision("residual_psi"),
+    nfpaClass: varchar("nfpa_class", { length: 16 }),
+    nfpaColor: varchar("nfpa_color", { length: 64 }),
+    notes: text("notes"),
+    recordVersion: recordVersionColumn,
+    createdByUserId: uuid("created_by_user_id"),
+    updatedByUserId: uuid("updated_by_user_id"),
+    createdAt: createdAtColumn,
+    updatedAt: updatedAtColumn,
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    deletedByUserId: uuid("deleted_by_user_id"),
+  },
+  (table) => [
+    uniqueIndex("rms_hydrants_tenant_display_id_uidx").on(table.tenantId, table.displayId),
+    index("rms_hydrants_tenant_status_idx").on(table.tenantId, table.status),
+    index("rms_hydrants_tenant_coordinates_idx").on(table.tenantId, table.latitude, table.longitude),
+  ],
+);
+
+export const rmsHydrantFlowTests = pgTable(
+  "rms_hydrant_flow_tests",
+  {
+    id: uuid("id").primaryKey(),
+    tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+    hydrantId: uuid("hydrant_id").notNull().references(() => rmsHydrants.id),
+    testDate: date("test_date").notNull(),
+    staticPsi: doublePrecision("static_psi"),
+    residualPsi: doublePrecision("residual_psi"),
+    flowGpm: doublePrecision("flow_gpm").notNull(),
+    nfpaClass: varchar("nfpa_class", { length: 16 }),
+    nfpaColor: varchar("nfpa_color", { length: 64 }),
+    testedBy: varchar("tested_by", { length: 200 }),
+    notes: text("notes"),
+    createdByUserId: uuid("created_by_user_id"),
+    createdAt: createdAtColumn,
+  },
+  (table) => [
+    index("rms_hydrant_flow_tests_hydrant_date_idx").on(table.hydrantId, table.testDate),
+    index("rms_hydrant_flow_tests_tenant_idx").on(table.tenantId),
+  ],
+);
