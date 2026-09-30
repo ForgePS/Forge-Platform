@@ -175,7 +175,7 @@ export const createHydrantInputSchema = z.object({
   postalCode: z.string().max(32).optional().nullable(),
   latitude: z.number().min(-90).max(90).optional().nullable(),
   longitude: z.number().min(-180).max(180).optional().nullable(),
-  status: z.enum(["IN_SERVICE", "OUT_OF_SERVICE", "UNKNOWN"]).default("IN_SERVICE"),
+  status: z.enum(["IN_SERVICE", "NEEDS_REPAIR", "OUT_OF_SERVICE", "UNKNOWN"]).default("IN_SERVICE"),
   waterProvider: z.string().max(200).optional().nullable(),
   waterAssociation: z.string().max(200).optional().nullable(),
   subdivision: z.string().max(200).optional().nullable(),
