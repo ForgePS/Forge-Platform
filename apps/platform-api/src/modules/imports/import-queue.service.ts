@@ -4,6 +4,7 @@ import type { ForgeEnvironment } from "@forge/environment";
 import {
   createImportUploadDetectMessage,
   type ImportExecuteMessage,
+  type ImportRollbackMessage,
   type ImportMalwareScanMessage,
   type ImportUploadDetectMessage,
 } from "@forge/imports";
@@ -84,6 +85,21 @@ export class ImportQueueService {
             DataType: "String",
             StringValue: message.correlationId,
           },
+        },
+      }),
+    );
+    return message;
+  }
+
+  async enqueueRollback(message: ImportRollbackMessage) {
+    await this.sqs.send(
+      new SendMessageCommand({
+        QueueUrl: this.queueUrl,
+        MessageBody: JSON.stringify(message),
+        MessageAttributes: {
+          messageType: { DataType: "String", StringValue: message.messageType },
+          tenantId: { DataType: "String", StringValue: message.tenantId },
+          correlationId: { DataType: "String", StringValue: message.correlationId },
         },
       }),
     );
