@@ -314,8 +314,8 @@ export function batchFieldValues(
   incidentId: string,
   values: Array<Record<string, unknown>>,
   recordVersion: number,
-): Promise<ApiResult<{ incident: IncidentDetail; upserted: number }>> {
-  return apiSendResult<{ incident: IncidentDetail; upserted: number }>(
+): Promise<ApiResult<{ incident: IncidentDetail; values: IncidentFieldValue[] }>> {
+  return apiSendResult<{ incident: IncidentDetail; values: IncidentFieldValue[] }>(
     `${tenantBase(tenantId)}/neris/incidents/${incidentId}/field-values`,
     "PATCH",
     { values },
