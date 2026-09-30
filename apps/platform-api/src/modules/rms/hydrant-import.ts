@@ -5,11 +5,13 @@ export const HYDRANT_IMPORT_ADAPTER_KEY = "FORGE_RMS:HYDRANTS:hydrant@1";
 
 const statusSchema = z.enum(["IN_SERVICE", "NEEDS_REPAIR", "OUT_OF_SERVICE", "UNKNOWN"]);
 
-const optionalNumber = z.preprocess((value) => {
-  if (value === "" || value == null) return null;
-  const parsed = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(parsed) ? parsed : value;
-}, z.number().optional().nullable());
+function optionalNumber(schema = z.number()) {
+  return z.preprocess((value) => {
+    if (value === "" || value == null) return null;
+    const parsed = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(parsed) ? parsed : value;
+  }, schema.optional().nullable());
+}
 
 const optionalText = z.preprocess((value) => {
   if (value == null) return null;
@@ -27,22 +29,22 @@ export const hydrantImportRecordSchema = z.object({
   city: optionalText,
   state: optionalText,
   postalCode: optionalText,
-  latitude: optionalNumber.pipe(z.number().min(-90).max(90).optional().nullable()),
-  longitude: optionalNumber.pipe(z.number().min(-180).max(180).optional().nullable()),
+  latitude: optionalNumber(z.number().min(-90).max(90)),
+  longitude: optionalNumber(z.number().min(-180).max(180)),
   status: statusSchema.default("UNKNOWN"),
   waterProvider: optionalText,
   waterAssociation: optionalText,
   subdivision: optionalText,
-  dischargeSize: optionalNumber.pipe(z.number().positive().optional().nullable()),
+  dischargeSize: optionalNumber(z.number().positive()),
   hydrantType: optionalText,
   manufacturer: optionalText,
   model: optionalText,
   installDate: optionalText,
   lastInspectionDate: optionalText,
   lastFlowTestDate: optionalText,
-  flowGpm: optionalNumber.pipe(z.number().nonnegative().optional().nullable()),
-  staticPsi: optionalNumber.pipe(z.number().nonnegative().optional().nullable()),
-  residualPsi: optionalNumber.pipe(z.number().nonnegative().optional().nullable()),
+  flowGpm: optionalNumber(z.number().nonnegative()),
+  staticPsi: optionalNumber(z.number().nonnegative()),
+  residualPsi: optionalNumber(z.number().nonnegative()),
   nfpaClass: optionalText,
   nfpaColor: optionalText,
   issue: optionalText,
