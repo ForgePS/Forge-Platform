@@ -30,6 +30,7 @@ function resourceController(
     | "createApparatus"
     | "createUnit"
     | "createPersonnel"
+    | "createHydrant"
     | "createOccupancy"
     | "createPreplan"
   >,
@@ -40,6 +41,7 @@ function resourceController(
     | "listApparatus"
     | "listUnits"
     | "listPersonnel"
+    | "listHydrants"
     | "listOccupancies"
     | "listPreplans"
   >,
@@ -50,6 +52,7 @@ function resourceController(
     | "getApparatus"
     | "getUnit"
     | "getPersonnel"
+    | "getHydrant"
     | "getOccupancy"
     | "getPreplan"
   >,
@@ -60,6 +63,7 @@ function resourceController(
     | "patchApparatus"
     | "patchUnit"
     | "patchPersonnel"
+    | "patchHydrant"
     | "patchOccupancy"
     | "patchPreplan"
   >,
@@ -70,6 +74,7 @@ function resourceController(
     | "deleteApparatus"
     | "deleteUnit"
     | "deletePersonnel"
+    | "deleteHydrant"
     | "deleteOccupancy"
     | "deletePreplan"
   >,
@@ -210,6 +215,48 @@ export const RmsPersonnelController = resourceController(
   "deletePersonnel",
   "personnelId",
 );
+
+export const RmsHydrantsController = resourceController(
+  "hydrants",
+  "rms_hydrant",
+  "createHydrant",
+  "listHydrants",
+  "getHydrant",
+  "patchHydrant",
+  "deleteHydrant",
+  "hydrantId",
+);
+
+@Controller("api/v1/tenants/:tenantId/rms/hydrants/:hydrantId/flow-tests")
+export class RmsHydrantFlowTestsController {
+  constructor(private readonly rms: RmsMasterDataService) {}
+
+  @Get()
+  @RequirePermission("rms.masterdata.read")
+  async list(
+    @Param("tenantId") tenantId: string,
+    @Param("hydrantId") hydrantId: string,
+    @Req() req: RequestWithIds,
+  ) {
+    return ok(await this.rms.listHydrantFlowTests(tenantId, hydrantId), getRequestIds(req));
+  }
+
+  @Post()
+  @RequirePermission("rms.masterdata.manage")
+  @Idempotent({ resourceType: "rms_hydrant_flow_test" })
+  async create(
+    @Param("tenantId") tenantId: string,
+    @Param("hydrantId") hydrantId: string,
+    @Body() body: unknown,
+    @Principal() principal: ForgePrincipal,
+    @Req() req: RequestWithIds,
+  ) {
+    return ok(
+      await this.rms.createHydrantFlowTest(tenantId, hydrantId, body, principal),
+      getRequestIds(req),
+    );
+  }
+}
 
 export const RmsOccupanciesController = resourceController(
   "occupancies",
