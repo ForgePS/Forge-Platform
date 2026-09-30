@@ -253,24 +253,6 @@ export type IncidentFieldValue = {
   updatedAt: string;
 };
 
-export type IncidentFieldValue = {
-  id: string;
-  incidentId: string;
-  fieldId: string;
-  sectionKey: string;
-  repeatableItemId: string | null;
-  valueText: string | null;
-  valueNumber: string | null;
-  valueBoolean: boolean | null;
-  valueTimestamp: string | null;
-  valueOptionId: string | null;
-  valueJson: unknown;
-  prefillSource: string | null;
-  userConfirmed: boolean;
-  recordVersion: number;
-  createdAt: string;
-  updatedAt: string;
-};
 export type PrefillCandidate = {
   fieldKey: string;
   sectionKey: string;
@@ -327,14 +309,6 @@ export function listFieldValues(
   );
 }
 
-export function listFieldValues(
-  tenantId: string,
-  incidentId: string,
-): Promise<ApiResult<IncidentFieldValue[]>> {
-  return apiGetResult<IncidentFieldValue[]>(
-    `${tenantBase(tenantId)}/neris/incidents/${incidentId}/field-values`,
-  );
-}
 export function batchFieldValues(
   tenantId: string,
   incidentId: string,
