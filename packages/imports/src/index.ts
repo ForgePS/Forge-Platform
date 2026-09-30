@@ -60,6 +60,12 @@ export {
   validateImportExecuteMessage,
   type ImportExecuteMessage,
   type MessageValidationResult,
+  IMPORT_ROLLBACK_MESSAGE_TYPE,
+  IMPORT_ROLLBACK_SCHEMA_VERSION,
+  importRollbackMessageSchema,
+  createImportRollbackMessage,
+  validateImportRollbackMessage,
+  type ImportRollbackMessage,
 } from "./execution/messages.js";
 
 export {
