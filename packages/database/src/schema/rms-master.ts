@@ -3,6 +3,8 @@ import {
   date,
   doublePrecision,
   index,
+  integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -348,5 +350,52 @@ export const rmsHydrantFlowTests = pgTable(
   (table) => [
     index("rms_hydrant_flow_tests_hydrant_date_idx").on(table.hydrantId, table.testDate),
     index("rms_hydrant_flow_tests_tenant_idx").on(table.tenantId),
+  ],
+);
+
+
+export const rmsHydrantInspections = pgTable(
+  "rms_hydrant_inspections",
+  {
+    id: uuid("id").primaryKey(),
+    tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+    hydrantId: uuid("hydrant_id").notNull().references(() => rmsHydrants.id),
+    inspectionAt: timestamp("inspection_at", { withTimezone: true }).notNull(),
+    operationalStatus: varchar("operational_status", { length: 32 }).notNull(),
+    inspector: varchar("inspector", { length: 200 }),
+    checklistJson: jsonb("checklist_json").notNull().default({}),
+    issueCount: integer("issue_count").notNull().default(0),
+    notes: text("notes"),
+    createdByUserId: uuid("created_by_user_id"),
+    createdAt: createdAtColumn,
+  },
+  (table) => [
+    index("rms_hydrant_inspections_hydrant_date_idx").on(table.hydrantId, table.inspectionAt),
+    index("rms_hydrant_inspections_tenant_idx").on(table.tenantId),
+  ],
+);
+
+export const rmsHydrantDamageReports = pgTable(
+  "rms_hydrant_damage_reports",
+  {
+    id: uuid("id").primaryKey(),
+    tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+    hydrantId: uuid("hydrant_id").notNull().references(() => rmsHydrants.id),
+    reportedAt: timestamp("reported_at", { withTimezone: true }).notNull(),
+    severity: varchar("severity", { length: 32 }).notNull(),
+    operationalStatus: varchar("operational_status", { length: 32 }).notNull(),
+    leakPresent: boolean("leak_present"),
+    trafficHazard: boolean("traffic_hazard"),
+    alternateWaterSupply: text("alternate_water_supply"),
+    waterProvider: varchar("water_provider", { length: 200 }),
+    workOrderReference: varchar("work_order_reference", { length: 120 }),
+    reportedBy: varchar("reported_by", { length: 200 }),
+    notes: text("notes"),
+    createdByUserId: uuid("created_by_user_id"),
+    createdAt: createdAtColumn,
+  },
+  (table) => [
+    index("rms_hydrant_damage_reports_hydrant_date_idx").on(table.hydrantId, table.reportedAt),
+    index("rms_hydrant_damage_reports_tenant_idx").on(table.tenantId),
   ],
 );
