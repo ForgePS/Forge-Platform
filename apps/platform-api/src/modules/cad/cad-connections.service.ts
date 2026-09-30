@@ -12,6 +12,7 @@ import {
 import {
   cadConnections,
   cadConflicts,
+  cadFieldProvenance,
   cadIncidentLinks,
   cadPersonnelMappings,
   cadRawMessages,
@@ -834,12 +835,29 @@ export class CadConnectionsService {
         .orderBy(desc(cadConflicts.createdAt))
         .limit(50);
 
+      const fieldProvenance = await tx
+        .select()
+        .from(cadFieldProvenance)
+        .where(
+          and(
+            eq(cadFieldProvenance.tenantId, tenantId),
+            eq(cadFieldProvenance.incidentId, incidentId),
+          ),
+        )
+        .orderBy(desc(cadFieldProvenance.updatedAt))
+        .limit(200);
+
       return {
         links,
         openConflicts: conflicts,
+        fieldProvenance,
         operatingHints: {
           linked: links.some((link) => link.linkStatus === "ACTIVE"),
           conflictCount: conflicts.length,
+          cadOwnedFieldCount: fieldProvenance.filter(
+            (row) => row.currentValueSource === "CAD" && !row.manualOverrideAt,
+          ).length,
+          manualOverrideCount: fieldProvenance.filter((row) => Boolean(row.manualOverrideAt)).length,
         },
       };
     });
