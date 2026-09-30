@@ -586,7 +586,7 @@ export class ImportExecutionService {
     const idempotencyKey = input.idempotencyKey ?? headerIdempotencyKey ?? `rb:${jobId}:${correlationId}`;
 
     try {
-      return await withTenantTransaction(
+      const result = await withTenantTransaction(
         this.db,
         tenantId,
         async (tx) => {
