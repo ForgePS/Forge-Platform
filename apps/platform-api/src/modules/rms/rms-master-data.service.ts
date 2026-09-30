@@ -353,7 +353,14 @@ export class RmsMasterDataService {
 
   async listHydrantFlowTests(tenantId: string, hydrantId: string) {
     return withTenantTransaction(this.db, tenantId, async (tx) => {
-      await this.getHydrant(tenantId, hydrantId);
+      const hydrant = await tx.query.rmsHydrants.findFirst({
+        where: and(
+          eq(rmsHydrants.tenantId, tenantId),
+          eq(rmsHydrants.id, hydrantId),
+          isNull(rmsHydrants.deletedAt),
+        ),
+      });
+      if (!hydrant) throw new ForgeError("NOT_FOUND", "rms_hydrant not found");
       return tx.query.rmsHydrantFlowTests.findMany({
         where: and(
           eq(rmsHydrantFlowTests.tenantId, tenantId),
