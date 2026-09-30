@@ -103,16 +103,29 @@ Do not overload operational IDs with migration metadata. Preserve migration prov
 
 ## Execution status
 
-As of this change, Forge Platform's S8 import execution service explicitly defaults to the neutral reference adapter and states that product adapters are not authorized in the worker path.
+The production worker now registers `FORGE_RMS:HYDRANTS:hydrant@1` in its default adapter registry, and the Platform API automatically selects that adapter for the exact `FORGE_RMS / HYDRANTS / hydrant` import tuple.
 
-Therefore this work intentionally enables:
+Execution behavior:
 
-- template selection
-- normalization
-- validation
-- duplicate/ambiguity classification
-- reconciliation/preview design
+- creates the tenant-scoped hydrant and valid historical child rows in one transaction
+- skips an existing tenant/display-ID match as a duplicate instead of overwriting it
+- records destination ID and compensation metadata in the generic import journal
+- preserves valid flow-test, inspection, and damage-report timestamps where supplied
+- supports injected registries in worker tests, so the shared execution engine remains independently testable
 
-It does **not** claim that live hydrant commits through the generic import worker are enabled.
+The adapter implements `compensateRecord` by deleting imported damage reports, inspections, flow tests, then the imported hydrant inside a tenant transaction.
 
-The next execution step is to register a database-backed `FORGE_RMS:HYDRANTS:hydrant@1` adapter in the worker/runtime, then add rollback/compensation and authenticated end-to-end migration tests.
+### Remaining rollback boundary
+
+The shared Import Platform currently implements rollback request/classification and stores rollback journal entries, but generic compensation execution is still deferred. Therefore hydrant rollback capability exists at the adapter level but must not be described as end-to-end operational until the rollback worker invokes `compensateRecord` and completes the job state transition to `ROLLED_BACK`.
+
+### Required production validation
+
+Before production migration:
+
+1. run worker-service typecheck/unit tests
+2. run platform-api import tests
+3. execute an authenticated staged hydrant import against an isolated tenant
+4. verify rerun duplicate/idempotency behavior
+5. verify historical child counts and latest hydrant snapshots
+6. execute rollback after generic compensation execution is wired
