@@ -46,6 +46,24 @@ export const RMS_NAVIGATION_REGISTRY: readonly RmsNavigationItem[] = [
     mobile: true,
   },
   {
+    id: "hydrants",
+    label: "Hydrants",
+    path: "/hydrants/",
+    group: "water-supply",
+    groupLabel: "Water Supply",
+    permission: "rms.masterdata.read",
+    mobile: true,
+  },
+  {
+    id: "hydrants-new",
+    label: "Add Hydrant",
+    path: "/hydrants/new/",
+    group: "water-supply",
+    groupLabel: "Water Supply",
+    permission: "rms.masterdata.manage",
+    mobile: true,
+  },
+  {
     id: "cad-operations",
     label: "CAD Operations",
     path: "/cad/operations/",
@@ -132,6 +150,7 @@ export const RMS_NON_NAV_ROUTES = [
   { id: "auth-callback", path: "/auth/callback/", note: "OAuth callback" },
   { id: "health", path: "/health/", note: "Ops health probe" },
   { id: "incident-detail", path: "/incidents/[id]/", note: "Record workspace via list/create" },
+  { id: "hydrant-detail", path: "/hydrants/[id]/", note: "Hydrant workspace via list/create" },
 ] as const;
 
 export function findNavItemByPath(pathname: string): RmsNavigationItem | undefined {
