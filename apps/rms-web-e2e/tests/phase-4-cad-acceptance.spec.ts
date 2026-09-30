@@ -259,9 +259,14 @@ test.describe("Phase 4 CAD acceptance @phase4 @cad", () => {
       `/api/v1/tenants/${tenantId}/neris/incidents/${incidentId}/cad-status`,
     );
     expect(res.status).toBe(200);
-    const status = unwrapData<{ links?: unknown[]; openConflicts?: unknown[] }>(res.json);
+    const status = unwrapData<{
+      links?: unknown[];
+      openConflicts?: unknown[];
+      fieldProvenance?: unknown[];
+    }>(res.json);
     expect(Array.isArray(status.links)).toBe(true);
     expect(Array.isArray(status.openConflicts)).toBe(true);
+    expect(Array.isArray(status.fieldProvenance)).toBe(true);
   });
 
   test("21/22 — RMS CAD Operations + Connections pages load", async ({ authenticatedPage: page }) => {
