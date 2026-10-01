@@ -1335,12 +1335,16 @@ export function createRoster(
 ):Promise<ApiResult<RosterDetail>>{
   return apiSendResult<RosterDetail>(`${tenantBase(tenantId)}/rms/rosters`,"POST",payload,{idempotencyKey:createIdempotencyKey("roster")});
 }
+export type RosterAssignment={
+  id:string;rosterId:string;personnelId:string;unitId:string|null;assignmentRole:string;
+  isOfficer:boolean;incidentCommanderEligible:boolean;recordVersion:number;createdAt:string;updatedAt:string;
+};
 export function addRosterAssignment(
   tenantId:string,
   rosterId:string,
   payload:{personnelId:string;unitId?:string|null;assignmentRole?:string;isOfficer?:boolean;incidentCommanderEligible?:boolean},
-):Promise<ApiResult<RosterDetail>>{
-  return apiSendResult<RosterDetail>(`${tenantBase(tenantId)}/rms/rosters/${rosterId}/assignments`,"POST",payload,{idempotencyKey:createIdempotencyKey("roster-assignment")});
+):Promise<ApiResult<RosterAssignment>>{
+  return apiSendResult<RosterAssignment>(`${tenantBase(tenantId)}/rms/rosters/${rosterId}/assignments`,"POST",payload,{idempotencyKey:createIdempotencyKey("roster-assignment")});
 }
 export function removeRosterAssignment(tenantId:string,rosterId:string,assignmentId:string):Promise<void>{
   return apiSend<void>(`${tenantBase(tenantId)}/rms/rosters/${rosterId}/assignments/${assignmentId}`,"DELETE");
