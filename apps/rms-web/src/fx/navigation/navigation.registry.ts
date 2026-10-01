@@ -118,6 +118,15 @@ export const RMS_NAVIGATION_REGISTRY: readonly RmsNavigationItem[] = [
     mobile: true,
   },
   {
+    id: "rosters-list",
+    label: "Daily Rosters",
+    path: "/rosters/",
+    group: "operations",
+    groupLabel: "Operations",
+    permission: "rms.masterdata.read",
+    mobile: true,
+  },
+  {
     id: "occupancies-list",
     label: "Occupancies",
     path: "/occupancies/",
