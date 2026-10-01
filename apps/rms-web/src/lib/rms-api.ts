@@ -1299,3 +1299,27 @@ export function listUnits(tenantId:string,query:Record<string,string>):Promise<A
 export function createUnit(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<UnitDetail>>{
   return apiSendResult<UnitDetail>(`${tenantBase(tenantId)}/rms/units`,"POST",payload,{idempotencyKey:createIdempotencyKey("unit")});
 }
+
+
+export type StationSummary={
+  id:string;stationNumber:string;name:string;status:string;addressLine1:string|null;addressLine2:string|null;
+  city:string|null;state:string|null;postalCode:string|null;timezone:string;defaultResponseDistrict:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type ShiftSummary={
+  id:string;name:string;code:string;status:string;scheduleReference:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+
+export function listStations(tenantId:string,query:Record<string,string>):Promise<ApiResult<StationSummary[]>>{
+  return apiGetResult<StationSummary[]>(`${tenantBase(tenantId)}/rms/stations`,{query});
+}
+export function createStation(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<StationSummary>>{
+  return apiSendResult<StationSummary>(`${tenantBase(tenantId)}/rms/stations`,"POST",payload,{idempotencyKey:createIdempotencyKey("station")});
+}
+export function listShifts(tenantId:string,query:Record<string,string>):Promise<ApiResult<ShiftSummary[]>>{
+  return apiGetResult<ShiftSummary[]>(`${tenantBase(tenantId)}/rms/shifts`,{query});
+}
+export function createShift(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<ShiftSummary>>{
+  return apiSendResult<ShiftSummary>(`${tenantBase(tenantId)}/rms/shifts`,"POST",payload,{idempotencyKey:createIdempotencyKey("shift")});
+}
