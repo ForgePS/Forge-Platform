@@ -37,7 +37,7 @@ describe("RMS navigation registry", () => {
     const groups = buildPrimaryNavigation({}, { authenticated: true });
     const operations = groups.find((group) => group.id === "operations");
     expect(operations?.items.map((item) => item.id)).toEqual(
-      expect.arrayContaining(["personnel-list", "personnel-new", "apparatus-list", "units-list", "stations-list", "shifts-list", "rosters-list"]),
+      expect.arrayContaining(["personnel-list", "personnel-new", "apparatus-list", "units-list", "stations-list", "shifts-list", "rosters-list", "equipment-list", "inventory-list"]),
     );
   });
 
