@@ -256,6 +256,7 @@ export const createEquipmentInputSchema = z.object({
   stationId: z.string().uuid().optional().nullable(),
   apparatusId: z.string().uuid().optional().nullable(),
   personnelId: z.string().uuid().optional().nullable(),
+  storageLocation: z.string().max(200).optional().nullable(),
   purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
   inServiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
   expirationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
@@ -269,6 +270,7 @@ export const createEquipmentAssignmentInputSchema = z.object({
   stationId: z.string().uuid().optional().nullable(),
   apparatusId: z.string().uuid().optional().nullable(),
   personnelId: z.string().uuid().optional().nullable(),
+  storageLocation: z.string().max(200).optional().nullable(),
   assignedAt: z.string().datetime(),
   releasedAt: z.string().datetime().optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
@@ -276,6 +278,7 @@ export const createEquipmentAssignmentInputSchema = z.object({
   if (value.assignmentType === "STATION" && !value.stationId) ctx.addIssue({ code: "custom", message: "stationId is required for STATION assignment", path: ["stationId"] });
   if (value.assignmentType === "APPARATUS" && !value.apparatusId) ctx.addIssue({ code: "custom", message: "apparatusId is required for APPARATUS assignment", path: ["apparatusId"] });
   if (value.assignmentType === "PERSONNEL" && !value.personnelId) ctx.addIssue({ code: "custom", message: "personnelId is required for PERSONNEL assignment", path: ["personnelId"] });
+  if (value.assignmentType === "STORAGE" && !value.storageLocation) ctx.addIssue({ code: "custom", message: "storageLocation is required for STORAGE assignment", path: ["storageLocation"] });
 });
 
 export const createEquipmentMeterReadingInputSchema = z.object({
