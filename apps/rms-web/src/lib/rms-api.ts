@@ -227,6 +227,7 @@ export type RosterDetail = {
     unitId: string | null;
     assignmentRole: string;
     isOfficer: boolean;
+    incidentCommanderEligible: boolean;
   }>;
 };
 
@@ -1322,4 +1323,25 @@ export function listShifts(tenantId:string,query:Record<string,string>):Promise<
 }
 export function createShift(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<ShiftSummary>>{
   return apiSendResult<ShiftSummary>(`${tenantBase(tenantId)}/rms/shifts`,"POST",payload,{idempotencyKey:createIdempotencyKey("shift")});
+}
+
+
+export function listRosters(tenantId:string,query:Record<string,string>):Promise<ApiResult<Array<Omit<RosterDetail,"assignments">>>>{
+  return apiGetResult<Array<Omit<RosterDetail,"assignments">>>(`${tenantBase(tenantId)}/rms/rosters`,{query});
+}
+export function createRoster(
+  tenantId:string,
+  payload:{rosterDate:string;shiftId:string;stationId:string;status?:"ACTIVE"|"INACTIVE"},
+):Promise<ApiResult<RosterDetail>>{
+  return apiSendResult<RosterDetail>(`${tenantBase(tenantId)}/rms/rosters`,"POST",payload,{idempotencyKey:createIdempotencyKey("roster")});
+}
+export function addRosterAssignment(
+  tenantId:string,
+  rosterId:string,
+  payload:{personnelId:string;unitId?:string|null;assignmentRole?:string;isOfficer?:boolean;incidentCommanderEligible?:boolean},
+):Promise<ApiResult<RosterDetail>>{
+  return apiSendResult<RosterDetail>(`${tenantBase(tenantId)}/rms/rosters/${rosterId}/assignments`,"POST",payload,{idempotencyKey:createIdempotencyKey("roster-assignment")});
+}
+export function removeRosterAssignment(tenantId:string,rosterId:string,assignmentId:string):Promise<void>{
+  return apiSend<void>(`${tenantBase(tenantId)}/rms/rosters/${rosterId}/assignments/${assignmentId}`,"DELETE");
 }
