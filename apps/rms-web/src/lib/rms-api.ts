@@ -1287,3 +1287,11 @@ export function listApparatus(tenantId:string,query:Record<string,string>):Promi
 export function createApparatus(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<ApparatusDetail&{recordVersion:number}>>{
   return apiSendResult<ApparatusDetail&{recordVersion:number}>(`${tenantBase(tenantId)}/rms/apparatus`,"POST",payload,{idempotencyKey:createIdempotencyKey("apparatus")});
 }
+
+
+export function listUnits(tenantId:string,query:Record<string,string>):Promise<ApiResult<UnitDetail[]>>{
+  return apiGetResult<UnitDetail[]>(`${tenantBase(tenantId)}/rms/units`,{query});
+}
+export function createUnit(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<UnitDetail>>{
+  return apiSendResult<UnitDetail>(`${tenantBase(tenantId)}/rms/units`,"POST",payload,{idempotencyKey:createIdempotencyKey("unit")});
+}
