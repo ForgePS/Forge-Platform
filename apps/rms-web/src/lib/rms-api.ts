@@ -1187,3 +1187,31 @@ export function listHydrantDamageReports(tenantId:string,hydrantId:string):Promi
 export function createHydrantDamageReport(tenantId:string,hydrantId:string,payload:Record<string,unknown>):Promise<HydrantDamageReport>{
   return apiSend<HydrantDamageReport>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}/damage-reports`,"POST",payload,{idempotencyKey:createIdempotencyKey("hydrant-damage")});
 }
+
+
+export type OccupancySummary={
+  id:string;name:string;addressLine1:string|null;city:string|null;state:string|null;postalCode:string|null;
+  primaryContact:string|null;occupancyType:string|null;status:string;preplanId:string|null;
+  latitude:number|null;longitude:number|null;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type PreplanSummary={
+  id:string;occupancyId:string;versionLabel:string;approvalStatus:"DRAFT"|"APPROVED"|"SUPERSEDED";
+  tacticalSummary:string|null;hazards:string|null;accessNotes:string|null;utilityNotes:string|null;
+  primaryStationId:string|null;recordVersion:number;createdAt:string;updatedAt:string;
+};
+
+export function listOccupancies(tenantId:string,query:Record<string,string>):Promise<ApiResult<OccupancySummary[]>>{
+  return apiGetResult<OccupancySummary[]>(`${tenantBase(tenantId)}/rms/occupancies`,{query});
+}
+export function createOccupancy(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<OccupancySummary>>{
+  return apiSendResult<OccupancySummary>(`${tenantBase(tenantId)}/rms/occupancies`,"POST",payload,{idempotencyKey:createIdempotencyKey("occupancy")});
+}
+export function listPreplans(tenantId:string,query:Record<string,string>):Promise<ApiResult<PreplanSummary[]>>{
+  return apiGetResult<PreplanSummary[]>(`${tenantBase(tenantId)}/rms/preplans`,{query});
+}
+export function getPreplan(tenantId:string,preplanId:string):Promise<PreplanSummary>{
+  return apiGet<PreplanSummary>(`${tenantBase(tenantId)}/rms/preplans/${preplanId}`);
+}
+export function createPreplan(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<PreplanSummary>>{
+  return apiSendResult<PreplanSummary>(`${tenantBase(tenantId)}/rms/preplans`,"POST",payload,{idempotencyKey:createIdempotencyKey("preplan")});
+}
