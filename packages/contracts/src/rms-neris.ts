@@ -327,11 +327,13 @@ export const createInventoryTransactionInputSchema = z.object({
 
 export const patchEquipmentInputSchema = createEquipmentInputSchema
   .omit({ stationId: true, apparatusId: true, personnelId: true, storageLocation: true })
-  .partial();
+  .partial()
+  .strict();
 
 export const patchInventoryItemInputSchema = createInventoryItemInputSchema
   .omit({ currentQuantity: true })
-  .partial();
+  .partial()
+  .strict();
 
 export type CreateEquipmentInput = z.infer<typeof createEquipmentInputSchema>;
 export type CreateEquipmentAssignmentInput = z.infer<typeof createEquipmentAssignmentInputSchema>;
