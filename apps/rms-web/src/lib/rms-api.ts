@@ -1251,3 +1251,39 @@ export function patchPreplan(
     {ifMatch:toIfMatch(recordVersion)},
   );
 }
+
+
+export type PersonSummary={
+  id:string;forgePersonNumber:string;firstName:string;middleName:string|null;lastName:string;
+  preferredName:string|null;displayName:string;email:string|null;phone:string|null;status:string;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type RmsPersonnelSummary={
+  id:string;personId:string;rank:string|null;qualificationSummary:string|null;stationId:string|null;
+  shiftId:string|null;status:string;incidentEligible:boolean;recordVersion:number;createdAt:string;updatedAt:string;
+};
+
+export function listPersons(tenantId:string,q=""):Promise<ApiResult<PersonSummary[]>>{
+  return apiGetResult<PersonSummary[]>(`${tenantBase(tenantId)}/persons`,{query:q.trim()?{q:q.trim()}:{}});
+}
+export function getPerson(tenantId:string,personId:string):Promise<PersonSummary>{
+  return apiGet<PersonSummary>(`${tenantBase(tenantId)}/persons/${personId}`);
+}
+export function createPerson(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<PersonSummary>>{
+  return apiSendResult<PersonSummary>(`${tenantBase(tenantId)}/persons`,"POST",payload,{idempotencyKey:createIdempotencyKey("person")});
+}
+export function listPersonnel(tenantId:string,query:Record<string,string>):Promise<ApiResult<RmsPersonnelSummary[]>>{
+  return apiGetResult<RmsPersonnelSummary[]>(`${tenantBase(tenantId)}/rms/personnel`,{query});
+}
+export function createRmsPersonnel(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<RmsPersonnelSummary>>{
+  return apiSendResult<RmsPersonnelSummary>(`${tenantBase(tenantId)}/rms/personnel`,"POST",payload,{idempotencyKey:createIdempotencyKey("rms-personnel")});
+}
+export function getRmsPersonnel(tenantId:string,personnelId:string):Promise<RmsPersonnelSummary>{
+  return apiGet<RmsPersonnelSummary>(`${tenantBase(tenantId)}/rms/personnel/${personnelId}`);
+}
+export function listApparatus(tenantId:string,query:Record<string,string>):Promise<ApiResult<ApparatusDetail[]>>{
+  return apiGetResult<ApparatusDetail[]>(`${tenantBase(tenantId)}/rms/apparatus`,{query});
+}
+export function createApparatus(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<ApparatusDetail&{recordVersion:number}>>{
+  return apiSendResult<ApparatusDetail&{recordVersion:number}>(`${tenantBase(tenantId)}/rms/apparatus`,"POST",payload,{idempotencyKey:createIdempotencyKey("apparatus")});
+}
