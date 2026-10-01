@@ -33,6 +33,18 @@ describe("RMS navigation registry", () => {
     expect(incidents?.items.some((item) => item.id === "incidents-list")).toBe(true);
   });
 
+  it("exposes native hydrants under Water Supply", () => {
+    const groups = buildPrimaryNavigation({}, { authenticated: true });
+    const waterSupply = groups.find((group) => group.id === "water-supply");
+    expect(waterSupply?.label).toBe("Water Supply");
+    expect(waterSupply?.items.map((item) => item.id)).toEqual(
+      expect.arrayContaining(["hydrants-list", "hydrants-new"]),
+    );
+    expect(waterSupply?.items.find((item) => item.id === "hydrants-list")?.permission).toBe(
+      "rms.masterdata.read",
+    );
+  });
+
   it("builds secondary nav for active CAD group", () => {
     const flags = {
       [RMS_FEATURE_FLAGS.cadEnabled]: true,
