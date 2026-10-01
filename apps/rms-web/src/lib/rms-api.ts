@@ -1223,3 +1223,31 @@ export function getPreplan(tenantId:string,preplanId:string):Promise<PreplanSumm
 export function createPreplan(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<PreplanSummary>>{
   return apiSendResult<PreplanSummary>(`${tenantBase(tenantId)}/rms/preplans`,"POST",payload,{idempotencyKey:createIdempotencyKey("preplan")});
 }
+
+
+export function patchOccupancy(
+  tenantId:string,
+  occupancyId:string,
+  payload:Record<string,unknown>,
+  recordVersion:number,
+):Promise<ApiResult<OccupancyDetail>>{
+  return apiSendResult<OccupancyDetail>(
+    `${tenantBase(tenantId)}/rms/occupancies/${occupancyId}`,
+    "PATCH",
+    payload,
+    {ifMatch:toIfMatch(recordVersion)},
+  );
+}
+export function patchPreplan(
+  tenantId:string,
+  preplanId:string,
+  payload:Record<string,unknown>,
+  recordVersion:number,
+):Promise<ApiResult<PreplanSummary>>{
+  return apiSendResult<PreplanSummary>(
+    `${tenantBase(tenantId)}/rms/preplans/${preplanId}`,
+    "PATCH",
+    payload,
+    {ifMatch:toIfMatch(recordVersion)},
+  );
+}
