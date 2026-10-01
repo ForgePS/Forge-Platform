@@ -33,6 +33,14 @@ describe("RMS navigation registry", () => {
     expect(incidents?.items.some((item) => item.id === "incidents-list")).toBe(true);
   });
 
+  it("exposes native Operations personnel apparatus and unit routes", () => {
+    const groups = buildPrimaryNavigation({}, { authenticated: true });
+    const operations = groups.find((group) => group.id === "operations");
+    expect(operations?.items.map((item) => item.id)).toEqual(
+      expect.arrayContaining(["personnel-list", "personnel-new", "apparatus-list", "units-list"]),
+    );
+  });
+
   it("exposes native Prevention occupancy and preplan routes", () => {
     const groups = buildPrimaryNavigation({}, { authenticated: true });
     const prevention = groups.find((group) => group.id === "prevention");
