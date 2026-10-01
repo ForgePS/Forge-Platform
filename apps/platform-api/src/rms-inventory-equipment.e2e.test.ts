@@ -45,6 +45,12 @@ describe("RMS equipment and inventory domain", () => {
 
     const equipmentId = equipment.body.data.id as string;
 
+    await api
+      .patch(`/api/v1/tenants/${tenant.tenantId}/rms/equipment/${equipmentId}`)
+      .set("If-Match", `W/"${equipment.body.data.recordVersion}"`)
+      .send({ storageLocation: "Bypass history" })
+      .expect(400);
+
     const assignment = await api
       .post(`/api/v1/tenants/${tenant.tenantId}/rms/equipment/${equipmentId}/assignments`)
       .set("Idempotency-Key", createId())
@@ -86,6 +92,12 @@ describe("RMS equipment and inventory domain", () => {
       .expect(200);
 
     const itemId = item.body.data.id as string;
+
+    await api
+      .patch(`/api/v1/tenants/${tenant.tenantId}/rms/inventory/${itemId}`)
+      .set("If-Match", `W/"${item.body.data.recordVersion}"`)
+      .send({ currentQuantity: 999 })
+      .expect(400);
 
     const issue = await api
       .post(`/api/v1/tenants/${tenant.tenantId}/rms/inventory/${itemId}/transactions`)
@@ -129,8 +141,11 @@ describe("RMS equipment and inventory domain", () => {
       .get(`/api/v1/tenants/${tenant.tenantId}/rms/inventory/${itemId}/transactions`)
       .expect(200);
 
-    expect(transactions.body.data).toHaveLength(2);
+    expect(transactions.body.data).toHaveLength(3);
     expect(transactions.body.data[0].quantityAfter).toBe(12);
+    expect(
+      transactions.body.data.some((row: { reason?: string | null }) => row.reason === "Opening balance"),
+    ).toBe(true);
 
     const assignments = await api
       .get(`/api/v1/tenants/${tenant.tenantId}/rms/equipment/${equipmentId}/assignments`)
