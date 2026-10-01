@@ -1349,3 +1349,65 @@ export function addRosterAssignment(
 export function removeRosterAssignment(tenantId:string,rosterId:string,assignmentId:string):Promise<void>{
   return apiSend<void>(`${tenantBase(tenantId)}/rms/rosters/${rosterId}/assignments/${assignmentId}`,"DELETE");
 }
+
+
+export type EquipmentDetail={
+  id:string;assetTag:string;name:string;category:string;serialNumber:string|null;manufacturer:string|null;model:string|null;
+  status:string;stationId:string|null;apparatusId:string|null;personnelId:string|null;storageLocation:string|null;
+  purchaseDate:string|null;inServiceDate:string|null;expirationDate:string|null;lastServiceDate:string|null;nextServiceDate:string|null;
+  notes:string|null;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type EquipmentAssignment={
+  id:string;equipmentId:string;assignmentType:string;stationId:string|null;apparatusId:string|null;personnelId:string|null;
+  storageLocation:string|null;assignedAt:string;releasedAt:string|null;notes:string|null;createdAt:string;
+};
+export type EquipmentMeterReading={
+  id:string;equipmentId:string;meterType:string;reading:number;recordedAt:string;source:string|null;notes:string|null;createdAt:string;
+};
+export type InventoryItem={
+  id:string;itemCode:string;name:string;category:string|null;unitOfMeasure:string;storageLocation:string;
+  stationId:string|null;apparatusId:string|null;currentQuantity:number;minimumQuantity:number|null;targetQuantity:number|null;
+  status:string;expirationTracked:boolean;lotTracked:boolean;notes:string|null;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type InventoryTransaction={
+  id:string;inventoryItemId:string;transactionType:string;quantityDelta:number;quantityAfter:number;referenceType:string|null;
+  referenceId:string|null;lotNumber:string|null;expirationDate:string|null;reason:string|null;occurredAt:string;
+  performedByPersonnelId:string|null;createdAt:string;
+};
+
+export function listEquipment(tenantId:string,query:Record<string,string>):Promise<ApiResult<EquipmentDetail[]>>{
+  return apiGetResult<EquipmentDetail[]>(`${tenantBase(tenantId)}/rms/equipment`,{query});
+}
+export function getEquipment(tenantId:string,equipmentId:string):Promise<EquipmentDetail>{
+  return apiGet<EquipmentDetail>(`${tenantBase(tenantId)}/rms/equipment/${equipmentId}`);
+}
+export function createEquipment(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<EquipmentDetail>>{
+  return apiSendResult<EquipmentDetail>(`${tenantBase(tenantId)}/rms/equipment`,"POST",payload,{idempotencyKey:createIdempotencyKey("equipment")});
+}
+export function listEquipmentAssignments(tenantId:string,equipmentId:string):Promise<EquipmentAssignment[]>{
+  return apiGet<EquipmentAssignment[]>(`${tenantBase(tenantId)}/rms/equipment/${equipmentId}/assignments`);
+}
+export function assignEquipment(tenantId:string,equipmentId:string,payload:Record<string,unknown>):Promise<{assignment:EquipmentAssignment;equipment:EquipmentDetail}>{
+  return apiSend<{assignment:EquipmentAssignment;equipment:EquipmentDetail}>(`${tenantBase(tenantId)}/rms/equipment/${equipmentId}/assignments`,"POST",payload,{idempotencyKey:createIdempotencyKey("equipment-assignment")});
+}
+export function listEquipmentMeterReadings(tenantId:string,equipmentId:string):Promise<EquipmentMeterReading[]>{
+  return apiGet<EquipmentMeterReading[]>(`${tenantBase(tenantId)}/rms/equipment/${equipmentId}/meter-readings`);
+}
+export function createEquipmentMeterReading(tenantId:string,equipmentId:string,payload:Record<string,unknown>):Promise<EquipmentMeterReading>{
+  return apiSend<EquipmentMeterReading>(`${tenantBase(tenantId)}/rms/equipment/${equipmentId}/meter-readings`,"POST",payload,{idempotencyKey:createIdempotencyKey("equipment-meter")});
+}
+export function listInventoryItems(tenantId:string,query:Record<string,string>):Promise<ApiResult<InventoryItem[]>>{
+  return apiGetResult<InventoryItem[]>(`${tenantBase(tenantId)}/rms/inventory`,{query});
+}
+export function getInventoryItem(tenantId:string,itemId:string):Promise<InventoryItem>{
+  return apiGet<InventoryItem>(`${tenantBase(tenantId)}/rms/inventory/${itemId}`);
+}
+export function createInventoryItem(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<InventoryItem>>{
+  return apiSendResult<InventoryItem>(`${tenantBase(tenantId)}/rms/inventory`,"POST",payload,{idempotencyKey:createIdempotencyKey("inventory-item")});
+}
+export function listInventoryTransactions(tenantId:string,itemId:string):Promise<InventoryTransaction[]>{
+  return apiGet<InventoryTransaction[]>(`${tenantBase(tenantId)}/rms/inventory/${itemId}/transactions`);
+}
+export function createInventoryTransaction(tenantId:string,itemId:string,payload:Record<string,unknown>):Promise<{transaction:InventoryTransaction;inventoryItem:InventoryItem}>{
+  return apiSend<{transaction:InventoryTransaction;inventoryItem:InventoryItem}>(`${tenantBase(tenantId)}/rms/inventory/${itemId}/transactions`,"POST",payload,{idempotencyKey:createIdempotencyKey("inventory-transaction")});
+}
