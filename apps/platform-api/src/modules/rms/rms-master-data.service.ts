@@ -629,7 +629,7 @@ export class RmsMasterDataService {
       const [assignment] = await tx.insert(rmsEquipmentAssignmentHistory).values({
         id, tenantId, equipmentId, assignmentType: data.assignmentType,
         stationId, apparatusId, personnelId, storageLocation,
-        assignedAt, releasedAt: data.releasedAt ? new Date(data.releasedAt) : null,
+        assignedAt, releasedAt: null,
         notes: data.notes, createdByUserId: principal.userId, createdAt: now,
       }).returning();
       if (!assignment) throw new ForgeError("INTERNAL_ERROR", "Failed to create equipment assignment");
