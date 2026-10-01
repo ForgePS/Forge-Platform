@@ -189,8 +189,12 @@ export type ApparatusDetail = {
   apparatusNumber: string;
   name: string;
   apparatusType: string;
+  stationId: string | null;
   nerisClassification: string | null;
   status: string;
+  recordVersion: number;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type OccupancyDetail = {
