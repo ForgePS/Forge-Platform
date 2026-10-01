@@ -5,6 +5,13 @@ import {
   createHydrantFlowTestInputSchema,
   createHydrantInspectionInputSchema,
   createHydrantInputSchema,
+  createEquipmentAssignmentInputSchema,
+  createEquipmentInputSchema,
+  createEquipmentMeterReadingInputSchema,
+  createInventoryItemInputSchema,
+  createInventoryTransactionInputSchema,
+  patchEquipmentInputSchema,
+  patchInventoryItemInputSchema,
   createOccupancyInputSchema,
   createPreplanInputSchema,
   createRmsPersonnelInputSchema,
@@ -21,6 +28,11 @@ import {
   rmsHydrantFlowTests,
   rmsHydrantInspections,
   rmsHydrants,
+  rmsEquipment,
+  rmsEquipmentAssignmentHistory,
+  rmsEquipmentMeterReadings,
+  rmsInventoryItems,
+  rmsInventoryTransactions,
   rmsOccupancies,
   rmsPersonnel,
   rmsPreplans,
@@ -50,6 +62,8 @@ type RmsResourceTable =
   | typeof rmsUnits
   | typeof rmsPersonnel
   | typeof rmsHydrants
+  | typeof rmsEquipment
+  | typeof rmsInventoryItems
   | typeof rmsOccupancies
   | typeof rmsPreplans;
 
@@ -508,6 +522,264 @@ export class RmsMasterDataService {
       await this.emitMasterDataUpdated(tx, tenantId, "rms_hydrant_damage_report", id, principal, "create", row);
       await this.emitMasterDataUpdated(tx, tenantId, "rms_hydrant", hydrantId, principal, "damage_report", updatedHydrant, hydrant);
       return { damageReport: row, hydrant: updatedHydrant };
+    }, principal.userId);
+  }
+
+  // --- equipment ---
+
+  async createEquipment(tenantId: string, input: unknown, principal: ForgePrincipal) {
+    const data = createEquipmentInputSchema.parse(input);
+    const assignmentTargets = [data.stationId, data.apparatusId, data.personnelId, data.storageLocation].filter(Boolean);
+    if (assignmentTargets.length > 1) {
+      throw new ForgeError("BAD_REQUEST", "Equipment may have only one current assignment target");
+    }
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const id = createId();
+      const now = new Date();
+      const [row] = await tx.insert(rmsEquipment).values({
+        id, tenantId,
+        assetTag: data.assetTag, name: data.name, category: data.category,
+        serialNumber: data.serialNumber, manufacturer: data.manufacturer, model: data.model,
+        status: data.status, stationId: data.stationId, apparatusId: data.apparatusId,
+        personnelId: data.personnelId, storageLocation: data.storageLocation,
+        purchaseDate: data.purchaseDate, inServiceDate: data.inServiceDate,
+        expirationDate: data.expirationDate, lastServiceDate: data.lastServiceDate,
+        nextServiceDate: data.nextServiceDate, notes: data.notes,
+        createdByUserId: principal.userId, updatedByUserId: principal.userId,
+        createdAt: now, updatedAt: now,
+      }).returning();
+      if (!row) throw new ForgeError("INTERNAL_ERROR", "Failed to create rms_equipment");
+      await this.emitMasterDataUpdated(tx, tenantId, "rms_equipment", id, principal, "create", row);
+      if (assignmentTargets.length === 1) {
+        const assignmentType = data.stationId ? "STATION" : data.apparatusId ? "APPARATUS" : data.personnelId ? "PERSONNEL" : "STORAGE";
+        const assignmentId = createId();
+        const [assignment] = await tx.insert(rmsEquipmentAssignmentHistory).values({
+          id: assignmentId, tenantId, equipmentId: id, assignmentType,
+          stationId: data.stationId ?? null, apparatusId: data.apparatusId ?? null,
+          personnelId: data.personnelId ?? null, storageLocation: data.storageLocation ?? null,
+          assignedAt: now, releasedAt: null, notes: "Initial assignment",
+          createdByUserId: principal.userId, createdAt: now,
+        }).returning();
+        if (!assignment) throw new ForgeError("INTERNAL_ERROR", "Failed to create initial equipment assignment");
+        await this.emitMasterDataUpdated(tx, tenantId, "rms_equipment_assignment", assignmentId, principal, "create", assignment);
+      }
+      return row;
+    }, principal.userId);
+  }
+
+  async listEquipment(tenantId: string, query: unknown) {
+    const { page, pageSize, search } = pageQuerySchema.parse(query ?? {});
+    return this.listResource(tenantId, rmsEquipment, page, pageSize, search, (q) =>
+      or(
+        ilike(rmsEquipment.assetTag, q),
+        ilike(rmsEquipment.name, q),
+        ilike(rmsEquipment.category, q),
+        ilike(rmsEquipment.serialNumber, q),
+      ),
+    );
+  }
+
+  async getEquipment(tenantId: string, id: string) {
+    return this.getResource(tenantId, rmsEquipment, id, "rms_equipment");
+  }
+
+  async patchEquipment(tenantId: string, id: string, input: unknown, principal: ForgePrincipal, expected: ExpectedVersion) {
+    const data = patchEquipmentInputSchema.parse(input);
+    return this.patchResource(tenantId, "rms_equipment", rmsEquipment, id, data, principal, expected);
+  }
+
+  async deleteEquipment(tenantId: string, id: string, principal: ForgePrincipal, expected: ExpectedVersion) {
+    return this.softDelete(tenantId, "rms_equipment", rmsEquipment, id, principal, expected);
+  }
+
+  async listEquipmentAssignments(tenantId: string, equipmentId: string) {
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const equipment = await tx.query.rmsEquipment.findFirst({
+        where: and(eq(rmsEquipment.tenantId, tenantId), eq(rmsEquipment.id, equipmentId), isNull(rmsEquipment.deletedAt)),
+      });
+      if (!equipment) throw new ForgeError("NOT_FOUND", "rms_equipment not found");
+      return tx.query.rmsEquipmentAssignmentHistory.findMany({
+        where: and(eq(rmsEquipmentAssignmentHistory.tenantId, tenantId), eq(rmsEquipmentAssignmentHistory.equipmentId, equipmentId)),
+        orderBy: (table, { desc }) => [desc(table.assignedAt), desc(table.createdAt)],
+      });
+    });
+  }
+
+  async assignEquipment(tenantId: string, equipmentId: string, input: unknown, principal: ForgePrincipal) {
+    const data = createEquipmentAssignmentInputSchema.parse(input);
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const equipment = await tx.query.rmsEquipment.findFirst({
+        where: and(eq(rmsEquipment.tenantId, tenantId), eq(rmsEquipment.id, equipmentId), isNull(rmsEquipment.deletedAt)),
+      });
+      if (!equipment) throw new ForgeError("NOT_FOUND", "rms_equipment not found");
+      const assignedAt = new Date(data.assignedAt);
+      await tx.update(rmsEquipmentAssignmentHistory).set({ releasedAt: assignedAt }).where(
+        and(
+          eq(rmsEquipmentAssignmentHistory.tenantId, tenantId),
+          eq(rmsEquipmentAssignmentHistory.equipmentId, equipmentId),
+          isNull(rmsEquipmentAssignmentHistory.releasedAt),
+        ),
+      );
+      const id = createId();
+      const now = new Date();
+      const stationId = data.assignmentType === "STATION" ? data.stationId : null;
+      const apparatusId = data.assignmentType === "APPARATUS" ? data.apparatusId : null;
+      const personnelId = data.assignmentType === "PERSONNEL" ? data.personnelId : null;
+      const storageLocation = data.assignmentType === "STORAGE" ? data.storageLocation : null;
+      const [assignment] = await tx.insert(rmsEquipmentAssignmentHistory).values({
+        id, tenantId, equipmentId, assignmentType: data.assignmentType,
+        stationId, apparatusId, personnelId, storageLocation,
+        assignedAt, releasedAt: null,
+        notes: data.notes, createdByUserId: principal.userId, createdAt: now,
+      }).returning();
+      if (!assignment) throw new ForgeError("INTERNAL_ERROR", "Failed to create equipment assignment");
+      const [updated] = await tx.update(rmsEquipment).set({
+        stationId, apparatusId, personnelId, storageLocation,
+        recordVersion: equipment.recordVersion + 1,
+        updatedByUserId: principal.userId, updatedAt: now,
+      }).where(and(eq(rmsEquipment.id, equipmentId), eq(rmsEquipment.recordVersion, equipment.recordVersion))).returning();
+      if (!updated) throw concurrencyConflict({tenantId,resourceType:"rms_equipment",resourceId:equipmentId,expectedVersion:equipment.recordVersion,actualVersion:null});
+      await this.emitMasterDataUpdated(tx, tenantId, "rms_equipment_assignment", id, principal, "create", assignment);
+      await this.emitMasterDataUpdated(tx, tenantId, "rms_equipment", equipmentId, principal, "assign", updated, equipment);
+      return { assignment, equipment: updated };
+    }, principal.userId);
+  }
+
+  async listEquipmentMeterReadings(tenantId: string, equipmentId: string) {
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const equipment = await tx.query.rmsEquipment.findFirst({
+        where: and(eq(rmsEquipment.tenantId, tenantId), eq(rmsEquipment.id, equipmentId), isNull(rmsEquipment.deletedAt)),
+      });
+      if (!equipment) throw new ForgeError("NOT_FOUND", "rms_equipment not found");
+      return tx.query.rmsEquipmentMeterReadings.findMany({
+        where: and(eq(rmsEquipmentMeterReadings.tenantId, tenantId), eq(rmsEquipmentMeterReadings.equipmentId, equipmentId)),
+        orderBy: (table, { desc }) => [desc(table.recordedAt), desc(table.createdAt)],
+      });
+    });
+  }
+
+  async createEquipmentMeterReading(tenantId: string, equipmentId: string, input: unknown, principal: ForgePrincipal) {
+    const data = createEquipmentMeterReadingInputSchema.parse(input);
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const equipment = await tx.query.rmsEquipment.findFirst({
+        where: and(eq(rmsEquipment.tenantId, tenantId), eq(rmsEquipment.id, equipmentId), isNull(rmsEquipment.deletedAt)),
+      });
+      if (!equipment) throw new ForgeError("NOT_FOUND", "rms_equipment not found");
+      const id = createId();
+      const [row] = await tx.insert(rmsEquipmentMeterReadings).values({
+        id, tenantId, equipmentId, meterType: data.meterType, reading: data.reading,
+        recordedAt: new Date(data.recordedAt), source: data.source, notes: data.notes,
+        createdByUserId: principal.userId, createdAt: new Date(),
+      }).returning();
+      if (!row) throw new ForgeError("INTERNAL_ERROR", "Failed to create equipment meter reading");
+      await this.emitMasterDataUpdated(tx, tenantId, "rms_equipment_meter_reading", id, principal, "create", row);
+      return row;
+    }, principal.userId);
+  }
+
+  // --- inventory ---
+
+  async createInventoryItem(tenantId: string, input: unknown, principal: ForgePrincipal) {
+    const data = createInventoryItemInputSchema.parse(input);
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const id = createId();
+      const now = new Date();
+      const [row] = await tx.insert(rmsInventoryItems).values({
+        id, tenantId, itemCode: data.itemCode, name: data.name, category: data.category,
+        unitOfMeasure: data.unitOfMeasure, storageLocation: data.storageLocation,
+        stationId: data.stationId, apparatusId: data.apparatusId,
+        currentQuantity: data.currentQuantity, minimumQuantity: data.minimumQuantity,
+        targetQuantity: data.targetQuantity, status: data.status,
+        expirationTracked: data.expirationTracked, lotTracked: data.lotTracked,
+        notes: data.notes, createdByUserId: principal.userId, updatedByUserId: principal.userId,
+        createdAt: now, updatedAt: now,
+      }).returning();
+      if (!row) throw new ForgeError("INTERNAL_ERROR", "Failed to create rms_inventory_item");
+      await this.emitMasterDataUpdated(tx, tenantId, "rms_inventory_item", id, principal, "create", row);
+      if (data.currentQuantity !== 0) {
+        const transactionId = createId();
+        const [opening] = await tx.insert(rmsInventoryTransactions).values({
+          id: transactionId, tenantId, inventoryItemId: id,
+          transactionType: "ADJUST", quantityDelta: data.currentQuantity,
+          quantityAfter: data.currentQuantity, reason: "Opening balance",
+          occurredAt: now, createdByUserId: principal.userId, createdAt: now,
+        }).returning();
+        if (!opening) throw new ForgeError("INTERNAL_ERROR", "Failed to create opening inventory transaction");
+        await this.emitMasterDataUpdated(tx, tenantId, "rms_inventory_transaction", transactionId, principal, "create", opening);
+      }
+      return row;
+    }, principal.userId);
+  }
+
+  async listInventoryItems(tenantId: string, query: unknown) {
+    const { page, pageSize, search } = pageQuerySchema.parse(query ?? {});
+    return this.listResource(tenantId, rmsInventoryItems, page, pageSize, search, (q) =>
+      or(
+        ilike(rmsInventoryItems.itemCode, q),
+        ilike(rmsInventoryItems.name, q),
+        ilike(rmsInventoryItems.category, q),
+        ilike(rmsInventoryItems.storageLocation, q),
+      ),
+    );
+  }
+
+  async getInventoryItem(tenantId: string, id: string) {
+    return this.getResource(tenantId, rmsInventoryItems, id, "rms_inventory_item");
+  }
+
+  async patchInventoryItem(tenantId: string, id: string, input: unknown, principal: ForgePrincipal, expected: ExpectedVersion) {
+    const data = patchInventoryItemInputSchema.parse(input);
+    return this.patchResource(tenantId, "rms_inventory_item", rmsInventoryItems, id, data, principal, expected);
+  }
+
+  async deleteInventoryItem(tenantId: string, id: string, principal: ForgePrincipal, expected: ExpectedVersion) {
+    return this.softDelete(tenantId, "rms_inventory_item", rmsInventoryItems, id, principal, expected);
+  }
+
+  async listInventoryTransactions(tenantId: string, inventoryItemId: string) {
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const item = await tx.query.rmsInventoryItems.findFirst({
+        where: and(eq(rmsInventoryItems.tenantId, tenantId), eq(rmsInventoryItems.id, inventoryItemId), isNull(rmsInventoryItems.deletedAt)),
+      });
+      if (!item) throw new ForgeError("NOT_FOUND", "rms_inventory_item not found");
+      return tx.query.rmsInventoryTransactions.findMany({
+        where: and(eq(rmsInventoryTransactions.tenantId, tenantId), eq(rmsInventoryTransactions.inventoryItemId, inventoryItemId)),
+        orderBy: (table, { desc }) => [desc(table.occurredAt), desc(table.createdAt)],
+      });
+    });
+  }
+
+  async createInventoryTransaction(tenantId: string, inventoryItemId: string, input: unknown, principal: ForgePrincipal) {
+    const data = createInventoryTransactionInputSchema.parse(input);
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const item = await tx.query.rmsInventoryItems.findFirst({
+        where: and(eq(rmsInventoryItems.tenantId, tenantId), eq(rmsInventoryItems.id, inventoryItemId), isNull(rmsInventoryItems.deletedAt)),
+      });
+      if (!item) throw new ForgeError("NOT_FOUND", "rms_inventory_item not found");
+      const quantityAfter = item.currentQuantity + data.quantityDelta;
+      if (quantityAfter < 0) throw new ForgeError("BAD_REQUEST", "Inventory transaction would create a negative balance");
+      const id = createId();
+      const now = new Date();
+      const [transaction] = await tx.insert(rmsInventoryTransactions).values({
+        id, tenantId, inventoryItemId, transactionType: data.transactionType,
+        quantityDelta: data.quantityDelta, quantityAfter,
+        referenceType: data.referenceType, referenceId: data.referenceId,
+        lotNumber: data.lotNumber, expirationDate: data.expirationDate,
+        reason: data.reason, occurredAt: new Date(data.occurredAt),
+        performedByPersonnelId: data.performedByPersonnelId,
+        createdByUserId: principal.userId, createdAt: now,
+      }).returning();
+      if (!transaction) throw new ForgeError("INTERNAL_ERROR", "Failed to create inventory transaction");
+      const [updated] = await tx.update(rmsInventoryItems).set({
+        currentQuantity: quantityAfter,
+        recordVersion: item.recordVersion + 1,
+        updatedByUserId: principal.userId,
+        updatedAt: now,
+      }).where(and(eq(rmsInventoryItems.id, inventoryItemId), eq(rmsInventoryItems.recordVersion, item.recordVersion))).returning();
+      if (!updated) throw concurrencyConflict({tenantId,resourceType:"rms_inventory_item",resourceId:inventoryItemId,expectedVersion:item.recordVersion,actualVersion:null});
+      await this.emitMasterDataUpdated(tx, tenantId, "rms_inventory_transaction", id, principal, "create", transaction);
+      await this.emitMasterDataUpdated(tx, tenantId, "rms_inventory_item", inventoryItemId, principal, "transaction", updated, item);
+      return { transaction, inventoryItem: updated };
     }, principal.userId);
   }
 

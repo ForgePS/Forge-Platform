@@ -31,6 +31,8 @@ function resourceController(
     | "createUnit"
     | "createPersonnel"
     | "createHydrant"
+    | "createEquipment"
+    | "createInventoryItem"
     | "createOccupancy"
     | "createPreplan"
   >,
@@ -42,6 +44,8 @@ function resourceController(
     | "listUnits"
     | "listPersonnel"
     | "listHydrants"
+    | "listEquipment"
+    | "listInventoryItems"
     | "listOccupancies"
     | "listPreplans"
   >,
@@ -53,6 +57,8 @@ function resourceController(
     | "getUnit"
     | "getPersonnel"
     | "getHydrant"
+    | "getEquipment"
+    | "getInventoryItem"
     | "getOccupancy"
     | "getPreplan"
   >,
@@ -64,6 +70,8 @@ function resourceController(
     | "patchUnit"
     | "patchPersonnel"
     | "patchHydrant"
+    | "patchEquipment"
+    | "patchInventoryItem"
     | "patchOccupancy"
     | "patchPreplan"
   >,
@@ -75,6 +83,8 @@ function resourceController(
     | "deleteUnit"
     | "deletePersonnel"
     | "deleteHydrant"
+    | "deleteEquipment"
+    | "deleteInventoryItem"
     | "deleteOccupancy"
     | "deletePreplan"
   >,
@@ -287,6 +297,100 @@ export class RmsHydrantDamageReportsController {
   @Idempotent({ resourceType: "rms_hydrant_damage_report" })
   async create(@Param("tenantId") tenantId: string, @Param("hydrantId") hydrantId: string, @Body() body: unknown, @Principal() principal: ForgePrincipal, @Req() req: RequestWithIds) {
     return ok(await this.rms.createHydrantDamageReport(tenantId, hydrantId, body, principal), getRequestIds(req));
+  }
+}
+
+export const RmsEquipmentController = resourceController(
+  "equipment",
+  "rms_equipment",
+  "createEquipment",
+  "listEquipment",
+  "getEquipment",
+  "patchEquipment",
+  "deleteEquipment",
+  "equipmentId",
+);
+
+@Controller("api/v1/tenants/:tenantId/rms/equipment/:equipmentId/assignments")
+export class RmsEquipmentAssignmentsController {
+  constructor(private readonly rms: RmsMasterDataService) {}
+
+  @Get()
+  @RequirePermission("rms.masterdata.read")
+  async list(@Param("tenantId") tenantId: string, @Param("equipmentId") equipmentId: string, @Req() req: RequestWithIds) {
+    return ok(await this.rms.listEquipmentAssignments(tenantId, equipmentId), getRequestIds(req));
+  }
+
+  @Post()
+  @RequirePermission("rms.masterdata.manage")
+  @Idempotent({ resourceType: "rms_equipment_assignment" })
+  async create(
+    @Param("tenantId") tenantId: string,
+    @Param("equipmentId") equipmentId: string,
+    @Body() body: unknown,
+    @Principal() principal: ForgePrincipal,
+    @Req() req: RequestWithIds,
+  ) {
+    return ok(await this.rms.assignEquipment(tenantId, equipmentId, body, principal), getRequestIds(req));
+  }
+}
+
+@Controller("api/v1/tenants/:tenantId/rms/equipment/:equipmentId/meter-readings")
+export class RmsEquipmentMeterReadingsController {
+  constructor(private readonly rms: RmsMasterDataService) {}
+
+  @Get()
+  @RequirePermission("rms.masterdata.read")
+  async list(@Param("tenantId") tenantId: string, @Param("equipmentId") equipmentId: string, @Req() req: RequestWithIds) {
+    return ok(await this.rms.listEquipmentMeterReadings(tenantId, equipmentId), getRequestIds(req));
+  }
+
+  @Post()
+  @RequirePermission("rms.masterdata.manage")
+  @Idempotent({ resourceType: "rms_equipment_meter_reading" })
+  async create(
+    @Param("tenantId") tenantId: string,
+    @Param("equipmentId") equipmentId: string,
+    @Body() body: unknown,
+    @Principal() principal: ForgePrincipal,
+    @Req() req: RequestWithIds,
+  ) {
+    return ok(await this.rms.createEquipmentMeterReading(tenantId, equipmentId, body, principal), getRequestIds(req));
+  }
+}
+
+export const RmsInventoryItemsController = resourceController(
+  "inventory",
+  "rms_inventory_item",
+  "createInventoryItem",
+  "listInventoryItems",
+  "getInventoryItem",
+  "patchInventoryItem",
+  "deleteInventoryItem",
+  "inventoryItemId",
+);
+
+@Controller("api/v1/tenants/:tenantId/rms/inventory/:inventoryItemId/transactions")
+export class RmsInventoryTransactionsController {
+  constructor(private readonly rms: RmsMasterDataService) {}
+
+  @Get()
+  @RequirePermission("rms.masterdata.read")
+  async list(@Param("tenantId") tenantId: string, @Param("inventoryItemId") inventoryItemId: string, @Req() req: RequestWithIds) {
+    return ok(await this.rms.listInventoryTransactions(tenantId, inventoryItemId), getRequestIds(req));
+  }
+
+  @Post()
+  @RequirePermission("rms.masterdata.manage")
+  @Idempotent({ resourceType: "rms_inventory_transaction" })
+  async create(
+    @Param("tenantId") tenantId: string,
+    @Param("inventoryItemId") inventoryItemId: string,
+    @Body() body: unknown,
+    @Principal() principal: ForgePrincipal,
+    @Req() req: RequestWithIds,
+  ) {
+    return ok(await this.rms.createInventoryTransaction(tenantId, inventoryItemId, body, principal), getRequestIds(req));
   }
 }
 
