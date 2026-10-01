@@ -272,7 +272,6 @@ export const createEquipmentAssignmentInputSchema = z.object({
   personnelId: z.string().uuid().optional().nullable(),
   storageLocation: z.string().max(200).optional().nullable(),
   assignedAt: z.string().datetime(),
-  releasedAt: z.string().datetime().optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
 }).superRefine((value, ctx) => {
   if (value.assignmentType === "STATION" && !value.stationId) ctx.addIssue({ code: "custom", message: "stationId is required for STATION assignment", path: ["stationId"] });
