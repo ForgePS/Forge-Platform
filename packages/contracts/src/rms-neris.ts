@@ -245,6 +245,89 @@ export const createPreplanInputSchema = z.object({
   primaryStationId: z.string().uuid().optional().nullable(),
 });
 
+export const createEquipmentInputSchema = z.object({
+  assetTag: z.string().min(1).max(64),
+  name: z.string().min(1).max(200),
+  category: z.string().min(1).max(120),
+  serialNumber: z.string().max(120).optional().nullable(),
+  manufacturer: z.string().max(120).optional().nullable(),
+  model: z.string().max(120).optional().nullable(),
+  status: z.enum(["IN_SERVICE", "OUT_OF_SERVICE", "NEEDS_SERVICE", "RETIRED"]).default("IN_SERVICE"),
+  stationId: z.string().uuid().optional().nullable(),
+  apparatusId: z.string().uuid().optional().nullable(),
+  personnelId: z.string().uuid().optional().nullable(),
+  purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  inServiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  expirationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  lastServiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  nextServiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  notes: z.string().max(8000).optional().nullable(),
+});
+
+export const createEquipmentAssignmentInputSchema = z.object({
+  assignmentType: z.enum(["STATION", "APPARATUS", "PERSONNEL", "STORAGE", "UNASSIGNED"]),
+  stationId: z.string().uuid().optional().nullable(),
+  apparatusId: z.string().uuid().optional().nullable(),
+  personnelId: z.string().uuid().optional().nullable(),
+  assignedAt: z.string().datetime(),
+  releasedAt: z.string().datetime().optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
+}).superRefine((value, ctx) => {
+  if (value.assignmentType === "STATION" && !value.stationId) ctx.addIssue({ code: "custom", message: "stationId is required for STATION assignment", path: ["stationId"] });
+  if (value.assignmentType === "APPARATUS" && !value.apparatusId) ctx.addIssue({ code: "custom", message: "apparatusId is required for APPARATUS assignment", path: ["apparatusId"] });
+  if (value.assignmentType === "PERSONNEL" && !value.personnelId) ctx.addIssue({ code: "custom", message: "personnelId is required for PERSONNEL assignment", path: ["personnelId"] });
+});
+
+export const createEquipmentMeterReadingInputSchema = z.object({
+  meterType: z.string().min(1).max(64),
+  reading: z.number().nonnegative(),
+  recordedAt: z.string().datetime(),
+  source: z.string().max(64).optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
+});
+
+export const createInventoryItemInputSchema = z.object({
+  itemCode: z.string().min(1).max(64),
+  name: z.string().min(1).max(200),
+  category: z.string().max(120).optional().nullable(),
+  unitOfMeasure: z.string().min(1).max(32).default("EA"),
+  storageLocation: z.string().min(1).max(200).default("GENERAL"),
+  stationId: z.string().uuid().optional().nullable(),
+  apparatusId: z.string().uuid().optional().nullable(),
+  currentQuantity: z.number().nonnegative().default(0),
+  minimumQuantity: z.number().nonnegative().optional().nullable(),
+  targetQuantity: z.number().nonnegative().optional().nullable(),
+  status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+  expirationTracked: z.boolean().default(false),
+  lotTracked: z.boolean().default(false),
+  notes: z.string().max(8000).optional().nullable(),
+});
+
+export const createInventoryTransactionInputSchema = z.object({
+  transactionType: z.enum(["RECEIVE", "ISSUE", "ADJUST", "COUNT", "TRANSFER_IN", "TRANSFER_OUT"]),
+  quantityDelta: z.number().refine((value) => value !== 0, "quantityDelta must not be zero"),
+  referenceType: z.string().max(64).optional().nullable(),
+  referenceId: z.string().max(120).optional().nullable(),
+  lotNumber: z.string().max(120).optional().nullable(),
+  expirationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  reason: z.string().max(4000).optional().nullable(),
+  occurredAt: z.string().datetime(),
+  performedByPersonnelId: z.string().uuid().optional().nullable(),
+}).superRefine((value, ctx) => {
+  if (["RECEIVE", "TRANSFER_IN"].includes(value.transactionType) && value.quantityDelta <= 0) {
+    ctx.addIssue({ code: "custom", message: "Inbound transactions require a positive quantityDelta", path: ["quantityDelta"] });
+  }
+  if (["ISSUE", "TRANSFER_OUT"].includes(value.transactionType) && value.quantityDelta >= 0) {
+    ctx.addIssue({ code: "custom", message: "Outbound transactions require a negative quantityDelta", path: ["quantityDelta"] });
+  }
+});
+
+export type CreateEquipmentInput = z.infer<typeof createEquipmentInputSchema>;
+export type CreateEquipmentAssignmentInput = z.infer<typeof createEquipmentAssignmentInputSchema>;
+export type CreateEquipmentMeterReadingInput = z.infer<typeof createEquipmentMeterReadingInputSchema>;
+export type CreateInventoryItemInput = z.infer<typeof createInventoryItemInputSchema>;
+export type CreateInventoryTransactionInput = z.infer<typeof createInventoryTransactionInputSchema>;
+
 export const createIncidentInputSchema = z.object({
   incidentNumber: z.string().min(1).max(64).optional(),
   manualNumber: z.boolean().default(false),
