@@ -33,6 +33,14 @@ describe("RMS navigation registry", () => {
     expect(incidents?.items.some((item) => item.id === "incidents-list")).toBe(true);
   });
 
+  it("exposes native Prevention occupancy and preplan routes", () => {
+    const groups = buildPrimaryNavigation({}, { authenticated: true });
+    const prevention = groups.find((group) => group.id === "prevention");
+    expect(prevention?.items.map((item) => item.id)).toEqual(
+      expect.arrayContaining(["occupancies-list", "occupancies-new", "preplans-list", "preplans-new"]),
+    );
+  });
+
   it("exposes native hydrants under Water Supply", () => {
     const groups = buildPrimaryNavigation({}, { authenticated: true });
     const waterSupply = groups.find((group) => group.id === "water-supply");
