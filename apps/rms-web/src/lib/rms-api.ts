@@ -199,8 +199,16 @@ export type OccupancyDetail = {
   addressLine1: string | null;
   city: string | null;
   state: string | null;
+  postalCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  primaryContact: string | null;
+  occupancyType: string | null;
   preplanId: string | null;
   status: string;
+  recordVersion: number;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type RosterDetail = {
