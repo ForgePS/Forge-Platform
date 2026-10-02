@@ -8,10 +8,12 @@ import {
 import { RMS_NAVIGATION_REGISTRY, RMS_NON_NAV_ROUTES } from "./navigation.registry";
 
 describe("RMS navigation registry", () => {
-  it("contains only verified live routes (no invented modules)", () => {
+  it("contains only verified live routes and no duplicate ids", () => {
     const paths = RMS_NAVIGATION_REGISTRY.map((item) => item.path);
-    expect(paths).not.toEqual(expect.arrayContaining(["/personnel/", "/prevention/", "/fleet/"]));
-    expect(RMS_NAVIGATION_REGISTRY.some((item) => item.label === "Personnel")).toBe(false);
+    const ids = RMS_NAVIGATION_REGISTRY.map((item) => item.id);
+    expect(paths).not.toEqual(expect.arrayContaining(["/prevention/", "/fleet/"]));
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(RMS_NAVIGATION_REGISTRY.some((item) => item.path === "/personnel/")).toBe(true);
   });
 
   it("accounts for non-nav deep-link routes separately", () => {
@@ -54,9 +56,9 @@ describe("RMS navigation registry", () => {
     const waterSupply = groups.find((group) => group.id === "water-supply");
     expect(waterSupply?.label).toBe("Water Supply");
     expect(waterSupply?.items.map((item) => item.id)).toEqual(
-      expect.arrayContaining(["hydrants-list", "hydrants-new"]),
+      expect.arrayContaining(["hydrants", "hydrants-new"]),
     );
-    expect(waterSupply?.items.find((item) => item.id === "hydrants-list")?.permission).toBe(
+    expect(waterSupply?.items.find((item) => item.id === "hydrants")?.permission).toBe(
       "rms.masterdata.read",
     );
   });
