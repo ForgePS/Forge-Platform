@@ -89,11 +89,30 @@ export class RmsSchedulingService{
   }
 
   async patchAssignment(tenantId:string,id:string,input:unknown,principal:ForgePrincipal,expected:ExpectedVersion){
-    const data=assignmentSchema.partial().parse(input);return withTenantTransaction(this.db,tenantId,async tx=>{
-      const before=await tx.query.rmsScheduleAssignments.findFirst({where:and(eq(rmsScheduleAssignments.tenantId,tenantId),eq(rmsScheduleAssignments.id,id),isNull(rmsScheduleAssignments.deletedAt))});if(!before)throw new ForgeError("NOT_FOUND","Schedule assignment not found");if(expected!=="*"&&before.recordVersion!==expected)throw concurrencyConflict({tenantId,resourceType:"rms_schedule_assignment",resourceId:id,expectedVersion:expected,actualVersion:before.recordVersion});
-      const start=data.startAt?new Date(data.startAt):before.startAt;const end=data.endAt?new Date(data.endAt):before.endAt;if(end<=start)throw new ForgeError("VALIDATION_ERROR","Schedule end must be after start");
-      const personnelId=data.personnelId??before.personnelId;const overlap=await tx.query.rmsScheduleAssignments.findFirst({where:and(eq(rmsScheduleAssignments.tenantId,tenantId),eq(rmsScheduleAssignments.personnelId,personnelId),ne(rmsScheduleAssignments.id,id),ne(rmsScheduleAssignments.status,"CANCELED"),isNull(rmsScheduleAssignments.deletedAt),lt(rmsScheduleAssignments.startAt,end),gt(rmsScheduleAssignments.endAt,start))});if(overlap)throw new ForgeError("VALIDATION_ERROR","Personnel already has an overlapping schedule assignment");
-      const [row]=await tx.update(rmsScheduleAssignments).set({...data,startAt,endAt:end,recordVersion:before.recordVersion+1,updatedByUserId:principal.userId,updatedAt:new Date()}).where(and(eq(rmsScheduleAssignments.id,id),eq(rmsScheduleAssignments.recordVersion,before.recordVersion))).returning();if(!row)throw concurrencyConflict({tenantId,resourceType:"rms_schedule_assignment",resourceId:id,expectedVersion:expected,actualVersion:null});await this.emit(tx,tenantId,"rms_schedule_assignment",id,"update",principal,row,before);return row;
+    const data=assignmentSchema.partial().parse(input);
+    const current=await withTenantTransaction(this.db,tenantId,async tx=>{
+      const row=await tx.query.rmsScheduleAssignments.findFirst({where:and(eq(rmsScheduleAssignments.tenantId,tenantId),eq(rmsScheduleAssignments.id,id),isNull(rmsScheduleAssignments.deletedAt))});
+      if(!row)throw new ForgeError("NOT_FOUND","Schedule assignment not found");
+      return row;
+    },principal.userId);
+    const personnelId=data.personnelId??current.personnelId;
+    const readiness=await this.training.readiness(tenantId,personnelId);
+    const warnings=[...readiness.missingTraining.map(x=>`Training: ${x.code} ${x.title}`),...readiness.missingCertifications.map(x=>`Certification: ${x.code} ${x.name}`)];
+    return withTenantTransaction(this.db,tenantId,async tx=>{
+      const before=await tx.query.rmsScheduleAssignments.findFirst({where:and(eq(rmsScheduleAssignments.tenantId,tenantId),eq(rmsScheduleAssignments.id,id),isNull(rmsScheduleAssignments.deletedAt))});
+      if(!before)throw new ForgeError("NOT_FOUND","Schedule assignment not found");
+      if(expected!=="*"&&before.recordVersion!==expected)throw concurrencyConflict({tenantId,resourceType:"rms_schedule_assignment",resourceId:id,expectedVersion:expected,actualVersion:before.recordVersion});
+      const start=data.startAt?new Date(data.startAt):before.startAt;
+      const end=data.endAt?new Date(data.endAt):before.endAt;
+      if(end<=start)throw new ForgeError("VALIDATION_ERROR","Schedule end must be after start");
+      const overlap=await tx.query.rmsScheduleAssignments.findFirst({where:and(eq(rmsScheduleAssignments.tenantId,tenantId),eq(rmsScheduleAssignments.personnelId,personnelId),ne(rmsScheduleAssignments.id,id),ne(rmsScheduleAssignments.status,"CANCELED"),isNull(rmsScheduleAssignments.deletedAt),lt(rmsScheduleAssignments.startAt,end),gt(rmsScheduleAssignments.endAt,start))});
+      if(overlap)throw new ForgeError("VALIDATION_ERROR","Personnel already has an overlapping schedule assignment");
+      const leave=await tx.query.rmsTimeOffRequests.findFirst({where:and(eq(rmsTimeOffRequests.tenantId,tenantId),eq(rmsTimeOffRequests.personnelId,personnelId),eq(rmsTimeOffRequests.status,"APPROVED"),lt(rmsTimeOffRequests.startAt,end),gt(rmsTimeOffRequests.endAt,start))});
+      if(leave)throw new ForgeError("VALIDATION_ERROR","Personnel has approved time off during this assignment");
+      const [row]=await tx.update(rmsScheduleAssignments).set({...data,personnelId,startAt:start,endAt:end,eligibilityStatus:readiness.eligible?"ELIGIBLE":"NOT_READY",eligibilityWarningsJson:warnings,recordVersion:before.recordVersion+1,updatedByUserId:principal.userId,updatedAt:new Date()}).where(and(eq(rmsScheduleAssignments.id,id),eq(rmsScheduleAssignments.recordVersion,before.recordVersion))).returning();
+      if(!row)throw concurrencyConflict({tenantId,resourceType:"rms_schedule_assignment",resourceId:id,expectedVersion:expected,actualVersion:null});
+      await this.emit(tx,tenantId,"rms_schedule_assignment",id,"update",principal,row,before);
+      return row;
     },principal.userId);
   }
 
@@ -118,8 +137,45 @@ export class RmsSchedulingService{
   }
 
   async patchSwap(tenantId:string,id:string,input:unknown,principal:ForgePrincipal,expected:ExpectedVersion){
-    const data=swapSchema.partial().parse(input);let readiness:null|Awaited<ReturnType<RmsTrainingService["readiness"]>>=null;const replacementId=data.replacementPersonnelId??null;if(data.status==="APPROVED"&&replacementId)readiness=await this.training.readiness(tenantId,replacementId);
-    return withTenantTransaction(this.db,tenantId,async tx=>{const before=await tx.query.rmsShiftSwapRequests.findFirst({where:and(eq(rmsShiftSwapRequests.tenantId,tenantId),eq(rmsShiftSwapRequests.id,id))});if(!before)throw new ForgeError("NOT_FOUND","Shift swap request not found");if(expected!=="*"&&before.recordVersion!==expected)throw concurrencyConflict({tenantId,resourceType:"rms_shift_swap_request",resourceId:id,expectedVersion:expected,actualVersion:before.recordVersion});const nextReplacement=data.replacementPersonnelId??before.replacementPersonnelId;if(data.status==="APPROVED"&&!nextReplacement)throw new ForgeError("VALIDATION_ERROR","Approved swap requires a replacement person");if(data.status==="APPROVED"&&!readiness&&nextReplacement)readiness=await this.training.readiness(tenantId,nextReplacement);const now=new Date();const values:Record<string,unknown>={...data,recordVersion:before.recordVersion+1,updatedByUserId:principal.userId,updatedAt:now};if(data.status==="APPROVED"||data.status==="DENIED")values.reviewedAt=now;const [row]=await tx.update(rmsShiftSwapRequests).set(values as never).where(and(eq(rmsShiftSwapRequests.id,id),eq(rmsShiftSwapRequests.recordVersion,before.recordVersion))).returning();if(!row)throw concurrencyConflict({tenantId,resourceType:"rms_shift_swap_request",resourceId:id,expectedVersion:expected,actualVersion:null});if(data.status==="APPROVED"&&nextReplacement){const assignment=await tx.query.rmsScheduleAssignments.findFirst({where:and(eq(rmsScheduleAssignments.tenantId,tenantId),eq(rmsScheduleAssignments.id,before.offeredAssignmentId),isNull(rmsScheduleAssignments.deletedAt))});if(!assignment)throw new ForgeError("NOT_FOUND","Offered schedule assignment not found");const warnings=readiness?[...readiness.missingTraining.map(x=>`Training: ${x.code} ${x.title}`),...readiness.missingCertifications.map(x=>`Certification: ${x.code} ${x.name}`)]:[];await tx.update(rmsScheduleAssignments).set({personnelId:nextReplacement,eligibilityStatus:readiness?.eligible?"ELIGIBLE":"NOT_READY",eligibilityWarningsJson:warnings,recordVersion:assignment.recordVersion+1,updatedByUserId:principal.userId,updatedAt:now}).where(and(eq(rmsScheduleAssignments.id,assignment.id),eq(rmsScheduleAssignments.recordVersion,assignment.recordVersion)));}await this.emit(tx,tenantId,"rms_shift_swap_request",id,"update",principal,row,before);return row;},principal.userId);
+    const data=swapSchema.partial().parse(input);
+    const current=await withTenantTransaction(this.db,tenantId,async tx=>{
+      const swap=await tx.query.rmsShiftSwapRequests.findFirst({where:and(eq(rmsShiftSwapRequests.tenantId,tenantId),eq(rmsShiftSwapRequests.id,id))});
+      if(!swap)throw new ForgeError("NOT_FOUND","Shift swap request not found");
+      const assignment=await tx.query.rmsScheduleAssignments.findFirst({where:and(eq(rmsScheduleAssignments.tenantId,tenantId),eq(rmsScheduleAssignments.id,swap.offeredAssignmentId),isNull(rmsScheduleAssignments.deletedAt))});
+      if(!assignment)throw new ForgeError("NOT_FOUND","Offered schedule assignment not found");
+      return {swap,assignment};
+    },principal.userId);
+    const nextReplacement=data.replacementPersonnelId??current.swap.replacementPersonnelId;
+    let readiness:null|Awaited<ReturnType<RmsTrainingService["readiness"]>>=null;
+    if(data.status==="APPROVED"){
+      if(!nextReplacement)throw new ForgeError("VALIDATION_ERROR","Approved swap requires a replacement person");
+      readiness=await this.training.readiness(tenantId,nextReplacement);
+    }
+    return withTenantTransaction(this.db,tenantId,async tx=>{
+      const before=await tx.query.rmsShiftSwapRequests.findFirst({where:and(eq(rmsShiftSwapRequests.tenantId,tenantId),eq(rmsShiftSwapRequests.id,id))});
+      if(!before)throw new ForgeError("NOT_FOUND","Shift swap request not found");
+      if(expected!=="*"&&before.recordVersion!==expected)throw concurrencyConflict({tenantId,resourceType:"rms_shift_swap_request",resourceId:id,expectedVersion:expected,actualVersion:before.recordVersion});
+      const assignment=await tx.query.rmsScheduleAssignments.findFirst({where:and(eq(rmsScheduleAssignments.tenantId,tenantId),eq(rmsScheduleAssignments.id,before.offeredAssignmentId),isNull(rmsScheduleAssignments.deletedAt))});
+      if(!assignment)throw new ForgeError("NOT_FOUND","Offered schedule assignment not found");
+      if(data.status==="APPROVED"&&nextReplacement){
+        const overlap=await tx.query.rmsScheduleAssignments.findFirst({where:and(eq(rmsScheduleAssignments.tenantId,tenantId),eq(rmsScheduleAssignments.personnelId,nextReplacement),ne(rmsScheduleAssignments.id,assignment.id),ne(rmsScheduleAssignments.status,"CANCELED"),isNull(rmsScheduleAssignments.deletedAt),lt(rmsScheduleAssignments.startAt,assignment.endAt),gt(rmsScheduleAssignments.endAt,assignment.startAt))});
+        if(overlap)throw new ForgeError("VALIDATION_ERROR","Replacement personnel already has an overlapping schedule assignment");
+        const leave=await tx.query.rmsTimeOffRequests.findFirst({where:and(eq(rmsTimeOffRequests.tenantId,tenantId),eq(rmsTimeOffRequests.personnelId,nextReplacement),eq(rmsTimeOffRequests.status,"APPROVED"),lt(rmsTimeOffRequests.startAt,assignment.endAt),gt(rmsTimeOffRequests.endAt,assignment.startAt))});
+        if(leave)throw new ForgeError("VALIDATION_ERROR","Replacement personnel has approved time off during the offered assignment");
+      }
+      const now=new Date();
+      const values:Record<string,unknown>={...data,recordVersion:before.recordVersion+1,updatedByUserId:principal.userId,updatedAt:now};
+      if(data.status==="APPROVED"||data.status==="DENIED")values.reviewedAt=now;
+      const [row]=await tx.update(rmsShiftSwapRequests).set(values as never).where(and(eq(rmsShiftSwapRequests.id,id),eq(rmsShiftSwapRequests.recordVersion,before.recordVersion))).returning();
+      if(!row)throw concurrencyConflict({tenantId,resourceType:"rms_shift_swap_request",resourceId:id,expectedVersion:expected,actualVersion:null});
+      if(data.status==="APPROVED"&&nextReplacement){
+        const warnings=readiness?[...readiness.missingTraining.map(x=>`Training: ${x.code} ${x.title}`),...readiness.missingCertifications.map(x=>`Certification: ${x.code} ${x.name}`)]:[];
+        const [updatedAssignment]=await tx.update(rmsScheduleAssignments).set({personnelId:nextReplacement,eligibilityStatus:readiness?.eligible?"ELIGIBLE":"NOT_READY",eligibilityWarningsJson:warnings,recordVersion:assignment.recordVersion+1,updatedByUserId:principal.userId,updatedAt:now}).where(and(eq(rmsScheduleAssignments.id,assignment.id),eq(rmsScheduleAssignments.recordVersion,assignment.recordVersion))).returning();
+        if(!updatedAssignment)throw concurrencyConflict({tenantId,resourceType:"rms_schedule_assignment",resourceId:assignment.id,expectedVersion:assignment.recordVersion,actualVersion:null});
+      }
+      await this.emit(tx,tenantId,"rms_shift_swap_request",id,"update",principal,row,before);
+      return row;
+    },principal.userId);
   }
 
   private async requirePersonnel(tx:Parameters<Parameters<typeof withTenantTransaction>[2]>[0],tenantId:string,personnelId:string){const row=await tx.query.rmsPersonnel.findFirst({where:and(eq(rmsPersonnel.tenantId,tenantId),eq(rmsPersonnel.id,personnelId),isNull(rmsPersonnel.deletedAt))});if(!row)throw new ForgeError("NOT_FOUND","Personnel record not found");return row;}
