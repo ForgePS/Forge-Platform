@@ -1463,3 +1463,50 @@ export function patchCodeViolation(tenantId:string,violationId:string,payload:Re
 export function issueCodeNotice(tenantId:string,caseId:string,payload:Record<string,unknown>):Promise<{notice:CodeNotice;case:CodeCase}>{
   return apiSend<{notice:CodeNotice;case:CodeCase}>(`${tenantBase(tenantId)}/rms/code-cases/${caseId}/notices`,"POST",payload,{idempotencyKey:createIdempotencyKey("code-notice")});
 }
+
+
+export type InvestigationCase={
+  id:string;caseNumber:string;incidentId:string|null;occupancyId:string|null;
+  caseType:"FIRE_INVESTIGATION"|"ORIGIN_CAUSE"|"CODE_REFERRAL"|"ADMIN_REVIEW";
+  leadInvestigator:string|null;status:"OPEN"|"SCENE_SECURED"|"ANALYSIS"|"PENDING_REVIEW"|"CLOSED"|"VOID";
+  openedAt:string;closedAt:string|null;location:string|null;sceneStatus:"SECURED"|"RELEASED"|"RESTRICTED"|null;
+  weather:string|null;initialObservations:string|null;areaOfOrigin:string|null;
+  causeClassification:"UNDETERMINED"|"ACCIDENTAL"|"INCENDIARY"|"NATURAL"|"OTHER"|null;
+  causeNarrative:string|null;disposition:string|null;
+  supervisorReviewStatus:"NOT_SUBMITTED"|"PENDING"|"APPROVED"|"RETURNED";
+  supervisorReviewer:string|null;supervisorReviewedAt:string|null;supervisorNotes:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type InvestigationEvidence={
+  id:string;caseId:string;evidenceType:"PHOTO"|"PHYSICAL"|"DOCUMENT"|"INTERVIEW"|"VIDEO"|"OTHER";
+  tagNumber:string;title:string|null;description:string|null;collectedAt:string|null;collectedBy:string|null;
+  currentCustodian:string|null;storageLocation:string|null;status:"IN_CUSTODY"|"RELEASED"|"RETURNED"|"DISPOSED";
+  notes:string|null;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type InvestigationCustodyEvent={
+  id:string;evidenceId:string;action:"COLLECTED"|"TRANSFERRED"|"STORED"|"RELEASED"|"RETURNED"|"DISPOSED";
+  occurredAt:string;fromCustodian:string|null;toCustodian:string|null;location:string|null;notes:string|null;createdAt:string;
+};
+export type InvestigationDetail={case:InvestigationCase;evidence:InvestigationEvidence[];custodyEvents:InvestigationCustodyEvent[]};
+
+export function listInvestigations(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<InvestigationCase[]>>{
+  return apiGetResult<InvestigationCase[]>(`${tenantBase(tenantId)}/rms/investigations`,{query});
+}
+export function getInvestigation(tenantId:string,caseId:string):Promise<InvestigationDetail>{
+  return apiGet<InvestigationDetail>(`${tenantBase(tenantId)}/rms/investigations/${caseId}`);
+}
+export function createInvestigation(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<InvestigationCase>>{
+  return apiSendResult<InvestigationCase>(`${tenantBase(tenantId)}/rms/investigations`,"POST",payload,{idempotencyKey:createIdempotencyKey("investigation")});
+}
+export function patchInvestigation(tenantId:string,caseId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<InvestigationCase>>{
+  return apiSendResult<InvestigationCase>(`${tenantBase(tenantId)}/rms/investigations/${caseId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function createInvestigationEvidence(tenantId:string,caseId:string,payload:Record<string,unknown>):Promise<InvestigationEvidence>{
+  return apiSend<InvestigationEvidence>(`${tenantBase(tenantId)}/rms/investigations/${caseId}/evidence`,"POST",payload,{idempotencyKey:createIdempotencyKey("investigation-evidence")});
+}
+export function patchInvestigationEvidence(tenantId:string,evidenceId:string,payload:Record<string,unknown>,recordVersion:number):Promise<InvestigationEvidence>{
+  return apiSend<InvestigationEvidence>(`${tenantBase(tenantId)}/rms/investigation-evidence/${evidenceId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function addInvestigationCustodyEvent(tenantId:string,evidenceId:string,payload:Record<string,unknown>):Promise<{event:InvestigationCustodyEvent;evidence:InvestigationEvidence}>{
+  return apiSend<{event:InvestigationCustodyEvent;evidence:InvestigationEvidence}>(`${tenantBase(tenantId)}/rms/investigation-evidence/${evidenceId}/custody-events`,"POST",payload,{idempotencyKey:createIdempotencyKey("investigation-custody")});
+}
