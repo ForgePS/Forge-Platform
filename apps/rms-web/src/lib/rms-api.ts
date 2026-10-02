@@ -1411,3 +1411,11 @@ export function createInspectionFinding(tenantId:string,inspectionId:string,payl
 export function patchInspectionFinding(tenantId:string,findingId:string,payload:Record<string,unknown>,recordVersion:number):Promise<InspectionFinding>{
   return apiSend<InspectionFinding>(`${tenantBase(tenantId)}/rms/inspection-findings/${findingId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
 }
+
+
+export function patchInspectionProgram(tenantId:string,programId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<InspectionProgram>>{
+  return apiSendResult<InspectionProgram>(`${tenantBase(tenantId)}/rms/inspection-programs/${programId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function patchInspectionTemplate(tenantId:string,templateId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<InspectionTemplate>>{
+  return apiSendResult<InspectionTemplate>(`${tenantBase(tenantId)}/rms/inspection-templates/${templateId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
