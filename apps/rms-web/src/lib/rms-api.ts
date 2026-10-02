@@ -1510,3 +1510,63 @@ export function patchInvestigationEvidence(tenantId:string,evidenceId:string,pay
 export function addInvestigationCustodyEvent(tenantId:string,evidenceId:string,payload:Record<string,unknown>):Promise<{event:InvestigationCustodyEvent;evidence:InvestigationEvidence}>{
   return apiSend<{event:InvestigationCustodyEvent;evidence:InvestigationEvidence}>(`${tenantBase(tenantId)}/rms/investigation-evidence/${evidenceId}/custody-events`,"POST",payload,{idempotencyKey:createIdempotencyKey("investigation-custody")});
 }
+
+
+export type TrainingCourse={
+  id:string;code:string;title:string;category:string;description:string|null;deliveryMode:string;
+  defaultHours:number|null;recurrenceMonths:number|null;requiredForIncidentEligibility:boolean;
+  status:string;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type TrainingRecord={
+  id:string;courseId:string;personnelId:string;completedAt:string;expiresAt:string|null;hours:number|null;
+  status:string;instructor:string|null;location:string|null;score:number|null;certificateNumber:string|null;
+  notes:string|null;source:string;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type CertificationType={
+  id:string;code:string;name:string;issuingAuthority:string|null;category:string;defaultValidityMonths:number|null;
+  requiredForIncidentEligibility:boolean;status:string;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type PersonnelCertification={
+  id:string;personnelId:string;certificationTypeId:string;credentialNumber:string|null;issuedAt:string|null;
+  expiresAt:string|null;status:string;verifiedAt:string|null;verifiedBy:string|null;notes:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type PersonnelReadiness={
+  personnelId:string;eligible:boolean;
+  training:Array<{courseId:string;code:string;title:string;current:boolean;completedAt:string|null;expiresAt:string|null}>;
+  certifications:Array<{certificationTypeId:string;code:string;name:string;current:boolean;credentialNumber:string|null;expiresAt:string|null}>;
+  missingTraining:Array<{courseId:string;code:string;title:string;current:boolean;completedAt:string|null;expiresAt:string|null}>;
+  missingCertifications:Array<{certificationTypeId:string;code:string;name:string;current:boolean;credentialNumber:string|null;expiresAt:string|null}>;
+  computedAt:string;
+};
+
+export function listTrainingCourses(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<TrainingCourse[]>>{
+  return apiGetResult<TrainingCourse[]>(`${tenantBase(tenantId)}/rms/training/courses`,{query});
+}
+export function createTrainingCourse(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<TrainingCourse>>{
+  return apiSendResult<TrainingCourse>(`${tenantBase(tenantId)}/rms/training/courses`,"POST",payload,{idempotencyKey:createIdempotencyKey("training-course")});
+}
+export function patchTrainingCourse(tenantId:string,courseId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<TrainingCourse>>{
+  return apiSendResult<TrainingCourse>(`${tenantBase(tenantId)}/rms/training/courses/${courseId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function listTrainingRecords(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<TrainingRecord[]>>{
+  return apiGetResult<TrainingRecord[]>(`${tenantBase(tenantId)}/rms/training/records`,{query});
+}
+export function createTrainingRecord(tenantId:string,payload:Record<string,unknown>):Promise<TrainingRecord>{
+  return apiSend<TrainingRecord>(`${tenantBase(tenantId)}/rms/training/records`,"POST",payload,{idempotencyKey:createIdempotencyKey("training-record")});
+}
+export function listCertificationTypes(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<CertificationType[]>>{
+  return apiGetResult<CertificationType[]>(`${tenantBase(tenantId)}/rms/certifications/types`,{query});
+}
+export function createCertificationType(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<CertificationType>>{
+  return apiSendResult<CertificationType>(`${tenantBase(tenantId)}/rms/certifications/types`,"POST",payload,{idempotencyKey:createIdempotencyKey("certification-type")});
+}
+export function listPersonnelCertifications(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<PersonnelCertification[]>>{
+  return apiGetResult<PersonnelCertification[]>(`${tenantBase(tenantId)}/rms/certifications/personnel`,{query});
+}
+export function createPersonnelCertification(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<PersonnelCertification>>{
+  return apiSendResult<PersonnelCertification>(`${tenantBase(tenantId)}/rms/certifications/personnel`,"POST",payload,{idempotencyKey:createIdempotencyKey("personnel-certification")});
+}
+export function getPersonnelReadiness(tenantId:string,personnelId:string):Promise<PersonnelReadiness>{
+  return apiGet<PersonnelReadiness>(`${tenantBase(tenantId)}/rms/training/readiness/${personnelId}`);
+}
