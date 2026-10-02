@@ -102,6 +102,17 @@ export class RmsInspectionsService{
     },principal.userId);
   }
 
+  async patchProgram(tenantId:string,id:string,input:unknown,principal:ForgePrincipal,expected:ExpectedVersion){
+    const data=programSchema.partial().parse(input);return withTenantTransaction(this.db,tenantId,async tx=>{
+      const before=await tx.query.rmsInspectionPrograms.findFirst({where:and(eq(rmsInspectionPrograms.tenantId,tenantId),eq(rmsInspectionPrograms.id,id),isNull(rmsInspectionPrograms.deletedAt))});
+      if(!before)throw new ForgeError("NOT_FOUND","Inspection program not found");
+      if(expected!=="*"&&before.recordVersion!==expected)throw concurrencyConflict({tenantId,resourceType:"rms_inspection_program",resourceId:id,expectedVersion:expected,actualVersion:before.recordVersion});
+      const [row]=await tx.update(rmsInspectionPrograms).set({...data,recordVersion:before.recordVersion+1,updatedByUserId:principal.userId,updatedAt:new Date()}).where(and(eq(rmsInspectionPrograms.id,id),eq(rmsInspectionPrograms.recordVersion,before.recordVersion))).returning();
+      if(!row)throw concurrencyConflict({tenantId,resourceType:"rms_inspection_program",resourceId:id,expectedVersion:expected,actualVersion:null});
+      await this.emit(tx,tenantId,"rms_inspection_program",id,"update",principal,row,before);return row;
+    },principal.userId);
+  }
+
   async listTemplates(tenantId:string,query:Record<string,string>){
     const q=page(query);return withTenantTransaction(this.db,tenantId,async tx=>{
       const filters=[eq(rmsInspectionTemplates.tenantId,tenantId),isNull(rmsInspectionTemplates.deletedAt)];
@@ -117,6 +128,20 @@ export class RmsInspectionsService{
       const now=new Date();const [row]=await tx.insert(rmsInspectionTemplates).values({id:createId(),tenantId,...data,publishedAt:data.lifecycleStatus==="PUBLISHED"?now:null,createdByUserId:principal.userId,updatedByUserId:principal.userId,createdAt:now,updatedAt:now}).returning();
       if(!row)throw new ForgeError("INTERNAL_ERROR","Failed to create inspection template");
       await this.emit(tx,tenantId,"rms_inspection_template",row.id,"create",principal,row);return row;
+    },principal.userId);
+  }
+
+  async patchTemplate(tenantId:string,id:string,input:unknown,principal:ForgePrincipal,expected:ExpectedVersion){
+    const data=templateSchema.partial().parse(input);return withTenantTransaction(this.db,tenantId,async tx=>{
+      const before=await tx.query.rmsInspectionTemplates.findFirst({where:and(eq(rmsInspectionTemplates.tenantId,tenantId),eq(rmsInspectionTemplates.id,id),isNull(rmsInspectionTemplates.deletedAt))});
+      if(!before)throw new ForgeError("NOT_FOUND","Inspection template not found");
+      if(data.programId){const program=await tx.query.rmsInspectionPrograms.findFirst({where:and(eq(rmsInspectionPrograms.tenantId,tenantId),eq(rmsInspectionPrograms.id,data.programId),isNull(rmsInspectionPrograms.deletedAt))});if(!program)throw new ForgeError("NOT_FOUND","Inspection program not found");}
+      if(expected!=="*"&&before.recordVersion!==expected)throw concurrencyConflict({tenantId,resourceType:"rms_inspection_template",resourceId:id,expectedVersion:expected,actualVersion:before.recordVersion});
+      const now=new Date();const values:Record<string,unknown>={...data,recordVersion:before.recordVersion+1,updatedByUserId:principal.userId,updatedAt:now};
+      if(data.lifecycleStatus==="PUBLISHED"&&!before.publishedAt)values.publishedAt=now;
+      const [row]=await tx.update(rmsInspectionTemplates).set(values as never).where(and(eq(rmsInspectionTemplates.id,id),eq(rmsInspectionTemplates.recordVersion,before.recordVersion))).returning();
+      if(!row)throw concurrencyConflict({tenantId,resourceType:"rms_inspection_template",resourceId:id,expectedVersion:expected,actualVersion:null});
+      await this.emit(tx,tenantId,"rms_inspection_template",id,"update",principal,row,before);return row;
     },principal.userId);
   }
 
