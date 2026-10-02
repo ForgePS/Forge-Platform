@@ -77,4 +77,33 @@ describe("RMS scheduling domain",()=>{
       tx.query.rmsScheduleAssignments.findFirst({where:eq(rmsScheduleAssignments.id,created.body.data.id)})
     )).resolves.toBeUndefined();
   });
+
+  it("rejects swap approval when replacement has an overlapping assignment",async()=>{
+    const tenant=await harness.createTenant({moduleCodes:["CORE","NERIS"]});
+    const user=await createManager(tenant.tenantId);
+    const requester=await createPersonnel(tenant.tenantId);
+    const replacement=await createPersonnel(tenant.tenantId);
+    const api=harness.api(user.userId,tenant.tenantId);
+
+    const offered=await api.post(`/api/v1/tenants/${tenant.tenantId}/rms/scheduling/assignments`)
+      .set("Idempotency-Key",createId())
+      .send({personnelId:requester,startAt:"2026-10-25T12:00:00.000Z",endAt:"2026-10-25T20:00:00.000Z"})
+      .expect(200);
+
+    await api.post(`/api/v1/tenants/${tenant.tenantId}/rms/scheduling/assignments`)
+      .set("Idempotency-Key",createId())
+      .send({personnelId:replacement,startAt:"2026-10-25T14:00:00.000Z",endAt:"2026-10-25T22:00:00.000Z"})
+      .expect(200);
+
+    const swap=await api.post(`/api/v1/tenants/${tenant.tenantId}/rms/scheduling/swaps`)
+      .set("Idempotency-Key",createId())
+      .send({offeredAssignmentId:offered.body.data.id,requesterPersonnelId:requester,replacementPersonnelId:replacement,status:"PENDING"})
+      .expect(200);
+
+    await api.patch(`/api/v1/tenants/${tenant.tenantId}/rms/scheduling/swaps/${swap.body.data.id}`)
+      .set("If-Match",`W/"${swap.body.data.recordVersion}"`)
+      .send({status:"APPROVED"})
+      .expect(res=>{expect(res.status).toBeGreaterThanOrEqual(400)});
+  });
+
 });
