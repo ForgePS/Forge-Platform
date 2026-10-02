@@ -148,7 +148,7 @@ export class RmsCodeEnforcementService{
     const data=noticeSchema.parse(input);return withTenantTransaction(this.db,tenantId,async tx=>{
       const parent=await tx.query.rmsCodeCases.findFirst({where:and(eq(rmsCodeCases.tenantId,tenantId),eq(rmsCodeCases.id,caseId),isNull(rmsCodeCases.deletedAt))});if(!parent)throw new ForgeError("NOT_FOUND","Code enforcement case not found");
       const now=new Date();const [notice]=await tx.insert(rmsCodeNotices).values({id:createId(),tenantId,caseId,...data,issuedAt:data.issuedAt?new Date(data.issuedAt):now,servedAt:data.servedAt?new Date(data.servedAt):null,createdByUserId:principal.userId,createdAt:now}).returning();if(!notice)throw new ForgeError("INTERNAL_ERROR","Failed to issue notice");
-      let caseAfter=parent;if(parent.status==="OPEN"){const [updated]=await tx.update(rmsCodeCases).set({status:"NOTICE_ISSUED",recordVersion:parent.recordVersion+1,updatedByUserId:principal.userId,updatedAt:now}).where(and(eq(rmsCodeCases.id,caseId),eq(rmsCodeCases.recordVersion,parent.recordVersion))).returning();if(updated)caseAfter=updated;}
+      let caseAfter=parent;if(parent.status==="OPEN"){const [updated]=await tx.update(rmsCodeCases).set({status:"NOTICE_ISSUED",recordVersion:parent.recordVersion+1,updatedByUserId:principal.userId,updatedAt:now}).where(and(eq(rmsCodeCases.id,caseId),eq(rmsCodeCases.recordVersion,parent.recordVersion))).returning();if(updated){caseAfter=updated;await this.emit(tx,tenantId,"rms_code_case",caseId,"notice_issued",principal,updated,parent);}}
       await this.emit(tx,tenantId,"rms_code_notice",notice.id,"issue",principal,notice);return {notice,case:caseAfter};
     },principal.userId);
   }
