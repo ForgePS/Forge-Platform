@@ -63,6 +63,15 @@ describe("RMS navigation registry", () => {
     );
   });
 
+  it("builds Training & Credentials navigation", () => {
+    const groups = buildPrimaryNavigation({}, { authenticated: true });
+    const training = groups.find((group) => group.id === "training");
+    expect(training?.label).toBe("Training & Credentials");
+    expect(training?.items.map((item) => item.id)).toEqual(
+      expect.arrayContaining(["training-courses","training-new","certifications-list","certifications-new"]),
+    );
+  });
+
   it("builds secondary nav for active CAD group", () => {
     const flags = {
       [RMS_FEATURE_FLAGS.cadEnabled]: true,
