@@ -146,6 +146,7 @@ export class RmsSchedulingService{
       return {swap,assignment};
     },principal.userId);
     const nextReplacement=data.replacementPersonnelId??current.swap.replacementPersonnelId;
+    if(nextReplacement===current.swap.requesterPersonnelId)throw new ForgeError("VALIDATION_ERROR","Replacement personnel must be different from requester");
     let readiness:null|Awaited<ReturnType<RmsTrainingService["readiness"]>>=null;
     if(data.status==="APPROVED"){
       if(!nextReplacement)throw new ForgeError("VALIDATION_ERROR","Approved swap requires a replacement person");
