@@ -1570,3 +1570,47 @@ export function createPersonnelCertification(tenantId:string,payload:Record<stri
 export function getPersonnelReadiness(tenantId:string,personnelId:string):Promise<PersonnelReadiness>{
   return apiGet<PersonnelReadiness>(`${tenantBase(tenantId)}/rms/training/readiness/${personnelId}`);
 }
+
+
+export type ScheduleAssignment={
+  id:string;personnelId:string;shiftId:string|null;stationId:string|null;unitId:string|null;
+  startAt:string;endAt:string;assignmentType:string;role:string|null;status:string;
+  eligibilityStatus:string;eligibilityWarningsJson:string[];notes:string|null;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type TimeOffRequest={
+  id:string;personnelId:string;startAt:string;endAt:string;leaveType:string;status:string;reason:string|null;
+  reviewer:string|null;reviewedAt:string|null;reviewNotes:string|null;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type ShiftSwapRequest={
+  id:string;offeredAssignmentId:string;requesterPersonnelId:string;replacementPersonnelId:string|null;targetPersonnelId:string|null;
+  status:string;reason:string|null;reviewer:string|null;reviewedAt:string|null;reviewNotes:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+
+export function listScheduleAssignments(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<ScheduleAssignment[]>>{
+  return apiGetResult<ScheduleAssignment[]>(`${tenantBase(tenantId)}/rms/scheduling/assignments`,{query});
+}
+export function createScheduleAssignment(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<ScheduleAssignment>>{
+  return apiSendResult<ScheduleAssignment>(`${tenantBase(tenantId)}/rms/scheduling/assignments`,"POST",payload,{idempotencyKey:createIdempotencyKey("schedule-assignment")});
+}
+export function patchScheduleAssignment(tenantId:string,id:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<ScheduleAssignment>>{
+  return apiSendResult<ScheduleAssignment>(`${tenantBase(tenantId)}/rms/scheduling/assignments/${id}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function listTimeOffRequests(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<TimeOffRequest[]>>{
+  return apiGetResult<TimeOffRequest[]>(`${tenantBase(tenantId)}/rms/scheduling/time-off`,{query});
+}
+export function createTimeOffRequest(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<TimeOffRequest>>{
+  return apiSendResult<TimeOffRequest>(`${tenantBase(tenantId)}/rms/scheduling/time-off`,"POST",payload,{idempotencyKey:createIdempotencyKey("time-off")});
+}
+export function patchTimeOffRequest(tenantId:string,id:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<TimeOffRequest>>{
+  return apiSendResult<TimeOffRequest>(`${tenantBase(tenantId)}/rms/scheduling/time-off/${id}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function listShiftSwaps(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<ShiftSwapRequest[]>>{
+  return apiGetResult<ShiftSwapRequest[]>(`${tenantBase(tenantId)}/rms/scheduling/swaps`,{query});
+}
+export function createShiftSwap(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<ShiftSwapRequest>>{
+  return apiSendResult<ShiftSwapRequest>(`${tenantBase(tenantId)}/rms/scheduling/swaps`,"POST",payload,{idempotencyKey:createIdempotencyKey("shift-swap")});
+}
+export function patchShiftSwap(tenantId:string,id:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<ShiftSwapRequest>>{
+  return apiSendResult<ShiftSwapRequest>(`${tenantBase(tenantId)}/rms/scheduling/swaps/${id}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
