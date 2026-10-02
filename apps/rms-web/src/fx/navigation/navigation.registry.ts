@@ -163,6 +163,15 @@ export const RMS_NAVIGATION_REGISTRY: readonly RmsNavigationItem[] = [
     mobile: true,
   },
   {
+    id: "inspections-configuration",
+    label: "Inspection Configuration",
+    path: "/inspections/configuration/",
+    group: "prevention",
+    groupLabel: "Prevention",
+    permission: "rms.masterdata.manage",
+    mobile: false,
+  },
+  {
     id: "preplans-list",
     label: "Preplans",
     path: "/preplans/",
