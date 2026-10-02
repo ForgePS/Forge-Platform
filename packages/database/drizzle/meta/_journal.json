@@ -316,6 +316,13 @@
       "when": 1754963000000,
       "tag": "0044_rms_investigations",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1754964000000,
+      "tag": "0045_rms_training_certifications",
+      "breakpoints": true
     }
   ]
 }
