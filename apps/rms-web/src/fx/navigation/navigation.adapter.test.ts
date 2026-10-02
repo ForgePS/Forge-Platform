@@ -72,6 +72,14 @@ describe("RMS navigation registry", () => {
     );
   });
 
+  it("builds scheduling navigation", () => {
+    const groups = buildPrimaryNavigation({}, { authenticated: true });
+    const scheduling = groups.find((group) => group.id === "scheduling");
+    expect(scheduling?.items.map((item) => item.id)).toEqual(
+      expect.arrayContaining(["scheduling","scheduling-new"]),
+    );
+  });
+
   it("builds secondary nav for active CAD group", () => {
     const flags = {
       [RMS_FEATURE_FLAGS.cadEnabled]: true,
