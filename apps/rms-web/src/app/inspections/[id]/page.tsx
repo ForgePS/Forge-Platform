@@ -1,0 +1,47 @@
+"use client";
+import Link from "next/link";
+import {useParams} from "next/navigation";
+import {useAuth} from "@forge/web-kit";
+import {useEffect,useMemo,useState} from "react";
+import {
+  createInspectionFinding,getInspection,getOccupancyDetail,patchInspection,upsertInspectionResponse,
+  type InspectionDetail,type InspectionFinding,type InspectionResponse,type OccupancyDetail
+} from "@/lib/rms-api";
+import styles from "../../page.module.css";
+
+type ChecklistField={sectionId:string|null;fieldKey:string;label:string;helpText?:string;type?:string;severity?:string};
+
+export default function InspectionDetailPage(){
+ const {me}=useAuth();const {id}=useParams<{id:string}>();const [detail,setDetail]=useState<InspectionDetail|null>(null);const [occupancy,setOccupancy]=useState<OccupancyDetail|null>(null);const [error,setError]=useState<string|null>(null);const [message,setMessage]=useState("");const [saving,setSaving]=useState(false);
+ const [findingTitle,setFindingTitle]=useState("");const [findingSeverity,setFindingSeverity]=useState("MODERATE");const [findingAction,setFindingAction]=useState("");const [findingDue,setFindingDue]=useState("");
+ async function load(){if(!me?.tenantId)return;try{const d=await getInspection(me.tenantId,id);setDetail(d);setOccupancy(await getOccupancyDetail(me.tenantId,d.inspection.occupancyId))}catch(e){setError(e instanceof Error?e.message:"Failed to load inspection")}}
+ useEffect(()=>{void load()},[me?.tenantId,id]);
+ const fields=useMemo<ChecklistField[]>(()=>{const sections=detail?.inspection.checklistSnapshotJson??[];return sections.flatMap((section:any)=>(section.fields??[]).map((field:any)=>({sectionId:String(section.id??section.title??"" )||null,fieldKey:String(field.key??field.id??""),label:String(field.label??field.key??field.id??"Checklist item"),helpText:field.helpText,type:field.type,severity:field.severity}))).filter(x=>x.fieldKey)},[detail]);
+ const responseMap=useMemo(()=>new Map((detail?.responses??[]).map(x=>[x.fieldKey,x])),[detail]);
+ async function saveResponse(field:ChecklistField,result:string,comment:string){if(!me?.tenantId||!detail)return;setSaving(true);setError(null);try{const saved=await upsertInspectionResponse(me.tenantId,id,{sectionId:field.sectionId,fieldKey:field.fieldKey,fieldLabel:field.label,result:result||null,comment:comment||null});setDetail({...detail,responses:[...detail.responses.filter(x=>x.fieldKey!==field.fieldKey),saved]});setMessage("Checklist response saved.")}catch(e){setError(e instanceof Error?e.message:"Failed to save checklist response")}finally{setSaving(false)}}
+ async function addFinding(){if(!me?.tenantId||!detail||!findingTitle.trim())return;setSaving(true);setError(null);try{const f=await createInspectionFinding(me.tenantId,id,{title:findingTitle.trim(),severity:findingSeverity,correctiveAction:findingAction||null,dueDate:findingDue||null,status:"OPEN"});setDetail({...detail,findings:[f,...detail.findings]});setFindingTitle("");setFindingAction("");setFindingDue("");setMessage("Finding created.")}catch(e){setError(e instanceof Error?e.message:"Failed to create finding")}finally{setSaving(false)}}
+ async function closeout(result:string,followUpDate:string,notes:string){if(!me?.tenantId||!detail)return;setSaving(true);setError(null);try{const r=await patchInspection(me.tenantId,id,{status:"COMPLETED",overallResult:result,followUpDate:followUpDate||null,notes:notes||null},detail.inspection.recordVersion);setDetail({...detail,inspection:r.data});setMessage("Inspection closed out.")}catch(e){setError(e instanceof Error?e.message:"Failed to close inspection")}finally{setSaving(false)}}
+ if(!detail)return <section className={styles.page}>{error?<p className={styles.error}>{error}</p>:<p className={styles.muted}>Loading inspection…</p>}</section>;
+ const inspection=detail.inspection;
+ return <section className={styles.page}><h1>Inspection</h1><p className={styles.lead}>{occupancy?.name??inspection.occupancyId} · {inspection.inspectionDate} · {inspection.status}</p>
+ <div className={styles.actions}><Link className={styles.button} href={`/occupancies/${inspection.occupancyId}/`}>Open occupancy</Link></div>
+ {error?<p className={styles.error}>{error}</p>:null}{message?<p>{message}</p>:null}
+ <div className={styles.panel}><h2>Inspection summary</h2><dl><dt>Inspector</dt><dd>{inspection.inspectorName??"—"}</dd><dt>Status</dt><dd>{inspection.status}</dd><dt>Result</dt><dd>{inspection.overallResult}</dd><dt>Follow-up</dt><dd>{inspection.followUpDate??"—"}</dd><dt>Open findings</dt><dd>{detail.findings.filter(x=>x.status==="OPEN"||x.status==="CORRECTED").length}</dd></dl></div>
+ <div className={styles.panel}><h2>Checklist</h2>{fields.length?fields.map(field=><ChecklistItem key={field.fieldKey} field={field} response={responseMap.get(field.fieldKey)} disabled={saving||inspection.status==="COMPLETED"} onSave={saveResponse}/>):<p className={styles.muted}>No checklist template was snapshotted for this inspection.</p>}</div>
+ <div className={styles.panel}><h2>Findings & corrective actions</h2>
+ <div className={styles.form}><div className={styles.formRow}><label>Finding title<input value={findingTitle} onChange={e=>setFindingTitle(e.target.value)}/></label></div><div className={styles.formRow}><label>Severity<select value={findingSeverity} onChange={e=>setFindingSeverity(e.target.value)}><option>LOW</option><option>MODERATE</option><option>HIGH</option><option>CRITICAL</option></select></label></div><div className={styles.formRow}><label>Corrective action<textarea rows={3} value={findingAction} onChange={e=>setFindingAction(e.target.value)}/></label></div><div className={styles.formRow}><label>Due date<input type="date" value={findingDue} onChange={e=>setFindingDue(e.target.value)}/></label></div><button type="button" className={styles.button} disabled={saving||!findingTitle.trim()} onClick={()=>void addFinding()}>Add finding</button></div>
+ {detail.findings.length?<table className={styles.table}><thead><tr><th>Finding</th><th>Severity</th><th>Status</th><th>Due</th><th>Corrective action</th></tr></thead><tbody>{detail.findings.map((f:InspectionFinding)=><tr key={f.id}><td>{f.title}</td><td>{f.severity}</td><td>{f.status}</td><td>{f.dueDate??"—"}</td><td>{f.correctiveAction??"—"}</td></tr>)}</tbody></table>:<p className={styles.muted}>No findings recorded.</p>}</div>
+ {inspection.status!=="COMPLETED"?<Closeout disabled={saving} onClose={closeout}/>:<div className={styles.panel}><h2>Closeout</h2><p>Completed {inspection.completedAt?new Date(inspection.completedAt).toLocaleString():""} · {inspection.overallResult}</p><p>{inspection.notes??"No closeout notes."}</p></div>}
+ </section>
+}
+
+function ChecklistItem({field,response,disabled,onSave}:{field:ChecklistField;response?:InspectionResponse;disabled:boolean;onSave:(field:ChecklistField,result:string,comment:string)=>Promise<void>}){
+ const [result,setResult]=useState(response?.result??"PASS");const [comment,setComment]=useState(response?.comment??"");
+ useEffect(()=>{setResult(response?.result??"PASS");setComment(response?.comment??"")},[response?.id,response?.recordVersion]);
+ return <div style={{borderBottom:"1px solid #ddd",padding:"12px 0"}}><strong>{field.label}</strong>{field.helpText?<p className={styles.muted}>{field.helpText}</p>:null}<div className={styles.formRow}><label>Result<select value={result} disabled={disabled} onChange={e=>setResult(e.target.value)}><option>PASS</option><option>FAIL</option><option>NA</option><option>INFO</option></select></label><label>Comment<input value={comment} disabled={disabled} onChange={e=>setComment(e.target.value)}/></label><button type="button" className={styles.button} disabled={disabled} onClick={()=>void onSave(field,result,comment)}>Save</button></div></div>
+}
+
+function Closeout({disabled,onClose}:{disabled:boolean;onClose:(result:string,followUpDate:string,notes:string)=>Promise<void>}){
+ const [result,setResult]=useState("PASS");const [follow,setFollow]=useState("");const [notes,setNotes]=useState("");
+ return <div className={styles.panel}><h2>Closeout</h2><div className={styles.form}><div className={styles.formRow}><label>Overall result<select value={result} onChange={e=>setResult(e.target.value)}><option>PASS</option><option>CONDITIONAL</option><option>FAIL</option></select></label></div><div className={styles.formRow}><label>Follow-up date<input type="date" value={follow} onChange={e=>setFollow(e.target.value)}/></label></div><div className={styles.formRow}><label>Closeout notes<textarea rows={4} value={notes} onChange={e=>setNotes(e.target.value)}/></label></div><button type="button" className={styles.button} disabled={disabled} onClick={()=>void onClose(result,follow,notes)}>Complete inspection</button></div></div>
+}
