@@ -17,6 +17,7 @@ export * from "./events.js";
 export * from "./idempotency.js";
 export * from "./neris.js";
 export * from "./rms-master.js";
+export * from "./rms-prevention.js";
 export * from "./neris-incidents.js";
 export * from "./neris-specialty.js";
 export * from "./cad.js";
