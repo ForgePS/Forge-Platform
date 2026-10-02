@@ -18,6 +18,8 @@ import { RmsInspectionFindingsController, RmsInspectionProgramsController, RmsIn
 import { RmsInspectionsService } from "./rms-inspections.service.js";
 import { RmsCodeCasesController, RmsCodeViolationsController } from "./rms-code-enforcement.controller.js";
 import { RmsCodeEnforcementService } from "./rms-code-enforcement.service.js";
+import { RmsInvestigationEvidenceController, RmsInvestigationsController } from "./rms-investigations.controller.js";
+import { RmsInvestigationsService } from "./rms-investigations.service.js";
 
 @Module({
   controllers: [
@@ -39,8 +41,10 @@ import { RmsCodeEnforcementService } from "./rms-code-enforcement.service.js";
     RmsInspectionFindingsController,
     RmsCodeCasesController,
     RmsCodeViolationsController,
+    RmsInvestigationsController,
+    RmsInvestigationEvidenceController,
   ],
-  providers: [RmsMasterDataService, RmsInspectionsService, RmsCodeEnforcementService],
-  exports: [RmsMasterDataService, RmsInspectionsService, RmsCodeEnforcementService],
+  providers: [RmsMasterDataService, RmsInspectionsService, RmsCodeEnforcementService, RmsInvestigationsService],
+  exports: [RmsMasterDataService, RmsInspectionsService, RmsCodeEnforcementService, RmsInvestigationsService],
 })
 export class RmsMasterDataModule {}
