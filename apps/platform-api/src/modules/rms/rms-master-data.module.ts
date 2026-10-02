@@ -14,6 +14,8 @@ import {
   RmsUnitsController,
 } from "./rms-master-data.controllers.js";
 import { RmsMasterDataService } from "./rms-master-data.service.js";
+import { RmsInspectionFindingsController, RmsInspectionProgramsController, RmsInspectionsController, RmsInspectionTemplatesController } from "./rms-inspections.controller.js";
+import { RmsInspectionsService } from "./rms-inspections.service.js";
 
 @Module({
   controllers: [
@@ -29,8 +31,12 @@ import { RmsMasterDataService } from "./rms-master-data.service.js";
     RmsRostersController,
     RmsOccupanciesController,
     RmsPreplansController,
+    RmsInspectionProgramsController,
+    RmsInspectionTemplatesController,
+    RmsInspectionsController,
+    RmsInspectionFindingsController,
   ],
-  providers: [RmsMasterDataService],
-  exports: [RmsMasterDataService],
+  providers: [RmsMasterDataService, RmsInspectionsService],
+  exports: [RmsMasterDataService, RmsInspectionsService],
 })
 export class RmsMasterDataModule {}
