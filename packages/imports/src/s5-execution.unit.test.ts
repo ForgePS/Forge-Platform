@@ -4,6 +4,7 @@ import {
   computeProgress,
   computeExecutionRetryDelayMs,
   createImportExecuteMessage,
+  createImportRollbackMessage,
   finalizeJobStatus,
   ImportAdapterRegistry,
   isLockExpired,
@@ -14,6 +15,7 @@ import {
   shouldRetryFailure,
   summarizeRollbackFromResults,
   validateImportExecuteMessage,
+  validateImportRollbackMessage,
 } from "./index.js";
 
 describe("S5 execution state", () => {
@@ -23,6 +25,11 @@ describe("S5 execution state", () => {
 
   it("rejects invalid execute transition", () => {
     expect(() => assertS5Transition("execute", "MAPPED")).toThrow(/does not allow/);
+  });
+
+  it("transitions pending rollback to rolled back only on completion",()=>{
+    expect(nextStatusForS5Action("complete_rollback","ROLLBACK_PENDING")).toBe("ROLLED_BACK");
+    expect(()=>nextStatusForS5Action("complete_rollback","COMPLETED")).toThrow(/does not allow/);
   });
 
   it("finalizes COMPLETED_WITH_ERRORS on partial failure", () => {
@@ -48,6 +55,19 @@ describe("S5 queue message", () => {
   it("rejects malformed message", () => {
     const result = validateImportExecuteMessage({ schemaVersion: "9" });
     expect(result.ok).toBe(false);
+  });
+
+  it("creates and validates rollback message", () => {
+    const msg=createImportRollbackMessage({
+      jobId:"11111111-1111-4111-8111-111111111111",
+      tenantId:"22222222-2222-4222-8222-222222222222",
+      rollbackEventId:"44444444-4444-4444-8444-444444444444",
+      requestedBy:"33333333-3333-4333-8333-333333333333",
+      correlationId:"corr-rb",
+      idempotencyKey:"idem-rb",
+    });
+    expect(msg.messageType).toBe("IMPORT_ROLLBACK");
+    expect(validateImportRollbackMessage(msg).ok).toBe(true);
   });
 });
 

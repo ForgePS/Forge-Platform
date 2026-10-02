@@ -1,0 +1,24 @@
+"use client";
+import {useSearchParams} from "next/navigation";
+import {useAuth} from "@forge/web-kit";
+import {useEffect,useMemo,useState,type FormEvent} from "react";
+import {createScheduleAssignment,listPersons,listPersonnel,listShifts,listStations,listUnits,type PersonSummary,type RmsPersonnelSummary,type ShiftSummary,type StationSummary,type UnitDetail} from "@/lib/rms-api";
+import styles from "../../page.module.css";
+
+export default function NewScheduleAssignmentPage(){
+ const {me}=useAuth(); const searchParams=useSearchParams(); const [personnel,setPersonnel]=useState<RmsPersonnelSummary[]>([]); const [persons,setPersons]=useState<PersonSummary[]>([]); const [shifts,setShifts]=useState<ShiftSummary[]>([]); const [stations,setStations]=useState<StationSummary[]>([]); const [units,setUnits]=useState<UnitDetail[]>([]);
+ const [personnelId,setPersonnelId]=useState(searchParams.get("personnelId")??""); const [shiftId,setShiftId]=useState(""); const [stationId,setStationId]=useState(""); const [unitId,setUnitId]=useState(""); const [startAt,setStartAt]=useState(new Date().toISOString().slice(0,16)); const [endAt,setEndAt]=useState(new Date(Date.now()+12*3600000).toISOString().slice(0,16)); const [assignmentType,setAssignmentType]=useState("DUTY"); const [role,setRole]=useState(""); const [notes,setNotes]=useState(""); const [error,setError]=useState<string|null>(null); const [saving,setSaving]=useState(false);
+ useEffect(()=>{if(!me?.tenantId)return;void Promise.all([listPersonnel(me.tenantId,{page:"1",pageSize:"200"}),listPersons(me.tenantId),listShifts(me.tenantId,{page:"1",pageSize:"200"}),listStations(me.tenantId,{page:"1",pageSize:"200"}),listUnits(me.tenantId,{page:"1",pageSize:"200"})]).then(([p,people,s,st,u])=>{setPersonnel(p.data);setPersons(people.data);setShifts(s.data);setStations(st.data);setUnits(u.data)}).catch(e=>setError(e instanceof Error?e.message:"Failed to load scheduling form data"))},[me?.tenantId]);
+ const names=useMemo(()=>new Map(persons.map(p=>[p.id,p.displayName])),[persons]);
+ async function submit(e:FormEvent){e.preventDefault();if(!me?.tenantId)return;setSaving(true);setError(null);try{await createScheduleAssignment(me.tenantId,{personnelId,shiftId:shiftId||null,stationId:stationId||null,unitId:unitId||null,startAt:new Date(startAt).toISOString(),endAt:new Date(endAt).toISOString(),assignmentType,role:role||null,status:"SCHEDULED",notes:notes||null});window.location.assign("/scheduling/")}catch(x){setError(x instanceof Error?x.message:"Failed to create assignment")}finally{setSaving(false)}}
+ return <section className={styles.page}><h1>Add schedule assignment</h1>{error?<p className={styles.error}>{error}</p>:null}<form className={styles.form} onSubmit={submit}>
+ <div className={styles.formRow}><label>Personnel<select required value={personnelId} onChange={e=>setPersonnelId(e.target.value)}><option value="">Select personnel</option>{personnel.map(p=><option key={p.id} value={p.id}>{names.get(p.personId)??p.personId}{p.rank?" · "+p.rank:""}</option>)}</select></label></div>
+ <div className={styles.formRow}><label>Shift<select value={shiftId} onChange={e=>setShiftId(e.target.value)}><option value="">No shift</option>{shifts.map(x=><option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select></label></div>
+ <div className={styles.formRow}><label>Station<select value={stationId} onChange={e=>setStationId(e.target.value)}><option value="">No station</option>{stations.map(x=><option key={x.id} value={x.id}>{x.stationNumber} · {x.name}</option>)}</select></label></div>
+ <div className={styles.formRow}><label>Unit<select value={unitId} onChange={e=>setUnitId(e.target.value)}><option value="">No unit</option>{units.map(x=><option key={x.id} value={x.id}>{x.callSign??x.unitNumber}</option>)}</select></label></div>
+ <div className={styles.formRow}><label>Start<input type="datetime-local" required value={startAt} onChange={e=>setStartAt(e.target.value)}/></label><label>End<input type="datetime-local" required value={endAt} onChange={e=>setEndAt(e.target.value)}/></label></div>
+ <div className={styles.formRow}><label>Assignment type<select value={assignmentType} onChange={e=>setAssignmentType(e.target.value)}><option>DUTY</option><option>OVERTIME</option><option>TRAINING</option><option>ADMIN</option><option>CALLBACK</option></select></label></div>
+ <div className={styles.formRow}><label>Role<input value={role} onChange={e=>setRole(e.target.value)} placeholder="Officer, Driver, Medic, Member"/></label></div>
+ <div className={styles.formRow}><label>Notes<textarea rows={4} value={notes} onChange={e=>setNotes(e.target.value)}/></label></div>
+ <button className={styles.button} disabled={saving}>{saving?"Saving…":"Create assignment"}</button></form></section>
+}

@@ -7,12 +7,14 @@ import {
 import {
   IMPORT_EXECUTE_MESSAGE_TYPE,
   IMPORT_MALWARE_SCAN_MESSAGE_TYPE,
+  IMPORT_ROLLBACK_MESSAGE_TYPE,
   IMPORT_UPLOAD_DETECT_MESSAGE_TYPE,
   type ImportUploadDetectMessage,
 } from "@forge/imports";
 import { createLogger } from "@forge/observability";
 import { processImportExecuteJob } from "./import-execute-processor.js";
 import { processImportMalwareScanJob } from "./import-malware-processor.js";
+import { processImportRollbackJob } from "./import-rollback-processor.js";
 import { processImportUploadDetectJob } from "./import-upload-processor.js";
 
 export class ImportSqsConsumer {
@@ -93,6 +95,27 @@ export class ImportSqsConsumer {
               }),
             );
             processed += 1;
+          }
+          continue;
+        }
+
+        if (type === IMPORT_ROLLBACK_MESSAGE_TYPE) {
+          const outcome = await processImportRollbackJob({
+            raw: parsed,
+            databaseUrl: this.props.databaseUrl,
+          });
+          if (outcome === "completed" || outcome === "rejected") {
+            await this.client.send(new DeleteMessageCommand({
+              QueueUrl: this.props.queueUrl,
+              ReceiptHandle: message.ReceiptHandle,
+            }));
+            processed += 1;
+          } else {
+            await this.client.send(new ChangeMessageVisibilityCommand({
+              QueueUrl: this.props.queueUrl,
+              ReceiptHandle: message.ReceiptHandle,
+              VisibilityTimeout: 30,
+            }));
           }
           continue;
         }

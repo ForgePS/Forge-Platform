@@ -8,10 +8,12 @@ import {
 import { RMS_NAVIGATION_REGISTRY, RMS_NON_NAV_ROUTES } from "./navigation.registry";
 
 describe("RMS navigation registry", () => {
-  it("contains only verified live routes (no invented modules)", () => {
+  it("contains only verified live routes and no duplicate ids", () => {
     const paths = RMS_NAVIGATION_REGISTRY.map((item) => item.path);
-    expect(paths).not.toEqual(expect.arrayContaining(["/personnel/", "/prevention/", "/fleet/"]));
-    expect(RMS_NAVIGATION_REGISTRY.some((item) => item.label === "Personnel")).toBe(false);
+    const ids = RMS_NAVIGATION_REGISTRY.map((item) => item.id);
+    expect(paths).not.toEqual(expect.arrayContaining(["/prevention/", "/fleet/"]));
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(RMS_NAVIGATION_REGISTRY.some((item) => item.path === "/personnel/")).toBe(true);
   });
 
   it("accounts for non-nav deep-link routes separately", () => {
@@ -31,6 +33,51 @@ describe("RMS navigation registry", () => {
     const groups = buildPrimaryNavigation(flags, { authenticated: true });
     const incidents = groups.find((group) => group.id === "incidents");
     expect(incidents?.items.some((item) => item.id === "incidents-list")).toBe(true);
+  });
+
+  it("exposes native Operations personnel apparatus and unit routes", () => {
+    const groups = buildPrimaryNavigation({}, { authenticated: true });
+    const operations = groups.find((group) => group.id === "operations");
+    expect(operations?.items.map((item) => item.id)).toEqual(
+      expect.arrayContaining(["personnel-list", "personnel-new", "apparatus-list", "units-list", "stations-list", "shifts-list", "rosters-list"]),
+    );
+  });
+
+  it("exposes native Prevention occupancy and preplan routes", () => {
+    const groups = buildPrimaryNavigation({}, { authenticated: true });
+    const prevention = groups.find((group) => group.id === "prevention");
+    expect(prevention?.items.map((item) => item.id)).toEqual(
+      expect.arrayContaining(["occupancies-list", "occupancies-new", "inspections-list", "inspections-new", "inspections-configuration", "code-enforcement-list", "code-enforcement-new", "investigations-list", "investigations-new", "preplans-list", "preplans-new"]),
+    );
+  });
+
+  it("exposes native hydrants under Water Supply", () => {
+    const groups = buildPrimaryNavigation({}, { authenticated: true });
+    const waterSupply = groups.find((group) => group.id === "water-supply");
+    expect(waterSupply?.label).toBe("Water Supply");
+    expect(waterSupply?.items.map((item) => item.id)).toEqual(
+      expect.arrayContaining(["hydrants", "hydrants-new"]),
+    );
+    expect(waterSupply?.items.find((item) => item.id === "hydrants")?.permission).toBe(
+      "rms.masterdata.read",
+    );
+  });
+
+  it("builds Training & Credentials navigation", () => {
+    const groups = buildPrimaryNavigation({}, { authenticated: true });
+    const training = groups.find((group) => group.id === "training");
+    expect(training?.label).toBe("Training & Credentials");
+    expect(training?.items.map((item) => item.id)).toEqual(
+      expect.arrayContaining(["training-courses","training-new","certifications-list","certifications-new"]),
+    );
+  });
+
+  it("builds scheduling navigation", () => {
+    const groups = buildPrimaryNavigation({}, { authenticated: true });
+    const scheduling = groups.find((group) => group.id === "scheduling");
+    expect(scheduling?.items.map((item) => item.id)).toEqual(
+      expect.arrayContaining(["scheduling","scheduling-new"]),
+    );
   });
 
   it("builds secondary nav for active CAD group", () => {

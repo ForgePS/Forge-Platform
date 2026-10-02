@@ -1,6 +1,10 @@
 import { Inject, Injectable } from "@nestjs/common";
 import {
   createApparatusInputSchema,
+  createHydrantDamageReportInputSchema,
+  createHydrantFlowTestInputSchema,
+  createHydrantInspectionInputSchema,
+  createHydrantInputSchema,
   createOccupancyInputSchema,
   createPreplanInputSchema,
   createRmsPersonnelInputSchema,
@@ -13,6 +17,10 @@ import {
   createId,
   rmsApparatus,
   rmsDailyRosters,
+  rmsHydrantDamageReports,
+  rmsHydrantFlowTests,
+  rmsHydrantInspections,
+  rmsHydrants,
   rmsOccupancies,
   rmsPersonnel,
   rmsPreplans,
@@ -41,6 +49,7 @@ type RmsResourceTable =
   | typeof rmsApparatus
   | typeof rmsUnits
   | typeof rmsPersonnel
+  | typeof rmsHydrants
   | typeof rmsOccupancies
   | typeof rmsPreplans;
 
@@ -301,6 +310,205 @@ export class RmsMasterDataService {
     expected: ExpectedVersion,
   ) {
     return this.softDelete(tenantId, "rms_personnel", rmsPersonnel, id, principal, expected);
+  }
+
+  // --- hydrants ---
+
+  async createHydrant(tenantId: string, input: unknown, principal: ForgePrincipal) {
+    const data = createHydrantInputSchema.parse(input);
+    return this.createResource(tenantId, "rms_hydrant", rmsHydrants, data, principal, data);
+  }
+
+  async listHydrants(tenantId: string, query: unknown) {
+    const { page, pageSize, search } = pageQuerySchema.parse(query ?? {});
+    return this.listResource(tenantId, rmsHydrants, page, pageSize, search, (q) =>
+      or(
+        ilike(rmsHydrants.displayId, q),
+        ilike(rmsHydrants.addressLine1, q),
+        ilike(rmsHydrants.city, q),
+        ilike(rmsHydrants.waterProvider, q),
+      ),
+    );
+  }
+
+  async getHydrant(tenantId: string, id: string) {
+    return this.getResource(tenantId, rmsHydrants, id, "rms_hydrant");
+  }
+
+  async patchHydrant(
+    tenantId: string,
+    id: string,
+    input: unknown,
+    principal: ForgePrincipal,
+    expected: ExpectedVersion,
+  ) {
+    const data = patchFromCreate(createHydrantInputSchema).parse(input);
+    return this.patchResource(tenantId, "rms_hydrant", rmsHydrants, id, data, principal, expected);
+  }
+
+  async deleteHydrant(
+    tenantId: string,
+    id: string,
+    principal: ForgePrincipal,
+    expected: ExpectedVersion,
+  ) {
+    return this.softDelete(tenantId, "rms_hydrant", rmsHydrants, id, principal, expected);
+  }
+
+  async listHydrantFlowTests(tenantId: string, hydrantId: string) {
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const hydrant = await tx.query.rmsHydrants.findFirst({
+        where: and(
+          eq(rmsHydrants.tenantId, tenantId),
+          eq(rmsHydrants.id, hydrantId),
+          isNull(rmsHydrants.deletedAt),
+        ),
+      });
+      if (!hydrant) throw new ForgeError("NOT_FOUND", "rms_hydrant not found");
+      return tx.query.rmsHydrantFlowTests.findMany({
+        where: and(
+          eq(rmsHydrantFlowTests.tenantId, tenantId),
+          eq(rmsHydrantFlowTests.hydrantId, hydrantId),
+        ),
+        orderBy: (table, { desc }) => [desc(table.testDate), desc(table.createdAt)],
+      });
+    });
+  }
+
+  async createHydrantFlowTest(
+    tenantId: string,
+    hydrantId: string,
+    input: unknown,
+    principal: ForgePrincipal,
+  ) {
+    const data = createHydrantFlowTestInputSchema.parse(input);
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const hydrant = await tx.query.rmsHydrants.findFirst({
+        where: and(
+          eq(rmsHydrants.tenantId, tenantId),
+          eq(rmsHydrants.id, hydrantId),
+          isNull(rmsHydrants.deletedAt),
+        ),
+      });
+      if (!hydrant) throw new ForgeError("NOT_FOUND", "rms_hydrant not found");
+      const id = createId();
+      const now = new Date();
+      const [row] = await tx.insert(rmsHydrantFlowTests).values({
+        id,
+        tenantId,
+        hydrantId,
+        ...data,
+        createdByUserId: principal.userId,
+        createdAt: now,
+      }).returning();
+      if (!row) throw new ForgeError("INTERNAL_ERROR", "Failed to create hydrant flow test");
+
+      const [updatedHydrant] = await tx.update(rmsHydrants).set({
+        lastFlowTestDate: data.testDate,
+        staticPsi: data.staticPsi,
+        residualPsi: data.residualPsi,
+        dischargeSize: data.dischargeSize ?? hydrant.dischargeSize,
+        flowGpm: data.flowGpm,
+        nfpaClass: data.nfpaClass,
+        nfpaColor: data.nfpaColor,
+        recordVersion: hydrant.recordVersion + 1,
+        updatedByUserId: principal.userId,
+        updatedAt: now,
+      }).where(and(eq(rmsHydrants.id, hydrantId), eq(rmsHydrants.recordVersion, hydrant.recordVersion))).returning();
+      if (!updatedHydrant) throw concurrencyConflict({
+        tenantId,
+        resourceType: "rms_hydrant",
+        resourceId: hydrantId,
+        expectedVersion: hydrant.recordVersion,
+        actualVersion: null,
+      });
+
+      await this.emitMasterDataUpdated(tx, tenantId, "rms_hydrant_flow_test", id, principal, "create", row);
+      await this.emitMasterDataUpdated(tx, tenantId, "rms_hydrant", hydrantId, principal, "flow_test", updatedHydrant, hydrant);
+      return { flowTest: row, hydrant: updatedHydrant };
+    }, principal.userId);
+  }
+
+  async listHydrantInspections(tenantId: string, hydrantId: string) {
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const hydrant = await tx.query.rmsHydrants.findFirst({
+        where: and(eq(rmsHydrants.tenantId, tenantId), eq(rmsHydrants.id, hydrantId), isNull(rmsHydrants.deletedAt)),
+      });
+      if (!hydrant) throw new ForgeError("NOT_FOUND", "rms_hydrant not found");
+      return tx.query.rmsHydrantInspections.findMany({
+        where: and(eq(rmsHydrantInspections.tenantId, tenantId), eq(rmsHydrantInspections.hydrantId, hydrantId)),
+        orderBy: (table, { desc }) => [desc(table.inspectionAt), desc(table.createdAt)],
+      });
+    });
+  }
+
+  async createHydrantInspection(tenantId: string, hydrantId: string, input: unknown, principal: ForgePrincipal) {
+    const data = createHydrantInspectionInputSchema.parse(input);
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const hydrant = await tx.query.rmsHydrants.findFirst({
+        where: and(eq(rmsHydrants.tenantId, tenantId), eq(rmsHydrants.id, hydrantId), isNull(rmsHydrants.deletedAt)),
+      });
+      if (!hydrant) throw new ForgeError("NOT_FOUND", "rms_hydrant not found");
+      const id = createId();
+      const now = new Date();
+      const [row] = await tx.insert(rmsHydrantInspections).values({
+        id, tenantId, hydrantId, inspectionAt: new Date(data.inspectionDate),
+        operationalStatus: data.operationalStatus, inspector: data.inspector,
+        checklistJson: data.checklist, issueCount: data.issueCount, notes: data.notes,
+        createdByUserId: principal.userId, createdAt: now,
+      }).returning();
+      if (!row) throw new ForgeError("INTERNAL_ERROR", "Failed to create hydrant inspection");
+      const [updatedHydrant] = await tx.update(rmsHydrants).set({
+        status: data.operationalStatus, lastInspectionDate: data.inspectionDate.slice(0, 10),
+        recordVersion: hydrant.recordVersion + 1, updatedByUserId: principal.userId, updatedAt: now,
+      }).where(and(eq(rmsHydrants.id, hydrantId), eq(rmsHydrants.recordVersion, hydrant.recordVersion))).returning();
+      if (!updatedHydrant) throw concurrencyConflict({tenantId,resourceType:"rms_hydrant",resourceId:hydrantId,expectedVersion:hydrant.recordVersion,actualVersion:null});
+      await this.emitMasterDataUpdated(tx, tenantId, "rms_hydrant_inspection", id, principal, "create", row);
+      await this.emitMasterDataUpdated(tx, tenantId, "rms_hydrant", hydrantId, principal, "inspection", updatedHydrant, hydrant);
+      return { inspection: row, hydrant: updatedHydrant };
+    }, principal.userId);
+  }
+
+  async listHydrantDamageReports(tenantId: string, hydrantId: string) {
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const hydrant = await tx.query.rmsHydrants.findFirst({
+        where: and(eq(rmsHydrants.tenantId, tenantId), eq(rmsHydrants.id, hydrantId), isNull(rmsHydrants.deletedAt)),
+      });
+      if (!hydrant) throw new ForgeError("NOT_FOUND", "rms_hydrant not found");
+      return tx.query.rmsHydrantDamageReports.findMany({
+        where: and(eq(rmsHydrantDamageReports.tenantId, tenantId), eq(rmsHydrantDamageReports.hydrantId, hydrantId)),
+        orderBy: (table, { desc }) => [desc(table.reportedAt), desc(table.createdAt)],
+      });
+    });
+  }
+
+  async createHydrantDamageReport(tenantId: string, hydrantId: string, input: unknown, principal: ForgePrincipal) {
+    const data = createHydrantDamageReportInputSchema.parse(input);
+    return withTenantTransaction(this.db, tenantId, async (tx) => {
+      const hydrant = await tx.query.rmsHydrants.findFirst({
+        where: and(eq(rmsHydrants.tenantId, tenantId), eq(rmsHydrants.id, hydrantId), isNull(rmsHydrants.deletedAt)),
+      });
+      if (!hydrant) throw new ForgeError("NOT_FOUND", "rms_hydrant not found");
+      const id = createId();
+      const now = new Date();
+      const [row] = await tx.insert(rmsHydrantDamageReports).values({
+        id, tenantId, hydrantId, reportedAt: new Date(data.reportedAt), severity: data.severity,
+        operationalStatus: data.operationalStatus, leakPresent: data.leakPresent,
+        trafficHazard: data.trafficHazard, alternateWaterSupply: data.alternateWaterSupply,
+        waterProvider: data.waterProvider, workOrderReference: data.workOrderReference,
+        reportedBy: data.reportedBy, notes: data.notes, createdByUserId: principal.userId, createdAt: now,
+      }).returning();
+      if (!row) throw new ForgeError("INTERNAL_ERROR", "Failed to create hydrant damage report");
+      const [updatedHydrant] = await tx.update(rmsHydrants).set({
+        status: data.operationalStatus, issue: data.notes ?? hydrant.issue,
+        alternateSupply: data.alternateWaterSupply ?? hydrant.alternateSupply,
+        recordVersion: hydrant.recordVersion + 1, updatedByUserId: principal.userId, updatedAt: now,
+      }).where(and(eq(rmsHydrants.id, hydrantId), eq(rmsHydrants.recordVersion, hydrant.recordVersion))).returning();
+      if (!updatedHydrant) throw concurrencyConflict({tenantId,resourceType:"rms_hydrant",resourceId:hydrantId,expectedVersion:hydrant.recordVersion,actualVersion:null});
+      await this.emitMasterDataUpdated(tx, tenantId, "rms_hydrant_damage_report", id, principal, "create", row);
+      await this.emitMasterDataUpdated(tx, tenantId, "rms_hydrant", hydrantId, principal, "damage_report", updatedHydrant, hydrant);
+      return { damageReport: row, hydrant: updatedHydrant };
+    }, principal.userId);
   }
 
   // --- occupancies ---

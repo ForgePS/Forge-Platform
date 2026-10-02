@@ -164,6 +164,76 @@ export const createOccupancyInputSchema = z.object({
   preplanId: z.string().uuid().optional().nullable(),
 });
 
+export const createHydrantInputSchema = z.object({
+  displayId: z.string().min(1).max(64),
+  officialHydrantId: z.string().max(64).optional().nullable(),
+  locationId: z.string().max(64).optional().nullable(),
+  district: z.string().max(120).optional().nullable(),
+  addressLine1: z.string().max(300).optional().nullable(),
+  city: z.string().max(120).optional().nullable(),
+  state: z.string().max(64).optional().nullable(),
+  postalCode: z.string().max(32).optional().nullable(),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  status: z.enum(["IN_SERVICE", "NEEDS_REPAIR", "OUT_OF_SERVICE", "UNKNOWN"]).default("IN_SERVICE"),
+  waterProvider: z.string().max(200).optional().nullable(),
+  waterAssociation: z.string().max(200).optional().nullable(),
+  subdivision: z.string().max(200).optional().nullable(),
+  dischargeSize: z.number().positive().optional().nullable(),
+  hydrantType: z.string().max(80).optional().nullable(),
+  manufacturer: z.string().max(120).optional().nullable(),
+  model: z.string().max(120).optional().nullable(),
+  installDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  lastInspectionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  lastFlowTestDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  flowGpm: z.number().nonnegative().optional().nullable(),
+  staticPsi: z.number().nonnegative().optional().nullable(),
+  residualPsi: z.number().nonnegative().optional().nullable(),
+  nfpaClass: z.string().max(16).optional().nullable(),
+  nfpaColor: z.string().max(64).optional().nullable(),
+  issue: z.string().max(8000).optional().nullable(),
+  alternateSupply: z.string().max(8000).optional().nullable(),
+  notes: z.string().max(8000).optional().nullable(),
+});
+
+export const createHydrantFlowTestInputSchema = z.object({
+  testDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  staticPsi: z.number().nonnegative().optional().nullable(),
+  residualPsi: z.number().nonnegative().optional().nullable(),
+  pitotPsi: z.number().nonnegative().optional().nullable(),
+  dischargeSize: z.number().positive().optional().nullable(),
+  flowGpm: z.number().nonnegative(),
+  nfpaClass: z.string().max(16).optional().nullable(),
+  nfpaColor: z.string().max(64).optional().nullable(),
+  testedBy: z.string().max(200).optional().nullable(),
+  shift: z.string().max(64).optional().nullable(),
+  flowResult: z.string().max(64).optional().nullable(),
+  status: z.string().max(32).optional().nullable(),
+  notes: z.string().max(8000).optional().nullable(),
+});
+
+export const createHydrantInspectionInputSchema = z.object({
+  inspectionDate: z.string().datetime(),
+  operationalStatus: z.enum(["IN_SERVICE", "NEEDS_REPAIR", "OUT_OF_SERVICE", "UNKNOWN"]),
+  inspector: z.string().max(200).optional().nullable(),
+  checklist: z.record(z.string(), z.boolean()).default({}),
+  issueCount: z.number().int().nonnegative().default(0),
+  notes: z.string().max(8000).optional().nullable(),
+});
+
+export const createHydrantDamageReportInputSchema = z.object({
+  reportedAt: z.string().datetime(),
+  severity: z.enum(["minor", "moderate", "major", "critical"]),
+  operationalStatus: z.enum(["IN_SERVICE", "NEEDS_REPAIR", "OUT_OF_SERVICE", "UNKNOWN"]),
+  leakPresent: z.boolean().optional().nullable(),
+  trafficHazard: z.boolean().optional().nullable(),
+  alternateWaterSupply: z.string().max(2000).optional().nullable(),
+  waterProvider: z.string().max(200).optional().nullable(),
+  workOrderReference: z.string().max(120).optional().nullable(),
+  reportedBy: z.string().max(200).optional().nullable(),
+  notes: z.string().max(8000).optional().nullable(),
+});
+
 export const createPreplanInputSchema = z.object({
   occupancyId: z.string().uuid(),
   versionLabel: z.string().min(1).max(64).default("1"),

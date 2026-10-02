@@ -11,6 +11,7 @@ export const S5_EXECUTION_TRANSITIONS: Record<string, ReadonlyArray<ImportJobSta
   cancel_processing: ["PROCESSING"],
   request_rollback: ["COMPLETED", "COMPLETED_WITH_ERRORS"],
   refuse_rollback: ["ROLLBACK_PENDING"],
+  complete_rollback: ["ROLLBACK_PENDING"],
 };
 
 export function assertS5Transition(
@@ -50,6 +51,8 @@ export function nextStatusForS5Action(
       return "ROLLBACK_PENDING";
     case "refuse_rollback":
       return "ROLLBACK_REFUSED";
+    case "complete_rollback":
+      return "ROLLED_BACK";
     default:
       return current;
   }

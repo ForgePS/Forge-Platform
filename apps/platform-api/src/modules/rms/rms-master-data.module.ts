@@ -1,6 +1,10 @@
 import { Module } from "@nestjs/common";
 import {
   RmsApparatusController,
+  RmsHydrantDamageReportsController,
+  RmsHydrantFlowTestsController,
+  RmsHydrantInspectionsController,
+  RmsHydrantsController,
   RmsOccupanciesController,
   RmsPersonnelController,
   RmsPreplansController,
@@ -10,19 +14,49 @@ import {
   RmsUnitsController,
 } from "./rms-master-data.controllers.js";
 import { RmsMasterDataService } from "./rms-master-data.service.js";
+import { RmsInspectionFindingsController, RmsInspectionProgramsController, RmsInspectionsController, RmsInspectionTemplatesController } from "./rms-inspections.controller.js";
+import { RmsInspectionsService } from "./rms-inspections.service.js";
+import { RmsCodeCasesController, RmsCodeViolationsController } from "./rms-code-enforcement.controller.js";
+import { RmsCodeEnforcementService } from "./rms-code-enforcement.service.js";
+import { RmsInvestigationEvidenceController, RmsInvestigationsController } from "./rms-investigations.controller.js";
+import { RmsInvestigationsService } from "./rms-investigations.service.js";
+import { RmsCertificationTypesController, RmsPersonnelCertificationsController, RmsTrainingCoursesController, RmsTrainingReadinessController, RmsTrainingRecordsController } from "./rms-training.controller.js";
+import { RmsTrainingService } from "./rms-training.service.js";
+import { RmsScheduleAssignmentsController, RmsShiftSwapsController, RmsTimeOffController } from "./rms-scheduling.controller.js";
+import { RmsSchedulingService } from "./rms-scheduling.service.js";
 
 @Module({
   controllers: [
     RmsStationsController,
     RmsShiftsController,
     RmsApparatusController,
+    RmsHydrantsController,
+    RmsHydrantFlowTestsController,
+    RmsHydrantInspectionsController,
+    RmsHydrantDamageReportsController,
     RmsUnitsController,
     RmsPersonnelController,
     RmsRostersController,
     RmsOccupanciesController,
     RmsPreplansController,
+    RmsInspectionProgramsController,
+    RmsInspectionTemplatesController,
+    RmsInspectionsController,
+    RmsInspectionFindingsController,
+    RmsCodeCasesController,
+    RmsCodeViolationsController,
+    RmsInvestigationsController,
+    RmsInvestigationEvidenceController,
+    RmsTrainingCoursesController,
+    RmsTrainingRecordsController,
+    RmsCertificationTypesController,
+    RmsPersonnelCertificationsController,
+    RmsTrainingReadinessController,
+    RmsScheduleAssignmentsController,
+    RmsTimeOffController,
+    RmsShiftSwapsController,
   ],
-  providers: [RmsMasterDataService],
-  exports: [RmsMasterDataService],
+  providers: [RmsMasterDataService, RmsInspectionsService, RmsCodeEnforcementService, RmsInvestigationsService, RmsTrainingService, RmsSchedulingService],
+  exports: [RmsMasterDataService, RmsInspectionsService, RmsCodeEnforcementService, RmsInvestigationsService, RmsTrainingService, RmsSchedulingService],
 })
 export class RmsMasterDataModule {}

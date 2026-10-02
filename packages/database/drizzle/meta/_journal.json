@@ -288,6 +288,55 @@
       "when": 1754950000000,
       "tag": "0040_industrial_domain_s1",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1754960000000,
+      "tag": "0041_rms_hydrants",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1754961000000,
+      "tag": "0042_rms_inspections",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1754962000000,
+      "tag": "0043_rms_code_enforcement",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1754963000000,
+      "tag": "0044_rms_investigations",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1754964000000,
+      "tag": "0045_rms_training_certifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1754965000000,
+      "tag": "0046_rms_scheduling",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1754966000000,
+      "tag": "0047_rms_inventory",
+      "breakpoints": true
     }
   ]
 }

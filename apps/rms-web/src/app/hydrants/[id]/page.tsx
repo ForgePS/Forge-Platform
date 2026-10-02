@@ -1,0 +1,22 @@
+"use client";
+import Link from "next/link";
+import {useParams} from "next/navigation";
+import {useAuth} from "@forge/web-kit";
+import {useCallback,useEffect,useState} from "react";
+import {getHydrant,listHydrantDamageReports,listHydrantFlowTests,listHydrantInspections,type HydrantDamageReport,type HydrantDetail,type HydrantFlowTest,type HydrantInspection} from "@/lib/rms-api";
+import styles from "../../page.module.css";
+
+export default function HydrantDetailPage(){
+ const {me}=useAuth(); const params=useParams<{id:string}>(); const id=params.id;
+ const [hydrant,setHydrant]=useState<HydrantDetail|null>(null);const [tests,setTests]=useState<HydrantFlowTest[]>([]);const [inspections,setInspections]=useState<HydrantInspection[]>([]);const [damage,setDamage]=useState<HydrantDamageReport[]>([]);const [error,setError]=useState<string|null>(null);
+ const load=useCallback(async()=>{if(!me?.tenantId||!id)return;try{const [h,t,i,d]=await Promise.all([getHydrant(me.tenantId,id),listHydrantFlowTests(me.tenantId,id),listHydrantInspections(me.tenantId,id),listHydrantDamageReports(me.tenantId,id)]);setHydrant(h);setTests(t);setInspections(i);setDamage(d)}catch(e){setError(e instanceof Error?e.message:"Failed to load hydrant")}},[me?.tenantId,id]); useEffect(()=>{void load()},[load]);
+ if(error)return <section className={styles.page}><h1>Hydrant</h1><p className={styles.error}>{error}</p></section>;
+ if(!hydrant)return <section className={styles.page}><p className={styles.muted}>Loading hydrant…</p></section>;
+ return <section className={styles.page}><h1>{hydrant.displayId}</h1><p className={styles.lead}>{hydrant.status} · {[hydrant.addressLine1,hydrant.city,hydrant.state].filter(Boolean).join(", ")||"No address"}</p>
+ <div className={styles.actions}><Link className={styles.button} href={`/hydrants/${id}/edit/`}>Edit hydrant</Link><Link className={styles.button} href={`/hydrants/${id}/flow-test/new/`}>Record flow test</Link><Link className={styles.button} href={`/hydrants/${id}/inspection/new/`}>Inspect</Link><Link className={styles.button} href={`/hydrants/${id}/damage/new/`}>Report damage</Link></div>
+ <div className={styles.panel}><h2>Hydrant profile</h2><dl><dt>Official ID</dt><dd>{hydrant.officialHydrantId??"—"}</dd><dt>District</dt><dd>{hydrant.district??"—"}</dd><dt>Water provider</dt><dd>{hydrant.waterProvider??"—"}</dd><dt>Manufacturer / model</dt><dd>{[hydrant.manufacturer,hydrant.model].filter(Boolean).join(" / ")||"—"}</dd><dt>Coordinates</dt><dd>{hydrant.latitude!=null&&hydrant.longitude!=null?`${hydrant.latitude}, ${hydrant.longitude}`:"—"}</dd><dt>Current flow</dt><dd>{hydrant.flowGpm!=null?`${hydrant.flowGpm} GPM`:"—"}</dd><dt>Pressure</dt><dd>{hydrant.staticPsi!=null?`${hydrant.staticPsi} static / ${hydrant.residualPsi??"—"} residual PSI`:"—"}</dd><dt>NFPA</dt><dd>{[hydrant.nfpaClass,hydrant.nfpaColor].filter(Boolean).join(" · ")||"—"}</dd><dt>Issue</dt><dd>{hydrant.issue??"—"}</dd></dl></div>
+ <div className={styles.panel}><h2>Flow tests</h2>{tests.length?<table className={styles.table}><thead><tr><th>Date</th><th>GPM</th><th>Static</th><th>Residual</th><th>NFPA</th></tr></thead><tbody>{tests.map(x=><tr key={x.id}><td>{x.testDate}</td><td>{x.flowGpm}</td><td>{x.staticPsi??"—"}</td><td>{x.residualPsi??"—"}</td><td>{[x.nfpaClass,x.nfpaColor].filter(Boolean).join(" · ")||"—"}</td></tr>)}</tbody></table>:<p className={styles.muted}>No flow tests.</p>}</div>
+ <div className={styles.panel}><h2>Inspections</h2>{inspections.length?<table className={styles.table}><thead><tr><th>Date</th><th>Status</th><th>Inspector</th><th>Issues</th></tr></thead><tbody>{inspections.map(x=><tr key={x.id}><td>{new Date(x.inspectionAt).toLocaleString()}</td><td>{x.operationalStatus}</td><td>{x.inspector??"—"}</td><td>{x.issueCount}</td></tr>)}</tbody></table>:<p className={styles.muted}>No inspections.</p>}</div>
+ <div className={styles.panel}><h2>Damage reports</h2>{damage.length?<table className={styles.table}><thead><tr><th>Date</th><th>Severity</th><th>Status</th><th>Leak</th><th>Traffic hazard</th></tr></thead><tbody>{damage.map(x=><tr key={x.id}><td>{new Date(x.reportedAt).toLocaleString()}</td><td>{x.severity}</td><td>{x.operationalStatus}</td><td>{x.leakPresent?"Yes":"No"}</td><td>{x.trafficHazard?"Yes":"No"}</td></tr>)}</tbody></table>:<p className={styles.muted}>No damage reports.</p>}</div>
+ </section>
+}

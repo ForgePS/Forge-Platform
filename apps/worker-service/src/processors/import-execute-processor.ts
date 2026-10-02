@@ -34,6 +34,7 @@ import {
 import { createLogger } from "@forge/observability";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { emitEmfMetric } from "../metrics.js";
+import { createRmsHydrantImportAdapter } from "./rms-hydrant-import-adapter.js";
 
 export type ImportExecuteOutcome = "completed" | "retry" | "rejected";
 
@@ -41,9 +42,10 @@ function workerId(): string {
   return process.env.HOSTNAME || hostname() || `worker-${process.pid}`;
 }
 
-function createDefaultRegistry(): ImportAdapterRegistry {
+function createDefaultRegistry(databaseUrl: string): ImportAdapterRegistry {
   const registry = new ImportAdapterRegistry();
   registry.register(new ReferenceImportAdapter("reference:generic:record@1"));
+  registry.register(createRmsHydrantImportAdapter(databaseUrl));
   return registry;
 }
 
@@ -65,7 +67,7 @@ export async function processImportExecuteJob(input: {
     return "rejected";
   }
   const message = validated.message;
-  const registry = input.registry ?? createDefaultRegistry();
+  const registry = input.registry ?? createDefaultRegistry(input.databaseUrl);
   const db = getSharedDatabase(input.databaseUrl);
   const owner = workerId();
 

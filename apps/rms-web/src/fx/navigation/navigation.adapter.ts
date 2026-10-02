@@ -1,7 +1,7 @@
 import type { RmsNavGroup, RmsNavigationItem } from "./navigation.types";
 import { RMS_NAVIGATION_REGISTRY } from "./navigation.registry";
 
-const GROUP_ORDER = ["home", "incidents", "cad", "neris", "session"] as const;
+const GROUP_ORDER = ["home", "incidents", "operations", "training", "scheduling", "prevention", "water-supply", "cad", "neris", "session"] as const;
 
 export function isNavItemVisible(
   item: RmsNavigationItem,

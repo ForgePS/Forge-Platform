@@ -1,0 +1,13 @@
+"use client";
+import Link from "next/link";
+import {useAuth} from "@forge/web-kit";
+import {useCallback,useEffect,useMemo,useState} from "react";
+import {getPerson,listPersonnel,type PersonSummary,type RmsPersonnelSummary} from "@/lib/rms-api";
+import styles from "../page.module.css";
+
+export default function PersonnelPage(){
+ const {me}=useAuth();const [items,setItems]=useState<RmsPersonnelSummary[]>([]);const [people,setPeople]=useState<Record<string,PersonSummary>>({});const [search,setSearch]=useState("");const [loading,setLoading]=useState(true);const [error,setError]=useState<string|null>(null);
+ const load=useCallback(async()=>{if(!me?.tenantId)return;setLoading(true);setError(null);try{const r=await listPersonnel(me.tenantId,{page:"1",pageSize:"100",...(search.trim()?{search:search.trim()}:{})});setItems(r.data);const pairs=await Promise.all(r.data.map(async row=>{try{return [row.personId,await getPerson(me.tenantId!,row.personId)] as const}catch{return [row.personId,null] as const}}));setPeople(Object.fromEntries(pairs.filter((p):p is readonly [string,PersonSummary]=>Boolean(p[1]))))}catch(e){setError(e instanceof Error?e.message:"Failed to load personnel")}finally{setLoading(false)}},[me?.tenantId,search]);useEffect(()=>{void load()},[load]);
+ const active=useMemo(()=>items.filter(x=>x.status==="ACTIVE").length,[items]);
+ return <section className={styles.page}><h1>Personnel</h1><p className={styles.lead}>Fire-service assignments linked to Forge Person identities.</p><div className={styles.actions}><Link className={styles.button} href="/personnel/new/">Add personnel</Link></div><div className={styles.formRow}><label htmlFor="personnelSearch">Search personnel</label><input id="personnelSearch" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rank, qualification, assignment"/></div><p className={styles.muted}>{active} active · {items.length} total</p>{error?<p className={styles.error}>{error}</p>:null}<div className={styles.panel}>{loading?<p className={styles.muted}>Loading…</p>:null}{items.length?<table className={styles.table}><thead><tr><th>Name</th><th>Rank</th><th>Status</th><th>Incident eligible</th><th>Qualifications</th><th>Action</th></tr></thead><tbody>{items.map(x=><tr key={x.id}><td>{people[x.personId]?.displayName??x.personId}</td><td>{x.rank??"—"}</td><td>{x.status}</td><td>{x.incidentEligible?"Yes":"No"}</td><td>{x.qualificationSummary??"—"}</td><td><Link href={`/personnel/${x.id}/`}>Open</Link></td></tr>)}</tbody></table>:!loading?<p className={styles.muted}>No personnel found.</p>:null}</div></section>
+}

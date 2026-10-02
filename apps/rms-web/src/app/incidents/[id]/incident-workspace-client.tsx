@@ -354,6 +354,15 @@ function IncidentWorkspaceInner() {
         {activeSection === "OVERVIEW" ? (
           <div className={styles.panel}>
             <h2>Overview</h2>
+            <div className={styles.actions}>
+              <button
+                type="button"
+                className={styles.button}
+                onClick={() => router.push(`/investigations/new/?incidentId=${incident.id}`)}
+              >
+                Open Investigation
+              </button>
+            </div>
             <OverviewAssignmentSection
               tenantId={me!.tenantId}
               incident={incident}

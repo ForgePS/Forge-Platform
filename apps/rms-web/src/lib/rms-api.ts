@@ -189,8 +189,12 @@ export type ApparatusDetail = {
   apparatusNumber: string;
   name: string;
   apparatusType: string;
+  stationId: string | null;
   nerisClassification: string | null;
   status: string;
+  recordVersion: number;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type OccupancyDetail = {
@@ -199,8 +203,16 @@ export type OccupancyDetail = {
   addressLine1: string | null;
   city: string | null;
   state: string | null;
+  postalCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  primaryContact: string | null;
+  occupancyType: string | null;
   preplanId: string | null;
   status: string;
+  recordVersion: number;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type RosterDetail = {
@@ -215,6 +227,7 @@ export type RosterDetail = {
     unitId: string | null;
     assignmentRole: string;
     isOfficer: boolean;
+    incidentCommanderEligible: boolean;
   }>;
 };
 
@@ -1137,4 +1150,467 @@ export function rejectAiNarrative(
 
 export function getAiNarrativeHistory(requestId: string): Promise<AiNarrativeHistory> {
   return apiGet<AiNarrativeHistory>(`/api/v1/ai/narratives/${requestId}/history`);
+}
+
+
+export type HydrantSummary={
+  id:string;displayId:string;officialHydrantId:string|null;district:string|null;
+  addressLine1:string|null;city:string|null;state:string|null;status:string;
+  waterProvider:string|null;flowGpm:number|null;staticPsi:number|null;residualPsi:number|null;
+  nfpaClass:string|null;nfpaColor:string|null;lastInspectionDate:string|null;lastFlowTestDate:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type HydrantDetail=HydrantSummary&{
+  locationId:string|null;postalCode:string|null;latitude:number|null;longitude:number|null;
+  waterAssociation:string|null;subdivision:string|null;dischargeSize:number|null;hydrantType:string|null;
+  manufacturer:string|null;model:string|null;installDate:string|null;issue:string|null;
+  alternateSupply:string|null;notes:string|null;
+};
+export type HydrantFlowTest={id:string;testDate:string;staticPsi:number|null;residualPsi:number|null;pitotPsi:number|null;dischargeSize:number|null;flowGpm:number;nfpaClass:string|null;nfpaColor:string|null;testedBy:string|null;shift:string|null;flowResult:string|null;status:string|null;notes:string|null;createdAt:string};
+export type HydrantInspection={id:string;inspectionAt:string;operationalStatus:string;inspector:string|null;checklistJson:Record<string,unknown>;issueCount:number;notes:string|null;createdAt:string};
+export type HydrantDamageReport={id:string;reportedAt:string;severity:string;operationalStatus:string;leakPresent:boolean|null;trafficHazard:boolean|null;alternateWaterSupply:string|null;waterProvider:string|null;workOrderReference:string|null;reportedBy:string|null;notes:string|null;createdAt:string};
+
+export function listHydrants(tenantId:string,query:Record<string,string>):Promise<ApiResult<HydrantSummary[]>>{
+  return apiGetResult<HydrantSummary[]>(`${tenantBase(tenantId)}/rms/hydrants`,{query});
+}
+export function getHydrant(tenantId:string,hydrantId:string):Promise<HydrantDetail>{
+  return apiGet<HydrantDetail>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}`);
+}
+export function createHydrant(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<HydrantDetail>>{
+  return apiSendResult<HydrantDetail>(`${tenantBase(tenantId)}/rms/hydrants`,"POST",payload,{idempotencyKey:createIdempotencyKey("hydrant")});
+}
+export function patchHydrant(tenantId:string,hydrantId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<HydrantDetail>>{
+  return apiSendResult<HydrantDetail>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function listHydrantFlowTests(tenantId:string,hydrantId:string):Promise<HydrantFlowTest[]>{
+  return apiGet<HydrantFlowTest[]>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}/flow-tests`);
+}
+export function createHydrantFlowTest(tenantId:string,hydrantId:string,payload:Record<string,unknown>):Promise<HydrantFlowTest>{
+  return apiSend<HydrantFlowTest>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}/flow-tests`,"POST",payload,{idempotencyKey:createIdempotencyKey("hydrant-flow")});
+}
+export function listHydrantInspections(tenantId:string,hydrantId:string):Promise<HydrantInspection[]>{
+  return apiGet<HydrantInspection[]>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}/inspections`);
+}
+export function createHydrantInspection(tenantId:string,hydrantId:string,payload:Record<string,unknown>):Promise<HydrantInspection>{
+  return apiSend<HydrantInspection>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}/inspections`,"POST",payload,{idempotencyKey:createIdempotencyKey("hydrant-inspection")});
+}
+export function listHydrantDamageReports(tenantId:string,hydrantId:string):Promise<HydrantDamageReport[]>{
+  return apiGet<HydrantDamageReport[]>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}/damage-reports`);
+}
+export function createHydrantDamageReport(tenantId:string,hydrantId:string,payload:Record<string,unknown>):Promise<HydrantDamageReport>{
+  return apiSend<HydrantDamageReport>(`${tenantBase(tenantId)}/rms/hydrants/${hydrantId}/damage-reports`,"POST",payload,{idempotencyKey:createIdempotencyKey("hydrant-damage")});
+}
+
+
+export type OccupancySummary={
+  id:string;name:string;addressLine1:string|null;city:string|null;state:string|null;postalCode:string|null;
+  primaryContact:string|null;occupancyType:string|null;status:string;preplanId:string|null;
+  latitude:number|null;longitude:number|null;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type PreplanSummary={
+  id:string;occupancyId:string;versionLabel:string;approvalStatus:"DRAFT"|"APPROVED"|"SUPERSEDED";
+  tacticalSummary:string|null;hazards:string|null;accessNotes:string|null;utilityNotes:string|null;
+  primaryStationId:string|null;recordVersion:number;createdAt:string;updatedAt:string;
+};
+
+export function listOccupancies(tenantId:string,query:Record<string,string>):Promise<ApiResult<OccupancySummary[]>>{
+  return apiGetResult<OccupancySummary[]>(`${tenantBase(tenantId)}/rms/occupancies`,{query});
+}
+export function createOccupancy(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<OccupancySummary>>{
+  return apiSendResult<OccupancySummary>(`${tenantBase(tenantId)}/rms/occupancies`,"POST",payload,{idempotencyKey:createIdempotencyKey("occupancy")});
+}
+export function listPreplans(tenantId:string,query:Record<string,string>):Promise<ApiResult<PreplanSummary[]>>{
+  return apiGetResult<PreplanSummary[]>(`${tenantBase(tenantId)}/rms/preplans`,{query});
+}
+export function getPreplan(tenantId:string,preplanId:string):Promise<PreplanSummary>{
+  return apiGet<PreplanSummary>(`${tenantBase(tenantId)}/rms/preplans/${preplanId}`);
+}
+export function createPreplan(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<PreplanSummary>>{
+  return apiSendResult<PreplanSummary>(`${tenantBase(tenantId)}/rms/preplans`,"POST",payload,{idempotencyKey:createIdempotencyKey("preplan")});
+}
+
+
+export function patchOccupancy(
+  tenantId:string,
+  occupancyId:string,
+  payload:Record<string,unknown>,
+  recordVersion:number,
+):Promise<ApiResult<OccupancyDetail>>{
+  return apiSendResult<OccupancyDetail>(
+    `${tenantBase(tenantId)}/rms/occupancies/${occupancyId}`,
+    "PATCH",
+    payload,
+    {ifMatch:toIfMatch(recordVersion)},
+  );
+}
+export function patchPreplan(
+  tenantId:string,
+  preplanId:string,
+  payload:Record<string,unknown>,
+  recordVersion:number,
+):Promise<ApiResult<PreplanSummary>>{
+  return apiSendResult<PreplanSummary>(
+    `${tenantBase(tenantId)}/rms/preplans/${preplanId}`,
+    "PATCH",
+    payload,
+    {ifMatch:toIfMatch(recordVersion)},
+  );
+}
+
+
+export type PersonSummary={
+  id:string;forgePersonNumber:string;firstName:string;middleName:string|null;lastName:string;
+  preferredName:string|null;displayName:string;email:string|null;phone:string|null;status:string;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type RmsPersonnelSummary={
+  id:string;personId:string;rank:string|null;qualificationSummary:string|null;stationId:string|null;
+  shiftId:string|null;status:string;incidentEligible:boolean;recordVersion:number;createdAt:string;updatedAt:string;
+};
+
+export function listPersons(tenantId:string,q=""):Promise<ApiResult<PersonSummary[]>>{
+  return apiGetResult<PersonSummary[]>(`${tenantBase(tenantId)}/persons`,{query:q.trim()?{q:q.trim()}:{}});
+}
+export function getPerson(tenantId:string,personId:string):Promise<PersonSummary>{
+  return apiGet<PersonSummary>(`${tenantBase(tenantId)}/persons/${personId}`);
+}
+export function createPerson(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<PersonSummary>>{
+  return apiSendResult<PersonSummary>(`${tenantBase(tenantId)}/persons`,"POST",payload,{idempotencyKey:createIdempotencyKey("person")});
+}
+export function listPersonnel(tenantId:string,query:Record<string,string>):Promise<ApiResult<RmsPersonnelSummary[]>>{
+  return apiGetResult<RmsPersonnelSummary[]>(`${tenantBase(tenantId)}/rms/personnel`,{query});
+}
+export function createRmsPersonnel(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<RmsPersonnelSummary>>{
+  return apiSendResult<RmsPersonnelSummary>(`${tenantBase(tenantId)}/rms/personnel`,"POST",payload,{idempotencyKey:createIdempotencyKey("rms-personnel")});
+}
+export function getRmsPersonnel(tenantId:string,personnelId:string):Promise<RmsPersonnelSummary>{
+  return apiGet<RmsPersonnelSummary>(`${tenantBase(tenantId)}/rms/personnel/${personnelId}`);
+}
+export function listApparatus(tenantId:string,query:Record<string,string>):Promise<ApiResult<ApparatusDetail[]>>{
+  return apiGetResult<ApparatusDetail[]>(`${tenantBase(tenantId)}/rms/apparatus`,{query});
+}
+export function createApparatus(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<ApparatusDetail&{recordVersion:number}>>{
+  return apiSendResult<ApparatusDetail&{recordVersion:number}>(`${tenantBase(tenantId)}/rms/apparatus`,"POST",payload,{idempotencyKey:createIdempotencyKey("apparatus")});
+}
+
+
+export function listUnits(tenantId:string,query:Record<string,string>):Promise<ApiResult<UnitDetail[]>>{
+  return apiGetResult<UnitDetail[]>(`${tenantBase(tenantId)}/rms/units`,{query});
+}
+export function createUnit(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<UnitDetail>>{
+  return apiSendResult<UnitDetail>(`${tenantBase(tenantId)}/rms/units`,"POST",payload,{idempotencyKey:createIdempotencyKey("unit")});
+}
+
+
+export type StationSummary={
+  id:string;stationNumber:string;name:string;status:string;addressLine1:string|null;addressLine2:string|null;
+  city:string|null;state:string|null;postalCode:string|null;timezone:string;defaultResponseDistrict:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type ShiftSummary={
+  id:string;name:string;code:string;status:string;scheduleReference:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+
+export function listStations(tenantId:string,query:Record<string,string>):Promise<ApiResult<StationSummary[]>>{
+  return apiGetResult<StationSummary[]>(`${tenantBase(tenantId)}/rms/stations`,{query});
+}
+export function createStation(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<StationSummary>>{
+  return apiSendResult<StationSummary>(`${tenantBase(tenantId)}/rms/stations`,"POST",payload,{idempotencyKey:createIdempotencyKey("station")});
+}
+export function listShifts(tenantId:string,query:Record<string,string>):Promise<ApiResult<ShiftSummary[]>>{
+  return apiGetResult<ShiftSummary[]>(`${tenantBase(tenantId)}/rms/shifts`,{query});
+}
+export function createShift(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<ShiftSummary>>{
+  return apiSendResult<ShiftSummary>(`${tenantBase(tenantId)}/rms/shifts`,"POST",payload,{idempotencyKey:createIdempotencyKey("shift")});
+}
+
+
+export function listRosters(tenantId:string,query:Record<string,string>):Promise<ApiResult<Array<Omit<RosterDetail,"assignments">>>>{
+  return apiGetResult<Array<Omit<RosterDetail,"assignments">>>(`${tenantBase(tenantId)}/rms/rosters`,{query});
+}
+export function createRoster(
+  tenantId:string,
+  payload:{rosterDate:string;shiftId:string;stationId:string;status?:"ACTIVE"|"INACTIVE"},
+):Promise<ApiResult<RosterDetail>>{
+  return apiSendResult<RosterDetail>(`${tenantBase(tenantId)}/rms/rosters`,"POST",payload,{idempotencyKey:createIdempotencyKey("roster")});
+}
+export type RosterAssignment={
+  id:string;rosterId:string;personnelId:string;unitId:string|null;assignmentRole:string;
+  isOfficer:boolean;incidentCommanderEligible:boolean;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export function addRosterAssignment(
+  tenantId:string,
+  rosterId:string,
+  payload:{personnelId:string;unitId?:string|null;assignmentRole?:string;isOfficer?:boolean;incidentCommanderEligible?:boolean},
+):Promise<ApiResult<RosterAssignment>>{
+  return apiSendResult<RosterAssignment>(`${tenantBase(tenantId)}/rms/rosters/${rosterId}/assignments`,"POST",payload,{idempotencyKey:createIdempotencyKey("roster-assignment")});
+}
+export function removeRosterAssignment(tenantId:string,rosterId:string,assignmentId:string):Promise<void>{
+  return apiSend<void>(`${tenantBase(tenantId)}/rms/rosters/${rosterId}/assignments/${assignmentId}`,"DELETE");
+}
+
+
+export type InspectionProgram={
+  id:string;name:string;code:string|null;description:string|null;active:boolean;frequency:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type InspectionTemplate={
+  id:string;programId:string|null;name:string;lifecycleStatus:"DRAFT"|"PUBLISHED"|"RETIRED";version:number;
+  sectionsJson:Array<Record<string,unknown>>;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type InspectionSummary={
+  id:string;occupancyId:string;programId:string|null;templateId:string|null;inspectorName:string|null;
+  inspectionDate:string;scheduledDate:string|null;startedAt:string|null;completedAt:string|null;
+  status:"SCHEDULED"|"IN_PROGRESS"|"COMPLETED"|"CANCELLED";
+  overallResult:"PENDING"|"PASS"|"CONDITIONAL"|"FAIL";followUpDate:string|null;notes:string|null;
+  checklistSnapshotJson:Array<Record<string,unknown>>;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type InspectionResponse={
+  id:string;inspectionId:string;sectionId:string|null;fieldKey:string;fieldLabel:string|null;result:string|null;
+  valueJson:unknown;comment:string|null;recordVersion:number;
+};
+export type InspectionFinding={
+  id:string;inspectionId:string;responseId:string|null;title:string;description:string|null;
+  severity:"LOW"|"MODERATE"|"HIGH"|"CRITICAL";correctiveAction:string|null;responsibleParty:string|null;
+  dueDate:string|null;status:"OPEN"|"CORRECTED"|"VERIFIED"|"VOID";correctedAt:string|null;verifiedAt:string|null;
+  verificationNotes:string|null;recordVersion:number;
+};
+export type InspectionDetail={inspection:InspectionSummary;responses:InspectionResponse[];findings:InspectionFinding[]};
+
+export function listInspectionPrograms(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<InspectionProgram[]>>{
+  return apiGetResult<InspectionProgram[]>(`${tenantBase(tenantId)}/rms/inspection-programs`,{query});
+}
+export function createInspectionProgram(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<InspectionProgram>>{
+  return apiSendResult<InspectionProgram>(`${tenantBase(tenantId)}/rms/inspection-programs`,"POST",payload,{idempotencyKey:createIdempotencyKey("inspection-program")});
+}
+export function listInspectionTemplates(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<InspectionTemplate[]>>{
+  return apiGetResult<InspectionTemplate[]>(`${tenantBase(tenantId)}/rms/inspection-templates`,{query});
+}
+export function createInspectionTemplate(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<InspectionTemplate>>{
+  return apiSendResult<InspectionTemplate>(`${tenantBase(tenantId)}/rms/inspection-templates`,"POST",payload,{idempotencyKey:createIdempotencyKey("inspection-template")});
+}
+export function listInspections(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<InspectionSummary[]>>{
+  return apiGetResult<InspectionSummary[]>(`${tenantBase(tenantId)}/rms/inspections`,{query});
+}
+export function getInspection(tenantId:string,inspectionId:string):Promise<InspectionDetail>{
+  return apiGet<InspectionDetail>(`${tenantBase(tenantId)}/rms/inspections/${inspectionId}`);
+}
+export function createInspection(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<InspectionSummary>>{
+  return apiSendResult<InspectionSummary>(`${tenantBase(tenantId)}/rms/inspections`,"POST",payload,{idempotencyKey:createIdempotencyKey("inspection")});
+}
+export function patchInspection(tenantId:string,inspectionId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<InspectionSummary>>{
+  return apiSendResult<InspectionSummary>(`${tenantBase(tenantId)}/rms/inspections/${inspectionId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function upsertInspectionResponse(tenantId:string,inspectionId:string,payload:Record<string,unknown>):Promise<InspectionResponse>{
+  return apiSend<InspectionResponse>(`${tenantBase(tenantId)}/rms/inspections/${inspectionId}/responses`,"POST",payload,{idempotencyKey:createIdempotencyKey("inspection-response")});
+}
+export function createInspectionFinding(tenantId:string,inspectionId:string,payload:Record<string,unknown>):Promise<InspectionFinding>{
+  return apiSend<InspectionFinding>(`${tenantBase(tenantId)}/rms/inspections/${inspectionId}/findings`,"POST",payload,{idempotencyKey:createIdempotencyKey("inspection-finding")});
+}
+export function patchInspectionFinding(tenantId:string,findingId:string,payload:Record<string,unknown>,recordVersion:number):Promise<InspectionFinding>{
+  return apiSend<InspectionFinding>(`${tenantBase(tenantId)}/rms/inspection-findings/${findingId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+
+
+export function patchInspectionProgram(tenantId:string,programId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<InspectionProgram>>{
+  return apiSendResult<InspectionProgram>(`${tenantBase(tenantId)}/rms/inspection-programs/${programId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function patchInspectionTemplate(tenantId:string,templateId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<InspectionTemplate>>{
+  return apiSendResult<InspectionTemplate>(`${tenantBase(tenantId)}/rms/inspection-templates/${templateId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+
+
+export type CodeCase={
+  id:string;caseNumber:string;occupancyId:string;inspectionId:string|null;caseType:"VIOLATION"|"COMPLAINT"|"ORDER"|"CITATION";
+  status:"OPEN"|"NOTICE_ISSUED"|"COMPLIANCE_PENDING"|"HEARING"|"CLOSED"|"VOID";openedAt:string;complianceDueDate:string|null;
+  closedAt:string|null;responsibleParty:string|null;contactEmail:string|null;contactPhone:string|null;summary:string|null;notes:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type CodeViolation={
+  id:string;caseId:string;inspectionFindingId:string|null;codeReference:string|null;title:string;description:string|null;
+  severity:"LOW"|"MODERATE"|"HIGH"|"CRITICAL";status:"OPEN"|"CORRECTED"|"VERIFIED"|"VOID";correctiveAction:string|null;
+  correctionDueDate:string|null;correctedAt:string|null;verifiedAt:string|null;verificationNotes:string|null;fineAmount:number|null;
+  recordVersion:number;
+};
+export type CodeNotice={
+  id:string;caseId:string;noticeType:"WARNING"|"NOTICE_OF_VIOLATION"|"ORDER_TO_CORRECT"|"CITATION";issuedAt:string;
+  recipient:string|null;deliveryMethod:string|null;servedAt:string|null;subject:string|null;bodySnapshot:string;createdAt:string;
+};
+export type CodeCaseDetail={case:CodeCase;violations:CodeViolation[];notices:CodeNotice[]};
+
+export function listCodeCases(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<CodeCase[]>>{
+  return apiGetResult<CodeCase[]>(`${tenantBase(tenantId)}/rms/code-cases`,{query});
+}
+export function getCodeCase(tenantId:string,caseId:string):Promise<CodeCaseDetail>{
+  return apiGet<CodeCaseDetail>(`${tenantBase(tenantId)}/rms/code-cases/${caseId}`);
+}
+export function createCodeCase(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<CodeCase>>{
+  return apiSendResult<CodeCase>(`${tenantBase(tenantId)}/rms/code-cases`,"POST",payload,{idempotencyKey:createIdempotencyKey("code-case")});
+}
+export function createCodeCaseFromFinding(tenantId:string,findingId:string):Promise<{case:CodeCase;violation:CodeViolation;existing:boolean}>{
+  return apiSend<{case:CodeCase;violation:CodeViolation;existing:boolean}>(`${tenantBase(tenantId)}/rms/code-cases/from-finding/${findingId}`,"POST",{}, {idempotencyKey:createIdempotencyKey("code-case-finding")});
+}
+export function patchCodeCase(tenantId:string,caseId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<CodeCase>>{
+  return apiSendResult<CodeCase>(`${tenantBase(tenantId)}/rms/code-cases/${caseId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function createCodeViolation(tenantId:string,caseId:string,payload:Record<string,unknown>):Promise<CodeViolation>{
+  return apiSend<CodeViolation>(`${tenantBase(tenantId)}/rms/code-cases/${caseId}/violations`,"POST",payload,{idempotencyKey:createIdempotencyKey("code-violation")});
+}
+export function patchCodeViolation(tenantId:string,violationId:string,payload:Record<string,unknown>,recordVersion:number):Promise<CodeViolation>{
+  return apiSend<CodeViolation>(`${tenantBase(tenantId)}/rms/code-violations/${violationId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function issueCodeNotice(tenantId:string,caseId:string,payload:Record<string,unknown>):Promise<{notice:CodeNotice;case:CodeCase}>{
+  return apiSend<{notice:CodeNotice;case:CodeCase}>(`${tenantBase(tenantId)}/rms/code-cases/${caseId}/notices`,"POST",payload,{idempotencyKey:createIdempotencyKey("code-notice")});
+}
+
+
+export type InvestigationCase={
+  id:string;caseNumber:string;incidentId:string|null;occupancyId:string|null;
+  caseType:"FIRE_INVESTIGATION"|"ORIGIN_CAUSE"|"CODE_REFERRAL"|"ADMIN_REVIEW";
+  leadInvestigator:string|null;status:"OPEN"|"SCENE_SECURED"|"ANALYSIS"|"PENDING_REVIEW"|"CLOSED"|"VOID";
+  openedAt:string;closedAt:string|null;location:string|null;sceneStatus:"SECURED"|"RELEASED"|"RESTRICTED"|null;
+  weather:string|null;initialObservations:string|null;areaOfOrigin:string|null;
+  causeClassification:"UNDETERMINED"|"ACCIDENTAL"|"INCENDIARY"|"NATURAL"|"OTHER"|null;
+  causeNarrative:string|null;disposition:string|null;
+  supervisorReviewStatus:"NOT_SUBMITTED"|"PENDING"|"APPROVED"|"RETURNED";
+  supervisorReviewer:string|null;supervisorReviewedAt:string|null;supervisorNotes:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type InvestigationEvidence={
+  id:string;caseId:string;evidenceType:"PHOTO"|"PHYSICAL"|"DOCUMENT"|"INTERVIEW"|"VIDEO"|"OTHER";
+  tagNumber:string;title:string|null;description:string|null;collectedAt:string|null;collectedBy:string|null;
+  currentCustodian:string|null;storageLocation:string|null;status:"IN_CUSTODY"|"RELEASED"|"RETURNED"|"DISPOSED";
+  notes:string|null;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type InvestigationCustodyEvent={
+  id:string;evidenceId:string;action:"COLLECTED"|"TRANSFERRED"|"STORED"|"RELEASED"|"RETURNED"|"DISPOSED";
+  occurredAt:string;fromCustodian:string|null;toCustodian:string|null;location:string|null;notes:string|null;createdAt:string;
+};
+export type InvestigationDetail={case:InvestigationCase;evidence:InvestigationEvidence[];custodyEvents:InvestigationCustodyEvent[]};
+
+export function listInvestigations(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<InvestigationCase[]>>{
+  return apiGetResult<InvestigationCase[]>(`${tenantBase(tenantId)}/rms/investigations`,{query});
+}
+export function getInvestigation(tenantId:string,caseId:string):Promise<InvestigationDetail>{
+  return apiGet<InvestigationDetail>(`${tenantBase(tenantId)}/rms/investigations/${caseId}`);
+}
+export function createInvestigation(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<InvestigationCase>>{
+  return apiSendResult<InvestigationCase>(`${tenantBase(tenantId)}/rms/investigations`,"POST",payload,{idempotencyKey:createIdempotencyKey("investigation")});
+}
+export function patchInvestigation(tenantId:string,caseId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<InvestigationCase>>{
+  return apiSendResult<InvestigationCase>(`${tenantBase(tenantId)}/rms/investigations/${caseId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function createInvestigationEvidence(tenantId:string,caseId:string,payload:Record<string,unknown>):Promise<InvestigationEvidence>{
+  return apiSend<InvestigationEvidence>(`${tenantBase(tenantId)}/rms/investigations/${caseId}/evidence`,"POST",payload,{idempotencyKey:createIdempotencyKey("investigation-evidence")});
+}
+export function patchInvestigationEvidence(tenantId:string,evidenceId:string,payload:Record<string,unknown>,recordVersion:number):Promise<InvestigationEvidence>{
+  return apiSend<InvestigationEvidence>(`${tenantBase(tenantId)}/rms/investigation-evidence/${evidenceId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function addInvestigationCustodyEvent(tenantId:string,evidenceId:string,payload:Record<string,unknown>):Promise<{event:InvestigationCustodyEvent;evidence:InvestigationEvidence}>{
+  return apiSend<{event:InvestigationCustodyEvent;evidence:InvestigationEvidence}>(`${tenantBase(tenantId)}/rms/investigation-evidence/${evidenceId}/custody-events`,"POST",payload,{idempotencyKey:createIdempotencyKey("investigation-custody")});
+}
+
+
+export type TrainingCourse={
+  id:string;code:string;title:string;category:string;description:string|null;deliveryMode:string;
+  defaultHours:number|null;recurrenceMonths:number|null;requiredForIncidentEligibility:boolean;
+  status:string;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type TrainingRecord={
+  id:string;courseId:string;personnelId:string;completedAt:string;expiresAt:string|null;hours:number|null;
+  status:string;instructor:string|null;location:string|null;score:number|null;certificateNumber:string|null;
+  notes:string|null;source:string;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type CertificationType={
+  id:string;code:string;name:string;issuingAuthority:string|null;category:string;defaultValidityMonths:number|null;
+  requiredForIncidentEligibility:boolean;status:string;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type PersonnelCertification={
+  id:string;personnelId:string;certificationTypeId:string;credentialNumber:string|null;issuedAt:string|null;
+  expiresAt:string|null;status:string;verifiedAt:string|null;verifiedBy:string|null;notes:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type PersonnelReadiness={
+  personnelId:string;eligible:boolean;
+  training:Array<{courseId:string;code:string;title:string;current:boolean;completedAt:string|null;expiresAt:string|null}>;
+  certifications:Array<{certificationTypeId:string;code:string;name:string;current:boolean;credentialNumber:string|null;expiresAt:string|null}>;
+  missingTraining:Array<{courseId:string;code:string;title:string;current:boolean;completedAt:string|null;expiresAt:string|null}>;
+  missingCertifications:Array<{certificationTypeId:string;code:string;name:string;current:boolean;credentialNumber:string|null;expiresAt:string|null}>;
+  computedAt:string;
+};
+
+export function listTrainingCourses(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<TrainingCourse[]>>{
+  return apiGetResult<TrainingCourse[]>(`${tenantBase(tenantId)}/rms/training/courses`,{query});
+}
+export function createTrainingCourse(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<TrainingCourse>>{
+  return apiSendResult<TrainingCourse>(`${tenantBase(tenantId)}/rms/training/courses`,"POST",payload,{idempotencyKey:createIdempotencyKey("training-course")});
+}
+export function patchTrainingCourse(tenantId:string,courseId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<TrainingCourse>>{
+  return apiSendResult<TrainingCourse>(`${tenantBase(tenantId)}/rms/training/courses/${courseId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function listTrainingRecords(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<TrainingRecord[]>>{
+  return apiGetResult<TrainingRecord[]>(`${tenantBase(tenantId)}/rms/training/records`,{query});
+}
+export function createTrainingRecord(tenantId:string,payload:Record<string,unknown>):Promise<TrainingRecord>{
+  return apiSend<TrainingRecord>(`${tenantBase(tenantId)}/rms/training/records`,"POST",payload,{idempotencyKey:createIdempotencyKey("training-record")});
+}
+export function listCertificationTypes(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<CertificationType[]>>{
+  return apiGetResult<CertificationType[]>(`${tenantBase(tenantId)}/rms/certifications/types`,{query});
+}
+export function createCertificationType(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<CertificationType>>{
+  return apiSendResult<CertificationType>(`${tenantBase(tenantId)}/rms/certifications/types`,"POST",payload,{idempotencyKey:createIdempotencyKey("certification-type")});
+}
+export function listPersonnelCertifications(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<PersonnelCertification[]>>{
+  return apiGetResult<PersonnelCertification[]>(`${tenantBase(tenantId)}/rms/certifications/personnel`,{query});
+}
+export function createPersonnelCertification(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<PersonnelCertification>>{
+  return apiSendResult<PersonnelCertification>(`${tenantBase(tenantId)}/rms/certifications/personnel`,"POST",payload,{idempotencyKey:createIdempotencyKey("personnel-certification")});
+}
+export function getPersonnelReadiness(tenantId:string,personnelId:string):Promise<PersonnelReadiness>{
+  return apiGet<PersonnelReadiness>(`${tenantBase(tenantId)}/rms/training/readiness/${personnelId}`);
+}
+
+
+export type ScheduleAssignment={
+  id:string;personnelId:string;shiftId:string|null;stationId:string|null;unitId:string|null;
+  startAt:string;endAt:string;assignmentType:string;role:string|null;status:string;
+  eligibilityStatus:string;eligibilityWarningsJson:string[];notes:string|null;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type TimeOffRequest={
+  id:string;personnelId:string;startAt:string;endAt:string;leaveType:string;status:string;reason:string|null;
+  reviewer:string|null;reviewedAt:string|null;reviewNotes:string|null;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type ShiftSwapRequest={
+  id:string;offeredAssignmentId:string;requesterPersonnelId:string;replacementPersonnelId:string|null;targetPersonnelId:string|null;
+  status:string;reason:string|null;reviewer:string|null;reviewedAt:string|null;reviewNotes:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+
+export function listScheduleAssignments(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<ScheduleAssignment[]>>{
+  return apiGetResult<ScheduleAssignment[]>(`${tenantBase(tenantId)}/rms/scheduling/assignments`,{query});
+}
+export function createScheduleAssignment(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<ScheduleAssignment>>{
+  return apiSendResult<ScheduleAssignment>(`${tenantBase(tenantId)}/rms/scheduling/assignments`,"POST",payload,{idempotencyKey:createIdempotencyKey("schedule-assignment")});
+}
+export function patchScheduleAssignment(tenantId:string,id:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<ScheduleAssignment>>{
+  return apiSendResult<ScheduleAssignment>(`${tenantBase(tenantId)}/rms/scheduling/assignments/${id}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function listTimeOffRequests(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<TimeOffRequest[]>>{
+  return apiGetResult<TimeOffRequest[]>(`${tenantBase(tenantId)}/rms/scheduling/time-off`,{query});
+}
+export function createTimeOffRequest(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<TimeOffRequest>>{
+  return apiSendResult<TimeOffRequest>(`${tenantBase(tenantId)}/rms/scheduling/time-off`,"POST",payload,{idempotencyKey:createIdempotencyKey("time-off")});
+}
+export function patchTimeOffRequest(tenantId:string,id:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<TimeOffRequest>>{
+  return apiSendResult<TimeOffRequest>(`${tenantBase(tenantId)}/rms/scheduling/time-off/${id}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function listShiftSwaps(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<ShiftSwapRequest[]>>{
+  return apiGetResult<ShiftSwapRequest[]>(`${tenantBase(tenantId)}/rms/scheduling/swaps`,{query});
+}
+export function createShiftSwap(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<ShiftSwapRequest>>{
+  return apiSendResult<ShiftSwapRequest>(`${tenantBase(tenantId)}/rms/scheduling/swaps`,"POST",payload,{idempotencyKey:createIdempotencyKey("shift-swap")});
+}
+export function patchShiftSwap(tenantId:string,id:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<ShiftSwapRequest>>{
+  return apiSendResult<ShiftSwapRequest>(`${tenantBase(tenantId)}/rms/scheduling/swaps/${id}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
 }
