@@ -22,6 +22,7 @@ export * from "./rms-code-enforcement.js";
 export * from "./rms-investigations.js";
 export * from "./rms-training.js";
 export * from "./rms-scheduling.js";
+export * from "./rms-inventory.js";
 export * from "./neris-incidents.js";
 export * from "./neris-specialty.js";
 export * from "./cad.js";
