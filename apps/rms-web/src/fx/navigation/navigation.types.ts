@@ -1,4 +1,4 @@
-export type RmsNavGroupId = "home" | "incidents" | "operations" | "prevention" | "water-supply" | "cad" | "neris" | "session";
+export type RmsNavGroupId = "home" | "incidents" | "operations" | "training" | "prevention" | "water-supply" | "cad" | "neris" | "session";
 
 export type RmsNavigationItem = {
   id: string;
