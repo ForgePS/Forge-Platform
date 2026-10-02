@@ -169,8 +169,16 @@ export class RmsInspectionsService{
       const inspection=await tx.query.rmsInspections.findFirst({where:and(eq(rmsInspections.tenantId,tenantId),eq(rmsInspections.id,inspectionId),isNull(rmsInspections.deletedAt))});if(!inspection)throw new ForgeError("NOT_FOUND","Inspection not found");
       const existing=await tx.query.rmsInspectionResponses.findFirst({where:and(eq(rmsInspectionResponses.tenantId,tenantId),eq(rmsInspectionResponses.inspectionId,inspectionId),eq(rmsInspectionResponses.fieldKey,data.fieldKey))});
       const now=new Date();
-      if(existing){const [row]=await tx.update(rmsInspectionResponses).set({...data,recordVersion:existing.recordVersion+1,updatedByUserId:principal.userId,updatedAt:now}).where(eq(rmsInspectionResponses.id,existing.id)).returning();return row!;}
-      const [row]=await tx.insert(rmsInspectionResponses).values({id:createId(),tenantId,inspectionId,...data,createdByUserId:principal.userId,updatedByUserId:principal.userId,createdAt:now,updatedAt:now}).returning();return row!;
+      if(existing){
+        const [row]=await tx.update(rmsInspectionResponses).set({...data,recordVersion:existing.recordVersion+1,updatedByUserId:principal.userId,updatedAt:now}).where(eq(rmsInspectionResponses.id,existing.id)).returning();
+        if(!row)throw new ForgeError("INTERNAL_ERROR","Failed to update inspection response");
+        await this.emit(tx,tenantId,"rms_inspection_response",row.id,"update",principal,row,existing);
+        return row;
+      }
+      const [row]=await tx.insert(rmsInspectionResponses).values({id:createId(),tenantId,inspectionId,...data,createdByUserId:principal.userId,updatedByUserId:principal.userId,createdAt:now,updatedAt:now}).returning();
+      if(!row)throw new ForgeError("INTERNAL_ERROR","Failed to create inspection response");
+      await this.emit(tx,tenantId,"rms_inspection_response",row.id,"create",principal,row);
+      return row;
     },principal.userId);
   }
 
