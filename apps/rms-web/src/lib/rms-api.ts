@@ -1349,3 +1349,65 @@ export function addRosterAssignment(
 export function removeRosterAssignment(tenantId:string,rosterId:string,assignmentId:string):Promise<void>{
   return apiSend<void>(`${tenantBase(tenantId)}/rms/rosters/${rosterId}/assignments/${assignmentId}`,"DELETE");
 }
+
+
+export type InspectionProgram={
+  id:string;name:string;code:string|null;description:string|null;active:boolean;frequency:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type InspectionTemplate={
+  id:string;programId:string|null;name:string;lifecycleStatus:"DRAFT"|"PUBLISHED"|"RETIRED";version:number;
+  sectionsJson:Array<Record<string,unknown>>;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type InspectionSummary={
+  id:string;occupancyId:string;programId:string|null;templateId:string|null;inspectorName:string|null;
+  inspectionDate:string;scheduledDate:string|null;startedAt:string|null;completedAt:string|null;
+  status:"SCHEDULED"|"IN_PROGRESS"|"COMPLETED"|"CANCELLED";
+  overallResult:"PENDING"|"PASS"|"CONDITIONAL"|"FAIL";followUpDate:string|null;notes:string|null;
+  checklistSnapshotJson:Array<Record<string,unknown>>;recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type InspectionResponse={
+  id:string;inspectionId:string;sectionId:string|null;fieldKey:string;fieldLabel:string|null;result:string|null;
+  valueJson:unknown;comment:string|null;recordVersion:number;
+};
+export type InspectionFinding={
+  id:string;inspectionId:string;responseId:string|null;title:string;description:string|null;
+  severity:"LOW"|"MODERATE"|"HIGH"|"CRITICAL";correctiveAction:string|null;responsibleParty:string|null;
+  dueDate:string|null;status:"OPEN"|"CORRECTED"|"VERIFIED"|"VOID";correctedAt:string|null;verifiedAt:string|null;
+  verificationNotes:string|null;recordVersion:number;
+};
+export type InspectionDetail={inspection:InspectionSummary;responses:InspectionResponse[];findings:InspectionFinding[]};
+
+export function listInspectionPrograms(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<InspectionProgram[]>>{
+  return apiGetResult<InspectionProgram[]>(`${tenantBase(tenantId)}/rms/inspection-programs`,{query});
+}
+export function createInspectionProgram(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<InspectionProgram>>{
+  return apiSendResult<InspectionProgram>(`${tenantBase(tenantId)}/rms/inspection-programs`,"POST",payload,{idempotencyKey:createIdempotencyKey("inspection-program")});
+}
+export function listInspectionTemplates(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<InspectionTemplate[]>>{
+  return apiGetResult<InspectionTemplate[]>(`${tenantBase(tenantId)}/rms/inspection-templates`,{query});
+}
+export function createInspectionTemplate(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<InspectionTemplate>>{
+  return apiSendResult<InspectionTemplate>(`${tenantBase(tenantId)}/rms/inspection-templates`,"POST",payload,{idempotencyKey:createIdempotencyKey("inspection-template")});
+}
+export function listInspections(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<InspectionSummary[]>>{
+  return apiGetResult<InspectionSummary[]>(`${tenantBase(tenantId)}/rms/inspections`,{query});
+}
+export function getInspection(tenantId:string,inspectionId:string):Promise<InspectionDetail>{
+  return apiGet<InspectionDetail>(`${tenantBase(tenantId)}/rms/inspections/${inspectionId}`);
+}
+export function createInspection(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<InspectionSummary>>{
+  return apiSendResult<InspectionSummary>(`${tenantBase(tenantId)}/rms/inspections`,"POST",payload,{idempotencyKey:createIdempotencyKey("inspection")});
+}
+export function patchInspection(tenantId:string,inspectionId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<InspectionSummary>>{
+  return apiSendResult<InspectionSummary>(`${tenantBase(tenantId)}/rms/inspections/${inspectionId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function upsertInspectionResponse(tenantId:string,inspectionId:string,payload:Record<string,unknown>):Promise<InspectionResponse>{
+  return apiSend<InspectionResponse>(`${tenantBase(tenantId)}/rms/inspections/${inspectionId}/responses`,"POST",payload,{idempotencyKey:createIdempotencyKey("inspection-response")});
+}
+export function createInspectionFinding(tenantId:string,inspectionId:string,payload:Record<string,unknown>):Promise<InspectionFinding>{
+  return apiSend<InspectionFinding>(`${tenantBase(tenantId)}/rms/inspections/${inspectionId}/findings`,"POST",payload,{idempotencyKey:createIdempotencyKey("inspection-finding")});
+}
+export function patchInspectionFinding(tenantId:string,findingId:string,payload:Record<string,unknown>,recordVersion:number):Promise<InspectionFinding>{
+  return apiSend<InspectionFinding>(`${tenantBase(tenantId)}/rms/inspection-findings/${findingId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
