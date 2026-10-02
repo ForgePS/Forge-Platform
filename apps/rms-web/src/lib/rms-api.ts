@@ -1419,3 +1419,47 @@ export function patchInspectionProgram(tenantId:string,programId:string,payload:
 export function patchInspectionTemplate(tenantId:string,templateId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<InspectionTemplate>>{
   return apiSendResult<InspectionTemplate>(`${tenantBase(tenantId)}/rms/inspection-templates/${templateId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
 }
+
+
+export type CodeCase={
+  id:string;caseNumber:string;occupancyId:string;inspectionId:string|null;caseType:"VIOLATION"|"COMPLAINT"|"ORDER"|"CITATION";
+  status:"OPEN"|"NOTICE_ISSUED"|"COMPLIANCE_PENDING"|"HEARING"|"CLOSED"|"VOID";openedAt:string;complianceDueDate:string|null;
+  closedAt:string|null;responsibleParty:string|null;contactEmail:string|null;contactPhone:string|null;summary:string|null;notes:string|null;
+  recordVersion:number;createdAt:string;updatedAt:string;
+};
+export type CodeViolation={
+  id:string;caseId:string;inspectionFindingId:string|null;codeReference:string|null;title:string;description:string|null;
+  severity:"LOW"|"MODERATE"|"HIGH"|"CRITICAL";status:"OPEN"|"CORRECTED"|"VERIFIED"|"VOID";correctiveAction:string|null;
+  correctionDueDate:string|null;correctedAt:string|null;verifiedAt:string|null;verificationNotes:string|null;fineAmount:number|null;
+  recordVersion:number;
+};
+export type CodeNotice={
+  id:string;caseId:string;noticeType:"WARNING"|"NOTICE_OF_VIOLATION"|"ORDER_TO_CORRECT"|"CITATION";issuedAt:string;
+  recipient:string|null;deliveryMethod:string|null;servedAt:string|null;subject:string|null;bodySnapshot:string;createdAt:string;
+};
+export type CodeCaseDetail={case:CodeCase;violations:CodeViolation[];notices:CodeNotice[]};
+
+export function listCodeCases(tenantId:string,query:Record<string,string>={}):Promise<ApiResult<CodeCase[]>>{
+  return apiGetResult<CodeCase[]>(`${tenantBase(tenantId)}/rms/code-cases`,{query});
+}
+export function getCodeCase(tenantId:string,caseId:string):Promise<CodeCaseDetail>{
+  return apiGet<CodeCaseDetail>(`${tenantBase(tenantId)}/rms/code-cases/${caseId}`);
+}
+export function createCodeCase(tenantId:string,payload:Record<string,unknown>):Promise<ApiResult<CodeCase>>{
+  return apiSendResult<CodeCase>(`${tenantBase(tenantId)}/rms/code-cases`,"POST",payload,{idempotencyKey:createIdempotencyKey("code-case")});
+}
+export function createCodeCaseFromFinding(tenantId:string,findingId:string):Promise<{case:CodeCase;violation:CodeViolation;existing:boolean}>{
+  return apiSend<{case:CodeCase;violation:CodeViolation;existing:boolean}>(`${tenantBase(tenantId)}/rms/code-cases/from-finding/${findingId}`,"POST",{}, {idempotencyKey:createIdempotencyKey("code-case-finding")});
+}
+export function patchCodeCase(tenantId:string,caseId:string,payload:Record<string,unknown>,recordVersion:number):Promise<ApiResult<CodeCase>>{
+  return apiSendResult<CodeCase>(`${tenantBase(tenantId)}/rms/code-cases/${caseId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function createCodeViolation(tenantId:string,caseId:string,payload:Record<string,unknown>):Promise<CodeViolation>{
+  return apiSend<CodeViolation>(`${tenantBase(tenantId)}/rms/code-cases/${caseId}/violations`,"POST",payload,{idempotencyKey:createIdempotencyKey("code-violation")});
+}
+export function patchCodeViolation(tenantId:string,violationId:string,payload:Record<string,unknown>,recordVersion:number):Promise<CodeViolation>{
+  return apiSend<CodeViolation>(`${tenantBase(tenantId)}/rms/code-violations/${violationId}`,"PATCH",payload,{ifMatch:toIfMatch(recordVersion)});
+}
+export function issueCodeNotice(tenantId:string,caseId:string,payload:Record<string,unknown>):Promise<{notice:CodeNotice;case:CodeCase}>{
+  return apiSend<{notice:CodeNotice;case:CodeCase}>(`${tenantBase(tenantId)}/rms/code-cases/${caseId}/notices`,"POST",payload,{idempotencyKey:createIdempotencyKey("code-notice")});
+}
