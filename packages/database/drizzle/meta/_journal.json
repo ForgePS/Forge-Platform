@@ -330,6 +330,13 @@
       "when": 1754965000000,
       "tag": "0046_rms_scheduling",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1754966000000,
+      "tag": "0047_rms_inventory",
+      "breakpoints": true
     }
   ]
 }
